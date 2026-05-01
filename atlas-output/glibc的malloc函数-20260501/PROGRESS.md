@@ -5,7 +5,7 @@
 - **短名**: glibc的malloc函数
 - **工作目录**: atlas-output/glibc的malloc函数-20260501/
 - **创建时间**: 2026-05-01T22:30:00+08:00
-- **上次更新**: 2026-05-02T01:50:00+08:00
+- **上次更新**: 2026-05-02T05:30:00+08:00
 - **当前阶段**: How(进行中)
 
 ## 灵魂问题(Discovery 收集)
@@ -50,6 +50,18 @@
 ### How 阶段
 - 第 1 次追问 + 不懂反馈: 用户问"glibc 是不是分进程加载、不同进程互不影响?有没有'域'再划 arena?"+ "需要 arena/chunk/bin 三者关系图" → 已 patch 文件:在「核心机制骨架」前补《用户视角凝固:层级关系澄清》小节,双进程对照图(指令共享 + 状态独立)+ arena/bin/chunk 嵌套层级图(arena 头 + bins[] + in-use chunks + heap 物理布局 + 内核镜像类比);明确"进程隔离 = 内核责任,arena 多池 = ptmalloc2 责任",澄清没有"glibc 域"层级
 - 第 2 次追问 + 元规则: 用户问"arena 上限 8×CPU 核数 为什么 8 倍?超过怎样?"+ 给出元规则"以后介绍概念按'因为 → 要解决 → 所以引入'格式" → 已 patch 文件: ① 误解 2 末尾追加《为什么偏偏是 8》和《超过会怎样》两个子节,严格用模板推导 + 调优经验表 + jemalloc/tcmalloc 预告;② 元规则写入入口 SKILL.md 新小节《概念引入纪律》 + 反模式 12 + CLAUDE.md 同步说明,所有阶段 skill 一律遵守
+- 第 3 次追问: 用户问"bin 是怎么组织的?为什么不像 buddy 直接按大小分?" → 已 patch 文件:在「层级关系澄清」后补《bin 为什么切 4 类而不是直接按大小分》小节;澄清 bin 双层组织(切 4 类是第一层,每类内部按大小是第二层);严格用元规则推 fastbin/smallbin/largebin/unsorted 各自存在理由;核心洞察"buddy 单维 vs ptmalloc2 双维(大小 + temporal locality)";4 类 bin 对照表
+- 第 1 次不懂反馈 / 画图错误纠正: 用户指出层级关系图里 bins 画成了 `fastbins[0~9] → chunk → ...`,把二维(桶数组 × 桶内链表)误画成一维 → 已 patch 文件:把 bins 图改成"左列第一维(桶号 + 大小),右列第二维(桶内 chunk 链表)";附实际 C 结构的字段名(fastbinsY[NFASTBINS] / bins[NBINS*2-2])让读者看到底层 metadata
+- 第 2 次新视角: 用户答"fastbin 单独数组是因为小对象多",对应 3 个原因里的 cache locality 一条 → 已 patch 文件:在《4 类 bin 对照表》后加子节《为什么 fastbin 用独立数组》,补全另外 2 条(链表类型不混 + 给 lock-free 演化留空间);附「元方法论」3 把尺子(类型 / 热度 / 演化)看任何"故意不合并"的设计
+- 第 2 次不懂反馈 + 画图改进: 用户说"cache locality 那段没理解 + ascii 图纵向更好" → 已 patch 文件:① 重画 bins ASCII 图为纵向(横向桶号 / 纵向 chunk 链,跟 hash table separate chaining 一致);② 在《为什么 fastbin 独立数组》后加《cache locality 展开》5 步推导(CPU 速度差 → cache line 是 64B → fast path 用的 3 个 hot 字段 → 方案 A 1 次 miss 155ns vs 方案 B 2 次 miss 305ns → 类比内核 __cacheline_aligned),从第一性原理把 cache locality 推清楚
+- 第 3 次精确追问: 用户问"fastbinsY[idx] 是不是 8 字节指针" → 是 8 B (64 位指针);校准 fast path 字节数(之前 ~30 B 过度简化,实际 mutex 40 B + fastbinsY[idx] 8 B + chunk->fd 8 B ≈ 56 B);精确化方案 A vs B 的 cache miss 数(idx=0,1 时 2 vs 3 = +50%;idx=2~9 时 3 vs 3 = 同等)→ 真正优化点是让最高频的 idx=0,1(即 16 B 和 24 B 桶,std::string 和小 STL 节点最常命中)免费跟 mutex 共 cache line 0
+- 第 4 次方法论挑战(关键): 用户挑战"散进 bins[] 也可以放最开始啊,为什么会 miss?"——完全正确,之前的方案 B 是 strawman;**cache locality 不是 fastbinsY 独立的根本原因,只是派生好处**;真正的硬约束是**类型不可调和**(fastbin 单链表 8B/槽 vs 其他 bin 双链表 16B/槽);共数组要么浪费 80B 要么打类型补丁,这才是分开的必要原因。元方法论沉淀:区分"必要原因"(不这么做会失败)vs "派生好处"(这么做顺便拿到的);别把派生好处当必要原因 → 因果链会颠倒
+- 第 5 次产物迭代(双视图请求): 用户提议"画实际物理内存图,展示 in-use/free 交错 + free chunk 链接到不同 bin" → 已在「层级关系澄清」末尾加《物理内存视图 vs 逻辑链表视图》子节,9 chunk 具体场景 ASCII 图(B 在 fastbinsY[1] / D 在 unsorted / F 在 smallbins[5] / H 在 smallbins[6]);列 5 件读图后能拿到的事(碎片原型 / 物理 vs 逻辑双维度 / IN_USE 不在 bin / 一时刻一条链表 / 合并时双视图同步);提炼"chunk 是数据,bin 是索引"跟数据库 数据/索引 同构的元洞察
+- 第 6 次元规则(图示偏好): 用户指出"复杂图用 HTML 比 ASCII 好;把'复杂问题多画图'作为偏好写入 skill" → ① 创建 figures/ 子目录 + figures/03-physical-vs-logical.html(暗色科技风 + SVG 1200×540 + 虚线箭头连接 free chunk 到 bin 槽 + 5 件读图能拿到的事 + 元洞察);② markdown 里删除大 ASCII 图,改成极简文字占位 + HTML 链接;③ 入口 SKILL.md 加《图示偏好》小节(figures/ 目录约定 / 文件命名 / 暗色样式 / 链接格式 / 4 反模式)+ 反模式 13;④ CLAUDE.md 同步
+- 第 7 次反馈(关键格式校准): 用户反馈"HTML 在 markdown 里显示不出来"——HTML 无法在 markdown 内联渲染 → ① 提取 SVG 到独立 figures/03-physical-vs-logical.svg(自带暗色 rect 背景);② markdown 改用 `![](*.svg)` 图片语法,HTML 链接降级为可选;③ 大改入口 SKILL.md《图示偏好》:SVG 优先(markdown 内联),HTML 备用(浏览器看富排版);新增 SVG 自带暗色背景硬要求 + SVG vs HTML 对照表 + 反模式 5/6 条;CLAUDE.md 同步
+- 第 8 次产物迭代: 用户要求把"进程内 ptmalloc2 层级图(从粗到细)"也画成图 → ① 创建 `figures/03-arena-hierarchy.svg`(1200×700,进程 ⊃ arena #0 展开 4 区域 + arena #1/#N 折叠;头/空闲表/在用/物理布局 4 色编码;附 6 项图例);② 删除原 ASCII 树形图(被分裂的代码块),替换为 SVG 引用 + 4 区域职责分工表;③ 整理段落顺序:把"三件事/类比/小结"放回层级 2 小节内,把"5 件能读出的事/元洞察"从 ### 降为 ####(归属物理 vs 逻辑视图小节)
+- 第 9 次反馈(SVG 转义错误): 用户报错 SVG 报"StartTag: invalid element name" → 定位到 line 49 文本写了未转义的 `<`("小块 < 64 B");修复为 `&lt;`;`xmllint --noout` 校验通过。元规则同步入口 SKILL.md《图示偏好》反模式 7:SVG 文本不准直接写 `<` `>` `&`,XML 特殊字符必须转义;每次写完 SVG 用 `xmllint --noout` 验证
+- 第 10 次反馈(图详细度不够): 用户反馈"图能渲染但不完整 —— 之前 ASCII 展示了 fastbinsY/unsorted/small/large 完整二维结构和 chunk 链表,新 SVG 没画" → 重画 03-arena-hierarchy.svg 为 1500×1500 详细版(~30KB):头状态机 11 字段详列 / fastbinsY 全 10 桶 + 每桶 chunk 链 / bins[] 分两段(unsorted+small+large)+ 桶内双链表 chunk(small 等大、large 按 size 排序)/ 在用 chunks 5 例 / 物理布局 9 chunk + top / arena #1/#N 折叠 + 跨 arena 链;xmllint 通过
 
 ### Origin 阶段
 - (无)
