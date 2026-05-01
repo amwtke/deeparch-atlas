@@ -5,8 +5,10 @@
 - **短名**: glibc的malloc函数
 - **工作目录**: atlas-output/glibc的malloc函数-20260501/
 - **创建时间**: 2026-05-01T22:30:00+08:00
-- **上次更新**: 2026-05-02T05:30:00+08:00
-- **当前阶段**: How(进行中)
+- **上次更新**: 2026-05-02T05:45:00+08:00
+- **当前阶段**: How(进行中,**用户暂停 —— 明天继续**)
+- **暂停时间**: 2026-05-02T05:45:00+08:00
+- **恢复方式**: 直接说 "继续 atlas glibc的malloc函数" 或 "/atlas glibc的malloc函数",会触发 progress-tracker 的恢复流程
 
 ## 灵魂问题(Discovery 收集)
 > "malloc 要解决的工程问题是什么?"
@@ -62,6 +64,7 @@
 - 第 8 次产物迭代: 用户要求把"进程内 ptmalloc2 层级图(从粗到细)"也画成图 → ① 创建 `figures/03-arena-hierarchy.svg`(1200×700,进程 ⊃ arena #0 展开 4 区域 + arena #1/#N 折叠;头/空闲表/在用/物理布局 4 色编码;附 6 项图例);② 删除原 ASCII 树形图(被分裂的代码块),替换为 SVG 引用 + 4 区域职责分工表;③ 整理段落顺序:把"三件事/类比/小结"放回层级 2 小节内,把"5 件能读出的事/元洞察"从 ### 降为 ####(归属物理 vs 逻辑视图小节)
 - 第 9 次反馈(SVG 转义错误): 用户报错 SVG 报"StartTag: invalid element name" → 定位到 line 49 文本写了未转义的 `<`("小块 < 64 B");修复为 `&lt;`;`xmllint --noout` 校验通过。元规则同步入口 SKILL.md《图示偏好》反模式 7:SVG 文本不准直接写 `<` `>` `&`,XML 特殊字符必须转义;每次写完 SVG 用 `xmllint --noout` 验证
 - 第 10 次反馈(图详细度不够): 用户反馈"图能渲染但不完整 —— 之前 ASCII 展示了 fastbinsY/unsorted/small/large 完整二维结构和 chunk 链表,新 SVG 没画" → 重画 03-arena-hierarchy.svg 为 1500×1500 详细版(~30KB):头状态机 11 字段详列 / fastbinsY 全 10 桶 + 每桶 chunk 链 / bins[] 分两段(unsorted+small+large)+ 桶内双链表 chunk(small 等大、large 按 size 排序)/ 在用 chunks 5 例 / 物理布局 9 chunk + top / arena #1/#N 折叠 + 跨 arena 链;xmllint 通过
+- **【用户暂停】2026-05-02 05:45**:How 阶段累积了 10 次产物迭代,但还**没给明确推进信号**(走吧/进 Origin),所以仍在 How 内。下次恢复:从 How 继续,根据用户意愿可选:① 继续拷问(如 chunk header 位压缩 / unsorted bin 强制清空时机 / M_MMAP_THRESHOLD=128KB 推导)② 直接推进到 Origin(说"走吧/进 Origin/推进")③ 跳过 Deep 直接收束(分水岭节点,但 How 完成后才到分水岭)
 
 ### Origin 阶段
 - (无)
