@@ -55,6 +55,24 @@ Codified in `skills/three-options/SKILL.md` (file name is historical; the actual
 - During the wait, every user message gets classified: 追问 / 新视角 / 不懂反馈 / 附和 / 明确推进. Each non-advancement reply triggers a **patch to `stages/0X-stage.md`** — surgical edit, not full rewrite — plus a one-line audit entry in `PROGRESS.md`.
 - The stage file is a **living artifact**: it accumulates user insight, clarifications, and reframing until the user explicitly says "this is enough."
 
+### Concept introduction discipline
+
+Every term introduced for the first time **must follow the chain**:
+
+```
+因为 <constraint / pain point>(reference a Cn from the Why-stage list when available)
+   ↓
+要解决 <specific sub-problem>
+   ↓
+所以引入 <the concept / component / number / threshold>
+```
+
+Never just drop a term and define it ostensively ("chunk is the minimum bookkeeping unit"). Always derive it from a constraint. The Why-stage `C1~Cn` list is the **constraint library** — every new concept introduction in How / Deep / Comparison / Synthesis should cite at least one `Cn`.
+
+This applies to **numbers and magic constants too**: `M_ARENA_MAX = 8 × cores`, `M_MMAP_THRESHOLD = 128 KB`, `fastbin upper = 64 B` — each must be explained as "因为 X → 要解决 Y → 所以这个数字 ≈ Z" rather than just "this is the default value".
+
+Full spec in entry `SKILL.md` 「概念引入纪律」 (the discipline section, with reverse-example table) + anti-pattern #12 in the same file.
+
 ### Artifact snapshot protocol (git)
 
 Every stage advancement is also a **commit point**. The user's confirmed-stable artifact gets sealed to git in the background:
