@@ -73,6 +73,26 @@ This applies to **numbers and magic constants too**: `M_ARENA_MAX = 8 × cores`,
 
 Full spec in entry `SKILL.md` 「概念引入纪律」 (the discipline section, with reverse-example table) + anti-pattern #12 in the same file.
 
+### Diagram preference (SVG inline + HTML optional)
+
+For **complex multi-element relationships** (multi-view diagrams, nested hierarchies, state machines, dataflow, comparison matrices with 3+ axes), **draw a figure** instead of relying on prose. When ASCII can't render it cleanly (typically >50 lines), **use SVG** with markdown image syntax `![](path.svg)` — SVG renders inline in virtually every markdown viewer (VS Code, Typora, GitHub, Obsidian, Marked.app …), so the user sees the figure without clicking a link.
+
+- Figures live in `atlas-output/<short>-<yyyymmdd>/figures/`, sibling to `stages/`
+- Filename: `<stage-number>-<topic-slug>.svg` (e.g., `03-physical-vs-logical.svg`)
+- **SVG is the default**; HTML is **optional** for richer wrappers (e.g., adding `<div class="takeaways">`/`<div class="insight">` callouts around the SVG). When HTML is generated, also save the standalone SVG — markdown should always link to the SVG, never to the HTML alone (which can't render inline)
+- **SVG must include its own dark background** as the first element: `<rect width="..." height="..." fill="#0a0c10"/>`. Without this, light-themed viewers show light text on light background = unreadable
+- Style: dark-tech, `font-family="JetBrains Mono, Consolas, monospace"` on the root, viewBox typically `1200×?`. **5 stable semantic color codes** across figures:
+  - in-use blue `#1e3a5f` / `#4080c0` / text `#88c0ff`
+  - free red `#5f1e1e` / `#c04040` / text `#ff8888`
+  - special-position green (top_chunk, entry nodes) `#1e5f3a` / `#40c060` / text `#88ff88`
+  - metadata orange (fastbin, flags) `#5f3a1e` / `#c08040` / text `#ffaa55`
+  - index purple (bins[], headers) `#3a1e5f` / `#8040c0` / text `#c088ff`
+- Reference: `atlas-output/glibc的malloc函数-20260501/figures/03-physical-vs-logical.svg`
+
+In the markdown stage file: `![<short caption>](../figures/<stage-id>-<topic>.svg)` + 1–3 lines of text context. **Do not embed 50-line ASCII art** and **do not rely on HTML-only links** — both fail to render inline.
+
+Full spec in entry `SKILL.md` 「图示偏好」 + anti-pattern #13.
+
 ### Artifact snapshot protocol (git)
 
 Every stage advancement is also a **commit point**. The user's confirmed-stable artifact gets sealed to git in the background:
