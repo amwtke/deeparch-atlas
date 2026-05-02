@@ -5,8 +5,8 @@
 - **短名**: glibc的malloc函数
 - **工作目录**: atlas-output/glibc的malloc函数-20260501/
 - **创建时间**: 2026-05-01T22:30:00+08:00
-- **上次更新**: 2026-05-03T00:30:00+08:00
-- **当前阶段**: Synthesis(刚开始 —— 等用户对齐目标读者 / 必保洞察 / 长度偏好)
+- **上次更新**: 2026-05-03T01:30:00+08:00
+- **当前阶段**: Synthesis(初稿完成 —— 公开博文风格,用户 4 条元规则作核心,4 同构系统跨领域)
 
 ## 灵魂问题(Discovery 收集)
 > "malloc 要解决的工程问题是什么?"
@@ -85,7 +85,7 @@
 - 第 1 次产物初稿(2026-05-02 20:30):严格按新「Stage 开场对齐纪律」(渐进式 + 追加 reconfirm)走完 4 步对齐(同领域 vs 跨领域 → 选 A 同领域 → 全景 vs 精炼 → 选 B 全景 5 个 → 6 维度 → 用户加 docker/k8s 容器友好性 → OK)。两产物:① stages/06-comparison/06-comparison.md(420 行,§0~§7)— 5 个 allocator 简介 + 6 维度横向汇总(分两子表)+ docker/k8s 容器友好性专门展开 + 元洞察(5 条平行演化路径 + 用户 3 条元规则在每个 allocator 的体现);② stages/06-comparison/pics/06-design-space-map.svg(viewBox 1200×750)— 2D 散点图,横轴 = 对 C5 处理方式 / 纵轴 = 容器友好性,6 个 allocator 占据 5 个不同区域(Rust Layout 浮动),加 ABI 锁死边界垂直虚线分 "C ABI 锁死" 和 "新语言改 ABI" 两侧,xmllint 通过。**关键洞察**:① 没有"右上完美点"(消解 C5 + 全自动容器);② 6 个 allocator = 5+ 套不同取舍 = "约束权重不同的局部最优";③ 用户 3 条元规则在每个 allocator 都有具体实例(Go runtime + Rust Layout = 反向演化;Rust Layout 的"接口共存"= 复合分解;glibc 不做 / Go runtime 做 = 分层职责)
 
 ### Synthesis 阶段
-- (无)
+- 第 1 次产物初稿(2026-05-03 01:30):严格按新「Stage 开场对齐纪律」(渐进式 + 追加 reconfirm)走完 4 步对齐(模式 C 公开博文 → 读者 C 任何工程师 → 4 个同构系统 [JVM GC + Linux SLUB + DB buffer pool + K8s scheduler] → 用户 OK)。两产物:① stages/07-synthesis/07-synthesis.md(448 行,~7000~8000 字博文风格);② stages/07-synthesis/pics/07-isomorphic-systems.svg(viewBox 1600×900,5 列 × 5 行同构对照矩阵,xmllint 通过)。结构:引子(为什么 ptmalloc 当案例)→ §1 7 条约束 → §2 三件事 + tcache → §3 三路径耗时阶梯 → §4 五元组表 → §5 5 allocator 全景 → §6 4 同构系统(JVM GC / SLUB / DB buffer pool / K8s scheduler 各 ~600~800 字)→ **§7 ★ 4 条元规则**(博文卖点核心,逐条精度版 + 适用范围)→ §8 五步法(跟元规则交叉应用)→ §9 结语 + Doug Lea 1996 引用 + 引用列表。**核心价值定位**:让 ptmalloc 当方法论的"案例研究",不是 malloc 教程,卖元规则普适性
 
 ## 选定的对比对象(Comparison Hook 后填入)
 - (无)
