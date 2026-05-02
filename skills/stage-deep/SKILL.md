@@ -56,6 +56,73 @@ T=5ms   [内核]  执行系统调用 Y
 ...
 ```
 
+## 可运行演示代码(必备)
+
+**Deep 阶段必须配套生成可运行 demo**,跟时间线 / 反事实小试形成"理论 + 实证"配对。读者**能编译能运行**才算把"机制"从概念落到地面。
+
+### 输出位置
+
+`stages/0X-demo.<ext>`(扩展名跟主题对应:malloc → `.c`;Java GC → `.java`;Go runtime → `.go`;Linux 调度 → 可能是带 `Makefile` 的内核模块或 perf script)。
+
+如果 demo 不只一个文件(比如内核模块需要 Makefile + .c),建一个目录 `stages/0X-demo/`,内含完整可运行包。
+
+### demo 内容要求
+
+1. **触发本阶段讲解的具体路径** —— 每个场景 / 每个核心机制至少有一段最简代码触发它的源码路径
+2. **可编译 + 可运行** —— 给出**具体编译指令**(如 `gcc -O0 -g demo.c -o demo`)+ **依赖说明**(glibc / libc 版本、内核版本、CPU 特性等)
+3. **配套调试 tips**(critical):
+   - 运行命令(可能含 env var,如 `MALLOC_TRACE=trace.log ./demo`)
+   - 期望输出 / 观察方式(RSS 变化用 `/proc/<pid>/status`、syscall 数用 `strace`、cache miss 用 `perf stat`)
+   - 调试推荐(`gdb` 设源码断点位置,如 `b _int_malloc`)
+4. **代码注释贴源码 path** —— 关键行用注释标注它会触发哪段源码,用 `→` 链给出 call stack:
+   ```c
+   void *p1 = malloc(24);   // → __libc_malloc → tcache_get → return
+   free(p1);                // → __libc_free → tcache_put(无锁 thread-local)
+   ```
+
+### 配套源码追踪小节
+
+每段 demo 代码后面跟一节"**源码逐步追踪**":贴 glibc 关键函数 50~150 行原文(不要全文,挑关键段),逐句解释或用 inline 注释。读者把 demo 跑起来 + 看追踪 = 能完整理解一次内存分配的真实路径。
+
+### 例(malloc 主题三场景)
+
+`stages/05-demo.c`:
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int main(void) {
+    // 场景 1: tcache 命中(thread-local 无锁,~15 ns)
+    void *p1 = malloc(24);                   // → __libc_malloc → tcache_get
+    free(p1);                                // → __libc_free → tcache_put
+
+    // 场景 2: brk 路径(走 arena,fastbin/tcache miss → unsorted/largebin → top_chunk → sbrk)
+    void *p2 = malloc(8 * 1024);             // 8KB,走 brk → _int_malloc → sysmalloc
+    free(p2);                                // → 标 free,合并相邻,挂回 unsorted bin
+
+    // 场景 3: mmap 路径(超 M_MMAP_THRESHOLD = 128KB)
+    void *p3 = malloc(200 * 1024);           // 200KB → sysmalloc → mmap syscall
+    free(p3);                                // → IS_MMAPED 标志位 → munmap syscall
+
+    return 0;
+}
+```
+
+编译运行:
+```bash
+gcc -O0 -g stages/05-demo.c -o stages/05-demo
+strace -e trace=brk,mmap,munmap ./stages/05-demo
+```
+
+期望 syscall 输出(典型):
+```
+brk(NULL)             = 0x55...           # arena 初始化触发
+brk(0x55...8000)      = 0x55...8000       # 场景 2 触发 sbrk 扩 heap
+mmap(NULL, 204800, ...) = 0x7f...         # 场景 3 触发 mmap
+munmap(0x7f..., 204800) = 0                # 场景 3 free 触发 munmap
+```
+
 ## 反事实小试(每个核心机制后)
 "如果不这样设计,还能怎么做?"
 
@@ -151,3 +218,4 @@ Deep 阶段是大部分灵魂问题的精确回答位置。如果到这里灵魂
 3. **机制太多每个都浅** —— 应该挑 5~8 个核心机制深入
 4. **不交叉引用约束编号** —— 散了脊梁
 5. **不精确回答灵魂问题** —— Deep 是灵魂问题的精确回答位置,缺这步整个学习无锚点
+6. **没有可运行 demo 代码** —— Deep 必备 `stages/0X-demo.<ext>`,给读者能编译能运行的实证。有时间线 + 反事实但没 demo 就停在概念层面,落不了地。详见上文《可运行演示代码》
