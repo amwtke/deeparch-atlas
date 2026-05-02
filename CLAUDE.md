@@ -119,6 +119,18 @@ Sub-skills must call `progress-tracker` at stage start AND stage end. Skipping b
 
 It does **not** know what the next stage is. The caller (each `stage-X`) tells it. Don't embed a route table in `three-options` — that's an explicit anti-pattern (turns the suite into a spider web).
 
+### Stage 推进 reconfirm 纪律(推进信号 ≠ 已读完产物)
+
+Even when the user issues an explicit advancement signal from the whitelist (走吧 / 下一个 / 推进 / 继续往下走), **do NOT immediately seal + load the next stage**. The user might just be agreeing "directionally" based on Claude's chat summary, **without having read the full artifact**. Misreading this advances them past unread content.
+
+**Hard rule**: Before sealing the current stage, ask one reconfirm question:
+
+> "你确认要推进了吗?(`stages/0X-stage.md` 全文你看过 / 想先看一下再决定?)"
+
+Naturalize "stage" → "话题 / 这一块" per dialogue discipline. If user says "看过了 / 确认推进", proceed; if "还没看完 / 等等 / 让我先读读", stay in current stage; if vague, treat as "still reading."
+
+Full spec in entry `SKILL.md` 「Stage 推进 reconfirm 纪律」 + `skills/three-options/SKILL.md` step 1 + anti-pattern 16.
+
 ### Stage artifact structure (Why 之后所有 stage 通用)
 
 Every `stages/0X-stage.md` for stages **after Why** (How / Origin / Deep / Comparison / Synthesis) follows a fixed skeleton:
@@ -137,6 +149,7 @@ Every `stages/0X-stage.md` for stages **after Why** (How / Origin / Deep / Compa
 Hard rules:
 
 - **Top constraint quick-reference uses `#### Cn — phrase` markdown headings** (GFM auto-generates `id="c1"` anchors). **Never** put `<a id="c1"></a>` inside table cells — most viewers (VS Code default, CommonMark strict) don't parse inline HTML in tables and will render the tags as literal text.
+- **每个 stage 文档独立完整列约束速查** —— 不要用 "同 stages/03-how.md 顶部速查表" 这种 reference 偷懒。`[C1](#c1)` 锚点链接只在本文件内有效;跨文件 reference 不一定跳。每个 stage 文档要自包含。详见 anti-pattern 17.
 - **§0 "三件事" must be exactly 3** (not 5, not 7). Each construct derived via 「因为 Cx + Cy → 要解决 ZZZ → 所以引入 <construct>」. End with a 2-column comparison table (是什么 / 为什么存在).
 - **§1 overview SVG is separate from the detail SVG**:
   - `figures/0X-overview.svg` (~1200×500, bird's-eye, used in §1)
