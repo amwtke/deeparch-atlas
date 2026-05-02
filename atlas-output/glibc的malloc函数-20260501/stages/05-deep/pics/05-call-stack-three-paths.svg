@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 800"
+     font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1500" height="800" fill="#0a0c10"/>
+
+  <text x="750" y="32" fill="#e0e0e0" font-size="20" font-weight="bold" text-anchor="middle">三路径 call stack 对比 — glibc 2.34+</text>
+  <text x="750" y="55" fill="#888" font-size="13" text-anchor="middle">同一个 malloc() 入口,不同 size 走完全不同的 call stack;syscall 数量 + 锁开销 + 耗时差 30~300 倍</text>
+
+  <!-- ============ Col 1: tcache 路径 ============ -->
+  <g transform="translate(40,80)">
+    <rect width="440" height="660" fill="#0f1218" stroke="#4080c0" stroke-width="1.5"/>
+    <text x="220" y="25" fill="#88c0ff" font-size="15" font-weight="bold" text-anchor="middle">场景 1: malloc(24) → tcache 路径</text>
+    <text x="220" y="45" fill="#88c0ff" font-size="11" text-anchor="middle">thread-local 无锁 · 完全不进内核</text>
+
+    <!-- nodes -->
+    <g font-size="11" text-anchor="middle">
+      <rect x="30" y="60" width="380" height="32" fill="#1e3a5f" stroke="#4080c0"/>
+      <text x="220" y="75" fill="#88c0ff" font-weight="bold">user code</text>
+      <text x="220" y="88" fill="#88c0ff">void *p = malloc(24);</text>
+
+      <line x1="220" y1="92" x2="220" y2="106" stroke="#4080c0" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+
+      <rect x="30" y="108" width="380" height="28" fill="#1e3a5f" stroke="#4080c0"/>
+      <text x="220" y="126" fill="#88c0ff" font-weight="bold">__libc_malloc(bytes=24)</text>
+
+      <line x1="220" y1="136" x2="220" y2="150" stroke="#4080c0" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+
+      <rect x="30" y="152" width="380" height="28" fill="#1e3a5f" stroke="#4080c0"/>
+      <text x="220" y="170" fill="#88c0ff">tbytes = checked_request2size(24) = 32</text>
+
+      <line x1="220" y1="180" x2="220" y2="194" stroke="#4080c0" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+
+      <rect x="30" y="196" width="380" height="28" fill="#1e3a5f" stroke="#4080c0"/>
+      <text x="220" y="214" fill="#88c0ff">tc_idx = csize2tidx(32) = 1</text>
+
+      <line x1="220" y1="224" x2="220" y2="238" stroke="#4080c0" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+
+      <rect x="30" y="240" width="380" height="28" fill="#1e3a5f" stroke="#4080c0"/>
+      <text x="220" y="258" fill="#88c0ff">MAYBE_INIT_TCACHE()</text>
+
+      <line x1="220" y1="268" x2="220" y2="282" stroke="#4080c0" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+
+      <rect x="30" y="284" width="380" height="46" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+      <text x="220" y="302" fill="#88ff88" font-weight="bold">tcache_get_n(tc_idx=1)  ★ HIT</text>
+      <text x="220" y="318" fill="#88ff88">return tcache-&gt;entries[1]; *ep = next;</text>
+
+      <line x1="220" y1="330" x2="220" y2="344" stroke="#40c060" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+
+      <rect x="30" y="346" width="380" height="28" fill="#1e3a5f" stroke="#4080c0"/>
+      <text x="220" y="364" fill="#88c0ff">e-&gt;key = 0;  counts[1]--;</text>
+
+      <line x1="220" y1="374" x2="220" y2="388" stroke="#4080c0" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+
+      <rect x="30" y="390" width="380" height="28" fill="#1e3a5f" stroke="#4080c0"/>
+      <text x="220" y="408" fill="#88c0ff">return chunk2mem(e)  →  user 拿到 p</text>
+
+      <!-- 间隔 + free section -->
+      <line x1="40" y1="438" x2="400" y2="438" stroke="#444" stroke-dasharray="6,4"/>
+      <text x="220" y="456" fill="#aaa" font-size="11">— free(p) 反向 —</text>
+
+      <line x1="220" y1="462" x2="220" y2="476" stroke="#4080c0" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+
+      <rect x="30" y="478" width="380" height="28" fill="#1e3a5f" stroke="#4080c0"/>
+      <text x="220" y="496" fill="#88c0ff">__libc_free(p)</text>
+
+      <line x1="220" y1="506" x2="220" y2="520" stroke="#4080c0" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+
+      <rect x="30" y="522" width="380" height="28" fill="#1e3a5f" stroke="#4080c0"/>
+      <text x="220" y="540" fill="#88c0ff">chunk = mem2chunk(p);  size = 32</text>
+
+      <line x1="220" y1="550" x2="220" y2="564" stroke="#4080c0" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+
+      <rect x="30" y="566" width="380" height="46" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+      <text x="220" y="584" fill="#88ff88" font-weight="bold">tcache_put(chunk, tc_idx=1)</text>
+      <text x="220" y="600" fill="#88ff88">e-&gt;key = tcache_key; push 到 entries[1]</text>
+    </g>
+
+    <!-- 时间标 -->
+    <rect x="30" y="624" width="380" height="28" fill="#0a0c10" stroke="#88c0ff" stroke-dasharray="3,2"/>
+    <text x="220" y="642" fill="#88c0ff" font-size="13" font-weight="bold" text-anchor="middle">总耗时 ~ 15 ns · 0 syscall · 0 锁</text>
+  </g>
+
+  <!-- ============ Col 2: brk 路径 ============ -->
+  <g transform="translate(530,80)">
+    <rect width="440" height="660" fill="#0f1218" stroke="#c08040" stroke-width="1.5"/>
+    <text x="220" y="25" fill="#ffaa55" font-size="15" font-weight="bold" text-anchor="middle">场景 2: malloc(8KB) → brk 路径</text>
+    <text x="220" y="45" fill="#ffaa55" font-size="11" text-anchor="middle">走 arena · 抢锁 · sbrk 扩 heap</text>
+
+    <g font-size="11" text-anchor="middle">
+      <rect x="30" y="60" width="380" height="32" fill="#5f3a1e" stroke="#c08040"/>
+      <text x="220" y="75" fill="#ffaa55" font-weight="bold">user code</text>
+      <text x="220" y="88" fill="#ffaa55">void *p = malloc(8 * 1024);</text>
+
+      <line x1="220" y1="92" x2="220" y2="106" stroke="#c08040" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+
+      <rect x="30" y="108" width="380" height="28" fill="#5f3a1e" stroke="#c08040"/>
+      <text x="220" y="126" fill="#ffaa55">__libc_malloc(8192) ; tbytes=8208</text>
+
+      <line x1="220" y1="136" x2="220" y2="150" stroke="#c08040" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+
+      <rect x="30" y="152" width="380" height="28" fill="#5f1e1e" stroke="#c04040"/>
+      <text x="220" y="170" fill="#ff8888">tc_idx &gt; TCACHE_MAX_BINS  → tcache miss</text>
+
+      <line x1="220" y1="180" x2="220" y2="194" stroke="#c08040" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+
+      <rect x="30" y="196" width="380" height="28" fill="#5f3a1e" stroke="#c08040"/>
+      <text x="220" y="214" fill="#ffaa55">arena = arena_get(...);  lock(arena-&gt;mutex)</text>
+
+      <line x1="220" y1="224" x2="220" y2="238" stroke="#c08040" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+
+      <rect x="30" y="240" width="380" height="28" fill="#5f3a1e" stroke="#c08040"/>
+      <text x="220" y="258" fill="#ffaa55" font-weight="bold">_int_malloc(arena, 8192)</text>
+
+      <line x1="220" y1="268" x2="220" y2="282" stroke="#c08040" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+
+      <rect x="30" y="284" width="380" height="28" fill="#5f1e1e" stroke="#c04040"/>
+      <text x="220" y="302" fill="#ff8888">size &gt; MAX_FAST_SIZE  → fastbin miss</text>
+
+      <line x1="220" y1="312" x2="220" y2="326" stroke="#c08040" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+
+      <rect x="30" y="328" width="380" height="28" fill="#5f1e1e" stroke="#c04040"/>
+      <text x="220" y="346" fill="#ff8888">unsorted_bin / smallbin / largebin → miss</text>
+
+      <line x1="220" y1="356" x2="220" y2="370" stroke="#c08040" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+
+      <rect x="30" y="372" width="380" height="28" fill="#5f1e1e" stroke="#c04040"/>
+      <text x="220" y="390" fill="#ff8888">use_top:  top_chunk 太小  → 触发 sysmalloc</text>
+
+      <line x1="220" y1="400" x2="220" y2="414" stroke="#c08040" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+
+      <rect x="30" y="416" width="380" height="32" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+      <text x="220" y="430" fill="#ffaa55" font-weight="bold">sysmalloc(nb=8208, arena)</text>
+      <text x="220" y="444" fill="#ffaa55">need extension via sbrk</text>
+
+      <line x1="220" y1="452" x2="220" y2="468" stroke="#c08040" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#arrow-orange)"/>
+      <text x="280" y="463" fill="#666" font-size="10">user → kernel</text>
+
+      <rect x="30" y="470" width="380" height="32" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+      <text x="220" y="486" fill="#88ff88" font-weight="bold">brk(SYSCALL)  ★ 1 个 syscall</text>
+      <text x="220" y="498" fill="#88ff88">推 program break,扩 heap</text>
+
+      <line x1="220" y1="506" x2="220" y2="520" stroke="#c08040" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+
+      <rect x="30" y="522" width="380" height="28" fill="#5f3a1e" stroke="#c08040"/>
+      <text x="220" y="540" fill="#ffaa55">从扩出来的 top_chunk 切 8208B</text>
+
+      <line x1="220" y1="550" x2="220" y2="564" stroke="#c08040" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+
+      <rect x="30" y="566" width="380" height="46" fill="#5f3a1e" stroke="#c08040"/>
+      <text x="220" y="584" fill="#ffaa55">unlock(arena-&gt;mutex)</text>
+      <text x="220" y="600" fill="#ffaa55">return chunk2mem(victim)  →  user 拿到 p</text>
+    </g>
+
+    <rect x="30" y="624" width="380" height="28" fill="#0a0c10" stroke="#ffaa55" stroke-dasharray="3,2"/>
+    <text x="220" y="642" fill="#ffaa55" font-size="13" font-weight="bold" text-anchor="middle">总耗时 ~ 500-1000 ns · 1 syscall · 1 锁</text>
+  </g>
+
+  <!-- ============ Col 3: mmap 路径 ============ -->
+  <g transform="translate(1020,80)">
+    <rect width="440" height="660" fill="#0f1218" stroke="#c04040" stroke-width="1.5"/>
+    <text x="220" y="25" fill="#ff8888" font-size="15" font-weight="bold" text-anchor="middle">场景 3: malloc(200KB) → mmap 路径</text>
+    <text x="220" y="45" fill="#ff8888" font-size="11" text-anchor="middle">绕过 arena · 直接 syscall · 独立 VMA</text>
+
+    <g font-size="11" text-anchor="middle">
+      <rect x="30" y="60" width="380" height="32" fill="#5f1e1e" stroke="#c04040"/>
+      <text x="220" y="75" fill="#ff8888" font-weight="bold">user code</text>
+      <text x="220" y="88" fill="#ff8888">void *p = malloc(200 * 1024);</text>
+
+      <line x1="220" y1="92" x2="220" y2="106" stroke="#c04040" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+
+      <rect x="30" y="108" width="380" height="28" fill="#5f1e1e" stroke="#c04040"/>
+      <text x="220" y="126" fill="#ff8888">__libc_malloc(204800);  tbytes=204816</text>
+
+      <line x1="220" y1="136" x2="220" y2="150" stroke="#c04040" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+
+      <rect x="30" y="152" width="380" height="28" fill="#5f1e1e" stroke="#c04040"/>
+      <text x="220" y="170" fill="#ff8888">tc_idx &gt; TCACHE_MAX_BINS  → tcache miss</text>
+
+      <line x1="220" y1="180" x2="220" y2="194" stroke="#c04040" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+
+      <rect x="30" y="196" width="380" height="28" fill="#5f1e1e" stroke="#c04040"/>
+      <text x="220" y="214" fill="#ff8888" font-weight="bold">_int_malloc(arena, 204800)</text>
+
+      <line x1="220" y1="224" x2="220" y2="238" stroke="#c04040" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+
+      <rect x="30" y="240" width="380" height="42" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+      <text x="220" y="258" fill="#ff8888" font-weight="bold">if (nb &gt;= mp_.mmap_threshold)</text>
+      <text x="220" y="274" fill="#ff8888">204816 &gt; 131072  → 走 mmap_chunk 分支</text>
+
+      <line x1="220" y1="282" x2="220" y2="296" stroke="#c04040" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+
+      <rect x="30" y="298" width="380" height="32" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+      <text x="220" y="312" fill="#ff8888" font-weight="bold">sysmalloc_mmap(nb, arena)</text>
+      <text x="220" y="326" fill="#ff8888">size 向上对齐到 page (4KB)</text>
+
+      <line x1="220" y1="334" x2="220" y2="350" stroke="#c04040" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#arrow-red)"/>
+      <text x="280" y="345" fill="#666" font-size="10">user → kernel</text>
+
+      <rect x="30" y="352" width="380" height="46" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+      <text x="220" y="370" fill="#88ff88" font-weight="bold">mmap(SYSCALL)  ★ 1 个 syscall</text>
+      <text x="220" y="384" fill="#88ff88">PROT_READ|WRITE, MAP_PRIVATE|ANONYMOUS</text>
+      <text x="220" y="394" fill="#88ff88" font-size="10">独立 VMA,跟 arena heap 完全独立</text>
+
+      <line x1="220" y1="400" x2="220" y2="414" stroke="#c04040" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+
+      <rect x="30" y="416" width="380" height="28" fill="#5f1e1e" stroke="#c04040"/>
+      <text x="220" y="434" fill="#ff8888">chunk-&gt;size |= IS_MMAPED  (bit 1)</text>
+
+      <line x1="220" y1="444" x2="220" y2="458" stroke="#c04040" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+
+      <rect x="30" y="460" width="380" height="28" fill="#5f1e1e" stroke="#c04040"/>
+      <text x="220" y="478" fill="#ff8888">return chunk2mem(c)  →  user 拿到 p</text>
+
+      <line x1="40" y1="510" x2="400" y2="510" stroke="#444" stroke-dasharray="6,4"/>
+      <text x="220" y="528" fill="#aaa" font-size="11">— free(p) 反向 —</text>
+
+      <line x1="220" y1="534" x2="220" y2="548" stroke="#c04040" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+
+      <rect x="30" y="550" width="380" height="28" fill="#5f1e1e" stroke="#c04040"/>
+      <text x="220" y="568" fill="#ff8888">chunk = mem2chunk(p);  check IS_MMAPED</text>
+
+      <line x1="220" y1="578" x2="220" y2="592" stroke="#c04040" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+
+      <rect x="30" y="594" width="380" height="32" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+      <text x="220" y="610" fill="#88ff88" font-weight="bold">munmap(SYSCALL)  ★ 立即还内核</text>
+      <text x="220" y="622" fill="#88ff88">不进 arena/bin,RSS 立刻降</text>
+    </g>
+
+    <rect x="30" y="640" width="380" height="28" fill="#0a0c10" stroke="#ff8888" stroke-dasharray="3,2"/>
+    <text x="220" y="658" fill="#ff8888" font-size="13" font-weight="bold" text-anchor="middle">总耗时 ~ 5000 ns · 2 syscall · 0 锁</text>
+  </g>
+
+  <!-- 箭头标记 -->
+  <defs>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4080c0"/>
+    </marker>
+    <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c08040"/>
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c04040"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#40c060"/>
+    </marker>
+  </defs>
+
+  <!-- 底部图例 -->
+  <g transform="translate(40,755)">
+    <rect x="0" y="0" width="14" height="12" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="20" y="10" fill="#88c0ff" font-size="11">tcache 路径(蓝)</text>
+    <rect x="180" y="0" width="14" height="12" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="200" y="10" fill="#ffaa55" font-size="11">brk 路径(橙)</text>
+    <rect x="350" y="0" width="14" height="12" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="370" y="10" fill="#ff8888" font-size="11">mmap 路径(红)</text>
+    <rect x="520" y="0" width="14" height="12" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="540" y="10" fill="#88ff88" font-size="11">关键节点 / syscall(绿)</text>
+    <text x="800" y="10" fill="#aaa" font-size="11" font-style="italic">实线 = 用户态调用 · 虚线 = 跨 user/kernel 边界</text>
+  </g>
+</svg>
