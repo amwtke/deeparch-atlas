@@ -119,6 +119,35 @@ Sub-skills must call `progress-tracker` at stage start AND stage end. Skipping b
 
 It does **not** know what the next stage is. The caller (each `stage-X`) tells it. Don't embed a route table in `three-options` — that's an explicit anti-pattern (turns the suite into a spider web).
 
+### Stage artifact structure (Why 之后所有 stage 通用)
+
+Every `stages/0X-stage.md` for stages **after Why** (How / Origin / Deep / Comparison / Synthesis) follows a fixed skeleton:
+
+```
+# 阶段 X: <topic> <verb>
+## 约束清单速查 (C1~Cn)              ← top of file, `#### Cn — phrase` headings (NOT inline HTML in tables)
+## §0 从 上阶段 走到 本阶段:三件事记住    ← thesis (~3 core constructs derived from upstream Cn)
+## §1 一张极简概览图                  ← bird's-eye SVG (1200×400~600), before drilling into details
+## §2 ~ §N 细节展开                  ← numbered §X / §X.Y / §X.Y.Z
+## §N+1 约束回扣                     ← component → Cn closure table
+## §N+2 呼应灵魂问题                  ← X% closed / (100-X)% deferred
+## 修订记录                           ← unnumbered, one row per patch
+```
+
+Hard rules:
+
+- **Top constraint quick-reference uses `#### Cn — phrase` markdown headings** (GFM auto-generates `id="c1"` anchors). **Never** put `<a id="c1"></a>` inside table cells — most viewers (VS Code default, CommonMark strict) don't parse inline HTML in tables and will render the tags as literal text.
+- **§0 "三件事" must be exactly 3** (not 5, not 7). Each construct derived via 「因为 Cx + Cy → 要解决 ZZZ → 所以引入 <construct>」. End with a 2-column comparison table (是什么 / 为什么存在).
+- **§1 overview SVG is separate from the detail SVG**:
+  - `figures/0X-overview.svg` (~1200×500, bird's-eye, used in §1)
+  - `figures/0X-<topic>.svg` (any size, full structure, used inside §2~§N specific subsections)
+- **Section numbering** with §X / §X.Y / §X.Y.Z for navigability — outline-friendly in VS Code/Typora; cross-stage references like "§4.3 references 02-why.md §2.4" stay precise.
+- Quick-reference and revision-record sections are unnumbered (use `## 约束清单速查` / `## 修订记录`).
+
+Full spec in entry `SKILL.md` 「Stage 产物结构纲领」 + anti-patterns 14, 15.
+
+Reference implementation: `atlas-output/glibc的malloc函数-20260501/stages/03-how.md` (the first stage file built to this spec — copy its skeleton when starting a new stage file).
+
 ## Working-directory contract (runtime, per topic)
 
 When `/atlas <topic>` runs, sub-skills create and read a per-topic workspace **relative to the current working directory**:
