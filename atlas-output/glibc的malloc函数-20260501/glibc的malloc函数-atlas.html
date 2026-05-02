@@ -30,15 +30,10 @@ html, body {
   line-height: 1.7;
   font-size: 15px;
 }
-.layout {
-  display: flex;
-  min-height: 100vh;
-}
+.layout { display: flex; min-height: 100vh; }
 nav.timeline {
-  position: fixed;
-  top: 0; left: 0;
-  width: 280px;
-  height: 100vh;
+  position: fixed; top: 0; left: 0;
+  width: 280px; height: 100vh;
   overflow-y: auto;
   padding: 24px 16px 24px 24px;
   background: var(--bg-card);
@@ -46,11 +41,8 @@ nav.timeline {
   font-size: 12px;
 }
 nav.timeline a {
-  display: block;
-  padding: 4px 8px;
-  margin: 1px 0;
-  color: var(--fg-mute);
-  text-decoration: none;
+  display: block; padding: 4px 8px; margin: 1px 0;
+  color: var(--fg-mute); text-decoration: none;
   border-left: 2px solid transparent;
   transition: all 0.15s;
 }
@@ -60,43 +52,15 @@ nav.timeline a:hover {
   border-left-color: var(--accent);
 }
 nav.timeline a.nav-h1 {
-  font-weight: bold;
-  font-size: 13px;
+  font-weight: bold; font-size: 13px;
   color: var(--accent-3);
-  margin-top: 12px;
-  padding-left: 8px;
+  margin-top: 12px; padding-left: 8px;
 }
-nav.timeline a.nav-h2 {
-  padding-left: 20px;
-  color: var(--fg-mute);
-}
-main {
-  margin-left: 280px;
-  padding: 40px 60px 80px;
-  max-width: 1200px;
-}
-h1 {
-  font-size: 28px;
-  color: var(--accent-3);
-  border-bottom: 2px solid var(--accent-3);
-  padding-bottom: 12px;
-  margin-top: 56px;
-  margin-bottom: 24px;
-}
-h2 {
-  font-size: 22px;
-  color: var(--accent-2);
-  border-left: 4px solid var(--accent-2);
-  padding-left: 12px;
-  margin-top: 40px;
-  margin-bottom: 16px;
-}
-h3 {
-  font-size: 18px;
-  color: var(--accent);
-  margin-top: 28px;
-  margin-bottom: 12px;
-}
+nav.timeline a.nav-h2 { padding-left: 20px; color: var(--fg-mute); }
+main { margin-left: 280px; padding: 40px 60px 80px; max-width: 1200px; }
+h1 { font-size: 28px; color: var(--accent-3); border-bottom: 2px solid var(--accent-3); padding-bottom: 12px; margin-top: 56px; margin-bottom: 24px; }
+h2 { font-size: 22px; color: var(--accent-2); border-left: 4px solid var(--accent-2); padding-left: 12px; margin-top: 40px; margin-bottom: 16px; }
+h3 { font-size: 18px; color: var(--accent); margin-top: 28px; margin-bottom: 12px; }
 h4 { font-size: 16px; color: var(--accent-4); margin-top: 20px; margin-bottom: 8px; }
 h5 { font-size: 15px; color: var(--accent-6); margin-top: 16px; }
 h6 { font-size: 14px; color: var(--fg-mute); margin-top: 12px; }
@@ -105,83 +69,27 @@ strong { color: var(--accent-3); }
 em { color: var(--accent-4); }
 a { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
 a:hover { color: var(--accent-2); border-bottom-style: solid; }
-code {
-  background: var(--code-bg);
-  color: var(--accent-4);
-  padding: 1px 6px;
-  border-radius: 3px;
-  font-size: 13px;
-  font-family: 'JetBrains Mono', Consolas, monospace;
-}
-pre {
-  background: var(--code-bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 16px;
-  overflow-x: auto;
-  margin: 16px 0;
-  font-size: 13px;
-}
-pre code {
-  background: transparent;
-  padding: 0;
-  color: var(--fg);
-  font-size: 13px;
-}
-blockquote {
-  border-left: 4px solid var(--accent);
-  background: rgba(136, 192, 255, 0.05);
-  padding: 12px 18px;
-  margin: 16px 0;
-  color: var(--fg-mute);
-}
+code { background: var(--code-bg); color: var(--accent-4); padding: 1px 6px; border-radius: 3px; font-size: 13px; font-family: 'JetBrains Mono', Consolas, monospace; }
+pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 16px; overflow-x: auto; margin: 16px 0; font-size: 13px; }
+pre code { background: transparent; padding: 0; color: var(--fg); font-size: 13px; }
+blockquote { border-left: 4px solid var(--accent); background: rgba(136, 192, 255, 0.05); padding: 12px 18px; margin: 16px 0; color: var(--fg-mute); }
 blockquote strong { color: var(--accent); }
-hr {
-  border: 0;
-  border-top: 1px solid var(--border);
-  margin: 32px 0;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 16px 0;
-  font-size: 13px;
-  background: var(--bg-card-2);
-}
-th, td {
-  border: 1px solid var(--border);
-  padding: 8px 12px;
-  text-align: left;
-  vertical-align: top;
-}
-th {
-  background: var(--bg-card);
-  color: var(--accent-3);
-  font-weight: bold;
-}
+hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; background: var(--bg-card-2); }
+th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+th { background: var(--bg-card); color: var(--accent-3); font-weight: bold; }
 tr:hover { background: rgba(136, 192, 255, 0.03); }
 ul, ol { padding-left: 28px; margin: 12px 0; }
 li { margin: 4px 0; }
 figure.svg-figure {
-  margin: 24px 0;
-  padding: 16px;
+  margin: 24px 0; padding: 16px;
   background: var(--bg-card-2);
   border: 1px solid var(--border);
   border-radius: 6px;
   text-align: center;
 }
-figure.svg-figure svg {
-  display: block;
-  margin: 0 auto;
-  max-width: 100%;
-  height: auto;
-}
-figure.svg-figure figcaption {
-  margin-top: 12px;
-  color: var(--fg-deep);
-  font-size: 12px;
-  font-style: italic;
-}
+figure.svg-figure svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+figure.svg-figure figcaption { margin-top: 12px; color: var(--fg-deep); font-size: 12px; font-style: italic; }
 h1[id*="第一篇"] { border-bottom-color: #88c0ff; color: #88c0ff; }
 h1[id*="第二篇"] { border-bottom-color: #c088ff; color: #c088ff; }
 h1[id*="第三篇"] { border-bottom-color: #ffaa55; color: #ffaa55; }
@@ -189,34 +97,10 @@ h1[id*="第四篇"] { border-bottom-color: #ff8888; color: #ff8888; }
 h1[id*="第五篇"] { border-bottom-color: #88ffff; color: #88ffff; }
 h1[id*="第六篇"] { border-bottom-color: #88ff88; color: #88ff88; }
 h1[id*="第七篇"] { border-bottom-color: #ffaa55; color: #ffaa55; }
-.top-banner {
-  position: sticky;
-  top: 0;
-  background: linear-gradient(90deg, rgba(10, 12, 16, 0.95), rgba(15, 18, 24, 0.95));
-  backdrop-filter: blur(8px);
-  padding: 12px 24px;
-  border-bottom: 1px solid var(--border);
-  font-size: 12px;
-  color: var(--fg-mute);
-  z-index: 100;
-}
-.top-banner .badge {
-  display: inline-block;
-  padding: 2px 10px;
-  margin: 0 6px;
-  background: rgba(136, 255, 136, 0.1);
-  color: var(--accent-3);
-  border-radius: 12px;
-  font-size: 11px;
-}
-@media (max-width: 1100px) {
-  nav.timeline { width: 220px; }
-  main { margin-left: 220px; padding: 24px 32px; }
-}
-@media (max-width: 768px) {
-  nav.timeline { display: none; }
-  main { margin-left: 0; padding: 16px 20px; }
-}
+.top-banner { position: sticky; top: 0; background: linear-gradient(90deg, rgba(10, 12, 16, 0.95), rgba(15, 18, 24, 0.95)); backdrop-filter: blur(8px); padding: 12px 24px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--fg-mute); z-index: 100; }
+.top-banner .badge { display: inline-block; padding: 2px 10px; margin: 0 6px; background: rgba(136, 255, 136, 0.1); color: var(--accent-3); border-radius: 12px; font-size: 11px; }
+@media (max-width: 1100px) { nav.timeline { width: 220px; } main { margin-left: 220px; padding: 24px 32px; } }
+@media (max-width: 768px) { nav.timeline { display: none; } main { margin-left: 0; padding: 16px 20px; } }
 </style>
 </head>
 <body>
@@ -948,7 +832,7 @@ size ≤ 1032B &amp;&amp; tcache-&gt;entries[idx] 非空?
 <hr>
 <h2 id="§1-一张极简概览图">§1 一张极简概览图</h2>
 <p>§0 给了你三件事的"为什么";这张图给你三件事在内存里<strong>怎么排</strong>的鸟瞰:</p>
-<p><figure class="svg-figure"><svg style="max-width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700"
+<figure class="svg-figure"><svg style="max-width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700"
      font-family="JetBrains Mono, Consolas, monospace">
   <rect width="1200" height="700" fill="#0a0c10"/>
 
@@ -1034,7 +918,7 @@ size ≤ 1032B &amp;&amp; tcache-&gt;entries[idx] 非空?
   <!-- bins(紫) -->
   <rect x="65" y="370" width="660" height="78" fill="#3a1e5f" stroke="#8040c0" stroke-width="1"/>
   <text x="75" y="390" fill="#c088ff" font-size="13" font-weight="bold">bins(经典空闲索引,arena 锁内查)</text>
-  <text x="75" y="410" fill="#c088ff" font-size="11">  fastbinsY[10]  +  bins<a href="unsorted + small + large">~254</a></text>
+  <text x="75" y="410" fill="#c088ff" font-size="11">  fastbinsY[10]  +  bins[~254](unsorted + small + large)</text>
   <text x="75" y="430" fill="#888" font-size="11" font-style="italic">  ↑ tcache miss 后才走这里;tcache 满时溢出也回这里</text>
 
   <!-- chunks(物理布局) -->
@@ -1137,7 +1021,7 @@ size ≤ 1032B &amp;&amp; tcache-&gt;entries[idx] 非空?
     <text x="0" y="42" fill="#aaa" font-size="11" font-style="italic">实线 = 物理边界 / 同维度连接 · 虚线 = 逻辑指针 / thread → 资源映射</text>
   </g>
 </svg>
-<figcaption>三层骨架概览:进程 ⊃ arena ⊃ bin/chunk</figcaption></figure></p>
+<figcaption>三层骨架概览:进程 ⊃ arena ⊃ bin/chunk</figcaption></figure>
 <p><strong>几件能从图上直接读出来的事</strong>:</p>
 <ol>
 <li><strong>进程边界</strong>(虚线外框)是内核给的,<strong>ptmalloc2 看不见这一层</strong> —— 它假设自己只服务一个进程。</li>
@@ -1177,7 +1061,7 @@ size ≤ 1032B &amp;&amp; tcache-&gt;entries[idx] 非空?
 <blockquote>⚠️ 没有"glibc 域"这一层。如果你听到"glibc 分域加载",大概率是把"进程隔离"误说成"域"。准确表述:<strong>进程隔离由内核给,arena 多池由 ptmalloc2 给</strong>。</blockquote>
 <h3 id="§2-2-进程内的-thread-tcache-arena-bin-chunk-嵌套-详细图">§2.2 进程内的 thread tcache + arena / bin / chunk 嵌套(详细图)</h3>
 <p>进程内 ptmalloc2 的完整层级图(从粗到细,含 2017+ tcache 现代演化层):</p>
-<p><figure class="svg-figure"><svg style="max-width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1700" width="1500" height="1700" font-family="JetBrains Mono, Consolas, monospace">
+<figure class="svg-figure"><svg style="max-width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1700" width="1500" height="1700" font-family="JetBrains Mono, Consolas, monospace">
 
   <!-- 暗色背景 -->
   <rect width="1500" height="1700" fill="#0a0c10"/>
@@ -1672,7 +1556,7 @@ size ≤ 1032B &amp;&amp; tcache-&gt;entries[idx] 非空?
     <text x="830" y="252" fill="#88ff88" font-size="9" text-anchor="middle">brk 扩张时增大</text>
   </g>
 
-  <text x="494" y="1432" fill="#666" font-size="10" font-style="italic">B/D/F/H 物理上分散,逻辑上分别挂在 fastbinsY[1] / unsorted / s[5] / s<a href="见上方 fastbinsY 和 bins[] 区域中相同名字的 chunk">6</a></text>
+  <text x="494" y="1432" fill="#666" font-size="10" font-style="italic">B/D/F/H 物理上分散,逻辑上分别挂在 fastbinsY[1] / unsorted / s[5] / s[6](见上方 fastbinsY 和 bins[] 区域中相同名字的 chunk)</text>
 
   <text x="494" y="1452" fill="#666" font-size="10" font-style="italic">↑ 跨视图:同一个 chunk_B 既在物理布局这里,又在 fastbinsY[1] 链表里;同一个 chunk_D 既在物理这里,又在 unsorted bin 里 ……</text>
 
@@ -1693,7 +1577,7 @@ size ≤ 1032B &amp;&amp; tcache-&gt;entries[idx] 非空?
   <text x="780" y="1000" fill="#5a4a8a" font-size="10" font-style="italic">arena 间通过 next/next_free</text>
   <text x="780" y="1016" fill="#5a4a8a" font-size="10" font-style="italic">串成全局链表</text>
 </svg>
-<figcaption>进程内 thread tcache + arena 嵌套层级</figcaption></figure></p>
+<figcaption>进程内 thread tcache + arena 嵌套层级</figcaption></figure>
 <p><strong>从粗到细一层层往里看</strong>:<strong>进程 ⊃ { ① per-thread tcache 池(2017+)+ ② arena × N }</strong>;<strong>arena × N ⊃ {头状态机 / 空闲表 bins / 在用 chunks / 物理布局}</strong>。</p>
 <ul>
 <li><strong>tcache 维度</strong>(图顶部):per-thread,thread-local 无锁,64 桶 × 7 chunk,覆盖 16~1032B;90%+ alloc/free 命中这层,完全不进 arena</li>
@@ -1766,7 +1650,7 @@ size ≤ 1032B &amp;&amp; tcache-&gt;entries[idx] 非空?
 <p>(本子节由对话凝固 —— 用户提议"画一个实际物理内存图,展示 in-use 和 free 交错 + free chunk 链接到不同 bin"。)</p>
 <p>§2.2 的层级图是 arena 的<strong>逻辑视图</strong>(指针 → bin → chunk)。但 chunk 在物理上是<strong>连续字节流</strong>:in-use 和 free 在 heap 段里交错,每个 free chunk <strong>同时拥有物理位置 + bin 归属两种身份</strong>。这两个视角是同一组 chunk 的"鸟瞰" vs "侧视"。</p>
 <p>具体场景:heap 段里有 9 个 chunk + top_chunk,5 个 in-use(A/C/E/G/I)+ 4 个 free(B/D/F/H,大小不同)。</p>
-<p><figure class="svg-figure"><svg style="max-width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 540" width="1200" height="540" font-family="JetBrains Mono, Consolas, monospace">
+<figure class="svg-figure"><svg style="max-width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 540" width="1200" height="540" font-family="JetBrains Mono, Consolas, monospace">
 
   <!-- 暗色背景 -->
   <rect width="1200" height="540" fill="#0a0c10"/>
@@ -1972,7 +1856,7 @@ size ≤ 1032B &amp;&amp; tcache-&gt;entries[idx] 非空?
     <text x="245" y="11" fill="#c088ff" font-size="11">bins</text>
   </g>
 </svg>
-<figcaption>物理内存视图 vs arena bin 视图</figcaption></figure></p>
+<figcaption>物理内存视图 vs arena bin 视图</figcaption></figure>
 <blockquote>📄 完整富排版版(带 takeaways 卡片 + insight 卡片):<a href="stages/03-how/pics/03-physical-vs-logical.html"><code>stages/03-how/pics/03-physical-vs-logical.html</code></a>(浏览器打开)</blockquote>
 <h4 id="5-件这张图能让你直接读出来的事">5 件这张图能让你直接读出来的事</h4>
 <ol>
@@ -2794,7 +2678,7 @@ How 阶段你看到了 ptmalloc2 的"骨架成品"。但骨架不是凭空设计
 <hr>
 <h2 id="§1-一张时间线鸟瞰图">§1 一张时间线鸟瞰图</h2>
 <p>§0 给了你三个里程碑的"为什么";这张图给你这 40 年时间线的<strong>横向鸟瞰</strong>:</p>
-<p><figure class="svg-figure"><svg style="max-width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"
+<figure class="svg-figure"><svg style="max-width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"
      font-family="JetBrains Mono, Consolas, monospace">
   <rect width="1200" height="600" fill="#0a0c10"/>
 
@@ -2942,7 +2826,7 @@ How 阶段你看到了 ptmalloc2 的"骨架成品"。但骨架不是凭空设计
     <text x="20" y="72" fill="#ff8888" font-size="10">支线</text>
   </g>
 </svg>
-<figcaption>dlmalloc → ptmalloc → ptmalloc2 → tcache 时间线</figcaption></figure></p>
+<figcaption>dlmalloc → ptmalloc → ptmalloc2 → tcache 时间线</figcaption></figure>
 <p><strong>几件能从图上读出来的事</strong>:</p>
 <ol>
 <li><strong>关键里程碑(绿色大圆)只有 3 个</strong> —— 1987 dlmalloc 起点 / 2006 ptmalloc2 进 glibc / 2017 tcache。中间(1994 wilderness、1996 ptmalloc fork)是渐进改进,不是颠覆。</li>
@@ -3690,7 +3574,7 @@ Origin 阶段你看到了 40 年演化 + 关键 trick。但有些"具体值"还�
 <hr>
 <h2 id="§1-三路径-call-stack-对比图">§1 三路径 call stack 对比图</h2>
 <p>§0 给了你三条路径的"为什么有三条";这张图给你<strong>三条 call stack 并列</strong>的横向对比 —— 同一个 <code>malloc()</code> 入口,size 一变,路径完全分叉:</p>
-<p><figure class="svg-figure"><svg style="max-width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 800"
+<figure class="svg-figure"><svg style="max-width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 800"
      font-family="JetBrains Mono, Consolas, monospace">
   <rect width="1500" height="800" fill="#0a0c10"/>
 
@@ -3780,7 +3664,7 @@ Origin 阶段你看到了 40 年演化 + 关键 trick。但有些"具体值"还�
     <g font-size="11" text-anchor="middle">
       <rect x="30" y="60" width="380" height="32" fill="#5f3a1e" stroke="#c08040"/>
       <text x="220" y="75" fill="#ffaa55" font-weight="bold">user code</text>
-      <text x="220" y="88" fill="#ffaa55">void <em>p = malloc(8 </em> 1024);</text>
+      <text x="220" y="88" fill="#ffaa55">void *p = malloc(8 * 1024);</text>
 
       <line x1="220" y1="92" x2="220" y2="106" stroke="#c08040" stroke-width="1.5" marker-end="url(#05_call_stack_three_paths-arrow-orange)"/>
 
@@ -3855,7 +3739,7 @@ Origin 阶段你看到了 40 年演化 + 关键 trick。但有些"具体值"还�
     <g font-size="11" text-anchor="middle">
       <rect x="30" y="60" width="380" height="32" fill="#5f1e1e" stroke="#c04040"/>
       <text x="220" y="75" fill="#ff8888" font-weight="bold">user code</text>
-      <text x="220" y="88" fill="#ff8888">void <em>p = malloc(200 </em> 1024);</text>
+      <text x="220" y="88" fill="#ff8888">void *p = malloc(200 * 1024);</text>
 
       <line x1="220" y1="92" x2="220" y2="106" stroke="#c04040" stroke-width="1.5" marker-end="url(#05_call_stack_three_paths-arrow-red)"/>
 
@@ -3950,7 +3834,7 @@ Origin 阶段你看到了 40 年演化 + 关键 trick。但有些"具体值"还�
     <text x="800" y="10" fill="#aaa" font-size="11" font-style="italic">实线 = 用户态调用 · 虚线 = 跨 user/kernel 边界</text>
   </g>
 </svg>
-<figcaption>三路径 call stack 对比</figcaption></figure></p>
+<figcaption>三路径 call stack 对比</figcaption></figure>
 <p><strong>几件能从图上读出来的事</strong>:</p>
 <ol>
 <li><strong>入口都是 <code>__libc_malloc</code></strong> —— 然后立刻按 size + tcache 状态分叉</li>
@@ -5070,7 +4954,7 @@ Deep 阶段你钉死了 ptmalloc 内部所有重要数字。但 ptmalloc <strong
 <hr>
 <h2 id="§2-设计空间地图">§2 设计空间地图</h2>
 <p>5 个 allocator(+ ptmalloc 作基线)在两个最关键维度上的位置:</p>
-<p><figure class="svg-figure"><svg style="max-width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750"
+<figure class="svg-figure"><svg style="max-width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750"
      font-family="JetBrains Mono, Consolas, monospace">
   <rect width="1200" height="750" fill="#0a0c10"/>
 
@@ -5192,7 +5076,7 @@ Deep 阶段你钉死了 ptmalloc 内部所有重要数字。但 ptmalloc <strong
     </marker>
   </defs>
 </svg>
-<figcaption>用户态 allocator 设计空间地图</figcaption></figure></p>
+<figcaption>用户态 allocator 设计空间地图</figcaption></figure>
 <p><strong>两个轴</strong>:</p>
 <ul>
 <li><strong>横轴</strong>(x):<strong>对 <a href="#c5">C5</a> 的处理方式</strong> —— 从"完全背 C5 债(chunk header)"到"完全消解 C5(sized dealloc)"</li>
@@ -5951,7 +5835,7 @@ Deep 阶段你钉死了 ptmalloc 内部所有重要数字。但 ptmalloc <strong
 <hr>
 <h2 id="§5-5-个-allocator-全景-同-c1~c7-5-套不同取舍">§5 5 个 allocator 全景:同 C1~C7,5 套不同取舍</h2>
 <p><strong>ptmalloc 不是唯一答案</strong>。同样面对 7 条约束,工业界做出了 5+ 套不同取舍:</p>
-<p><figure class="svg-figure"><svg style="max-width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900"
+<figure class="svg-figure"><svg style="max-width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900"
      font-family="JetBrains Mono, Consolas, monospace">
   <rect width="1600" height="900" fill="#0a0c10"/>
 
@@ -6187,7 +6071,7 @@ Deep 阶段你钉死了 ptmalloc 内部所有重要数字。但 ptmalloc <strong
   <text x="40" y="848" fill="#aaa" font-size="12">★ "ptmalloc / JVM GC / SLUB / DB buffer pool / K8s scheduler" 不是"长得像" —— 它们解的就是同源工程问题。学会一个 = 学会五个。</text>
   <text x="40" y="868" fill="#88ff88" font-size="12" font-weight="bold">★ 这就是"用 ptmalloc 当方法论案例"的真正价值 —— 学会五维度解构,以后看任何系统都能问对的问题。</text>
 </svg>
-<figcaption>用户态 allocator 设计空间地图</figcaption></figure></p>
+<figcaption>用户态 allocator 设计空间地图</figcaption></figure>
 <table>
 <thead><tr>
 <th>Allocator</th>
