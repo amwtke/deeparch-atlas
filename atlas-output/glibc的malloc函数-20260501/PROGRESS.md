@@ -69,6 +69,7 @@
 
 ### Origin 阶段
 - 第 1 次产物初稿(2026-05-02 13:00):严格按 Stage 产物结构纲领 + Origin 起承转合;web search + WebFetch 4 次拉一手资料(Doug Lea 1996 paper / Wikipedia C 内存分配 / sploitfun glibc 综述 / DJ Delorie 邮件)。§0 三件事 = 三时代里程碑(1987 dlmalloc / 2006 ptmalloc2 入 glibc / 2017 tcache);§1 时间线鸟瞰 SVG(figures/04-timeline.svg,viewBox 1200×600,6 主线节点 + 2 支线 jemalloc/tcmalloc,xmllint 通过);§2~§5 起承转合(Doug Lea 1987 烦躁 + 失败方向 + Knuth trick 组合 / 1996 C7 浮现 + 两条死胡同 / Gloger multi-arena + 1MB 对齐位压缩 / 2017 tcache + 安全权衡 + Doug Lea 反思原话);§6 历史约束 vs 今天(组件"时代债"对照表,提炼"叠加 ≠ 技术债"洞察);§7 约束回扣(每组件 = 出生时代 Cn 子集);§8 呼应灵魂(95% 闭环 + 🌉 分水岭三选项);§9 一手资料(10 条带 URL);§10 信息缺口(5 处坦诚标注无一手资料,如 Gloger 1996-2006 间设计路径 / M_ARENA_MAX=8 推导 / tcache 安全权衡内部讨论)
+- 第 1 次反事实推演 (2026-05-02 13:25):用户对反问("Doug Lea 没 Gloger 帮忙会选什么路径?")给出 A(单全局锁);Claude 给历史真相 D(什么都不做,让 Gloger fork)+ Doug Lea 1996 论文脚注引证("for the Linux version" 而不是主线)+ 3 条理由(嵌入式市场污染 / 多线程重写工作量 / fork 文化先例);提炼"两维度四象限"(改 vs 不改 × 简单 vs 复杂)+ 元洞察"最强的工程选择有时是拒绝改"+ 4 行适用场景对照(库 / 框架 / OS / allocator);现实意义部分推演平行宇宙(如果 Doug Lea 选 A,jemalloc/tcmalloc 可能不存在,整个 allocator 生态可能"统一在 dlmalloc 主线");加 §4.4 新小节
 
 ### 分水岭
 - (无)
