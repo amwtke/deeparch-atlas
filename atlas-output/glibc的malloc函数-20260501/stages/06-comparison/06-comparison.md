@@ -88,11 +88,117 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 | **6 维度地图** | 元数据策略 / 锁机制 / 碎片管理 / C5 处理 / 应用域 / 容器友好 | 选 allocator = 在 6 维空间里挑你 workload 最匹配的 |
 | **容器友好是 2026 关键维度** | ptmalloc 不友好,jemalloc/mimalloc/Go 友好,Rust 取决底层 | 选错 allocator → 容器内 OOM-killed |
 
-后面 §1 给设计空间地图;§2 5 个 allocator 简介;§3 6 维度横向汇总;§4 容器友好性专门展开;§5 元洞察(呼应 3 条元规则);§6 约束回扣;§7 呼应灵魂。
+后面 §1 设计动机简表(每个 allocator 的初衷 + 擅长 + 不擅长);§2 设计空间地图;§3 5 个 allocator 详细简介;§4 6 维度横向汇总;§5 容器友好性专门展开;§6 元洞察(呼应 4 条元规则);§7 约束回扣;§8 呼应灵魂。
 
 ---
 
-## §1 设计空间地图
+## §1 设计动机简表(每个 allocator 的初衷 + 擅长 + 不擅长)
+
+进具体对比之前,先看每个 allocator **为什么被造出来 + 解决什么 + 不解决什么**。这一节是"实用价值锚点" —— 读完这一节,你能直接判断"我手上这个 workload,选哪个 allocator"。
+
+### §1.1 ptmalloc(基线)
+
+**初衷**:Doug Lea 1987 写 dlmalloc 解决 SunOS / BSD 自带 malloc 的碎片 + 慢;Wolfram Gloger 1996 fork 加多线程;**glibc 默认 = 兼容性 + 稳定性优先**,服务任何 C 程序。
+
+**擅长**:
+- **任何 C 程序的"零依赖默认"** —— 不装额外库,glibc 就有
+- **单线程或低并发** —— ~20 行的 fastbin 路径快得没什么开销
+- **混合 size 分布** —— 4 类 bin + tcache 覆盖大部分主流应用 workload
+
+**不擅长**:
+- **容器化部署** —— 默认不还内核,长跑 + cgroup limit 高 OOM 风险
+- **超大并发 server**(>= 100 线程) —— `M_ARENA_MAX = 8 × cores` 撑不住,锁竞争上来
+- **ML workload** —— 完全不为 GB 级 alloc 设计,直接绕开它(PyTorch / vLLM 自己写)
+
+### §1.2 jemalloc
+
+**初衷**:Jason Evans 2005 在 FreeBSD 内部解决 phkmalloc 的多线程瓶颈 + Solaris/Linux 大并发服务的 RSS 不可控;**Facebook 收编 Jason Evans 后**,优化超大规模 web service(数千线程 + 数百 GB 内存)的锁竞争 + RSS 控制。
+
+**擅长**:
+- **超大并发 server**(数百~数千线程)—— per-CPU arena 比 per-thread 更稳
+- **容器化 + cgroup memory limit 紧** —— `dirty_decay_ms` 默认积极还内存
+- **长跑 server,RSS 必须可控** —— Cassandra / Redis / FB 全栈用它部分原因
+- **碎片诊断** —— 内置 profiling(`MALLOC_CONF="prof:true"`)+ 详细 stats
+
+**不擅长**:
+- **单线程小程序** —— per-CPU arena 复杂度的开销 ROI 低
+- **极致 nano 级 fast path 应用** —— metadata 外置比 chunk header 多 1 次 cache miss
+- **超大 ABI 兼容场景**(老 C 程序)—— 跟 ptmalloc 的内存布局不同,某些通过 `ptr arithmetic` 探 chunk header 的"非法"代码会崩
+
+### §1.3 tcmalloc
+
+**初衷**:Google 内部 2003+ 解决数据中心数百万核 / 数十亿 RPC 场景下 ptmalloc 的扩展性问题;Sanjay Ghemawat(MapReduce / GFS 设计者之一)主导;**`thread-local cache + 中央堆` 比 ptmalloc 早 10 年实现 per-thread 免锁**。
+
+**擅长**:
+- **Google 风格的高密度 RPC server** —— 大量短 RPC + 频繁小对象,thread-local cache 命中率极高
+- **size 分布集中**(协议固定大小 buffer) —— size class 设计直接命中
+- **高频 alloc/free 同 size 循环** —— thread-local cache 永远 hit
+- **嵌入 Chrome / Firefox** —— 浏览器场景验证
+
+**不擅长**:
+- **容器场景**(开源版) —— 默认不 cgroup-aware;Google 内部有 fork 但不开源
+- **size 分布发散** —— size class 边缘的 size 内部碎片率高
+- **长跑应用 + 内存敏感** —— `MALLOC_RELEASE_RATE` 默认不积极还
+
+### §1.4 mimalloc
+
+**初衷**:Daan Leijen 2019 在 MS Research 重新设计 —— 反思 jemalloc / tcmalloc 复杂度高(30K LOC),想做**3K LOC + 极小开销 + 现代默认就友好**;面向 Rust / .NET / 现代 cloud-native workload。
+
+**擅长**:
+- **现代 Linux 容器**(`mi_option_purge_delay=100ms`,默认极激进还)
+- **Rust 生态** —— 主流社区从 jemalloc 切到 mimalloc
+- **代码 audit 敏感场景** —— 3K LOC 易于审查,适合安全 / 嵌入式 / 内核外延
+- **short-lived thread workload**(per-thread heap 一次性 destroy 极快)
+- **size 分布广 + 容器化部署** —— sharded free list 兼顾两个
+
+**不擅长**:
+- **生态成熟度**(2019 起,vs jemalloc 2008)—— 部分 corner case patches 持续在收
+- **超长稳定性需求场景**(7×24 几十年)—— 历史不够长,大型生产案例少于 jemalloc / tcmalloc
+
+### §1.5 Go runtime malloc
+
+**初衷**:Go 1.0(2012)需要跟 GC + goroutine 调度深度集成的 allocator;不背 C ABI 的 [C5](#c5) 债;充分利用 Go 的 type system + runtime 控制。**改语言 ABI 拿到 ptmalloc 永远拿不到的精简**。
+
+**擅长**:
+- **所有 Go 程序**(默认就是它)—— Kubernetes / Docker daemon / Prometheus 等 cloud-native 全栈
+- **容器化 cloud-native** —— `GOMEMLIMIT` 自动跟踪 cgroup memory limit
+- **GC 友好** —— allocator + GC 共享 metadata,减少跨 GC barrier 开销
+- **goroutine M:N 调度** —— per-P 模型完美适配 Go 的逻辑处理器
+
+**不擅长**:
+- **跨语言** —— 绑死 Go,不能给 C/C++ 用
+- **GC pause 敏感场景** —— Go GC 整合让 alloc 路径牵涉 GC 协调,极致低延迟应用要 tune GC
+- **手动控制内存** —— Go 不暴露 free,用户没有"立即 deallocate"的接口
+
+### §1.6 Rust `Layout` allocator
+
+**初衷**:Rust 2017+ 加 `core::alloc::Layout` API,要求每次 alloc/free 都传 `Layout { size, align }`;**完全消解 [C5](#c5)**(sized dealloc),让底层 allocator 理论上可以扔掉 chunk header 的 size 字段;**编译器自动填 layout**(用户不会传错)。
+
+**擅长**:
+- **Rust 全栈** —— 编译器代填 size,用户零负担
+- **类型安全 + 内存安全双重保证** —— `Drop` 自动调 dealloc,不会 leak
+- **可换底层** —— `#[global_allocator]` 让用户挑(默认 `System` / `mimalloc` / `jemalloc`)
+- **资源敏感场景**(嵌入式 / 实时)—— `Layout` 能精确控制对齐,无 chunk header 浪费(理论上)
+
+**不擅长**:
+- **理论的精简没拿到** —— 默认 `System` allocator(= glibc malloc)仍背 chunk header 债;社区主流换 mimalloc 才友好
+- **跨语言** —— `Layout` 是 Rust 概念;链接 C 库还得回到 C ABI(背 [C5](#c5))
+- **C ABI 兼容场景** —— FFI 边界仍要走 `malloc` / `free`,精简没用
+
+### §1 总结表(快速选择)
+
+| Allocator | 一句话推荐场景 | 一句话避开场景 |
+|----------|------------|------------|
+| **ptmalloc** | C/C++ 任何程序的零依赖默认 | 容器化高并发 |
+| **jemalloc** | FB/Cassandra/Redis 风格的大并发 long-running | 单线程小工具 |
+| **tcmalloc** | Google 风格 high-density RPC | 开源版无 cgroup-aware |
+| **mimalloc** | 现代 cloud-native(Rust / .NET / 容器) | 历史不够长的稳定性敏感场景 |
+| **Go runtime** | 所有 Go 程序 | 跨语言 |
+| **Rust `Layout`** | Rust 全栈 + 类型安全 | 默认 `System` 没用上,需换底层 |
+
+---
+
+## §2 设计空间地图
 
 5 个 allocator(+ ptmalloc 作基线)在两个最关键维度上的位置:
 
@@ -121,9 +227,9 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 
 ---
 
-## §2 5 个 allocator 简介
+## §3 5 个 allocator 简介
 
-### §2.1 jemalloc(Jason Evans @ FreeBSD 7.0+,2008)
+### §3.1 jemalloc(Jason Evans @ FreeBSD 7.0+,2008)
 
 **起源**:Jason Evans 2005 在 FreeBSD 内部解决 phkmalloc 的多线程瓶颈;2008 FreeBSD 7.0 默认。后来 Facebook 收编 Jason Evans 开发 jemalloc 4.x+,优化 FB 内部高并发服务。Rust(`#[global_allocator] = jemalloc-sys`)从 1.x 起到 1.32 长期默认。
 
@@ -138,7 +244,7 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 
 **最大代价**:**chunk metadata 外置**(在固定的 metadata 表里) → 比 ptmalloc 多一次 cache miss;但换来 [C5](#c5) 反查更精确 + 锁更少。
 
-### §2.2 tcmalloc(Sanjay Ghemawat @ Google,2007 开源,内部更早)
+### §3.2 tcmalloc(Sanjay Ghemawat @ Google,2007 开源,内部更早)
 
 **起源**:Google 内部 2003+ 开发,2007 作为 `gperftools` 一部分开源。Sanjay Ghemawat(MapReduce / GFS / Bigtable 设计者之一)主导。Google 内部所有 C++ 服务**默认就是 tcmalloc**,跑了二十多年。
 
@@ -153,7 +259,7 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 
 **最大代价**:**没有 cgroup-aware 默认行为**(开源版);Google 内部有 cgroup-aware fork 但不开源。需要手动 `MALLOC_RELEASE_RATE` 调内存还回率。
 
-### §2.3 mimalloc(Daan Leijen @ Microsoft,2019)
+### §3.3 mimalloc(Daan Leijen @ Microsoft,2019)
 
 **起源**:Daan Leijen(Haskell / Koka 语言研究员)2019 在 MS Research 设计。**Rust 现代默认推荐**(替换 jemalloc),Linux 容器场景大量使用。Lean 4 / .NET runtime 集成。
 
@@ -169,7 +275,7 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 
 **最大代价**:**生态较年轻**(2019 起,vs jemalloc 2008 / tcmalloc 2007);兼容性 patches 持续在收;部分 corner case(超大 alloc + free pattern)有过 regressions。
 
-### §2.4 Go runtime malloc(Go team,2009~,持续演化)
+### §3.4 Go runtime malloc(Go team,2009~,持续演化)
 
 **起源**:Go 1.0(2012)就有自己的 allocator,基于 tcmalloc 设计但深度整合 GC + goroutine 调度。**改语言 ABI 拿到 ptmalloc 永远拿不到的精简**。
 
@@ -185,7 +291,7 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 
 **最大代价**:**绑死 Go 语言** —— 不能给 C/C++ 应用用;改 ABI 的精简换不到跨语言通用。
 
-### §2.5 Rust `Layout` allocator(Rust core,2017+)
+### §3.5 Rust `Layout` allocator(Rust core,2017+)
 
 **起源**:Rust 1.x 加 `core::alloc::Layout` API,要求每次 alloc/free 都传 `Layout { size, align }`。**完全消解 [C5](#c5)**(sized dealloc),Origin §2.4.5 候选 D 的现实落地。
 
@@ -202,9 +308,9 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 
 ---
 
-## §3 6 维度横向汇总(分两子表)
+## §4 6 维度横向汇总(分两子表)
 
-### §3.1 设计选择维度(元数据 / 锁 / 碎片 / [C5](#c5) 处理)
+### §4.1 设计选择维度(元数据 / 锁 / 碎片 / [C5](#c5) 处理)
 
 | | **元数据策略** | **锁 / dealloc 机制** | **碎片管理** | **如何处理 [C5](#c5)** |
 |---|------------|------------------|----------|------------------|
@@ -215,7 +321,7 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 | **Go runtime** | per-P mcache + per-class mcentral + 全局 mheap | per-P 无锁 + mcentral mutex + GC 整合 | GC mark-sweep + size class | **runtime type tracking**(完全不需要 metadata 反查)|
 | **Rust `Layout`** | 取决于底层 allocator | 取决于底层 | 取决于底层 | **sized dealloc(编译器代填)完全消解** |
 
-### §3.2 部署 + 容器维度(应用域 / docker/k8s 友好性)
+### §4.2 部署 + 容器维度(应用域 / docker/k8s 友好性)
 
 | | **典型应用域** | **docker/k8s 容器友好性** |
 |---|----------|---------------------|
@@ -228,17 +334,17 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 
 ---
 
-## §4 docker/k8s 容器友好性专门展开(呼应 Deep §4.5)
+## §5 docker/k8s 容器友好性专门展开(呼应 Deep §4.5)
 
 容器场景下 allocator 的关键行为差异 —— 这维度在 2026 决定**容器内服务能否避免 OOM-kill**。
 
-### §4.1 容器场景下 allocator 必须解决的 3 个具体问题
+### §5.1 容器场景下 allocator 必须解决的 3 个具体问题
 
 1. **RSS 增长是否随 free 自动收缩?** —— 不收缩 → cgroup memory limit 累积到限 → OOM-killed
 2. **dirty page 多久还回内核?** —— 越激进越友好,但 syscall 频率涨,有性能代价
 3. **是否 cgroup-aware?** —— 检测 cgroup memory limit 自动调行为(arena 数 / trim 阈值 / GC 频率)
 
-### §4.2 5 个 allocator 的具体行为
+### §5.2 5 个 allocator 的具体行为
 
 #### ptmalloc(默认不友好)
 
@@ -296,7 +402,7 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 - Rust 自己**不做** cgroup-aware —— 因为 Rust 是语言不是 runtime,设计上就不该做(分层职责)
 - **典型容器配置**:`Cargo.toml` 加 `mimalloc = "0.1"`,`main.rs` `#[global_allocator]` 换 mimalloc
 
-### §4.3 容器友好性的"分层职责"再回看
+### §5.3 容器友好性的"分层职责"再回看
 
 呼应 Deep §4.5 元洞察:**"容器友好"应该哪一层做?**
 
@@ -311,9 +417,9 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 
 ---
 
-## §5 元洞察:5 条平行演化路径
+## §6 元洞察:5 条平行演化路径
 
-### §5.1 同 C1~C7,5 套不同取舍
+### §6.1 同 C1~C7,5 套不同取舍
 
 | Allocator | 优先化解的约束 | 接受的代价 |
 |----------|------------|---------|
@@ -326,7 +432,7 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 
 **5 套取舍 = 5 条平行演化路径**,每条都是"在某个约束子集上的局部最优"。**没有"绝对最优"**。
 
-### §5.2 用户贡献的 3 条元规则在 Comparison 阶段的体现
+### §6.2 用户贡献的 3 条元规则在 Comparison 阶段的体现
 
 回看你在 Origin / Deep 阶段贡献给 atlas 第一性原理方法论的 3 条元规则,**Comparison 阶段每个 allocator 都是这 3 条规则的活的实例**:
 
@@ -348,7 +454,7 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 
 **这 3 条元规则一起,把 atlas 的"约束清单"从一维(C1~Cn 列表)扩展到三维方法论:类型 × 时代 × 化解路径**。Comparison 阶段每个 allocator 都是这个三维空间里的一个点。
 
-### §5.3 五条平行演化路径的现实意义
+### §6.3 五条平行演化路径的现实意义
 
 **今天你看到 ptmalloc / jemalloc / tcmalloc / mimalloc / Go / Rust 五条路径并存,而不是哪个胜出**,本质就是 [C1](#c1)~[C7](#c7) 7 个约束在"约束空间"里有多个局部最优,每个 allocator 占据一个局部最优。
 
@@ -358,7 +464,7 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 - ML / async / 协程 workload **颠覆这两个假设** → 现有 allocator 都不再最优
 - PyTorch CUDA caching allocator / vLLM PagedAttention / Tokio runtime allocator 是**"第七、八、九条"演化路径的雏形**
 
-### §5.4 用户视角凝固:空白象限揭示的是路径依赖,不是物理约束
+### §6.4 用户视角凝固:空白象限揭示的是路径依赖,不是物理约束
 
 (本子节由对话凝固 —— 用户挑战"SVG 上左上空白象限(背 [C5](#c5) 债 + 容器友好)为什么没有 allocator",从 5 候选选 A "物理不可能"。Claude 精确化为 D + C 混合,A 不成立。)
 
@@ -426,11 +532,11 @@ A 的论点是:"chunk header 占 RSS → 容器内必然 OOM"。但**精确算 c
 1. **(Origin §5.5)约束反向演化** —— 约束不是永恒,新语境可松动甚至反转
 2. **(Deep §2.4.5)约束不可再分性是复合** —— 技术 × 生态 × 接口锁死
 3. **(Deep §4.5)分层职责优于"哪层做最容易"** —— 自适应提案的元判断工具
-4. **(Comparison §5.4,本节)空白象限是路径依赖,不是物理约束** —— 看 2D 设计空间图的"空白"先问"两轴是否正交 + 路径依赖原因",别立刻下"物理不可能"结论
+4. **(Comparison §6.4,本节)空白象限是路径依赖,不是物理约束** —— 看 2D 设计空间图的"空白"先问"两轴是否正交 + 路径依赖原因",别立刻下"物理不可能"结论
 
 ---
 
-## §6 约束回扣 —— 6 个 allocator 化解 C1~C7 的不同方式
+## §7 约束回扣 —— 6 个 allocator 化解 C1~C7 的不同方式
 
 | 约束 | ptmalloc | jemalloc | tcmalloc | mimalloc | Go runtime | Rust `Layout` |
 |-----|---------|---------|----------|---------|-----------|-------------|
@@ -450,7 +556,7 @@ A 的论点是:"chunk header 占 RSS → 容器内必然 OOM"。但**精确算 c
 
 ---
 
-## §7 呼应灵魂问题
+## §8 呼应灵魂问题
 
 你的灵魂问题:**"malloc 要解决的工程问题是什么?"**
 
@@ -488,4 +594,5 @@ A 的论点是:"chunk header 占 RSS → 容器内必然 OOM"。但**精确算 c
 | 时间 | 修订摘要 | 触发原因 |
 |------|---------|---------|
 | 2026-05-02 19:30 | 初稿:严格按新「Stage 开场对齐纪律」(渐进式 + 追加 reconfirm)走完 4 步对齐(同领域 vs 跨领域 → 全景扫描 → 6 维度 → 加 docker/k8s 容器友好性 → 用户 OK)后生成。§0 三件事(同问题不同解 / 6 维度地图 / 容器友好是 2026 关键);§1 设计空间 SVG;§2 5 个 allocator 简介(jemalloc / tcmalloc / mimalloc / Go runtime / Rust Layout);§3 6 维度横向汇总(分两子表);§4 docker/k8s 容器友好性专门展开(呼应 Deep §4.5);§5 元洞察(5 条平行演化路径 + 用户贡献的 3 条元规则在每个 allocator 的体现);§6 约束回扣(6 allocator × 7 约束矩阵);§7 呼应灵魂(从设计空间高度的最终答案,没有唯一最优解);总长 ~750-800 行 | Comparison 阶段对齐完成,用户在追加 reconfirm 后说 OK |
-| 2026-05-02 21:00 | §5.4 加新小节《空白象限揭示路径依赖,不是物理约束》:用户对反问"SVG 左上空白象限为什么没有 allocator?"选 A(物理不可能)。Claude 精确化为 D+C 混合(A 不成立)。① 算 chunk header overhead(典型 5-10%,不会引发 OOM);② 强调 SVG 两轴物理正交(C5 化解 vs C2 摊薄独立);③ 真正答案 = D(实际有,调过 ptmalloc 在左上)+ C(历史路径依赖,2008+ 大家同时改两维度);④ 提炼最深元洞察:"看 2D 设计空间空白象限,先问两轴是否正交 + 路径依赖,别立刻下物理不可能";⑤ 类比延伸到 OLTP/OLAP / 静态动态语言 / CAP / 网络栈 4 个场景的"空白象限实际是路径依赖"案例;⑥ 用户贡献给 atlas 第一性原理方法论的**第 4 条元规则:空白象限是路径依赖,不是物理约束**(前 3 条:约束反向演化 / 约束不可再分性是复合 / 分层职责) | 用户反问回应 A:物理不可能;触发"维度耦合误判"+ 路径依赖元洞察 |
+| 2026-05-02 21:00 | §5.4 加新小节《空白象限揭示路径依赖,不是物理约束》(顺移后位于 §6.4):用户对反问"SVG 左上空白象限为什么没有 allocator?"选 A(物理不可能)。Claude 精确化为 D+C 混合(A 不成立)。① 算 chunk header overhead(典型 5-10%,不会引发 OOM);② 强调 SVG 两轴物理正交(C5 化解 vs C2 摊薄独立);③ 真正答案 = D(实际有,调过 ptmalloc 在左上)+ C(历史路径依赖,2008+ 大家同时改两维度);④ 提炼最深元洞察:"看 2D 设计空间空白象限,先问两轴是否正交 + 路径依赖,别立刻下物理不可能";⑤ 类比延伸到 OLTP/OLAP / 静态动态语言 / CAP / 网络栈 4 个场景的"空白象限实际是路径依赖"案例;⑥ 用户贡献给 atlas 第一性原理方法论的**第 4 条元规则:空白象限是路径依赖,不是物理约束**(前 3 条:约束反向演化 / 约束不可再分性是复合 / 分层职责) | 用户反问回应 A:物理不可能;触发"维度耦合误判"+ 路径依赖元洞察 |
+| 2026-05-02 22:00 | **结构补强**:用户从 Synthesis 反向回来反馈"应该有个章节讲每个 memallocator 的初衷 + 擅长 + 不擅长" → ① 加新 §1《设计动机简表》:6 个 allocator(ptmalloc 作基线 + jemalloc/tcmalloc/mimalloc/Go runtime/Rust Layout 5 个对比对象)各自 5-8 行三件事(初衷 / 擅长 / 不擅长);加 §1 总结表(快速选择推荐 / 避开场景);② 原 §1~§7 全部顺移 +1 → §2~§8;原 §X.Y 子节同步 +1 → §X+1.Y;③ §0 末尾章节预告同步更新(§1 设计动机 / §2 地图 / ... / §8 呼应灵魂);④ Comparison §6.4 内部 cross-reference 同步更新(原 §5.4 → §6.4);⑤ stage-comparison/SKILL.md 加纪律:对照篇必备 §1 设计动机简表(初衷 / 擅长 / 不擅长),反模式 #6 新增 | 用户反馈:Comparison 文档应有"每个 allocator 设计初衷 + 解决什么问题 + 擅长什么"章节;同时把这条作为 Comparison skill 的标准要求写进 SKILL.md |
