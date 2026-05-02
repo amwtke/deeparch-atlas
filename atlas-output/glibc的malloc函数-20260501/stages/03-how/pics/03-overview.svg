@@ -1,117 +1,190 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 540"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700"
      font-family="JetBrains Mono, Consolas, monospace">
-  <rect width="1200" height="540" fill="#0a0c10"/>
+  <rect width="1200" height="700" fill="#0a0c10"/>
 
-  <text x="600" y="32" fill="#e0e0e0" font-size="20" font-weight="bold" text-anchor="middle">三层骨架概览:进程 ⊃ arena ⊃ { bin(索引) + chunk(物理) }</text>
-  <text x="600" y="55" fill="#888" font-size="13" text-anchor="middle">三件事记住:chunk 是物理实体 · bin 是空闲索引 · arena 是容器</text>
+  <text x="600" y="32" fill="#e0e0e0" font-size="20" font-weight="bold" text-anchor="middle">四件事骨架概览:tcache(2017) + arena ⊃ { bin(索引) + chunk(物理) }(经典 1987~2006)</text>
+  <text x="600" y="55" fill="#888" font-size="13" text-anchor="middle">tcache 是 thread-local 旁路 · 跟 arena 平行 · 90%+ 请求命中 tcache 完全不进 arena</text>
 
   <!-- 进程外框(内核责任,虚线) -->
-  <rect x="30" y="75" width="1140" height="445" fill="none" stroke="#666" stroke-width="2" stroke-dasharray="8,4"/>
+  <rect x="30" y="75" width="1140" height="585" fill="none" stroke="#666" stroke-width="2" stroke-dasharray="8,4"/>
   <text x="50" y="95" fill="#aaa" font-size="13" font-style="italic">进程边界(内核给独立地址空间 — ptmalloc2 看不见这一层)</text>
 
+  <!-- ============ thread tcache 区(顶部,thread-local 维度) ============ -->
+  <text x="50" y="120" fill="#88ffff" font-size="13" font-weight="bold">① per-thread tcache 池(2017+ 现代演化,thread-local 无锁)</text>
+
+  <!-- thread T1 tcache(展开) -->
+  <rect x="50" y="130" width="370" height="120" fill="#0f1218" stroke="#40c0c0" stroke-width="1.5"/>
+  <text x="60" y="150" fill="#88ffff" font-size="12" font-weight="bold">thread T1 tcache</text>
+  <text x="200" y="150" fill="#888" font-size="10">__thread tcache_perthread_struct</text>
+
+  <!-- 64 桶横排 -->
+  <text x="60" y="172" fill="#88ffff" font-size="11">entries[64]:</text>
+  <g transform="translate(150,160)">
+    <rect width="28" height="18" fill="#1e5f5f" stroke="#40c0c0"/>
+    <text x="14" y="13" fill="#88ffff" font-size="10" text-anchor="middle">0</text>
+    <rect x="32" width="28" height="18" fill="#1e5f5f" stroke="#40c0c0"/>
+    <text x="46" y="13" fill="#88ffff" font-size="10" text-anchor="middle">1</text>
+    <rect x="64" width="28" height="18" fill="#1e5f5f" stroke="#40c0c0"/>
+    <text x="78" y="13" fill="#88ffff" font-size="10" text-anchor="middle">2</text>
+    <text x="100" y="13" fill="#888" font-size="10">...</text>
+    <rect x="128" width="36" height="18" fill="#1e5f5f" stroke="#40c0c0"/>
+    <text x="146" y="13" fill="#88ffff" font-size="10" text-anchor="middle">63</text>
+  </g>
+
+  <!-- 单桶垂直 chain(展示 7 chunk LIFO) -->
+  <text x="60" y="196" fill="#888" font-size="10">每桶单链表 LIFO,最多 7 chunk:</text>
+  <g transform="translate(180,186)">
+    <rect width="22" height="14" fill="#1e3a5f" stroke="#4080c0"/>
+    <line x1="11" y1="14" x2="11" y2="22" stroke="#4080c0" stroke-width="1"/>
+    <rect x="0" y="22" width="22" height="14" fill="#1e3a5f" stroke="#4080c0"/>
+    <line x1="11" y1="36" x2="11" y2="44" stroke="#4080c0" stroke-width="1"/>
+    <rect x="0" y="44" width="22" height="14" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="32" y="42" fill="#888" font-size="9">最多 7 个</text>
+  </g>
+
+  <text x="60" y="240" fill="#88ffff" font-size="11">覆盖 16~1032B · 完全无锁 · ~15 ns 命中</text>
+
+  <!-- thread T2 tcache(折叠) -->
+  <rect x="430" y="130" width="200" height="120" fill="#0f1218" stroke="#40c0c0" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="445" y="150" fill="#88ffff" font-size="12" font-weight="bold">thread T2 tcache</text>
+  <text x="445" y="170" fill="#aaa" font-size="11">同 T1 结构</text>
+  <text x="445" y="190" fill="#888" font-size="10">独立 64 桶 × 7</text>
+  <text x="445" y="208" fill="#888" font-size="10">无锁 · 跟 T1 不共享</text>
+
+  <!-- thread T3 tcache(折叠) -->
+  <rect x="640" y="130" width="200" height="120" fill="#0f1218" stroke="#40c0c0" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="655" y="150" fill="#88ffff" font-size="12" font-weight="bold">thread T3 tcache</text>
+  <text x="655" y="170" fill="#aaa" font-size="11">同 T1 结构</text>
+  <text x="655" y="190" fill="#888" font-size="10">独立 64 桶 × 7</text>
+  <text x="655" y="208" fill="#888" font-size="10">无锁 · 跟 T1/T2 不共享</text>
+
+  <!-- thread Tn tcache(折叠) -->
+  <rect x="850" y="130" width="200" height="120" fill="#0f1218" stroke="#40c0c0" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="865" y="150" fill="#88ffff" font-size="12" font-weight="bold">thread Tn tcache</text>
+  <text x="865" y="170" fill="#aaa" font-size="11">每线程独占一份</text>
+  <text x="865" y="190" fill="#888" font-size="10">超大量线程也无锁</text>
+  <text x="865" y="208" fill="#888" font-size="10">代价: thread RSS 涨</text>
+
+  <text x="1060" y="200" fill="#666" font-size="11" font-style="italic">(thread 数 ≫</text>
+  <text x="1060" y="215" fill="#666" font-size="11" font-style="italic"> arena 数 N)</text>
+
+  <!-- 跨 tcache pool 说明: 都是 thread-local -->
+  <text x="50" y="265" fill="#aaa" font-size="11" font-style="italic">↑ tcache 是 per-thread 维度,跟下面 arena(thread 平摊的池)平行存在 —— 优先打 tcache,miss 才进 arena</text>
+
   <!-- ============ arena #0(展开) ============ -->
-  <rect x="50" y="110" width="690" height="390" fill="#0f1218" stroke="#888" stroke-width="1.5"/>
-  <text x="65" y="133" fill="#e0e0e0" font-size="15" font-weight="bold">arena #0(主线程,brk 扩)</text>
-  <text x="370" y="133" fill="#888" font-size="11">[ 一个进程内最多 8×CPU 核数 个 arena ]</text>
+  <rect x="50" y="275" width="690" height="365" fill="#0f1218" stroke="#888" stroke-width="1.5"/>
+  <text x="65" y="298" fill="#e0e0e0" font-size="15" font-weight="bold">② arena #0(主线程,brk 扩)</text>
+  <text x="370" y="298" fill="#888" font-size="11">[ 一个进程内最多 8×CPU 核数 个 arena ]</text>
 
-  <!-- ① 头(绿) -->
-  <rect x="65" y="148" width="660" height="50" fill="#1e5f3a" stroke="#40c060" stroke-width="1"/>
-  <text x="75" y="170" fill="#88ff88" font-size="13" font-weight="bold">① 头(arena 控制面)</text>
-  <text x="75" y="189" fill="#88ff88" font-size="11">mutex · top_chunk 指针 · next 链 · system_mem · ...</text>
+  <!-- 头(绿) -->
+  <rect x="65" y="313" width="660" height="48" fill="#1e5f3a" stroke="#40c060" stroke-width="1"/>
+  <text x="75" y="333" fill="#88ff88" font-size="13" font-weight="bold">头(arena 控制面)</text>
+  <text x="75" y="352" fill="#88ff88" font-size="11">mutex · top_chunk 指针 · next 链 · system_mem · ...</text>
 
-  <!-- ② bins(紫) -->
-  <rect x="65" y="208" width="660" height="80" fill="#3a1e5f" stroke="#8040c0" stroke-width="1"/>
-  <text x="75" y="230" fill="#c088ff" font-size="13" font-weight="bold">② bins(空闲 chunk 的分桶索引)</text>
-  <text x="75" y="252" fill="#c088ff" font-size="11">  fastbinsY[10]  +  bins[~254](unsorted + small + large)</text>
-  <text x="75" y="273" fill="#888" font-size="11" font-style="italic">  ↑ 这里只是元数据指针 — chunk 实体在下方物理布局里(详见 §3)</text>
+  <!-- bins(紫) -->
+  <rect x="65" y="370" width="660" height="78" fill="#3a1e5f" stroke="#8040c0" stroke-width="1"/>
+  <text x="75" y="390" fill="#c088ff" font-size="13" font-weight="bold">bins(经典空闲索引,arena 锁内查)</text>
+  <text x="75" y="410" fill="#c088ff" font-size="11">  fastbinsY[10]  +  bins[~254](unsorted + small + large)</text>
+  <text x="75" y="430" fill="#888" font-size="11" font-style="italic">  ↑ tcache miss 后才走这里;tcache 满时溢出也回这里</text>
 
-  <!-- ③ chunks(物理布局) -->
-  <rect x="65" y="298" width="660" height="190" fill="#0a0c10" stroke="#888" stroke-width="1" stroke-dasharray="3,3"/>
-  <text x="75" y="320" fill="#e0e0e0" font-size="13" font-weight="bold">③ chunks(物理布局:heap 段连续字节流,in-use/free 交错)</text>
+  <!-- chunks(物理布局) -->
+  <rect x="65" y="458" width="660" height="170" fill="#0a0c10" stroke="#888" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="75" y="478" fill="#e0e0e0" font-size="13" font-weight="bold">chunks(物理布局:heap 段连续字节流,in-use/free 交错)</text>
 
   <!-- chunks 横条 -->
-  <g transform="translate(75,338)">
-    <rect width="65" height="60" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.2"/>
+  <g transform="translate(75,495)">
+    <rect width="65" height="58" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.2"/>
     <text x="32" y="22" fill="#88c0ff" font-size="11" font-weight="bold" text-anchor="middle">A</text>
     <text x="32" y="40" fill="#88c0ff" font-size="9" text-anchor="middle">in-use</text>
 
-    <rect x="65" width="50" height="60" fill="#5f1e1e" stroke="#c04040" stroke-width="1.2"/>
+    <rect x="65" width="50" height="58" fill="#5f1e1e" stroke="#c04040" stroke-width="1.2"/>
     <text x="90" y="22" fill="#ff8888" font-size="11" font-weight="bold" text-anchor="middle">B</text>
     <text x="90" y="40" fill="#ff8888" font-size="9" text-anchor="middle">free</text>
 
-    <rect x="115" width="80" height="60" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.2"/>
+    <rect x="115" width="80" height="58" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.2"/>
     <text x="155" y="22" fill="#88c0ff" font-size="11" font-weight="bold" text-anchor="middle">C</text>
     <text x="155" y="40" fill="#88c0ff" font-size="9" text-anchor="middle">in-use</text>
 
-    <rect x="195" width="65" height="60" fill="#5f1e1e" stroke="#c04040" stroke-width="1.2"/>
+    <rect x="195" width="65" height="58" fill="#5f1e1e" stroke="#c04040" stroke-width="1.2"/>
     <text x="227" y="22" fill="#ff8888" font-size="11" font-weight="bold" text-anchor="middle">D</text>
     <text x="227" y="40" fill="#ff8888" font-size="9" text-anchor="middle">free</text>
 
-    <rect x="260" width="95" height="60" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.2"/>
+    <rect x="260" width="95" height="58" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.2"/>
     <text x="307" y="22" fill="#88c0ff" font-size="11" font-weight="bold" text-anchor="middle">E</text>
     <text x="307" y="40" fill="#88c0ff" font-size="9" text-anchor="middle">in-use</text>
 
-    <rect x="355" width="70" height="60" fill="#5f1e1e" stroke="#c04040" stroke-width="1.2"/>
+    <rect x="355" width="70" height="58" fill="#5f1e1e" stroke="#c04040" stroke-width="1.2"/>
     <text x="390" y="22" fill="#ff8888" font-size="11" font-weight="bold" text-anchor="middle">F</text>
     <text x="390" y="40" fill="#ff8888" font-size="9" text-anchor="middle">free</text>
 
-    <rect x="425" width="50" height="60" fill="none" stroke="#444" stroke-dasharray="4,3"/>
-    <text x="450" y="34" fill="#666" font-size="14" text-anchor="middle">...</text>
+    <rect x="425" width="50" height="58" fill="none" stroke="#444" stroke-dasharray="4,3"/>
+    <text x="450" y="33" fill="#666" font-size="14" text-anchor="middle">...</text>
 
-    <rect x="475" width="170" height="60" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
+    <rect x="475" width="170" height="58" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
     <text x="560" y="22" fill="#88ff88" font-size="12" font-weight="bold" text-anchor="middle">top_chunk</text>
     <text x="560" y="40" fill="#88ff88" font-size="9" text-anchor="middle">arena 末端"剩饭",下次切这</text>
   </g>
 
-  <text x="75" y="420" fill="#666" font-size="10">heap 起 →</text>
-  <text x="715" y="420" fill="#666" font-size="10" text-anchor="end">→ heap 向高地址扩</text>
+  <!-- 逻辑指针(从 bins → chunks)— 紫色虚线 -->
+  <line x1="200" y1="448" x2="107" y2="495" stroke="#c08040" stroke-width="1" stroke-dasharray="6,3" opacity="0.7"/>
+  <line x1="280" y1="448" x2="244" y2="495" stroke="#8040c0" stroke-width="1" stroke-dasharray="6,3" opacity="0.7"/>
+  <line x1="380" y1="448" x2="407" y2="495" stroke="#8040c0" stroke-width="1" stroke-dasharray="6,3" opacity="0.7"/>
 
-  <text x="75" y="450" fill="#888" font-size="10" font-style="italic">虚线箭头表示 bins 索引指向某个 free chunk(详见 §2.3 物理 vs 逻辑双视图)</text>
-
-  <!-- 逻辑指针(从 ② → ③) -->
-  <line x1="200" y1="288" x2="107" y2="338" stroke="#c08040" stroke-width="1" stroke-dasharray="6,3" opacity="0.7"/>
-  <line x1="280" y1="288" x2="244" y2="338" stroke="#8040c0" stroke-width="1" stroke-dasharray="6,3" opacity="0.7"/>
-  <line x1="380" y1="288" x2="407" y2="338" stroke="#8040c0" stroke-width="1" stroke-dasharray="6,3" opacity="0.7"/>
+  <!-- tcache → chunks 跨连接(关键:thread T1 tcache 的某 chunk 来自 arena #0 的 heap)— 青色虚线 -->
+  <line x1="220" y1="218" x2="180" y2="495" stroke="#40c0c0" stroke-width="1" stroke-dasharray="6,3" opacity="0.6"/>
+  <text x="245" y="290" fill="#88ffff" font-size="9" font-style="italic" opacity="0.8">tcache 缓存的 chunk</text>
+  <text x="245" y="302" fill="#88ffff" font-size="9" font-style="italic" opacity="0.8">物理上仍在 arena heap</text>
 
   <!-- ============ arena #1(折叠) ============ -->
-  <rect x="765" y="110" width="190" height="180" fill="#0f1218" stroke="#888" stroke-width="1.5" stroke-dasharray="4,3"/>
-  <text x="780" y="133" fill="#e0e0e0" font-size="14" font-weight="bold">arena #1</text>
-  <text x="780" y="155" fill="#aaa" font-size="11">thread arena,mmap 扩</text>
-  <text x="780" y="180" fill="#aaa" font-size="11">头 + bins + chunks</text>
-  <text x="780" y="200" fill="#aaa" font-size="11">(结构同 arena #0)</text>
-  <text x="780" y="240" fill="#888" font-size="10">独立 mutex,跟 #0</text>
-  <text x="780" y="255" fill="#888" font-size="10">不共享 chunk,</text>
-  <text x="780" y="270" fill="#888" font-size="10">不抢锁</text>
+  <rect x="765" y="275" width="190" height="180" fill="#0f1218" stroke="#888" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="780" y="298" fill="#e0e0e0" font-size="14" font-weight="bold">arena #1</text>
+  <text x="780" y="320" fill="#aaa" font-size="11">thread arena,mmap 扩</text>
+  <text x="780" y="345" fill="#aaa" font-size="11">头 + bins + chunks</text>
+  <text x="780" y="365" fill="#aaa" font-size="11">(结构同 arena #0)</text>
+  <text x="780" y="405" fill="#888" font-size="10">独立 mutex,跟 #0</text>
+  <text x="780" y="420" fill="#888" font-size="10">不共享 chunk,</text>
+  <text x="780" y="435" fill="#888" font-size="10">不抢锁</text>
 
   <!-- ============ arena #N(折叠) ============ -->
-  <rect x="975" y="110" width="180" height="180" fill="#0f1218" stroke="#888" stroke-width="1.5" stroke-dasharray="4,3"/>
-  <text x="990" y="133" fill="#e0e0e0" font-size="14" font-weight="bold">arena #N</text>
-  <text x="990" y="155" fill="#aaa" font-size="11">N ≤ 8 × 核数</text>
-  <text x="990" y="180" fill="#aaa" font-size="11">超过线程数</text>
-  <text x="990" y="200" fill="#aaa" font-size="11">→ 复用已有 arena</text>
-  <text x="990" y="220" fill="#aaa" font-size="11">  (开始抢锁)</text>
+  <rect x="975" y="275" width="180" height="180" fill="#0f1218" stroke="#888" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="990" y="298" fill="#e0e0e0" font-size="14" font-weight="bold">arena #N</text>
+  <text x="990" y="320" fill="#aaa" font-size="11">N ≤ 8 × 核数</text>
+  <text x="990" y="345" fill="#aaa" font-size="11">超过线程数</text>
+  <text x="990" y="365" fill="#aaa" font-size="11">→ 复用已有 arena</text>
+  <text x="990" y="385" fill="#aaa" font-size="11">  (开始抢锁)</text>
 
   <!-- next 链 -->
-  <line x1="740" y1="135" x2="765" y2="135" stroke="#888" stroke-width="1" stroke-dasharray="4,3"/>
-  <text x="745" y="128" fill="#888" font-size="9">.next</text>
-  <line x1="955" y1="135" x2="975" y2="135" stroke="#888" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="740" y1="300" x2="765" y2="300" stroke="#888" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="745" y="293" fill="#888" font-size="9">.next</text>
+  <line x1="955" y1="300" x2="975" y2="300" stroke="#888" stroke-width="1" stroke-dasharray="4,3"/>
 
-  <!-- 图例 -->
-  <g transform="translate(770,320)">
-    <text x="0" y="0" fill="#aaa" font-size="12" font-weight="bold">图例(5 类色编码)</text>
-    <rect x="0" y="10" width="14" height="12" fill="#1e3a5f" stroke="#4080c0"/>
-    <text x="20" y="20" fill="#88c0ff" font-size="11">in-use chunk(蓝)</text>
-    <rect x="0" y="30" width="14" height="12" fill="#5f1e1e" stroke="#c04040"/>
-    <text x="20" y="40" fill="#ff8888" font-size="11">free chunk(红)</text>
-    <rect x="0" y="50" width="14" height="12" fill="#1e5f3a" stroke="#40c060"/>
-    <text x="20" y="60" fill="#88ff88" font-size="11">头 / top_chunk(绿)</text>
-    <rect x="0" y="70" width="14" height="12" fill="#3a1e5f" stroke="#8040c0"/>
-    <text x="20" y="80" fill="#c088ff" font-size="11">bins 索引(紫)</text>
-    <rect x="0" y="90" width="14" height="12" fill="#5f3a1e" stroke="#c08040"/>
-    <text x="20" y="100" fill="#ffaa55" font-size="11">fastbin 槽(橙)</text>
+  <!-- thread → arena 的"挂哪个 arena"虚线(说明 thread 同时挂 tcache + arena) -->
+  <line x1="180" y1="252" x2="180" y2="275" stroke="#aaa" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>
+  <text x="190" y="265" fill="#aaa" font-size="9" font-style="italic" opacity="0.7">T1 挂 arena #0</text>
 
-    <text x="0" y="130" fill="#aaa" font-size="11" font-style="italic">实线 = 物理边界</text>
-    <text x="0" y="148" fill="#aaa" font-size="11" font-style="italic">虚线 = 逻辑指针</text>
+  <!-- ============ 图例 ============ -->
+  <g transform="translate(50,648)">
+    <text x="0" y="0" fill="#aaa" font-size="11" font-weight="bold">图例(6 类色编码)</text>
+
+    <rect x="0" y="10" width="14" height="12" fill="#1e5f5f" stroke="#40c0c0"/>
+    <text x="20" y="20" fill="#88ffff" font-size="10">tcache 桶(青,thread-local 无锁)</text>
+
+    <rect x="220" y="10" width="14" height="12" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="240" y="20" fill="#88c0ff" font-size="10">in-use chunk(蓝)</text>
+
+    <rect x="380" y="10" width="14" height="12" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="400" y="20" fill="#ff8888" font-size="10">free chunk(红)</text>
+
+    <rect x="530" y="10" width="14" height="12" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="550" y="20" fill="#88ff88" font-size="10">头 / top_chunk(绿)</text>
+
+    <rect x="710" y="10" width="14" height="12" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="730" y="20" fill="#c088ff" font-size="10">bins 索引(紫)</text>
+
+    <rect x="850" y="10" width="14" height="12" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="870" y="20" fill="#ffaa55" font-size="10">fastbin 槽(橙)</text>
+
+    <text x="0" y="42" fill="#aaa" font-size="11" font-style="italic">实线 = 物理边界 / 同维度连接 · 虚线 = 逻辑指针 / thread → 资源映射</text>
   </g>
 </svg>
