@@ -5,8 +5,8 @@
 - **短名**: glibc的malloc函数
 - **工作目录**: atlas-output/glibc的malloc函数-20260501/
 - **创建时间**: 2026-05-01T22:30:00+08:00
-- **上次更新**: 2026-05-02T19:30:00+08:00
-- **当前阶段**: Comparison(刚开始;Deep 完成,用户贡献 3 条元规则给 atlas 方法论)
+- **上次更新**: 2026-05-02T20:30:00+08:00
+- **当前阶段**: Comparison(初稿完成 —— 5 个用户态 allocator 全景对比 + 6 维度横向汇总 + 容器友好性专门展开)
 
 ## 灵魂问题(Discovery 收集)
 > "malloc 要解决的工程问题是什么?"
@@ -82,7 +82,7 @@
 - **第 2 轮初稿完成 (2026-05-02 17:30)**:按新「Stage 开场对齐纪律」(渐进式 + 追加 reconfirm)走完 6 轮对齐(聚焦 → 端到端追踪 → glibc 2.34+ → alloc+free → 8KB 中等场景 → demo 必备 → 目录结构调整 → 渐进式纪律修补 → 一一收敛)。三产物:① stages/05-deep/05-deep.md(721 行,聚焦三场景源码追踪 vs 旧版 6 机制反事实);② stages/05-deep/src/05-demo.c(108 行可运行 C,strace + gdb 调试 tips);③ stages/05-deep/pics/05-call-stack-three-paths.svg(三 call stack 横向并列对比,xmllint 通过)。结构:§0 三件事(三路径 + size 对赌假设) → §1 SVG → §2 demo+编译+strace+gdb → §3 tcache 路径源码追踪 → §4 brk 路径 → §5 mmap 路径 → §6 性能对比表 → §7 约束回扣 → §8 呼应灵魂(100% 闭环)。**关键洞察**:三条路径互补对赌不同假设(C1 高频小 / C2+C3+C6 中长跑 / C2+C3+C4 大短暂),没有"通吃"路径
 
 ### Comparison 阶段
-- (无)
+- 第 1 次产物初稿(2026-05-02 20:30):严格按新「Stage 开场对齐纪律」(渐进式 + 追加 reconfirm)走完 4 步对齐(同领域 vs 跨领域 → 选 A 同领域 → 全景 vs 精炼 → 选 B 全景 5 个 → 6 维度 → 用户加 docker/k8s 容器友好性 → OK)。两产物:① stages/06-comparison/06-comparison.md(420 行,§0~§7)— 5 个 allocator 简介 + 6 维度横向汇总(分两子表)+ docker/k8s 容器友好性专门展开 + 元洞察(5 条平行演化路径 + 用户 3 条元规则在每个 allocator 的体现);② stages/06-comparison/pics/06-design-space-map.svg(viewBox 1200×750)— 2D 散点图,横轴 = 对 C5 处理方式 / 纵轴 = 容器友好性,6 个 allocator 占据 5 个不同区域(Rust Layout 浮动),加 ABI 锁死边界垂直虚线分 "C ABI 锁死" 和 "新语言改 ABI" 两侧,xmllint 通过。**关键洞察**:① 没有"右上完美点"(消解 C5 + 全自动容器);② 6 个 allocator = 5+ 套不同取舍 = "约束权重不同的局部最优";③ 用户 3 条元规则在每个 allocator 都有具体实例(Go runtime + Rust Layout = 反向演化;Rust Layout 的"接口共存"= 复合分解;glibc 不做 / Go runtime 做 = 分层职责)
 
 ### Synthesis 阶段
 - (无)
