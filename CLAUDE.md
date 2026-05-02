@@ -119,6 +119,20 @@ Sub-skills must call `progress-tracker` at stage start AND stage end. Skipping b
 
 It does **not** know what the next stage is. The caller (each `stage-X`) tells it. Don't embed a route table in `three-options` — that's an explicit anti-pattern (turns the suite into a spider web).
 
+### Stage 开场对齐纪律(先问 3~5 问,不直接生成产物)
+
+Each stage (except Discovery) **must NOT immediately generate `stages/0X-stage.md`**. First ask the user 3~5 alignment questions about scope / focus / purpose / angle / background. Claude infers the questions based on the stage's core goal + previous stage artifacts + topic specifics.
+
+If the user says "你看着办 / 随便", Claude lists its inferred answers and asks the user to confirm before generating.
+
+Why this matters:
+1. Avoids drift — generating without alignment risks producing content the user doesn't need
+2. Respects user-led pacing — the user should decide each stage's shape, not Claude
+3. Primes user thinking — being asked questions makes them engage actively before reading
+4. Same idea as superpowers brainstorming — align intent before any creative output
+
+Full spec in entry `SKILL.md` 「Stage 开场对齐纪律」 + each stage skill's execution flow + anti-pattern 19.
+
 ### Stage 推进 reconfirm 纪律(推进信号 ≠ 已读完产物)
 
 Even when the user issues an explicit advancement signal from the whitelist (走吧 / 下一个 / 推进 / 继续往下走), **do NOT immediately seal + load the next stage**. The user might just be agreeing "directionally" based on Claude's chat summary, **without having read the full artifact**. Misreading this advances them past unread content.
