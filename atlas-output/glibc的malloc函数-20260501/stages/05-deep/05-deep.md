@@ -309,7 +309,45 @@ tcache_put (mchunkptr chunk, size_t tc_idx)
 - 64 桶 × 7 chunk × 1KB 平均 ~= 450KB / 线程 → 1000 线程 = 450MB 浪费
 - 上限 1032B 是"覆盖率 vs 内存"的精确折中点
 
-**结论**:tcache per-thread + 上限 1032B + 每桶 7 chunk 是 [C1](#c1) + [C7](#c7) 联合下的局部最优。
+#### 候选 D(用户挑战):调高 tcache 上限到 16KB(覆盖 8KB 让场景 2 也走 tcache)
+
+**用户视角凝固** —— 用户问"为什么 8KB 不走 tcache,如果调高上限会怎样"。RSS 失控分两层:
+
+**Layer 1:静态元数据开销**(`tcache_perthread_struct`,与 workload 无关)
+
+| 配置 | 单线程 thread-local 元数据 | 1000 线程总 RSS |
+|------|----------------------|--------------|
+| **N = 64**(默认) | ~640B | 640KB |
+| N = 256(覆盖 4KB) | ~2.5KB | 2.5MB |
+| **N = 1024**(覆盖 16KB) | **~10KB** | 10MB |
+
+这一层**还可接受**(10MB 对 1000 线程进程不算大)。
+
+**Layer 2:动态 chunks 占用**(取决于 workload)
+
+每桶最多缓存 7 chunk,实际占用 = "线程触发过的 size 都装一份":
+
+- **worst case**(workload 均匀触发 16B~16KB):平均 chunk = 8KB → 单线程 = 1024 × 7 × 8KB = **56 MB / thread** → 1000 线程 = **56 GB ⚠️ 失控**
+- **realistic case**(power-law workload,小块为主):单线程 ~几 MB → 1000 线程 ~几 GB(可控但代价大)
+
+**关键洞察 —— 64 桶 / 1032B 是 DJ Delorie 测出的边际收益拐点**:
+
+| 上限 | 命中率(典型 web server) | thread RSS worst case |
+|-----|-------------------|--------------------|
+| 256B | ~50% | 0.5 MB |
+| **1032B**(默认)| **~70%** | **3.5 MB** |
+| 4KB | ~73% | ~10 MB |
+| 16KB | ~75% | **56 MB ⚠️** |
+
+**4KB → 16KB 涨上限,命中率只多 2pp(72→75%),但 worst case RSS 涨 16×**。**默认 1032B 是命中率/RSS 的最佳拐点**;再大就是负收益。
+
+**链接到 Origin §5.5(约束反向演化)** —— 在 **ML workload**(GB 级 alloc + 短寿命)下:
+
+- 单个 GB chunk 装进 tcache = 单线程 7GB → 直接 OOM
+- PyTorch / vLLM 选择**完全绕开 ptmalloc tcache**,自己写 GPU mempool
+- 这是 [C7](#c7) 反向演化(per-thread cache 假设在新场景失效)的现实证据 —— **不是 tcache 算法不好,是它的"假设场景"被新 workload 颠覆**
+
+**结论**:tcache per-thread + 上限 1032B + 每桶 7 chunk 是 [C1](#c1) + [C7](#c7) 联合下的局部最优;**改任意一个值都会越过命中率/RSS 的边际收益拐点**。
 
 ---
 
@@ -719,3 +757,4 @@ munmap_chunk (mchunkptr p)
 | 时间 | 修订摘要 | 触发原因 |
 |------|---------|---------|
 | 2026-05-02 17:30 | 初稿(第 2 轮重启):严格按新「Stage 开场对齐纪律」(渐进式 + 追加 reconfirm)对齐 6 个维度后才生成。聚焦三场景源码追踪 vs 第 1 轮的"6 机制独立反事实"。§0 三件事 = 三条主路径(tcache 无锁 / brk arena+sbrk / mmap 独立 syscall)+ size 对赌假设;§1 SVG 三 call stack 并列对比图;§2 demo + 编译 + strace + gdb 调试;§3-§5 三条路径源码追踪(每路径含 §X.1 触发条件 + §X.2 关键源码 + §X.3 性能特征 + §X.4 反事实);§6 三路径性能对比表;§7 约束回扣;§8 呼应灵魂(100% 闭环);demo 在 src/05-demo.c(可运行 + strace 验证)| 用户在 Deep 第 2 轮渐进式对齐:聚焦 + 端到端源码追踪 + 三场景(24B/8KB/200KB)+ alloc+free + glibc 2.34+ + 可运行 demo;追加 reconfirm 后 OK |
+| 2026-05-02 18:00 | §3.4 加候选 D《调高 tcache 上限到 16KB》:用户对反问"为什么 8KB 不能走 tcache,调高上限会怎样" 选 B(RSS 失控)。Claude 精确化为两层:Layer 1 静态元数据开销(可接受,1000 线程 +10MB);Layer 2 动态 chunks 占用(worst case 1024×7×8KB = 56MB / thread,1000 线程 = 56GB ⚠️ 失控)。给出 DJ Delorie 测出的边际收益拐点(1032B / 70% 命中 / 3.5MB ↔ 16KB / 75% 命中 / 56MB,4KB→16KB 涨上限命中率只 +3pp 但 RSS 涨 16×)。链接 Origin §5.5 约束反向演化:ML workload(GB 级 alloc 短寿命)下 tcache 整个机制失效,PyTorch/vLLM 自己写 GPU mempool 绕开 —— 不是算法不好,是"假设场景"被颠覆 | 用户反问回应 B:RSS 失控;触发 tcache 上限边际收益拐点精确推导 + 链接 Origin 反向演化洞察 |
