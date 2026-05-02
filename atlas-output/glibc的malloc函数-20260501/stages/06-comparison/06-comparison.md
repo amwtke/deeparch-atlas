@@ -237,6 +237,61 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 | **Go runtime** | 所有 Go 程序 | 跨语言 |
 | **Rust `Layout`** | Rust 全栈 + 类型安全 | 默认 `System` 没用上,需换底层 |
 
+### §1.7 用户视角凝固:快速复述 + 精确化
+
+(本子节由对话凝固 —— 用户读完 §1.1~§1.6 后做的快速复述,Claude 核对发现 4 处需精确化:**2 处术语精确度** + **2 处时间顺序压缩**。)
+
+#### 用户复述(原话)
+
+> "ptmalloc 是最早出现的,带有标准的桶层次结构,做到性能稳定性都很好的一个版本;
+> jemalloc 后来出现的,主要解决了 ptmalloc 在超高并发的时候 arena 比较多占内存、
+> 比较少要加锁比较慢的缺点开发,不是 per-thread 分桶,而是 per-cpu 分桶;
+> 后面的 tcmalloc 是 google 开发,主要适配 google 内部的巨量并发设计,grpc 的优化,
+> 可以看做是 google 的定制版,通用性不好;
+> mimalloc 是微软的,主要是精简代码,降低 ptmalloc 与 tcmalooc 的复杂度,
+> 但是也是微软内部用的多。"
+
+#### 核对结果(5 处需精确化)
+
+| # | 用户复述要点 | 状态 | 精确化 |
+|---|----------|------|------|
+| 1 | ptmalloc "性能稳定都好" | 🟡 略宽松 | 准确版:**稳定性 40 年迭代最佳 + 兼容性最好**(C 程序零依赖默认);性能在大多数 workload 过得去但**不是最优**(jemalloc / mimalloc 在高并发或容器都比它快) |
+| 2 | "ptmalloc 是 per-thread 分桶"(隐含,从"jemalloc 不是 per-thread"反推)| ⚠️ **术语错位** | ptmalloc 的 **arena 不是 per-thread**,是 **"thread-平摊池"**(`8×cores` 个 arena 让 thread 抢);**真正 per-thread 的是 2017+ 的 tcache**;jemalloc 改的是 **arena 从 thread-平摊 → per-CPU**(thread 看自己跑哪个 CPU 自动绑) |
+| 3 | "tcmalloc 是 gRPC 优化" | ⚠️ **时间顺序反了** | tcmalloc 2003+ / gRPC 2015+,**tcmalloc 早 12 年**;实际是 Google 通用 RPC(Stubby + 后来 gRPC 都基于它,不是反过来)。tcmalloc 出现时还没有 gRPC |
+| 4 | "tcmalloc 通用性不好" | ⚠️ **不准确** | 开源版功能完整,**Chrome / ClickHouse / 部分 Cloudflare 服务都广泛用**;真正问题是**默认参数偏 Google 内部 workload + 开源版无 cgroup-aware**(Google 内部 fork 闭源) |
+| 5 | "mimalloc 微软内部用得多" | ⚠️ **位置不准** | MS 内部确实用(.NET 6+ 默认),**但繁荣在 Rust 现代社区**(2022+);.NET + Rust + Tauri + Lean 4 一起 = 远超 MS 内部纯量 |
+
+#### 精确化后的"一句话总结"
+
+| Allocator | 一句话(精确版)|
+|----------|------------|
+| **ptmalloc** | 最早(1987 至今)+ **兼容性 + 稳定性最佳**;arena 是 **thread-平摊池**(N×cores 让 thread 抢),2017+ 加 **per-thread tcache** |
+| **jemalloc** | 解 ptmalloc 高并发问题:**arena 从 thread-平摊池 → per-CPU**(thread 跑哪个 CPU 自动绑)+ 默认积极还内存(dirty_decay_ms) |
+| **tcmalloc** | Google 内部 RPC allocator(**2003+,比 gRPC 早 12 年**);开源版完整 + Chrome/ClickHouse 用;**默认偏 Google workload**,需手动调 `MALLOC_RELEASE_RATE` |
+| **mimalloc** | MS 出品 + **3K LOC 精简** + 默认极激进还内存(`purge_delay=100ms`);**繁荣在 Rust + .NET 现代社区**,不只 MS 内部 |
+
+#### 用户没覆盖的两个
+
+复述没提到 **Go runtime**(§1.5)和 **Rust `Layout`**(§1.6)—— 这两个最大特点是**改语言 ABI**(消解 [C5](#c5)),跟 ptmalloc/jemalloc/tcmalloc/mimalloc 在 **C ABI 内做不同优化**的"同维度竞争"完全不同。它们在设计空间地图上的**横轴右半边**(SVG §2 红虚线右侧),代表"新语言改 ABI"路线。
+
+#### 元洞察:复述时的两类系统性偏差
+
+走完这次核对,提炼两类常见复述错误的元规则(可推广到任何技术复述场景):
+
+##### 偏差 1:**同维度术语精确度** —— "per-thread vs per-CPU" 听起来差不多,但**术语错位会让因果链失效**
+
+**例子**:用户说"jemalloc 不是 per-thread 是 per-CPU",这句话**单独看完全正确**,但隐含"ptmalloc 是 per-thread"——而 ptmalloc 的 arena **不是** per-thread。这种术语错位让"jemalloc 改了什么"的因果不再精确。
+
+**元规则**:复述对比性判断时,**每个术语先在心里问"这个对象的 X 维度精确名称是什么?"** 不要从"对方是 Y" 反推 "我方是 ¬Y"。
+
+##### 偏差 2:**时间顺序压缩** —— "A 是 B 的优化"听起来合理,但**前提是 A 晚于 B**
+
+**例子**:"tcmalloc 是 gRPC 的优化" —— 但 tcmalloc 比 gRPC 早 12 年。这是把"今天 gRPC 在用 tcmalloc"压缩成了"tcmalloc 为 gRPC 优化"。
+
+**元规则**:看到"A 适配 B / 优化 B / 为 B 设计"的判断时,**先核对 A 和 B 的时间先后**。早的不可能为晚的优化;只能反过来。
+
+**这两类偏差在快速复述时极常见 —— 不是粗心,是"信息压缩"的副作用**。复述时压缩信息有效率,但要有意识保留**关键 ε**(术语精确度 + 时间锚点),否则压缩 = 失真。
+
 ---
 
 ## §2 设计空间地图
@@ -638,3 +693,4 @@ A 的论点是:"chunk header 占 RSS → 容器内必然 OOM"。但**精确算 c
 | 2026-05-02 21:00 | §5.4 加新小节《空白象限揭示路径依赖,不是物理约束》(顺移后位于 §6.4):用户对反问"SVG 左上空白象限为什么没有 allocator?"选 A(物理不可能)。Claude 精确化为 D+C 混合(A 不成立)。① 算 chunk header overhead(典型 5-10%,不会引发 OOM);② 强调 SVG 两轴物理正交(C5 化解 vs C2 摊薄独立);③ 真正答案 = D(实际有,调过 ptmalloc 在左上)+ C(历史路径依赖,2008+ 大家同时改两维度);④ 提炼最深元洞察:"看 2D 设计空间空白象限,先问两轴是否正交 + 路径依赖,别立刻下物理不可能";⑤ 类比延伸到 OLTP/OLAP / 静态动态语言 / CAP / 网络栈 4 个场景的"空白象限实际是路径依赖"案例;⑥ 用户贡献给 atlas 第一性原理方法论的**第 4 条元规则:空白象限是路径依赖,不是物理约束**(前 3 条:约束反向演化 / 约束不可再分性是复合 / 分层职责) | 用户反问回应 A:物理不可能;触发"维度耦合误判"+ 路径依赖元洞察 |
 | 2026-05-02 22:00 | **结构补强**:用户从 Synthesis 反向回来反馈"应该有个章节讲每个 memallocator 的初衷 + 擅长 + 不擅长" → ① 加新 §1《设计动机简表》:6 个 allocator(ptmalloc 作基线 + jemalloc/tcmalloc/mimalloc/Go runtime/Rust Layout 5 个对比对象)各自 5-8 行三件事(初衷 / 擅长 / 不擅长);加 §1 总结表(快速选择推荐 / 避开场景);② 原 §1~§7 全部顺移 +1 → §2~§8;原 §X.Y 子节同步 +1 → §X+1.Y;③ §0 末尾章节预告同步更新(§1 设计动机 / §2 地图 / ... / §8 呼应灵魂);④ Comparison §6.4 内部 cross-reference 同步更新(原 §5.4 → §6.4);⑤ stage-comparison/SKILL.md 加纪律:对照篇必备 §1 设计动机简表(初衷 / 擅长 / 不擅长),反模式 #6 新增 | 用户反馈:Comparison 文档应有"每个 allocator 设计初衷 + 解决什么问题 + 擅长什么"章节;同时把这条作为 Comparison skill 的标准要求写进 SKILL.md |
 | 2026-05-02 22:30 | **§1 设计动机简表加第 4 件事:典型应用场景**:用户反馈"擅长 / 不擅长后面加一列典型应用场景" → ① 6 个 allocator 各加 §1.X《典型应用场景》小节(具体可验证的项目名,不是抽象 workload);② 跟"擅长"区分:擅长 = workload 类型(抽象);典型应用场景 = 具体项目名(锚点)。例:ptmalloc → Bash/Apache/MySQL/GIMP;jemalloc → FB/Cassandra/Redis/ScyllaDB;tcmalloc → Google 全栈/Chrome/ClickHouse;mimalloc → .NET 6+/Lean 4/Tauri;Go runtime → Kubernetes/Docker/Prometheus/HashiCorp;Rust Layout → Firefox/ripgrep/bat/Tokio;③ stage-comparison/SKILL.md 模板从 3 件事(初衷/擅长/不擅长)升级到 **4 件事**(加典型应用场景),反模式 #6 同步;④ 模板要求"典型应用场景必须是可验证的具体项目名,不能泛泛 web server";⑤ 设计意图:给读者具体锚点 → "啊,我用过 Cassandra,原来它是 jemalloc" 强化记忆 | 用户反馈:擅长/不擅长后面加一列典型应用场景 |
+| 2026-05-03 00:00 | §1.7 加新小节《用户视角凝固:快速复述 + 精确化》:用户读完 §1.1~§1.6 后做的快速复述,Claude 核对 5 处需精确化(2 处术语精确度 + 2 处时间顺序压缩 + 1 处生态位置)。① 用户原话保留(ptmalloc 最早稳定;jemalloc per-CPU 不是 per-thread;tcmalloc gRPC 优化;mimalloc MS 内部用得多);② 5 处核对:ptmalloc 性能稳定 → 兼容性 + 稳定性最佳但性能不是最优;ptmalloc per-thread → arena 是 thread-平摊池(per-thread 是 2017+ tcache);tcmalloc gRPC 优化 → 时间顺序反了(tcmalloc 2003+ / gRPC 2015+,早 12 年);tcmalloc 通用性差 → 实际开源版完整,Chrome/ClickHouse 用;mimalloc MS 内部 → 繁荣在 Rust 社区不是 MS 内部;③ 精确化后的一句话总结(4 个 allocator 各一行);④ 用户没覆盖 Go runtime + Rust Layout(SVG 横轴右半边的"改 ABI 路线");⑤ **元洞察:复述时的两类系统性偏差** —— (a) 同维度术语精确度(per-thread vs per-CPU 错位让因果链失效);(b) 时间顺序压缩("A 适配 B"前提是 A 晚于 B);⑥ 元规则:复述时"关键 ε"必须保留(术语精确度 + 时间锚点) | 用户做了简短复述(4 个 allocator 各一句),Claude 核对发现术语错位 + 时间顺序压缩两类常见偏差 |
