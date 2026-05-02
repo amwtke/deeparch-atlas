@@ -110,6 +110,12 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 - **超大并发 server**(>= 100 线程) —— `M_ARENA_MAX = 8 × cores` 撑不住,锁竞争上来
 - **ML workload** —— 完全不为 GB 级 alloc 设计,直接绕开它(PyTorch / vLLM 自己写)
 
+**典型应用场景**:
+- **大多数标准 Linux server**(默认 glibc malloc)—— Apache httpd / Nginx 默认 / MySQL / PostgreSQL 默认
+- **GNU 工具链**:Bash / Zsh / coreutils / GCC / GDB / Git
+- **嵌入式 / 单线程精简服务** —— OpenWRT / 路由器固件
+- **传统 C/C++ 桌面应用** —— GIMP / Inkscape / Audacity
+
 ### §1.2 jemalloc
 
 **初衷**:Jason Evans 2005 在 FreeBSD 内部解决 phkmalloc 的多线程瓶颈 + Solaris/Linux 大并发服务的 RSS 不可控;**Facebook 收编 Jason Evans 后**,优化超大规模 web service(数千线程 + 数百 GB 内存)的锁竞争 + RSS 控制。
@@ -124,6 +130,13 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 - **单线程小程序** —— per-CPU arena 复杂度的开销 ROI 低
 - **极致 nano 级 fast path 应用** —— metadata 外置比 chunk header 多 1 次 cache miss
 - **超大 ABI 兼容场景**(老 C 程序)—— 跟 ptmalloc 的内存布局不同,某些通过 `ptr arithmetic` 探 chunk header 的"非法"代码会崩
+
+**典型应用场景**:
+- **Facebook 全栈** —— HHVM / RocksDB / Folly / 内部数据中心服务
+- **NoSQL / 分布式数据库** —— Cassandra(`cassandra-env.sh` 默认开)/ ScyllaDB / Aerospike
+- **Redis** —— `Makefile` 默认 `MALLOC=jemalloc`
+- **FreeBSD / NetBSD** —— 系统默认 allocator
+- **Rust 早期版本**(1.x ~ 1.32 默认,后来切回 System)
 
 ### §1.3 tcmalloc
 
@@ -140,6 +153,13 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 - **size 分布发散** —— size class 边缘的 size 内部碎片率高
 - **长跑应用 + 内存敏感** —— `MALLOC_RELEASE_RATE` 默认不积极还
 
+**典型应用场景**:
+- **Google 全栈**(2003+ 内部默认) —— Spanner / Bigtable / Borg / GMail 后端
+- **Chrome 浏览器** —— 主进程 + 渲染进程都用 tcmalloc
+- **ClickHouse** 数据库 —— 高密度列存查询
+- **部分 Cloudflare / Datadog 服务**
+- **gperftools 套件** —— heap profiler / CPU profiler 配套使用
+
 ### §1.4 mimalloc
 
 **初衷**:Daan Leijen 2019 在 MS Research 重新设计 —— 反思 jemalloc / tcmalloc 复杂度高(30K LOC),想做**3K LOC + 极小开销 + 现代默认就友好**;面向 Rust / .NET / 现代 cloud-native workload。
@@ -154,6 +174,13 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 **不擅长**:
 - **生态成熟度**(2019 起,vs jemalloc 2008)—— 部分 corner case patches 持续在收
 - **超长稳定性需求场景**(7×24 几十年)—— 历史不够长,大型生产案例少于 jemalloc / tcmalloc
+
+**典型应用场景**:
+- **.NET 6+ runtime** —— 默认 allocator,Microsoft 官方推荐
+- **Rust 现代社区主流**(2022+) —— 大量项目从 jemalloc 切到 mimalloc
+- **Lean 4 语言运行时** + Daan Leijen 自己设计的 **Koka 函数式语言**
+- **Microsoft Linux 容器服务** —— Azure 内部 + 部分外部服务
+- **Tauri 2.0+** 桌面应用框架
 
 ### §1.5 Go runtime malloc
 
@@ -170,6 +197,13 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 - **GC pause 敏感场景** —— Go GC 整合让 alloc 路径牵涉 GC 协调,极致低延迟应用要 tune GC
 - **手动控制内存** —— Go 不暴露 free,用户没有"立即 deallocate"的接口
 
+**典型应用场景**:
+- **Cloud-native 全栈基础设施** —— Kubernetes / Docker daemon / containerd / cri-o
+- **Observability** —— Prometheus / Grafana / Jaeger / OpenTelemetry collector
+- **HashiCorp 全栈** —— Terraform / Consul / Vault / Nomad
+- **CI/CD** —— GitLab Runner / Argo CD / Flux
+- **Cloud-native CLI** —— `kubectl` / `helm` / `etcdctl` / `gh`
+
 ### §1.6 Rust `Layout` allocator
 
 **初衷**:Rust 2017+ 加 `core::alloc::Layout` API,要求每次 alloc/free 都传 `Layout { size, align }`;**完全消解 [C5](#c5)**(sized dealloc),让底层 allocator 理论上可以扔掉 chunk header 的 size 字段;**编译器自动填 layout**(用户不会传错)。
@@ -184,6 +218,13 @@ Deep 阶段你看到了 ptmalloc 三条主路径(tcache / brk / mmap)的真实 c
 - **理论的精简没拿到** —— 默认 `System` allocator(= glibc malloc)仍背 chunk header 债;社区主流换 mimalloc 才友好
 - **跨语言** —— `Layout` 是 Rust 概念;链接 C 库还得回到 C ABI(背 [C5](#c5))
 - **C ABI 兼容场景** —— FFI 边界仍要走 `malloc` / `free`,精简没用
+
+**典型应用场景**:
+- **Firefox** —— Servo 渲染引擎部分 + 现代 Rust 化模块
+- **Cargo / rustup / crates.io 工具链**
+- **现代 CLI 工具**(性能敏感且单二进制) —— `ripgrep` / `bat` / `fd` / `bottom` / `zoxide` / `tokei`
+- **Tauri 桌面应用** —— Rust + Web 前端,跨平台桌面框架
+- **Tokio async runtime** + **`hyper` / `reqwest`** HTTP 生态
 
 ### §1 总结表(快速选择)
 
@@ -596,3 +637,4 @@ A 的论点是:"chunk header 占 RSS → 容器内必然 OOM"。但**精确算 c
 | 2026-05-02 19:30 | 初稿:严格按新「Stage 开场对齐纪律」(渐进式 + 追加 reconfirm)走完 4 步对齐(同领域 vs 跨领域 → 全景扫描 → 6 维度 → 加 docker/k8s 容器友好性 → 用户 OK)后生成。§0 三件事(同问题不同解 / 6 维度地图 / 容器友好是 2026 关键);§1 设计空间 SVG;§2 5 个 allocator 简介(jemalloc / tcmalloc / mimalloc / Go runtime / Rust Layout);§3 6 维度横向汇总(分两子表);§4 docker/k8s 容器友好性专门展开(呼应 Deep §4.5);§5 元洞察(5 条平行演化路径 + 用户贡献的 3 条元规则在每个 allocator 的体现);§6 约束回扣(6 allocator × 7 约束矩阵);§7 呼应灵魂(从设计空间高度的最终答案,没有唯一最优解);总长 ~750-800 行 | Comparison 阶段对齐完成,用户在追加 reconfirm 后说 OK |
 | 2026-05-02 21:00 | §5.4 加新小节《空白象限揭示路径依赖,不是物理约束》(顺移后位于 §6.4):用户对反问"SVG 左上空白象限为什么没有 allocator?"选 A(物理不可能)。Claude 精确化为 D+C 混合(A 不成立)。① 算 chunk header overhead(典型 5-10%,不会引发 OOM);② 强调 SVG 两轴物理正交(C5 化解 vs C2 摊薄独立);③ 真正答案 = D(实际有,调过 ptmalloc 在左上)+ C(历史路径依赖,2008+ 大家同时改两维度);④ 提炼最深元洞察:"看 2D 设计空间空白象限,先问两轴是否正交 + 路径依赖,别立刻下物理不可能";⑤ 类比延伸到 OLTP/OLAP / 静态动态语言 / CAP / 网络栈 4 个场景的"空白象限实际是路径依赖"案例;⑥ 用户贡献给 atlas 第一性原理方法论的**第 4 条元规则:空白象限是路径依赖,不是物理约束**(前 3 条:约束反向演化 / 约束不可再分性是复合 / 分层职责) | 用户反问回应 A:物理不可能;触发"维度耦合误判"+ 路径依赖元洞察 |
 | 2026-05-02 22:00 | **结构补强**:用户从 Synthesis 反向回来反馈"应该有个章节讲每个 memallocator 的初衷 + 擅长 + 不擅长" → ① 加新 §1《设计动机简表》:6 个 allocator(ptmalloc 作基线 + jemalloc/tcmalloc/mimalloc/Go runtime/Rust Layout 5 个对比对象)各自 5-8 行三件事(初衷 / 擅长 / 不擅长);加 §1 总结表(快速选择推荐 / 避开场景);② 原 §1~§7 全部顺移 +1 → §2~§8;原 §X.Y 子节同步 +1 → §X+1.Y;③ §0 末尾章节预告同步更新(§1 设计动机 / §2 地图 / ... / §8 呼应灵魂);④ Comparison §6.4 内部 cross-reference 同步更新(原 §5.4 → §6.4);⑤ stage-comparison/SKILL.md 加纪律:对照篇必备 §1 设计动机简表(初衷 / 擅长 / 不擅长),反模式 #6 新增 | 用户反馈:Comparison 文档应有"每个 allocator 设计初衷 + 解决什么问题 + 擅长什么"章节;同时把这条作为 Comparison skill 的标准要求写进 SKILL.md |
+| 2026-05-02 22:30 | **§1 设计动机简表加第 4 件事:典型应用场景**:用户反馈"擅长 / 不擅长后面加一列典型应用场景" → ① 6 个 allocator 各加 §1.X《典型应用场景》小节(具体可验证的项目名,不是抽象 workload);② 跟"擅长"区分:擅长 = workload 类型(抽象);典型应用场景 = 具体项目名(锚点)。例:ptmalloc → Bash/Apache/MySQL/GIMP;jemalloc → FB/Cassandra/Redis/ScyllaDB;tcmalloc → Google 全栈/Chrome/ClickHouse;mimalloc → .NET 6+/Lean 4/Tauri;Go runtime → Kubernetes/Docker/Prometheus/HashiCorp;Rust Layout → Firefox/ripgrep/bat/Tokio;③ stage-comparison/SKILL.md 模板从 3 件事(初衷/擅长/不擅长)升级到 **4 件事**(加典型应用场景),反模式 #6 同步;④ 模板要求"典型应用场景必须是可验证的具体项目名,不能泛泛 web server";⑤ 设计意图:给读者具体锚点 → "啊,我用过 Cassandra,原来它是 jemalloc" 强化记忆 | 用户反馈:擅长/不擅长后面加一列典型应用场景 |
