@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"
+     font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="600" fill="#0a0c10"/>
+
+  <text x="600" y="32" fill="#e0e0e0" font-size="20" font-weight="bold" text-anchor="middle">glibc malloc 演化时间线(1987 → 2026)</text>
+  <text x="600" y="55" fill="#888" font-size="13" text-anchor="middle">每一步都是新约束推动 —— 1987 还没 C7,2017 C7 加深;每代叠加上一代,不重写</text>
+
+  <!-- 主时间轴 -->
+  <line x1="80" y1="240" x2="1130" y2="240" stroke="#888" stroke-width="2"/>
+  <polygon points="1125,234 1140,240 1125,246" fill="#888"/>
+  <text x="60" y="245" fill="#666" font-size="11" text-anchor="end">主线</text>
+
+  <!-- ===== 节点 1: 1987 dlmalloc(关键里程碑) ===== -->
+  <circle cx="140" cy="240" r="11" fill="#1e5f3a" stroke="#40c060" stroke-width="2.5"/>
+  <text x="140" y="115" fill="#88ff88" font-size="17" font-weight="bold" text-anchor="middle">1987</text>
+  <text x="140" y="138" fill="#88ff88" font-size="13" font-weight="bold" text-anchor="middle">dlmalloc</text>
+  <text x="140" y="156" fill="#aaa" font-size="11" text-anchor="middle">Doug Lea</text>
+  <text x="140" y="172" fill="#888" font-size="10" text-anchor="middle">@SUNY Oswego</text>
+  <text x="140" y="188" fill="#666" font-size="9" font-style="italic" text-anchor="middle">libg++ 烦躁</text>
+  <line x1="140" y1="200" x2="140" y2="229" stroke="#40c060" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <text x="140" y="275" fill="#88ff88" font-size="11" font-weight="bold" text-anchor="middle">面对约束</text>
+  <text x="140" y="293" fill="#88ff88" font-size="11" text-anchor="middle">C1·C2·C5·C6</text>
+  <text x="140" y="318" fill="#aaa" font-size="11" font-weight="bold" text-anchor="middle">引入</text>
+  <text x="140" y="335" fill="#aaa" font-size="10" text-anchor="middle">boundary tag</text>
+  <text x="140" y="350" fill="#aaa" font-size="10" text-anchor="middle">+ bin 分桶</text>
+  <text x="140" y="365" fill="#aaa" font-size="10" text-anchor="middle">+ best-fit</text>
+  <text x="140" y="395" fill="#666" font-size="10" font-style="italic" text-anchor="middle">— 无 C7 —</text>
+  <text x="140" y="410" fill="#666" font-size="10" font-style="italic" text-anchor="middle">单线程时代</text>
+
+  <!-- ===== 节点 2: 1994 wilderness(渐进改进) ===== -->
+  <circle cx="305" cy="240" r="8" fill="#3a1e5f" stroke="#8040c0" stroke-width="2"/>
+  <text x="305" y="115" fill="#c088ff" font-size="14" font-weight="bold" text-anchor="middle">1994</text>
+  <text x="305" y="138" fill="#c088ff" font-size="12" text-anchor="middle">wilderness</text>
+  <text x="305" y="156" fill="#aaa" font-size="11" text-anchor="middle">+ mmap 阈值</text>
+  <text x="305" y="172" fill="#888" font-size="10" text-anchor="middle">Doug Lea + Vo</text>
+  <line x1="305" y1="184" x2="305" y2="232" stroke="#8040c0" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <text x="305" y="275" fill="#c088ff" font-size="11" font-weight="bold" text-anchor="middle">+ 约束</text>
+  <text x="305" y="293" fill="#c088ff" font-size="11" text-anchor="middle">C4(整页)</text>
+  <text x="305" y="318" fill="#aaa" font-size="11" font-weight="bold" text-anchor="middle">引入</text>
+  <text x="305" y="335" fill="#aaa" font-size="10" text-anchor="middle">top_chunk</text>
+  <text x="305" y="350" fill="#aaa" font-size="10" text-anchor="middle">+ M_MMAP_THRESHOLD</text>
+  <text x="305" y="365" fill="#aaa" font-size="10" text-anchor="middle">= 128 KB</text>
+
+  <!-- ===== 节点 3: 1996 ptmalloc fork(临时方案) ===== -->
+  <circle cx="465" cy="240" r="9" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+  <text x="465" y="115" fill="#ffaa55" font-size="16" font-weight="bold" text-anchor="middle">1996</text>
+  <text x="465" y="138" fill="#ffaa55" font-size="13" font-weight="bold" text-anchor="middle">ptmalloc</text>
+  <text x="465" y="156" fill="#aaa" font-size="11" text-anchor="middle">Wolfram Gloger</text>
+  <text x="465" y="172" fill="#888" font-size="10" text-anchor="middle">fork dlmalloc</text>
+  <text x="465" y="188" fill="#666" font-size="9" font-style="italic" text-anchor="middle">POSIX threads</text>
+  <line x1="465" y1="200" x2="465" y2="231" stroke="#c08040" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <text x="465" y="275" fill="#ffaa55" font-size="11" font-weight="bold" text-anchor="middle">+ 约束 ⚠️</text>
+  <text x="465" y="293" fill="#ffaa55" font-size="11" font-weight="bold" text-anchor="middle">C7(多线程)</text>
+  <text x="465" y="318" fill="#aaa" font-size="11" font-weight="bold" text-anchor="middle">引入(临时)</text>
+  <text x="465" y="335" fill="#aaa" font-size="10" text-anchor="middle">单全局锁</text>
+  <text x="465" y="350" fill="#aaa" font-size="10" text-anchor="middle">+ thread-safe</text>
+  <text x="465" y="380" fill="#666" font-size="10" font-style="italic" text-anchor="middle">10 年摸索期</text>
+  <text x="465" y="395" fill="#666" font-size="10" font-style="italic" text-anchor="middle">→ multi-arena</text>
+
+  <!-- ===== 节点 4: 2006-01 ptmalloc2 (关键里程碑) ===== -->
+  <circle cx="660" cy="240" r="13" fill="#1e5f3a" stroke="#40c060" stroke-width="3"/>
+  <text x="660" y="115" fill="#88ff88" font-size="17" font-weight="bold" text-anchor="middle">2006-01</text>
+  <text x="660" y="138" fill="#88ff88" font-size="13" font-weight="bold" text-anchor="middle">ptmalloc2</text>
+  <text x="660" y="156" fill="#88ff88" font-size="11" text-anchor="middle">入 glibc 2.3.x</text>
+  <text x="660" y="172" fill="#aaa" font-size="11" text-anchor="middle">基于 dlmalloc-2.8.3</text>
+  <text x="660" y="188" fill="#888" font-size="10" text-anchor="middle">Wolfram Gloger</text>
+  <line x1="660" y1="200" x2="660" y2="227" stroke="#40c060" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <text x="660" y="275" fill="#88ff88" font-size="11" font-weight="bold" text-anchor="middle">真正解决 C7</text>
+  <text x="660" y="293" fill="#88ff88" font-size="10" text-anchor="middle">(锁分离 = 数据分离)</text>
+  <text x="660" y="318" fill="#aaa" font-size="11" font-weight="bold" text-anchor="middle">引入</text>
+  <text x="660" y="335" fill="#aaa" font-size="10" text-anchor="middle">multi-arena</text>
+  <text x="660" y="350" fill="#aaa" font-size="10" text-anchor="middle">+ per-arena lock</text>
+  <text x="660" y="365" fill="#aaa" font-size="10" text-anchor="middle">+ M_ARENA_MAX=8N</text>
+  <text x="660" y="380" fill="#aaa" font-size="10" text-anchor="middle">+ 1MB 对齐位压缩</text>
+  <text x="660" y="410" fill="#666" font-size="10" font-style="italic" text-anchor="middle">dlmalloc &amp; glibc 分家</text>
+
+  <!-- ===== 节点 5: 2017 tcache(关键里程碑 + 安全权衡) ===== -->
+  <circle cx="855" cy="240" r="11" fill="#1e3a5f" stroke="#4080c0" stroke-width="2.5"/>
+  <text x="855" y="115" fill="#88c0ff" font-size="17" font-weight="bold" text-anchor="middle">2017</text>
+  <text x="855" y="138" fill="#88c0ff" font-size="13" font-weight="bold" text-anchor="middle">tcache</text>
+  <text x="855" y="156" fill="#88c0ff" font-size="11" text-anchor="middle">glibc 2.26</text>
+  <text x="855" y="172" fill="#aaa" font-size="11" text-anchor="middle">DJ Delorie 等</text>
+  <text x="855" y="188" fill="#888" font-size="10" text-anchor="middle">glibc 团队</text>
+  <line x1="855" y1="200" x2="855" y2="229" stroke="#4080c0" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <text x="855" y="275" fill="#88c0ff" font-size="11" font-weight="bold" text-anchor="middle">C7 进一步加深</text>
+  <text x="855" y="293" fill="#88c0ff" font-size="10" text-anchor="middle">(多核普及,arena 锁也热)</text>
+  <text x="855" y="318" fill="#aaa" font-size="11" font-weight="bold" text-anchor="middle">引入</text>
+  <text x="855" y="335" fill="#aaa" font-size="10" text-anchor="middle">per-thread cache</text>
+  <text x="855" y="350" fill="#aaa" font-size="10" text-anchor="middle">64 桶 × 7 chunk</text>
+  <text x="855" y="365" fill="#aaa" font-size="10" text-anchor="middle">完全免锁</text>
+  <text x="855" y="395" fill="#ff8888" font-size="10" font-weight="bold" font-style="italic" text-anchor="middle">⚠ 安全权衡</text>
+  <text x="855" y="410" fill="#ff8888" font-size="10" font-style="italic" text-anchor="middle">CVE-2017-17426</text>
+
+  <!-- ===== 节点 6: 2026 今天 ===== -->
+  <circle cx="1050" cy="240" r="8" fill="#0f1218" stroke="#888" stroke-width="2"/>
+  <text x="1050" y="115" fill="#aaa" font-size="14" font-weight="bold" text-anchor="middle">2026</text>
+  <text x="1050" y="138" fill="#aaa" font-size="12" text-anchor="middle">今天</text>
+  <text x="1050" y="156" fill="#aaa" font-size="11" text-anchor="middle">glibc 2.40+</text>
+  <line x1="1050" y1="170" x2="1050" y2="232" stroke="#888" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <text x="1050" y="275" fill="#aaa" font-size="11" font-weight="bold" text-anchor="middle">C1~C7 全套</text>
+  <text x="1050" y="293" fill="#aaa" font-size="10" text-anchor="middle">+ 安全 patch 持续</text>
+  <text x="1050" y="318" fill="#aaa" font-size="11" font-weight="bold" text-anchor="middle">现有形态</text>
+  <text x="1050" y="335" fill="#aaa" font-size="10" text-anchor="middle">tcache + arena</text>
+  <text x="1050" y="350" fill="#aaa" font-size="10" text-anchor="middle">+ chunk + bin</text>
+  <text x="1050" y="365" fill="#aaa" font-size="10" text-anchor="middle">+ tcache key 等</text>
+
+  <!-- ===== 支线分割线 ===== -->
+  <line x1="80" y1="475" x2="1130" y2="475" stroke="#666" stroke-width="1" stroke-dasharray="6,4"/>
+  <text x="80" y="465" fill="#666" font-size="11" font-style="italic">支线(平行演化,glibc 主线之外 — Comparison 阶段会精确对比):</text>
+
+  <!-- 支线: 2007 tcmalloc -->
+  <circle cx="755" cy="495" r="6" fill="#5f1e1e" stroke="#c04040" stroke-width="1.5"/>
+  <text x="755" y="487" fill="#ff8888" font-size="11" font-weight="bold" text-anchor="middle">2007 tcmalloc</text>
+  <text x="755" y="513" fill="#aaa" font-size="10" text-anchor="middle">Sanjay Ghemawat @ Google</text>
+  <text x="755" y="528" fill="#888" font-size="9" text-anchor="middle">thread-local cache + 中央 heap</text>
+  <text x="755" y="542" fill="#888" font-size="9" font-style="italic" text-anchor="middle">比 glibc tcache 早 10 年</text>
+
+  <!-- 支线: 2008 jemalloc -->
+  <circle cx="935" cy="495" r="6" fill="#5f1e1e" stroke="#c04040" stroke-width="1.5"/>
+  <text x="935" y="487" fill="#ff8888" font-size="11" font-weight="bold" text-anchor="middle">2008 jemalloc</text>
+  <text x="935" y="513" fill="#aaa" font-size="10" text-anchor="middle">Jason Evans @ FreeBSD 7.0</text>
+  <text x="935" y="528" fill="#888" font-size="9" text-anchor="middle">per-CPU arena(不是 per-thread)</text>
+  <text x="935" y="542" fill="#888" font-size="9" font-style="italic" text-anchor="middle">FB / Rust 默认 allocator</text>
+
+  <!-- 支线箭头(从 2007/2008 指向今天) -->
+  <line x1="755" y1="500" x2="755" y2="565" stroke="#c04040" stroke-width="1" stroke-dasharray="4,3" opacity="0.5"/>
+  <line x1="935" y1="500" x2="935" y2="565" stroke="#c04040" stroke-width="1" stroke-dasharray="4,3" opacity="0.5"/>
+  <text x="845" y="585" fill="#666" font-size="10" font-style="italic" text-anchor="middle">这两条支线影响了 2017 glibc tcache 的设计灵感</text>
+
+  <!-- ===== 图例 ===== -->
+  <g transform="translate(80,90)">
+    <text x="0" y="0" fill="#aaa" font-size="11" font-weight="bold">图例</text>
+    <circle cx="7" cy="14" r="6" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+    <text x="20" y="18" fill="#88ff88" font-size="10">关键里程碑</text>
+    <circle cx="7" cy="32" r="5" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+    <text x="20" y="36" fill="#c088ff" font-size="10">渐进改进</text>
+    <circle cx="7" cy="50" r="5" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+    <text x="20" y="54" fill="#ffaa55" font-size="10">临时方案</text>
+    <circle cx="7" cy="68" r="5" fill="#5f1e1e" stroke="#c04040" stroke-width="1.5"/>
+    <text x="20" y="72" fill="#ff8888" font-size="10">支线</text>
+  </g>
+</svg>

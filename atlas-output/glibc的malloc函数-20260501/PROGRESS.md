@@ -5,8 +5,8 @@
 - **短名**: glibc的malloc函数
 - **工作目录**: atlas-output/glibc的malloc函数-20260501/
 - **创建时间**: 2026-05-01T22:30:00+08:00
-- **上次更新**: 2026-05-02T12:30:00+08:00
-- **当前阶段**: Origin(刚开始)
+- **上次更新**: 2026-05-02T13:00:00+08:00
+- **当前阶段**: Origin(初稿完成,等用户反馈或推进信号)
 
 ## 灵魂问题(Discovery 收集)
 > "malloc 要解决的工程问题是什么?"
@@ -68,7 +68,7 @@
 - 第 13 次反馈修复(2026-05-02 12:05):用户截图反馈 markdown viewer 把表格内的 `<a id="c1"></a>` 当作纯文本显示了,锚点 HTML 标签在视觉上很丑 —— viewer 不解析表格 cell 内的 inline HTML(GFM/CommonMark strict mode 行为) → 弃用表格 + HTML 锚点方案,改用 markdown 标题级别锚点:把 7 条约束改写成 7 个 `####` 小标题段(`#### C1 — 高频小块`),markdown viewer 自动给标题生成 `id="c1"~c7"` 锚点(GFM 标准),链接 `[C5](#c5)` 跨 viewer 兼容;每段 3 行紧凑(约束 + 不可再分 + 口诀);避免了表格内 inline HTML 的渲染问题,outline 中也能直接看到 7 条 Cn 跳转
 
 ### Origin 阶段
-- (无)
+- 第 1 次产物初稿(2026-05-02 13:00):严格按 Stage 产物结构纲领 + Origin 起承转合;web search + WebFetch 4 次拉一手资料(Doug Lea 1996 paper / Wikipedia C 内存分配 / sploitfun glibc 综述 / DJ Delorie 邮件)。§0 三件事 = 三时代里程碑(1987 dlmalloc / 2006 ptmalloc2 入 glibc / 2017 tcache);§1 时间线鸟瞰 SVG(figures/04-timeline.svg,viewBox 1200×600,6 主线节点 + 2 支线 jemalloc/tcmalloc,xmllint 通过);§2~§5 起承转合(Doug Lea 1987 烦躁 + 失败方向 + Knuth trick 组合 / 1996 C7 浮现 + 两条死胡同 / Gloger multi-arena + 1MB 对齐位压缩 / 2017 tcache + 安全权衡 + Doug Lea 反思原话);§6 历史约束 vs 今天(组件"时代债"对照表,提炼"叠加 ≠ 技术债"洞察);§7 约束回扣(每组件 = 出生时代 Cn 子集);§8 呼应灵魂(95% 闭环 + 🌉 分水岭三选项);§9 一手资料(10 条带 URL);§10 信息缺口(5 处坦诚标注无一手资料,如 Gloger 1996-2006 间设计路径 / M_ARENA_MAX=8 推导 / tcache 安全权衡内部讨论)
 
 ### 分水岭
 - (无)
