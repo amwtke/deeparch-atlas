@@ -150,6 +150,7 @@ Hard rules:
 
 - **Top constraint quick-reference uses `#### Cn — phrase` markdown headings** (GFM auto-generates `id="c1"` anchors). **Never** put `<a id="c1"></a>` inside table cells — most viewers (VS Code default, CommonMark strict) don't parse inline HTML in tables and will render the tags as literal text.
 - **每个 stage 文档独立完整列约束速查** —— 不要用 "同 stages/03-how.md 顶部速查表" 这种 reference 偷懒。`[C1](#c1)` 锚点链接只在本文件内有效;跨文件 reference 不一定跳。每个 stage 文档要自包含。详见 anti-pattern 17.
+- **约束数量 n 由主题复杂度动态决定,不预设** —— 简单主题(具体算法)3~4 条;中等(malloc / B+树)5~7 条;复杂(分布式共识 / GC)8~12 条。**严禁硬编码 "7 条"**(那是 malloc 主题的偶然结果)。skill 文件里所有 "约束" 引用用 "C1~Cn" / "n 条" 等动态表达。详见 `skills/stage-why/SKILL.md` 「约束清单的数量」+ anti-pattern 18.
 - **§0 "三件事" must be exactly 3** (not 5, not 7). Each construct derived via 「因为 Cx + Cy → 要解决 ZZZ → 所以引入 <construct>」. End with a 2-column comparison table (是什么 / 为什么存在).
 - **§1 overview SVG is separate from the detail SVG**:
   - `figures/0X-overview.svg` (~1200×500, bird's-eye, used in §1)
