@@ -5,8 +5,8 @@
 - **短名**: glibc的malloc函数
 - **工作目录**: atlas-output/glibc的malloc函数-20260501/
 - **创建时间**: 2026-05-01T22:30:00+08:00
-- **上次更新**: 2026-05-02T16:00:00+08:00
-- **当前阶段**: Deep(**重启** —— 用户要求删除上一版 05-deep.md + 05-mechanism-network.svg,按新纪律「Stage 开场对齐纪律」从对齐问题开始重新走。Origin 保留不动)
+- **上次更新**: 2026-05-02T17:00:00+08:00
+- **当前阶段**: Deep(**重启 + 目录结构调整** —— 用户要求:① 删除上一版 05-deep.md + 05-mechanism-network.svg;② 按新「Stage 开场对齐纪律」(渐进式 + 追加 reconfirm)重新走;③ 新目录结构每个 stage 自包含,顶级 figures/ 已废弃;Origin 保留,但路径调整为 stages/04-origin/)
 
 ## 灵魂问题(Discovery 收集)
 > "malloc 要解决的工程问题是什么?"

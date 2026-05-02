@@ -144,7 +144,7 @@ description: atlas 的 user-pacing gatekeeper —— 每段教学讲完后协调
 
 stage skill 用本协议时,要在自己的执行流程里明确:
 
-1. **当前 stage 文件路径**(如 `atlas-output/<短名>-<yyyymmdd>/stages/01-what.md`) —— 用于 patch
+1. **当前 stage 文件路径**(如 `atlas-output/<短名>-<yyyymmdd>/stages/01-what/01-what.md`) —— 用于 patch
 2. **下一阶段子 skill 路径**(如 `skills/stage-why/SKILL.md`) —— 用户明确推进时加载
 3. **本阶段反问素材**(可选) —— 反问应贴当前内容的边缘,由 stage skill 临场生成最贴
 

@@ -77,7 +77,7 @@ Full spec in entry `SKILL.md` 「概念引入纪律」 (the discipline section, 
 
 For **complex multi-element relationships** (multi-view diagrams, nested hierarchies, state machines, dataflow, comparison matrices with 3+ axes), **draw a figure** instead of relying on prose. When ASCII can't render it cleanly (typically >50 lines), **use SVG** with markdown image syntax `![](path.svg)` — SVG renders inline in virtually every markdown viewer (VS Code, Typora, GitHub, Obsidian, Marked.app …), so the user sees the figure without clicking a link.
 
-- Figures live in `atlas-output/<short>-<yyyymmdd>/figures/`, sibling to `stages/`
+- Figures live in `atlas-output/<short>-<yyyymmdd>/stages/0X-stage/pics/`, **inside** the per-stage directory (each stage is self-contained — markdown, pics, src all in one folder; no top-level `figures/`)
 - Filename: `<stage-number>-<topic-slug>.svg` (e.g., `03-physical-vs-logical.svg`)
 - **SVG is the default**; HTML is **optional** for richer wrappers (e.g., adding `<div class="takeaways">`/`<div class="insight">` callouts around the SVG). When HTML is generated, also save the standalone SVG — markdown should always link to the SVG, never to the HTML alone (which can't render inline)
 - **SVG must include its own dark background** as the first element: `<rect width="..." height="..." fill="#0a0c10"/>`. Without this, light-themed viewers show light text on light background = unreadable
@@ -87,9 +87,9 @@ For **complex multi-element relationships** (multi-view diagrams, nested hierarc
   - special-position green (top_chunk, entry nodes) `#1e5f3a` / `#40c060` / text `#88ff88`
   - metadata orange (fastbin, flags) `#5f3a1e` / `#c08040` / text `#ffaa55`
   - index purple (bins[], headers) `#3a1e5f` / `#8040c0` / text `#c088ff`
-- Reference: `atlas-output/glibc的malloc函数-20260501/figures/03-physical-vs-logical.svg`
+- Reference: `atlas-output/glibc的malloc函数-20260501/stages/03-how/pics/03-physical-vs-logical.svg`
 
-In the markdown stage file: `![<short caption>](../figures/<stage-id>-<topic>.svg)` + 1–3 lines of text context. **Do not embed 50-line ASCII art** and **do not rely on HTML-only links** — both fail to render inline.
+In the markdown stage file: `![<short caption>](pics/<stage-id>-<topic>.svg)` + 1–3 lines of text context. (The stage markdown is at the same level as `pics/`, so just `pics/...` — no `../`.) **Do not embed 50-line ASCII art** and **do not rely on HTML-only links** — both fail to render inline.
 
 Full spec in entry `SKILL.md` 「图示偏好」 + anti-pattern #13.
 
@@ -171,18 +171,18 @@ Every `stages/0X-stage.md` for stages **after Why** (How / Origin / Deep / Compa
 Hard rules:
 
 - **Top constraint quick-reference uses `#### Cn — phrase` markdown headings** (GFM auto-generates `id="c1"` anchors). **Never** put `<a id="c1"></a>` inside table cells — most viewers (VS Code default, CommonMark strict) don't parse inline HTML in tables and will render the tags as literal text.
-- **每个 stage 文档独立完整列约束速查** —— 不要用 "同 stages/03-how.md 顶部速查表" 这种 reference 偷懒。`[C1](#c1)` 锚点链接只在本文件内有效;跨文件 reference 不一定跳。每个 stage 文档要自包含。详见 anti-pattern 17.
+- **每个 stage 文档独立完整列约束速查** —— 不要用 "同 stages/03-how/03-how.md 顶部速查表" 这种 reference 偷懒。`[C1](#c1)` 锚点链接只在本文件内有效;跨文件 reference 不一定跳。每个 stage 文档要自包含。详见 anti-pattern 17.
 - **约束数量 n 由主题复杂度动态决定,不预设** —— 简单主题(具体算法)3~4 条;中等(malloc / B+树)5~7 条;复杂(分布式共识 / GC)8~12 条。**严禁硬编码 "7 条"**(那是 malloc 主题的偶然结果)。skill 文件里所有 "约束" 引用用 "C1~Cn" / "n 条" 等动态表达。详见 `skills/stage-why/SKILL.md` 「约束清单的数量」+ anti-pattern 18.
 - **§0 "三件事" must be exactly 3** (not 5, not 7). Each construct derived via 「因为 Cx + Cy → 要解决 ZZZ → 所以引入 <construct>」. End with a 2-column comparison table (是什么 / 为什么存在).
 - **§1 overview SVG is separate from the detail SVG**:
-  - `figures/0X-overview.svg` (~1200×500, bird's-eye, used in §1)
-  - `figures/0X-<topic>.svg` (any size, full structure, used inside §2~§N specific subsections)
+  - `stages/0X-stage/pics/0X-overview.svg` (~1200×500, bird's-eye, used in §1)
+  - `stages/0X-stage/pics/0X-<topic>.svg` (any size, full structure, used inside §2~§N specific subsections)
 - **Section numbering** with §X / §X.Y / §X.Y.Z for navigability — outline-friendly in VS Code/Typora; cross-stage references like "§4.3 references 02-why.md §2.4" stay precise.
 - Quick-reference and revision-record sections are unnumbered (use `## 约束清单速查` / `## 修订记录`).
 
 Full spec in entry `SKILL.md` 「Stage 产物结构纲领」 + anti-patterns 14, 15.
 
-Reference implementation: `atlas-output/glibc的malloc函数-20260501/stages/03-how.md` (the first stage file built to this spec — copy its skeleton when starting a new stage file).
+Reference implementation: `atlas-output/glibc的malloc函数-20260501/stages/03-how/03-how.md` (the first stage file built to this spec — copy its skeleton when starting a new stage file). Note the directory layout: `stages/03-how/03-how.md` + `stages/03-how/pics/*.svg` — each stage self-contained.
 
 ## Working-directory contract (runtime, per topic)
 
@@ -190,11 +190,23 @@ When `/atlas <topic>` runs, sub-skills create and read a per-topic workspace **r
 
 ```
 atlas-output/<short>-<yyyymmdd>/
-  ├── PROGRESS.md           ← state machine (metadata records original topic + short name)
-  ├── stages/0X-stage.md    ← per-stage outputs (immediate write)
-  ├── <short>-atlas.md      ← final fused doc (only after Synthesis)
-  └── <short>-atlas.html    ← optional, dark-tech style
+  ├── PROGRESS.md                       ← state machine
+  ├── stages/                           ← each stage = self-contained directory
+  │   ├── 01-what/
+  │   │   ├── 01-what.md                ← stage markdown (immediate write)
+  │   │   ├── pics/                     ← figures (SVG/HTML/PNG)
+  │   │   └── src/                      ← (optional) demo code, mandatory for Deep
+  │   ├── 02-why/
+  │   │   └── 02-why.md
+  │   ├── 03-how/
+  │   │   ├── 03-how.md
+  │   │   └── pics/03-overview.svg, ...
+  │   └── ...
+  ├── <short>-atlas.md                  ← final fused doc (only after Synthesis)
+  └── <short>-atlas.html                ← optional, dark-tech style
 ```
+
+Discipline: each stage folder is **self-contained** (md + pics + src all in one place). The top-level `figures/` folder is deprecated. Stage markdown references images via `pics/<file>` (same-directory relative path), no `../`.
 
 Path conventions:
 - `<short>` is the topic slug — **≤20 chars**, derived in entry `SKILL.md`. If the user's topic is already ≤20 chars use it verbatim (`malloc`, `io_uring`, `B+树`, `glibc的malloc函数`); if longer, the entry **asks the user** for a slug rather than guessing.

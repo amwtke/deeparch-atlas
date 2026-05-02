@@ -111,7 +111,7 @@ How 阶段你已经知道 ptmalloc2 大致怎么工作 —— chunk + bin + aren
 
 §0 给了你三个里程碑的"为什么";这张图给你这 40 年时间线的**横向鸟瞰**:
 
-![dlmalloc → ptmalloc → ptmalloc2 → tcache 时间线](../figures/04-timeline.svg)
+![dlmalloc → ptmalloc → ptmalloc2 → tcache 时间线](pics/04-timeline.svg)
 
 **几件能从图上读出来的事**:
 

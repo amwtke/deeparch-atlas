@@ -15,7 +15,7 @@ description: atlas 套件的 What 阶段教学子 skill。讲解一个技术"是
 
 ## 讲解结构(150~250 行)
 
-输出到 `stages/01-what.md`,结构如下:
+输出到 `stages/01-what/01-what.md`,结构如下:
 
 ```markdown
 # 阶段 1:<主题> 是什么
@@ -89,11 +89,11 @@ description: atlas 套件的 What 阶段教学子 skill。讲解一个技术"是
 - 用户答"轮廓" → "用哪个领域类比比较顺(物理 / 数学 / 日常 / 工程系统)?"
 - 用户答类比 → "全景图你想看概念形状,还是想看主要部件的结构?"
 - 用户答结构图 → "你已经知道哪些相关概念?Claude 避开重复"
-- 用户答"够了" → **进入"追加 reconfirm"**(不要立刻写;按入口 SKILL.md「追加 reconfirm」明确问"我已经清楚目标了 —— 你还有什么问题要追加吗?如果没有我就去写 stages/01-what.md 了")
+- 用户答"够了" → **进入"追加 reconfirm"**(不要立刻写;按入口 SKILL.md「追加 reconfirm」明确问"我已经清楚目标了 —— 你还有什么问题要追加吗?如果没有我就去写 stages/01-what/01-what.md 了")
 
 **严禁一次列 5 个问题**;**严禁 Claude 觉得清楚了就直接写**。收敛信号:用户的方向 / 类比 / 全景深度 / 已知背景都已明确,**且用户明确说"没有追加,可以写"**。
 
-### 第三步:写第一稿到 stages/01-what.md
+### 第三步:写第一稿到 stages/01-what/01-what.md
 
 按上面结构,生成 What 阶段的初稿。
 
@@ -106,12 +106,12 @@ description: atlas 套件的 What 阶段教学子 skill。讲解一个技术"是
 
 ### 第四步:在对话中**自然地**讲清楚要点 + 抛反问
 
-**不要说**"What 阶段已写入 stages/01-what.md(共 XX 行)"。这是管道术语,违反对话语言纪律。
+**不要说**"What 阶段已写入 stages/01-what/01-what.md(共 XX 行)"。这是管道术语,违反对话语言纪律。
 
 改说(示例,临场调整,核心是**自然 + 留路径让用户找到产物**):
 
 ```
-我先把 <主题> 的轮廓画了一下,草稿放在 atlas-output/.../stages/01-what.md。
+我先把 <主题> 的轮廓画了一下,草稿放在 atlas-output/.../stages/01-what/01-what.md。
 要点其实就三件事:
 - 它是<一句话定义>
 - 类比成<跨领域类比的精髓>
@@ -132,7 +132,7 @@ description: atlas 套件的 What 阶段教学子 skill。讲解一个技术"是
 
 按 `skills/three-options/SKILL.md` 协议处理用户回应:
 
-- **追问 / 新视角 / 不懂反馈** → 答清楚 + **patch `atlas-output/<短名>-<yyyymmdd>/stages/01-what.md`** + 抛新反问
+- **追问 / 新视角 / 不懂反馈** → 答清楚 + **patch `atlas-output/<短名>-<yyyymmdd>/stages/01-what/01-what.md`** + 抛新反问
 - **附和(嗯/好/明白)** → **不要推进**,再抛反问或留白
 - **明确推进信号**(继续 / 走吧 / 下一个 / 这块够了 / 我懂了接着讲) → 加载 `skills/stage-why/SKILL.md`,**用自然过渡语**接到 Why,例如:
   - "那顺着这个,我想跟你回到一个很基础的问题 —— 没有这个东西的世界会怎样?"
