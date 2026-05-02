@@ -573,6 +573,94 @@ _int_free (mstate av, mchunkptr p, int have_lock)
 
 **结论**:默认不还内核 = 牺牲 RSS 换 alloc/free 的延迟稳定性。这是 [C2](#c2) + [C6](#c6) 的折中。
 
+### §4.5 用户视角凝固:容器时代的"默认不还"还合理吗?
+
+(本子节由对话凝固 —— 用户挑战:"容器化(docker/k8s)有 cgroup memory limit,默认不还内核会让长跑 server 的 RSS 累积到 limit → OOM-killed。这个'默认不还'今天还合理吗?"用户从 4 候选中选 **C —— 让 glibc 检测容器,启动时读 `/proc/self/cgroup` 自动调 trim 阈值**。)
+
+#### C 的吸引力
+
+C 看起来很美 —— 应用零改动 + 类比 JVM `UseContainerSupport`(8u131+ 默认按 cgroup limit 调 max heap)。
+
+#### 但 glibc 不该做 C —— 4 个工程问题
+
+##### ① 破坏 glibc 的跨 OS 兼容定位
+
+`/proc/self/cgroup` 是 Linux 特有,BSD / macOS 没有。让 glibc 启动时读 `/proc` 等于:
+- 加 `#ifdef __linux__` 分支
+- 跨 OS 行为不一致(Linux 内自动 trim,BSD 不会)
+- glibc 维护者明确反对"OS-specific 自动行为"
+
+##### ② "容器"在 Linux 里没有清晰定义
+
+- cgroup v1 vs v2 格式不同
+- Docker / k8s / Podman / nerdctl / systemd-nspawn 标记各异
+- systemd 原生服务也跑在 cgroup 里(但不是"容器"语义)
+- chroot 不算 cgroup 但 RSS 也敏感
+
+谁来定义"glibc 看到 cgroup 就该激进 trim"?**这是 policy 决策,glibc 没立场**。
+
+##### ③ JVM 案例不能直接套用
+
+| | JVM `UseContainerSupport` | glibc 容器自适应 |
+|---|------------------------|-------------|
+| **影响参数** | `-Xmx`(几百 MB ~ 几 GB) | `M_TRIM_THRESHOLD_`(几十 KB ~ 几 MB)|
+| **自动调收益** | 巨大(避免 OOM-kill 是首要 ROI) | 小(RSS 减 10~30%)|
+| **定位** | 应用运行时,知道自己跑应用 | C 库,不知道场景 |
+| **跨 OS 影响** | JVM 本来就 Linux 主导 | glibc 必须跨 OS |
+
+**JVM 自动调收益 / 复杂度比 = 高;glibc = 低**。所以 JVM 该做,glibc 不该做。
+
+##### ④ 职责错位
+
+正确的分层职责:
+
+| 层级 | 职责 | 谁负责 |
+|-----|------|-------|
+| **Hardware / OS** | syscall + 内存 page table | Linux kernel |
+| **C 库 (glibc)** | 用户态最小化分配抽象 | glibc 维护者 |
+| **运行时(JVM/runtime)** | 应用语言的内存模型适配 | 各 runtime |
+| **容器编排(k8s/Docker)** | 决定运行环境(memory limit、env var)| DevOps / 平台团队 |
+| **应用代码** | 知道自己的 alloc 模式 | 应用开发者 |
+
+**容器 OOM-kill 风险 = DevOps + 应用层问题,不是 glibc 算法层**。让 glibc 做容器检测 = "把 DevOps 决策塞进 syscall 之上的最小抽象层"。
+
+#### 现实里的工程做法(2026)
+
+- **k8s pod spec / Dockerfile ENV** 设置 env var:
+  ```dockerfile
+  ENV MALLOC_ARENA_MAX=2
+  ENV MALLOC_TRIM_THRESHOLD_=131072
+  ```
+- **更激进**:`LD_PRELOAD=libjemalloc.so` 整体替换 allocator
+- **应用层 lib**:某些应用 link `tcmalloc` / `mimalloc` 内嵌
+
+**这是分层职责的正确解** —— 容器编排层(k8s)注入 env var → glibc 老老实实读 env var 调参 → 跨 OS 行为一致 + 用户控制。
+
+#### 元洞察:**"哪一层做最容易"vs"哪一层最该做"**
+
+> 选 C 暴露了一个常见思维陷阱:**"哪一层做最容易让用户省事,就让那一层做"** —— 但工程分层的核心原则是 **"哪一层最该负责,就让那一层做,即使对用户不那么省事"**。
+>
+> glibc 做容器检测对应用是"零改动"福利;但工程上**让 glibc 突然知道"容器编排"** = 跨了 3 层(syscall → user-space lib → container runtime → DevOps)。短期省事,长期破坏分层契约。
+
+#### 这条洞察的延伸适用面
+
+判断"自适应 / 自动检测"提案合理性的元规则:
+
+1. **跨了几层?** 跨 1 层(JVM 检测 cgroup,JVM 本就是应用层 runtime)合理;跨 2~3 层(glibc 检测容器编排)危险
+2. **谁该负责这个 policy?** policy 应该在最该负责的层定;不该在底层"代位决策"
+3. **跨 OS / 跨场景兼容性影响多大?** 影响小可以做(可选 flag);影响大必须避免
+4. **收益 / 复杂度比?** 类比 JVM `UseContainerSupport` 高 ROI 才能做
+
+**这条比 `free(p2)` 默认不还内核本身更值钱** —— 它是个**通用工程分层判断工具**,可以套到任何"自动检测 / 自适应 / 智能默认"提案上。
+
+#### 给 atlas 第一性原理方法论再加一条规则
+
+走完 Origin → Deep,用户已经贡献了 3 条元规则给 atlas 方法论:
+
+1. **(Origin §5.5)约束反向演化** —— 约束不是永恒,新语境可松动甚至反转
+2. **(Deep §2.4.5)约束不可再分性是复合** —— 技术 × 生态 × 接口锁死的混合
+3. **(Deep §4.5,本节)分层职责优于"哪层做最容易"** —— 判断"自适应"提案的元工具:跨几层 / 谁该负责 / 跨 OS 影响 / 收益复杂度比
+
 ---
 
 ## §5 场景 3:`malloc(200KB)` → mmap 路径
@@ -758,3 +846,4 @@ munmap_chunk (mchunkptr p)
 |------|---------|---------|
 | 2026-05-02 17:30 | 初稿(第 2 轮重启):严格按新「Stage 开场对齐纪律」(渐进式 + 追加 reconfirm)对齐 6 个维度后才生成。聚焦三场景源码追踪 vs 第 1 轮的"6 机制独立反事实"。§0 三件事 = 三条主路径(tcache 无锁 / brk arena+sbrk / mmap 独立 syscall)+ size 对赌假设;§1 SVG 三 call stack 并列对比图;§2 demo + 编译 + strace + gdb 调试;§3-§5 三条路径源码追踪(每路径含 §X.1 触发条件 + §X.2 关键源码 + §X.3 性能特征 + §X.4 反事实);§6 三路径性能对比表;§7 约束回扣;§8 呼应灵魂(100% 闭环);demo 在 src/05-demo.c(可运行 + strace 验证)| 用户在 Deep 第 2 轮渐进式对齐:聚焦 + 端到端源码追踪 + 三场景(24B/8KB/200KB)+ alloc+free + glibc 2.34+ + 可运行 demo;追加 reconfirm 后 OK |
 | 2026-05-02 18:00 | §3.4 加候选 D《调高 tcache 上限到 16KB》:用户对反问"为什么 8KB 不能走 tcache,调高上限会怎样" 选 B(RSS 失控)。Claude 精确化为两层:Layer 1 静态元数据开销(可接受,1000 线程 +10MB);Layer 2 动态 chunks 占用(worst case 1024×7×8KB = 56MB / thread,1000 线程 = 56GB ⚠️ 失控)。给出 DJ Delorie 测出的边际收益拐点(1032B / 70% 命中 / 3.5MB ↔ 16KB / 75% 命中 / 56MB,4KB→16KB 涨上限命中率只 +3pp 但 RSS 涨 16×)。链接 Origin §5.5 约束反向演化:ML workload(GB 级 alloc 短寿命)下 tcache 整个机制失效,PyTorch/vLLM 自己写 GPU mempool 绕开 —— 不是算法不好,是"假设场景"被颠覆 | 用户反问回应 B:RSS 失控;触发 tcache 上限边际收益拐点精确推导 + 链接 Origin 反向演化洞察 |
+| 2026-05-02 19:00 | §4.5 新加《容器时代的"默认不还"还合理吗?》:用户对反问"容器化 cgroup memory limit 让长跑 server RSS 累积 → OOM-killed,默认不还内核还合理吗?"选 C(让 glibc 检测容器自动调 trim)。Claude 精确化 C 的 4 个工程问题:① 破坏跨 OS 兼容(/proc/cgroup 是 Linux 特有);② "容器"在 Linux 没清晰定义(cgroup v1/v2 + Docker/k8s/Podman/systemd 标记各异);③ JVM UseContainerSupport 案例不能套(JVM 是应用 runtime + 影响 heap 几百 MB 量级,glibc 是 C 库 + 影响 trim 几十 KB 量级,收益/复杂度比反过来);④ 职责错位(容器 OOM 是 DevOps + 应用层问题,glibc 不该跨 3 层做容器检测)。**最深元洞察:"哪一层做最容易"vs"哪一层最该做"** —— 选 C 暴露常见思维陷阱(让用户最省事 → 让底层代位决策),正确分层是容器编排层注入 env var → glibc 读 env 调参。给"自适应/自动检测"提案的元判断工具(跨几层 / 谁负责 / 跨 OS 影响 / 收益复杂度比)。这是用户贡献给 atlas 第一性原理方法论的**第 3 条元规则:分层职责优于"哪层最容易"** | 用户反问回应 C:glibc 检测容器自动调;触发分层职责元洞察 |
