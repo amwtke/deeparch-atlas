@@ -119,19 +119,27 @@ Sub-skills must call `progress-tracker` at stage start AND stage end. Skipping b
 
 It does **not** know what the next stage is. The caller (each `stage-X`) tells it. Don't embed a route table in `three-options` — that's an explicit anti-pattern (turns the suite into a spider web).
 
-### Stage 开场对齐纪律(先问 3~5 问,不直接生成产物)
+### Stage 开场对齐纪律(渐进式提问,一问一答到收敛 + 追加 reconfirm)
 
-Each stage (except Discovery) **must NOT immediately generate `stages/0X-stage.md`**. First ask the user 3~5 alignment questions about scope / focus / purpose / angle / background. Claude infers the questions based on the stage's core goal + previous stage artifacts + topic specifics.
+Each stage (except Discovery) **must NOT immediately generate `stages/0X-stage.md`**. Three sub-rules:
 
-If the user says "你看着办 / 随便", Claude lists its inferred answers and asks the user to confirm before generating.
+1. **Progressive questioning, NOT batch list** — Claude asks **one** highest-level directional question first; based on user's answer, Claude generates the **next** logically downstream question. Repeat until convergence. **Never list 3~5 questions at once** (that drowns the user, presupposes question independence, and loses logical chain).
+
+2. **Convergence is user-decided, not Claude-decided** — when Claude subjectively feels alignment is clear, **do NOT immediately write**. Instead ask one final reconfirm question:
+   > "我已经清楚目标了 —— 你还有什么问题要追加吗?如果没有我就去写 stages/0X-stage.md 了。"
+   - User says "没有 / 可以写了" → generate
+   - User says "还有 X" → take it as new input, continue progressive questioning
+   - User says "随便 / 你看着办" → treat as no追加, generate but offer post-hoc patching
+
+3. **No preset question count** — could be 2 questions, could be 7+, depends on topic complexity and user response precision.
 
 Why this matters:
-1. Avoids drift — generating without alignment risks producing content the user doesn't need
-2. Respects user-led pacing — the user should decide each stage's shape, not Claude
-3. Primes user thinking — being asked questions makes them engage actively before reading
-4. Same idea as superpowers brainstorming — align intent before any creative output
+1. **Avoids drift** — generating without alignment risks producing content the user doesn't need
+2. **Respects user-led pacing** — the user decides each stage's shape AND when alignment is done, not Claude
+3. **Primes user thinking** — progressive questioning makes them engage actively before reading
+4. **Same idea as superpowers brainstorming** — align intent before any creative output
 
-Full spec in entry `SKILL.md` 「Stage 开场对齐纪律」 + each stage skill's execution flow + anti-pattern 19.
+Full spec in entry `SKILL.md` 「Stage 开场对齐纪律」 + 「追加 reconfirm」 + each stage skill's execution flow + anti-pattern 19.
 
 ### Stage 推进 reconfirm 纪律(推进信号 ≠ 已读完产物)
 
