@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 540"
+     font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="540" fill="#0a0c10"/>
+
+  <text x="600" y="32" fill="#e0e0e0" font-size="20" font-weight="bold" text-anchor="middle">三层骨架概览:进程 ⊃ arena ⊃ { bin(索引) + chunk(物理) }</text>
+  <text x="600" y="55" fill="#888" font-size="13" text-anchor="middle">三件事记住:chunk 是物理实体 · bin 是空闲索引 · arena 是容器</text>
+
+  <!-- 进程外框(内核责任,虚线) -->
+  <rect x="30" y="75" width="1140" height="445" fill="none" stroke="#666" stroke-width="2" stroke-dasharray="8,4"/>
+  <text x="50" y="95" fill="#aaa" font-size="13" font-style="italic">进程边界(内核给独立地址空间 — ptmalloc2 看不见这一层)</text>
+
+  <!-- ============ arena #0(展开) ============ -->
+  <rect x="50" y="110" width="690" height="390" fill="#0f1218" stroke="#888" stroke-width="1.5"/>
+  <text x="65" y="133" fill="#e0e0e0" font-size="15" font-weight="bold">arena #0(主线程,brk 扩)</text>
+  <text x="370" y="133" fill="#888" font-size="11">[ 一个进程内最多 8×CPU 核数 个 arena ]</text>
+
+  <!-- ① 头(绿) -->
+  <rect x="65" y="148" width="660" height="50" fill="#1e5f3a" stroke="#40c060" stroke-width="1"/>
+  <text x="75" y="170" fill="#88ff88" font-size="13" font-weight="bold">① 头(arena 控制面)</text>
+  <text x="75" y="189" fill="#88ff88" font-size="11">mutex · top_chunk 指针 · next 链 · system_mem · ...</text>
+
+  <!-- ② bins(紫) -->
+  <rect x="65" y="208" width="660" height="80" fill="#3a1e5f" stroke="#8040c0" stroke-width="1"/>
+  <text x="75" y="230" fill="#c088ff" font-size="13" font-weight="bold">② bins(空闲 chunk 的分桶索引)</text>
+  <text x="75" y="252" fill="#c088ff" font-size="11">  fastbinsY[10]  +  bins[~254](unsorted + small + large)</text>
+  <text x="75" y="273" fill="#888" font-size="11" font-style="italic">  ↑ 这里只是元数据指针 — chunk 实体在下方物理布局里(详见 §3)</text>
+
+  <!-- ③ chunks(物理布局) -->
+  <rect x="65" y="298" width="660" height="190" fill="#0a0c10" stroke="#888" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="75" y="320" fill="#e0e0e0" font-size="13" font-weight="bold">③ chunks(物理布局:heap 段连续字节流,in-use/free 交错)</text>
+
+  <!-- chunks 横条 -->
+  <g transform="translate(75,338)">
+    <rect width="65" height="60" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.2"/>
+    <text x="32" y="22" fill="#88c0ff" font-size="11" font-weight="bold" text-anchor="middle">A</text>
+    <text x="32" y="40" fill="#88c0ff" font-size="9" text-anchor="middle">in-use</text>
+
+    <rect x="65" width="50" height="60" fill="#5f1e1e" stroke="#c04040" stroke-width="1.2"/>
+    <text x="90" y="22" fill="#ff8888" font-size="11" font-weight="bold" text-anchor="middle">B</text>
+    <text x="90" y="40" fill="#ff8888" font-size="9" text-anchor="middle">free</text>
+
+    <rect x="115" width="80" height="60" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.2"/>
+    <text x="155" y="22" fill="#88c0ff" font-size="11" font-weight="bold" text-anchor="middle">C</text>
+    <text x="155" y="40" fill="#88c0ff" font-size="9" text-anchor="middle">in-use</text>
+
+    <rect x="195" width="65" height="60" fill="#5f1e1e" stroke="#c04040" stroke-width="1.2"/>
+    <text x="227" y="22" fill="#ff8888" font-size="11" font-weight="bold" text-anchor="middle">D</text>
+    <text x="227" y="40" fill="#ff8888" font-size="9" text-anchor="middle">free</text>
+
+    <rect x="260" width="95" height="60" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.2"/>
+    <text x="307" y="22" fill="#88c0ff" font-size="11" font-weight="bold" text-anchor="middle">E</text>
+    <text x="307" y="40" fill="#88c0ff" font-size="9" text-anchor="middle">in-use</text>
+
+    <rect x="355" width="70" height="60" fill="#5f1e1e" stroke="#c04040" stroke-width="1.2"/>
+    <text x="390" y="22" fill="#ff8888" font-size="11" font-weight="bold" text-anchor="middle">F</text>
+    <text x="390" y="40" fill="#ff8888" font-size="9" text-anchor="middle">free</text>
+
+    <rect x="425" width="50" height="60" fill="none" stroke="#444" stroke-dasharray="4,3"/>
+    <text x="450" y="34" fill="#666" font-size="14" text-anchor="middle">...</text>
+
+    <rect x="475" width="170" height="60" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
+    <text x="560" y="22" fill="#88ff88" font-size="12" font-weight="bold" text-anchor="middle">top_chunk</text>
+    <text x="560" y="40" fill="#88ff88" font-size="9" text-anchor="middle">arena 末端"剩饭",下次切这</text>
+  </g>
+
+  <text x="75" y="420" fill="#666" font-size="10">heap 起 →</text>
+  <text x="715" y="420" fill="#666" font-size="10" text-anchor="end">→ heap 向高地址扩</text>
+
+  <text x="75" y="450" fill="#888" font-size="10" font-style="italic">虚线箭头表示 bins 索引指向某个 free chunk(详见 §2.3 物理 vs 逻辑双视图)</text>
+
+  <!-- 逻辑指针(从 ② → ③) -->
+  <line x1="200" y1="288" x2="107" y2="338" stroke="#c08040" stroke-width="1" stroke-dasharray="6,3" opacity="0.7"/>
+  <line x1="280" y1="288" x2="244" y2="338" stroke="#8040c0" stroke-width="1" stroke-dasharray="6,3" opacity="0.7"/>
+  <line x1="380" y1="288" x2="407" y2="338" stroke="#8040c0" stroke-width="1" stroke-dasharray="6,3" opacity="0.7"/>
+
+  <!-- ============ arena #1(折叠) ============ -->
+  <rect x="765" y="110" width="190" height="180" fill="#0f1218" stroke="#888" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="780" y="133" fill="#e0e0e0" font-size="14" font-weight="bold">arena #1</text>
+  <text x="780" y="155" fill="#aaa" font-size="11">thread arena,mmap 扩</text>
+  <text x="780" y="180" fill="#aaa" font-size="11">头 + bins + chunks</text>
+  <text x="780" y="200" fill="#aaa" font-size="11">(结构同 arena #0)</text>
+  <text x="780" y="240" fill="#888" font-size="10">独立 mutex,跟 #0</text>
+  <text x="780" y="255" fill="#888" font-size="10">不共享 chunk,</text>
+  <text x="780" y="270" fill="#888" font-size="10">不抢锁</text>
+
+  <!-- ============ arena #N(折叠) ============ -->
+  <rect x="975" y="110" width="180" height="180" fill="#0f1218" stroke="#888" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="990" y="133" fill="#e0e0e0" font-size="14" font-weight="bold">arena #N</text>
+  <text x="990" y="155" fill="#aaa" font-size="11">N ≤ 8 × 核数</text>
+  <text x="990" y="180" fill="#aaa" font-size="11">超过线程数</text>
+  <text x="990" y="200" fill="#aaa" font-size="11">→ 复用已有 arena</text>
+  <text x="990" y="220" fill="#aaa" font-size="11">  (开始抢锁)</text>
+
+  <!-- next 链 -->
+  <line x1="740" y1="135" x2="765" y2="135" stroke="#888" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="745" y="128" fill="#888" font-size="9">.next</text>
+  <line x1="955" y1="135" x2="975" y2="135" stroke="#888" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- 图例 -->
+  <g transform="translate(770,320)">
+    <text x="0" y="0" fill="#aaa" font-size="12" font-weight="bold">图例(5 类色编码)</text>
+    <rect x="0" y="10" width="14" height="12" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="20" y="20" fill="#88c0ff" font-size="11">in-use chunk(蓝)</text>
+    <rect x="0" y="30" width="14" height="12" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="20" y="40" fill="#ff8888" font-size="11">free chunk(红)</text>
+    <rect x="0" y="50" width="14" height="12" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="20" y="60" fill="#88ff88" font-size="11">头 / top_chunk(绿)</text>
+    <rect x="0" y="70" width="14" height="12" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="20" y="80" fill="#c088ff" font-size="11">bins 索引(紫)</text>
+    <rect x="0" y="90" width="14" height="12" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="20" y="100" fill="#ffaa55" font-size="11">fastbin 槽(橙)</text>
+
+    <text x="0" y="130" fill="#aaa" font-size="11" font-style="italic">实线 = 物理边界</text>
+    <text x="0" y="148" fill="#aaa" font-size="11" font-style="italic">虚线 = 逻辑指针</text>
+  </g>
+</svg>
