@@ -1,14 +1,42 @@
-这不是普通技术视频，是一部 7 集大电影。
+glibc malloc 大电影 — 7 条不可再分约束 C1~C7：
+[C1] 高频小块 — 每秒 10⁵-10⁷ 次, 典型 16-256 字节
+[C2] syscall 贵 — 至少几百 ns, 比函数调用贵 2 个数量级
+[C3] brk 中间还不掉 — 只能改一个 long
+[C4] mmap 整页 — 最小粒度 4KB
+[C5] free(p) 不传 size — 1989 ANSI C ABI 锁死
+[C6] 碎片必然累积 — Knuth 50% 规则
+[C7] 多核并发 — 1996 浮现 / 2017 加深
 
-第 0 集 目录预告：用 1 分半告诉你这部 glibc malloc 大电影长什么样。看完这一集你能决定要不要追完整 7 集。
+──────────────────
 
-本集内容：
-1. 为什么把 malloc 拍成 7 集大电影
-2. 7 集结构总览：What / Why / How / Origin / Deep / Comparison / Synthesis
-3. 致敬 6 位关键人物：Knuth / Doug Lea / Linus / Gloger / Delorie / Evans-Ghemawat-Leijen
-4. atlas 文档里 7 张架构图全部讲透
-5. 你将带走的 6 样东西
+你按了千万次 malloc，但你真的搞懂它了吗？这不是普通技术视频，是一部 7 集大电影。68 分钟把 glibc 的 malloc 从骨架到源码、从 1987 年的第一行 dlmalloc 到 2026 年的反向演化，一刀一刀解剖给你看。
 
-适合人群：所有 C/C++ 工程师、系统编程爱好者、想训练"看任何技术系统都能问出对的问题"的开发者。
+7 集结构（按分 P 顺序）：
+P1 目录预告（3 min）— 全片骨架预告
+P2 What 阶段（6 min）— glibc malloc 不就是个切内存的吗？
+P3 Why 阶段（6 min）— 7 条不可再分约束 C1-C7 推导
+P4 How 阶段（12 min）— chunk + bin + arena + tcache 四件事
+P5 Origin 阶段（11 min）— 1987 → 1996 → 2017 三代接力的故事
+P6 Deep 阶段（10 min）— 三路径源码追踪，耗时差 300 倍
+P7 Comparison 阶段（9 min）— 6 个 allocator 横向对比
+P8 Synthesis 阶段（10 min）— 4 条工程方法论 + 五步法
 
-#Linux #malloc #大电影 #atlas系列 #工程方法论
+致敬 6 位关键人物：
+Donald Knuth（1968 boundary tag + 50% 碎片规则）
+Doug Lea（1987 dlmalloc, 后来的 java.util.concurrent）
+Linus Torvalds（1991 Linux + 1996 POSIX threads → C7 浮现）
+Wolfram Gloger（1996 ptmalloc multi-arena, 1MB 对齐反查）
+DJ Delorie（2017 tcache, 同年 CVE-2017-17426）
+Jason Evans / Sanjay Ghemawat / Daan Leijen（jemalloc / tcmalloc / mimalloc 三位作者）
+
+你将带走 6 样东西：
+1. malloc 完整知识体系（从一句话定义到源码追踪）
+2. 40 年技术演化叙事（能跟人讲技术故事而不是只列功能）
+3. 真实源码追踪能力（下次看 glibc 源码不再迷路）
+4. 6 个 allocator 选型判断（FB 选 jemalloc / Google 选 tcmalloc 背后的约束权重）
+5. 4 条通用工程教训（可以套到数据库、调度器、缓存等任何系统）
+6. 五步法（拿来就用的系统分析模板）
+
+适合人群：所有 C/C++ 工程师、系统编程爱好者、想训练"看任何技术系统都能问出对的问题"的开发者；想搞懂内存分配器的求职者；做基础设施 / 运行时设计的架构师。
+
+#Linux #malloc #大电影 #ptmalloc #jemalloc #tcmalloc #mimalloc #DougLea #内存管理 #工程方法论 #深度长文
