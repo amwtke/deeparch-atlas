@@ -1,0 +1,151 @@
+# 第 2 集 Why 阶段 — 7 条不可再分约束 C1-C7
+
+## 1 Why 阶段开场过场
+
+[visual: spotlight]
+现在我们走进 Why 阶段
+malloc 为什么必须存在？
+
+[narration]
+现在进入第 2 集——Why 阶段。第 1 集 What 给你看了 malloc 的形状，但没回答"它为什么必须长成这个形状"。Why 阶段就是正面回答。我们要把朴素方案撞的三堵墙，拆成 7 条不可再分的硬约束，编号 C1 到 C7。这 7 条是后面所有讨论的脊梁——读源码、对比 jemalloc、归纳方法论的时候，每一处都会回扣到这张约束表。
+
+---
+
+## 2 没有 malloc 的世界
+
+[visual: spotlight]
+没有 malloc 的世界会怎样？
+答：现代应用根本跑不起来
+
+[narration]
+先想一个反事实——如果操作系统只给你 brk 和 mmap，不给 malloc，会怎样？现代应用根本跑不起来。一个 C++ 服务用 STL，每秒几百万次小对象分配——朴素方案直接被 syscall 吞掉，业务逻辑跑不动。这不是性能差，是根本不能跑。所以问题不是"malloc 是否需要"，而是"它面对的硬约束到底有几条、每条不可再分性是什么"。
+
+---
+
+## 3 三个真实场景
+
+[visual: text title=三个让朴素方案崩塌的真实场景]
+> 场景 1: HTTP 服务器, 每秒 1 万请求 → 每秒 10 万次 syscall
+                  单核浪费 3-10% CPU, 32 核扔 1-3 个核
+> 场景 2: C++ STL 密集型 (NLP / SQL 优化器) → 每秒数百万次 alloc
+                  单核几乎全花在 syscall, 业务跑不动
+> 场景 3: free(p) 这个接口本身 — C 标准只传指针不传 size
+                  朴素 malloc 想 munmap 都不知道 size 是多少 → 写不出来
+
+[narration]
+三个真实场景把痛苦具体化。场景一 HTTP 每秒一万请求，每秒十万次 syscall，单核浪费 3 到 10 percent CPU。场景二 STL 密集每秒数百万次分配，朴素方案的 CPU 几乎全花 syscall。场景三是接口悖论——C 标准 1989 年就把 free 签名固化了，只传指针不传 size。朴素 malloc 想立即 munmap，根本不知道 size。这三件事合起来逼出一张精确的约束清单。
+
+---
+
+## 4 7 条硬约束 C1-C7
+
+[visual: layers title=约束清单 C1-C7 的脊梁]
+C1 高频小块 — 每秒 10⁵-10⁷ 次, 典型 16-256 字节
+C2 syscall 贵 — 至少几百 ns, 比函数调用贵 2 个数量级
+C3 brk 中间还不掉 — 只能改一个 long
+C4 mmap 整页 — 最小粒度 4KB
+C5 free(p) 不传 size — 1989 ANSI C ABI 锁死
+C6 碎片必然 — Knuth 50% 规则
+C7 多核并发 — 1996 浮现 / 2017 加深
+
+[narration]
+七条约束分层放出来。C1 高频小块——每秒十万到一千万次，典型十六到二百五十六字节。C2 syscall 贵——几百纳秒，比函数调用贵两个数量级。C3 brk 中间还不掉——刚才那张图的物理限制。C4 mmap 整页——CPU MMU 页表项最小粒度。C5 free(p) 不传 size——1989 ANSI C 锁死。C6 碎片必然——Knuth 50 percent 规则的数学定律。C7 多核并发——1996 随 POSIX threads 浮现，2017 随多核普及加深。每一条都通过了"不可再分"测试——再钻一层就要碰物理或语义天花板。
+
+---
+
+## 5 致敬 Knuth：boundary tag 之父
+
+[visual: facetime title=Donald Knuth]
+name: Donald Knuth
+role: 计算机科学家
+org: Stanford University
+photo: https://blog.parrikar.com/wp-content/uploads/2012/06/05-10107-post/Don-Knuth-Stanford.jpg
+- 1968 年《计算机程序设计艺术》卷一第 2.5 节首创 boundary tag
+- 这是后来 chunk header 内联 size + 标志位技术的源头
+- 50% 碎片规则也来自他对动态存储分配的数学分析
+- malloc 整个 chunk + bin 体系的根基都是 Knuth 1968 的工作
+
+[narration]
+讲到 C5 和 C6，必须停下来致敬一个人——Donald Knuth。他在 1968 年《计算机程序设计艺术》卷一第二点五节，首创了 boundary tag 概念——后来 chunk header 内联 size 和标志位技术的源头。Knuth 50 percent 碎片规则也是他对动态存储分配的数学分析。可以说 malloc 整个 chunk 加 bin 的体系，根基全在 Knuth 1968 的工作上。Doug Lea 1987 写 dlmalloc 自己都说——"我不是发明，是把 Knuth 的 trick 在 1987 时代背景下重新组合"。
+
+---
+
+## 6 C5 的精度升级
+
+[visual: spotlight]
+C5 不是绝对不可再分
+是"技术 + 生态"复合锁死
+新语言可以消解
+
+[narration]
+C5 这条要单独拎出来讲，因为它的"不可再分性"跟其他几条不太一样。它不是绝对的物理约束，是技术加生态复合锁死——1989 ANSI C 写死了 ABI，全世界几十亿行代码都在用 free(p)，allocator 必须 worst case 兼容。但是新语言可以从根上消解它。C++17 加了 sized dealloc，Rust 2017 加了 Layout API，每次 free 都传 size，编译器自动填——chunk header 理论上可以扔掉。这条洞察先记住，到 Comparison 集会发现 Rust 和 Go 在这里走出了完全不同的路线。
+
+---
+
+## 7 C7 的时代演化
+
+[visual: timeline title=C7 在 40 年里的演化轨迹]
+T=1987   [Doug Lea] 写 dlmalloc 时还没有 C7 (单线程时代)
+T=1991   [Linus] 发布 Linux 0.01 (还是单线程)
+T=1996   [POSIX] threads 接口稳定 → C7 第一次浮现
+T=2006   [Wolfram Gloger] ptmalloc2 进 glibc, 加 multi-arena
+T=2017   [DJ Delorie] tcache 引入 → C7 加深 (per-thread 免锁)
+T=2026+  [Go async / Rust async] OS 线程 ↔ 协作 task → C7 反向演化
+
+[narration]
+C7 的故事更曲折。它 1987 Doug Lea 写 dlmalloc 时还不存在。1991 年 Linus 发布 Linux 0.01 还是单线程。1996 年 POSIX threads 稳定，C7 第一次浮现。2006 年 ptmalloc2 进 glibc 靠 multi-arena 化解 C7。2017 年 DJ Delorie 引入 tcache 把 C7 加深到 per-thread 免锁。2026 年以后 Go goroutine 和 Rust async 把"线程"概念模糊化——C7 甚至在反向演化。约束不是物理常数，是时代视角下的不可再分。
+
+---
+
+## 8 核心 insight：5 个动作
+
+[visual: spotlight]
+用户态记账 + 批量向内核要
+延迟向内核还 + 双通道分粒度
+多池减并发竞争
+
+[narration]
+把 7 条约束的张力拧在一起，glibc malloc 的核心 insight 浓缩成一句话——用户态记账、批量向内核要、延迟向内核还、双通道分粒度、多池减并发竞争。拆开就是 5 个动作。用户态记账化解 C5 加 C6——不依赖内核知道 size，自己维护空闲表。批量要化解 C1 加 C2——把 syscall 固定开销摊到上千次 malloc。延迟还化解 C2 加 C3——syscall 贵不愿、brk 物理还不掉。双通道化解 C3 加 C4——brk 字节级加 mmap 任意位置可还。多池化解 C7——把单一全局锁拆成多个池锁。
+
+---
+
+## 9 用户视角：从约束推出 ptmalloc 形状
+
+[visual: text title=用户从约束推出设计的 4 层推理]
+> 第一层: 必须用户态记账 (C5 + C2 逼出)
+       账怎么记？最简单——链表串起来
+> 第二层: 借鉴 buddy system, 把 chunk 链接组织
+       才能找到所有空间
+> 第三层: 分配效率! 必须分桶 (C1 + C6 逼出)
+       按大小分组,精确快速找合适空间
+> 第四层: 多线程必有 arena (C7 逼出)
+       类比 NUMA zone — 不同线程分区,避免锁竞争
+
+[narration]
+有意思的是——一个完全没读过 ptmalloc 源码的用户，单凭 C1 到 C7 这张约束表加 buddy system 加 NUMA zone 两个工程模板，可以直接推出 ptmalloc 的形状。第一层必须用户态记账，最简单链表。第二层借鉴 buddy 把 chunk 链起来。第三层为了高频快速查找必须分桶。第四层多线程必有 arena 类比 NUMA zone。这四层覆盖 ptmalloc 设计骨架的 90 percent——证明了一件事：ptmalloc 不是开发者偏好选择，是约束单向逼出的必然形状。
+
+---
+
+## 10 元洞察：malloc 是内核的"用户态镜像"
+
+[visual: layers title=用户态 malloc vs 内核物理页层 同构]
+碎片管理 — 用户:bin 分桶 + 合并 / 内核:buddy system
+多核减锁 — 用户:arena 多池 / 内核:per-CPU / per-NUMA zone
+元数据   — 用户:chunk header / 内核:VMA struct
+大小分流 — 用户:bin + mmap 直分 / 内核:slab/SLUB + huge page
+
+[narration]
+更深一层的洞察——glibc 的 malloc 几乎是把 Linux 内核的内存子系统在用户态镜像了一遍。碎片管理用户态用 bin 分桶加合并，内核用 buddy。多核减锁用户态用 arena 多池，内核用 per-CPU 或 per-NUMA zone。元数据用户态用 chunk header，内核用 VMA 结构。大小分流用户态用 bin 加 mmap 直分，内核用 SLUB 加 huge page。这不是抄袭，是第一性原理在两个层面各自走到收敛点。底层约束的张力同构，所以解法也同构。这条洞察后面 Synthesis 集会扩展成更大的方法论。
+
+---
+
+## 11 Why 阶段收尾 + 下一集预告
+
+[visual: spotlight]
+约束清单 C1-C7 是脊梁
+下一集 How 篇 — 钻进 ptmalloc 内部
+
+[narration]
+Why 阶段收尾——你已经能正面回答 malloc 要解决的工程问题。答案是化解 C1 到 C7 这 7 条不可再分约束的张力。malloc 用 5 个动作同时化解全部 7 条。下一集 How 阶段，我们要钻进 ptmalloc 内部，看它由 chunk、bin、arena、tcache 四件事组成，每件事化解哪条约束，加 7 张架构图全部讲透。本集就到这里，下集见。
+
+---

@@ -1,0 +1,14 @@
+这不是普通技术视频，是一部 7 集大电影。
+
+第 0 集 目录预告：用 1 分半告诉你这部 glibc malloc 大电影长什么样。看完这一集你能决定要不要追完整 7 集。
+
+本集内容：
+1. 为什么把 malloc 拍成 7 集大电影
+2. 7 集结构总览：What / Why / How / Origin / Deep / Comparison / Synthesis
+3. 致敬 6 位关键人物：Knuth / Doug Lea / Linus / Gloger / Delorie / Evans-Ghemawat-Leijen
+4. atlas 文档里 7 张架构图全部讲透
+5. 你将带走的 6 样东西
+
+适合人群：所有 C/C++ 工程师、系统编程爱好者、想训练"看任何技术系统都能问出对的问题"的开发者。
+
+#Linux #malloc #大电影 #atlas系列 #工程方法论

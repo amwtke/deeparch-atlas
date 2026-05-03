@@ -1,0 +1,17 @@
+同样面对 C1-C7，工业界做了 5+ 套不同取舍。
+
+第 6 集 Comparison 阶段：跳出 ptmalloc，6 个 allocator 横向对比。看清同一个工程问题的设计空间有多大。
+
+本集内容：
+1. 致敬 Jason Evans：jemalloc 的 per-CPU arena + dirty_decay_ms 容器友好
+2. 致敬 Sanjay Ghemawat：tcmalloc 的 thread-local cache + 中央堆（比 glibc tcache 早 10 年）
+3. 致敬 Daan Leijen：mimalloc 的 sharded free list + 极激进还内存（3K LOC vs jemalloc 30K）
+4. Go runtime malloc：per-P + 改 ABI 消解 C5
+5. Rust Layout：sized dealloc 完全消解 C5
+6. 设计空间地图：横轴 C5 处理 × 纵轴容器友好性
+7. 左上角空白角落：物理可能但路径依赖（产品机会）
+8. 6 个 allocator 快速选择：FB/Cassandra/Redis 选 jemalloc，Google 选 tcmalloc，.NET/Rust 选 mimalloc
+
+适合人群：做 C/C++ 服务端基础设施的工程师；要给项目选 allocator 的架构师；研究语言运行时的开发者。
+
+#malloc #jemalloc #tcmalloc #mimalloc #Go #Rust #atlas系列

@@ -1,0 +1,366 @@
+# 第 3 集 How 阶段 — chunk + bin + arena + tcache 四件事
+
+## 1 How 阶段开场过场
+
+[visual: spotlight]
+现在我们来拆解 How 阶段
+ptmalloc 内部到底怎么工作？
+
+[narration]
+现在进入第 3 集——How 阶段。这是整部大电影里最长的一集，因为干货最密。我们要钻进 ptmalloc 内部，看它由几个组件组成、每个组件解决哪条约束。看完这一集你能跟同事完整讲清楚 ptmalloc 大致怎么工作——这是技术圈里"我懂这个"的最低门槛。
+
+---
+
+## 2 四件事抽象
+
+[visual: layers title=ptmalloc 的四件事]
+chunk    — 物理实体, heap 上一块连续字节, 自带 16B header (1987 起)
+bin      — 空闲索引, free chunk 按大小分桶 (1987 起)
+arena    — 容器, 一池 bin + 一段 heap + 一把锁 (1996 起)
+tcache   — per-thread 免锁缓存, 64 桶 × 7 chunk (2017 起)
+
+[narration]
+ptmalloc 的核心抽象只有 4 件事——chunk、bin、arena、tcache。注意时代——chunk 和 bin 是 1987 Doug Lea 起就有的；arena 是 1996 Wolfram Gloger 加的多线程支持；tcache 是 2017 DJ Delorie 加的 per-thread 旁路。今天的 ptmalloc 等于 1987 骨架加 1996 补丁加 2017 旁路三层叠加——这就是为什么源码里既有古老的反向偏移读 header，又有现代的 per-thread 64 桶。
+
+---
+
+## 3 chunk 是物理实体
+
+[visual: spotlight]
+chunk 是物理实体
+heap 上一块连续字节, 自带 header
+
+[narration]
+chunk 是物理实体——heap 段里一块真实占用字节的连续区域，自带 16 字节 header。每个 chunk 都"自带名字"——大小、状态、几个标志位都塞在 header 里。free(p) 时 p 减去 header 大小就拿到所有元数据。chunk 这个概念是被 C5 加 C6 联合逼出来的——既然 free 不传 size 就必须自带 size，既然要合并相邻空闲块就必须知道前后块状态。
+
+---
+
+## 4 bin 是空闲索引
+
+[visual: spotlight]
+bin 是空闲索引
+不是新 chunk, 只是一组指针
+
+[narration]
+bin 是空闲索引。注意——bin 链表里的"东西"不是 chunk 本身，是指向 chunk 的指针。同一个 chunk 物理位置不变，但归属哪个 bin 会随 alloc 和 free 变化。bin 把所有空闲 chunk 按大小分桶，每桶一条链表。malloc 进来按请求大小算桶号直接拿桶头，O(1)。free 挂回对应桶。bin 是 C1 高频小块加 C6 碎片管理联合逼出的——必须有快速查找空闲块的索引。
+
+---
+
+## 5 arena 是容器
+
+[visual: spotlight]
+arena 是容器
+一池 bin + 一段 heap + 一把锁
+
+[narration]
+arena 是容器。它把"一池 bin 加一段 heap 加一把锁"打包成独立单元。多个 arena 同时存在，线程平摊。主 arena 用 brk 扩 heap——字节级，但中间还不掉。线程 arena 用 mmap 扩——任意位置可还。数量上限是 8 倍 CPU 核数——经验值，折中减锁和控膨胀。arena 是 C7 多线程加 C2 syscall 贵联合逼出的。
+
+---
+
+## 6 tcache 是 per-thread 旁路
+
+[visual: spotlight]
+tcache 是 per-thread 免锁旁路
+90% 以上请求根本不进 arena
+
+[narration]
+tcache 是 per-thread 免锁旁路——2017 加的第四件事。每个线程独占一份，64 个桶覆盖 16 到 1032 字节，每桶最多 7 个 chunk 单链表 LIFO。malloc 先查 tcache 命中直接返回——大概 15 纳秒完全无锁。tcache miss 才 fall through 到 arena 路径。统计显示——现代应用 90% 以上的请求根本不进 arena。所以"现代 ptmalloc 实质"是经典三件事加 tcache，讲 How 不能漏。
+
+---
+
+## 7 第一张图：三层骨架概览
+
+[visual: html_slide title=三层骨架：进程 ⊃ arena ⊃ bin/chunk image=pics/03-overview.png]
+
+[step: auto]
+scroll auto
+
+[narration]
+第一张图是 ptmalloc 三层骨架的鸟瞰。最外面虚线是进程边界——这是内核给的，ptmalloc 看不见这一层。每个进程内部，每个线程独占一份 tcache 是青色块。arena 零是主 arena，内部分三块——头是控制面，bins 是紫色索引，chunks 是物理布局，蓝红绿交错代表"在用"和"空闲"交错。arena 一、arena N 是平行存在，各持自己 bins 和 chunks 不共享。注意 tcache 跟 arena 是不同维度——tcache 是 per-thread，arena 是 thread 平摊池。一个线程同时挂在一个 tcache 和一个 arena 上，优先打 tcache，miss 才进 arena。
+
+---
+
+## 8 第二张图：进程内嵌套层级
+
+[visual: html_slide title=tcache + arena 嵌套层级 image=pics/03-arena-hierarchy.png]
+
+[step: auto]
+scroll auto
+
+[narration]
+第二张图把进程内部的层级嵌套讲清楚。从粗到细看——进程包含 per-thread tcache 池加 arena × N。每个 arena 内部又分 4 个区域——头状态机管 mutex 和 top_chunk 指针；空闲表 bins 是 fastbin 加 bins 数组；在用 chunks 是被应用持有指针的；物理布局是 heap 段连续字节流。三件事再贴一遍——chunk 是物理实体、bin 是组织视图、arena 是容器持有它们。看完这张图，后面所有源码追踪你都能对到具体位置。
+
+---
+
+## 9 第三张图：物理 vs 逻辑双视图
+
+[visual: html_slide title=物理内存视图 vs arena bin 视图 image=pics/03-physical-vs-logical.png]
+
+[step: auto]
+scroll auto
+
+[narration]
+第三张图是 chunk 的"鸟瞰 vs 侧视"。物理上 9 个 chunk 加 top_chunk 在 heap 段连续排开——5 个在用 4 个空闲交错——这就是碎片的原始形态。但同一组 chunk 从 bin 视图看完全不同——空闲的 4 个分别挂在 fastbin、unsorted、smallbin 各自的链表上。chunk B 是 fastbin 一员，chunk D 在 unsorted 等待归类，F H 在各自 smallbin。这跟数据库的"数据 vs 索引"是同构的——chunk 是数据的物理布局，bin 是辅助加速的索引结构。每次合并拆分，两个视图必须同步变。出错叫 heap corruption——本质就是数据库的 index corruption。
+
+---
+
+## 10 bin 切 4 类的反直觉问题
+
+[visual: spotlight]
+buddy 是按大小分桶就够了
+ptmalloc 为什么要切 4 类？
+
+[narration]
+看到这里有人问——内核的 buddy system 按大小分桶就足够了，ptmalloc 为什么要切成 fastbin、unsorted、smallbin、largebin 四类？这是个深刻问题。答案——ptmalloc 利用了 buddy 没考虑的一个维度：时间局部性。刚释放的 chunk 极有可能马上又被同 size 的 alloc 用走——这个洞察单纯按 size 分桶捕捉不了。所以多了 fastbin（小块的"刚释放队列"）和 unsorted bin（中大块的"刚释放缓冲"），把时间维度的局部性也利用上。
+
+---
+
+## 11 fastbin
+
+[visual: text title=fastbin: 16-64B 小块的最快路径]
+> 因为 C1 高频小块, 典型 16-64B
+> 而且 C6 边界 — 小块合并代价 ≥ 收益
+> 要解决 — 让小块拿到最快路径: 不查、不合并、不双链
+> 所以引入 — 单链表 LIFO + 固定大小桶 + 不合并
+> 代价 — 零钱积累, 周期性触发 malloc_consolidate 集中清理
+
+[narration]
+第一类 fastbin——管 16 到 64 字节小块。因为 C1 高频小块加 C6 边界——小块合并代价大于收益。要让小块走最快路径，不查不合并不双链。所以单链表 LIFO 加固定大小桶。代价是零钱积累——fastbin 不合并会积零钱，周期性触发 malloc_consolidate 倒进 unsorted bin 集中清理。
+
+---
+
+## 12 smallbin
+
+[visual: text title=smallbin: 64-512B 的中小块]
+> 这一段是典型对象大小 (STL 节点 / 短 std::string / 协议 buffer)
+> 频率仍高但可以承担合并开销
+> 要解决 — O(1) 大小定位 + 支持 free 时从中间合并
+> 所以引入 — 固定 16B 步长 + 双链表
+> 每桶内 chunk 大小完全相等, O(1) 命中
+
+[narration]
+第二类 smallbin——管 64 到 512 字节，是典型对象大小，STL 节点、短字符串、协议 buffer 都在这段。频率仍高但可以承担合并开销。所以用固定 16 字节步长加双链表——支持从中间 unlink 做合并。每桶内 chunk 大小完全相等，O(1) 命中。
+
+---
+
+## 13 largebin
+
+[visual: text title=largebin: ≥512B 的大块]
+> 大小空间太大 (可能 600B 也可能 100KB)
+> 固定步长会爆桶, 但请求频率比小块低
+> 要解决 — 桶数受控前提下仍快速找到"够大且接近"的 chunk
+> 所以引入 — size class 分桶 (对数尺度) + 桶内按大小排序
+> malloc(700) 找到 [512,1024) 桶, 从大到小遍历找第一个 ≥700 的
+
+[narration]
+第三类 largebin——管大于等于 512 字节大块。这一段大小空间太大——可能 600 字节也可能 10 万字节，固定步长会爆桶，但好在请求频率比小块低。所以用 size class 分桶——对数尺度。桶内再按大小排序双链表。malloc 700 字节找到 512 到 1024 桶，从大到小遍历找第一个够大的。这是 best-fit 的近似实现。
+
+---
+
+## 14 unsorted bin：最反直觉
+
+[visual: spotlight]
+unsorted bin
+延迟分类 + 顺手清理 + 热块缓存
+
+[narration]
+第四类 unsorted bin 是最反直觉的设计。它是无分类的临时缓冲——任意大小都进。free 时不算桶号直接扔进去 O(1)。malloc 时先扫一眼 unsorted——撞上精确匹配直接拿走；不匹配顺手归位到正确的 small 或 large bin 继续扫。它的精神有 3 件事——延迟分类、顺手清理、热块缓存。本质就是 CPU 的 store buffer 思想——把"立即归位"延迟到"将来顺手做"。
+
+---
+
+## 15 chunk header 位压缩 trick
+
+[visual: spotlight]
+size + 3 个标志位塞同一个 word
+1 个指针位置压缩 4 种信息
+
+[narration]
+讲到这里必须停下来欣赏一个 trick——chunk header 的位压缩。chunk 头里 size 字段占一个 word，但 size 是按 8 字节对齐的，所以低 3 位永远是 0。Doug Lea 把这 3 位拿来塞标志位——bit 0 是 PREV_INUSE 前一块是否在用；bit 1 是 IS_MMAPED 本块是否 mmap 来的；bit 2 是 NON_MAIN_ARENA 属于主 arena 还是线程 arena。一个 word 装下大小加 4 种状态——这是 ptmalloc 最经典的位压缩。
+
+---
+
+## 16 端到端 malloc(24) 流程
+
+[visual: statemap title=malloc(24) 的查桶状态机]
+找当前线程 arena
+拿 arena mutex
+查 fastbin (< 64B 最快路径)
+查 unsorted bin (刚 free 的临时位置)
+查 smallbin / largebin
+top_chunk 切
+brk 扩 / mmap 扩
+返回 user data 指针
+
+[narration]
+看一下端到端流程。malloc(24) 进来——先找当前线程绑定的 arena，主线程是 main_arena 其他线程是 thread arena。拿 arena mutex 锁。然后开始查桶——先看 fastbin 是快路径；再看 unsorted bin 刚 free 的临时位置可能撞上合适的；最后看 smallbin 和 largebin。如果都没货，从 top_chunk 切下来。top_chunk 也不够就向内核要——主 arena 用 brk 推 program break，线程 arena 用 mmap 挂新区域。最后返回 user data 指针。
+
+---
+
+## 17 简化 malloc 伪代码
+
+[visual: code_explain lang=c title=简化的 malloc 伪代码]
+void *malloc(size_t n) {
+    arena_t *a = get_thread_arena();
+    lock(a->mutex);
+    chunk_t *c = NULL;
+    if (n < FASTBIN_MAX) c = fastbin_pop(a, n);
+    if (!c)              c = unsorted_bin_search(a, n);
+    if (!c)              c = smallbin_or_largebin_search(a, n);
+    if (c) { unlock(a->mutex); return chunk_to_userptr(c); }
+    if (n >= M_MMAP_THRESHOLD) {
+        c = mmap_new_chunk(n);
+    } else if (a->top_size >= n) {
+        c = split_top_chunk(a, n);
+    } else if (a == &main_arena) {
+        a->top = brk_extend(a->top, EXTEND_SIZE);
+        c = split_top_chunk(a, n);
+    } else {
+        a->top = mmap_extend(a->top, EXTEND_SIZE);
+        c = split_top_chunk(a, n);
+    }
+    unlock(a->mutex);
+    return chunk_to_userptr(c);
+}
+===HIGHLIGHT===
+lines=2-3
+步骤 1 找 arena
+化解 C7 多核并发
+arena 锁是 per-arena 不是全局
+===HIGHLIGHT===
+lines=5-8
+步骤 2 查 bin
+fastbin → unsorted → small/large
+化解 C1 + C6
+===HIGHLIGHT===
+lines=9-11
+步骤 3 大块走 mmap
+≥ M_MMAP_THRESHOLD 直接独立 VMA
+化解 C3 + C4
+===HIGHLIGHT===
+lines=14-19
+主 arena 用 brk 扩
+线程 arena 用 mmap 扩
+双通道分粒度
+
+[narration]
+看一段简化的 malloc 伪代码。第一行找 arena 化解 C7。中间一段查 bin——fastbin 优先再 unsorted 再 small large 化解 C1 加 C6。如果 bin 都没货——大块走 mmap，主 arena 用 brk 扩，线程 arena 用 mmap 扩——化解 C2 加 C3 加 C4。每行都对应一条约束。真实 ptmalloc2 几万行代码结构上就是这个伪代码的真实工程化。骨架本身并不复杂。
+
+---
+
+## 18 简化 free 伪代码
+
+[visual: code_explain lang=c title=简化的 free 伪代码]
+void free(void *p) {
+    chunk_t *c = userptr_to_chunk(p);
+    arena_t *a = chunk_arena(c);
+    lock(a->mutex);
+    if (c->size & IS_MMAPED) {
+        unlock(a->mutex);
+        munmap_chunk(c);
+        return;
+    }
+    c = coalesce_with_neighbors(a, c);
+    if (c->size < FASTBIN_MAX) fastbin_push(a, c);
+    else                       unsorted_bin_push(a, c);
+    unlock(a->mutex);
+    // 默认就停在这, 不还内核
+}
+===HIGHLIGHT===
+lines=2-3
+反向偏移读 chunk header
+化解 C5 — free(p) 不传 size
+===HIGHLIGHT===
+lines=5-9
+IS_MMAPED 标志位路由
+mmap 块直接 munmap 立即还
+===HIGHLIGHT===
+lines=10-12
+合并相邻 free chunk
+化解 C6 碎片管理
+===HIGHLIGHT===
+lines=14-14
+默认不还内核
+syscall 贵 + brk 还不掉中间
+
+[narration]
+free 伪代码——p 减去 header 大小拿到 chunk header。从 size 字段的 IS_MMAPED 标志位决定路径——mmap 路径直接 munmap 还内核，其他路径合并相邻 free chunk 挂回 fastbin 或 unsorted bin。注意最后一行注释——默认就停在这不还内核。这就是 free 不还内核的真相——syscall 贵加上 brk 中间还不掉，合理选择是不还。
+
+---
+
+## 19 朴素 vs glibc 七维对比
+
+[visual: diff title=朴素 malloc vs glibc 的 malloc]
+- 朴素: 每秒 10⁵ 次小分配 → 10⁵ 次 syscall
++ glibc: 批量摊薄 → 仅 10² 次 syscall
+- 朴素: free 中间块还内核? brk 限制做不到
++ glibc: 不还, 挂回 bin 等复用
+- 朴素: 24 字节真实占用 4KB (整页, 170× 浪费)
++ glibc: ~32 字节 (brk 字节级)
+- 朴素: 多线程并发? 应用层自己锁
++ glibc: arena 多池自动减竞争
+- 朴素: free(p) 不传 size 怎么知道大小? 不知道
++ glibc: 反向偏移读 chunk header
+
+[narration]
+对比朴素方案和 glibc 真正实现。每秒十万次小分配——朴素十万次 syscall，glibc 批量摊薄到一百次。free 之后能不能还中间——朴素做不到，glibc 不还挂回 bin。24 字节小请求物理占用——朴素整页 4KB，glibc 32 字节。多线程并发——朴素应用自己加锁，glibc arena 多池减竞争。free(p) 不传 size——朴素根本写不出来，glibc 反向偏移读 header。每行差异都对应 C1 到 C7 的具体化解。
+
+---
+
+## 20 误解一：free 之后内存还了
+
+[visual: spotlight]
+误解 #1
+free 之后, 内存就还给操作系统了
+
+[narration]
+讲三个常见误解。第一——free 之后内存就还给操作系统。错——默认不会。free 只是把 chunk 挂回 arena 的 bin。例外只有两个——这块原本走 mmap 路径直接 munmap 还，或者主动调 malloc_trim 收缩 brk。这就是为什么生产环境 RSS 纹丝不动是常态——故意攥着等复用。
+
+---
+
+## 21 误解二：所有线程共享一个全局表
+
+[visual: spotlight]
+误解 #2
+malloc 内部就一个全局空闲表
+
+[narration]
+第二——malloc 内部就一个全局空闲表，所有线程共享。错——有多个 arena，每个独立维护自己的 4 类 bin 和 heap 段。锁的粒度是 arena 级不是全局。但 arena 数量有上限——8 倍 CPU 核数。线程数远超这个数会触发 arena 复用，锁竞争就回来了。
+
+---
+
+## 22 为什么是 8 倍核数
+
+[visual: text title=为什么 M_ARENA_MAX = 8 × cores]
+> 因为 — arena 太少 → 多线程锁竞争重 (退回单池)
+        arena 太多 → 每个 arena 持自己 heap, 不共享 → RSS 翻倍
+> 要解决 — 减锁竞争 vs 控膨胀的折中
+> 所以引入 — 经验拍板的常数 8 (64 位默认值; 32 位是 2)
+> 没有严格推导 — 类似 Linux 内核大量 magic number
+> 典型调优 — 高并发 server 调到 2-4
+
+[narration]
+为什么偏偏 8 倍核数？因为 arena 太少多线程锁竞争重，太多每个 arena 持自己 heap 不共享 RSS 翻倍。要在减锁和控膨胀之间找折中。8 是经验拍板——64 位默认值，32 位是 2 因为地址空间紧。没有严格推导，就是工程经验值，类似 Linux 内核大量 magic number。典型调优——数百线程高并发 server 常调到 2 到 4。
+
+---
+
+## 23 cache locality 精妙设计
+
+[visual: spotlight]
+fastbin idx=0,1 跟 mutex 共享 cache line 0
+最高频的 16B/24B 桶免费命中
+
+[narration]
+讲一个让人拍案叫绝的细节——fastbin 数组为什么单独放不挤进 bins 数组？除了类型不同（单链表 vs 双链表），最精妙的派生好处是 cache locality。malloc_state 结构布局上 mutex 占 40 字节加 flags 8 字节加 fastbin 索引 0 和 1 刚好填满第一条 64 字节 cache line。最高频的 16 字节和 24 字节桶——也就是 std::string 小 STL 节点最常命中的 size——跟 mutex 免费共享 cache line 0。一次 cache miss 拉一整行进来，mutex 和最热的两个桶都被预热——这是把"最高频访问"压到"最少 cache miss"的精确化设计。
+
+---
+
+## 24 How 阶段收尾 + 下一集预告
+
+[visual: spotlight]
+How 阶段四件事讲透
+下一集 Origin 篇 — 40 年三代接力的故事
+
+[narration]
+How 阶段收尾——你已经能跟人完整讲清楚 ptmalloc 大致怎么工作。chunk bin arena tcache 四件事、查桶顺序、双通道、位压缩、cache locality 都讲透了。但骨架不是凭空设计，是 40 年间约束随时代浮现、三代人接力叠加的产物。下一集 Origin 阶段，我们换沉浸模式回到 1987 年纽约州立大学的 Doug Lea 面前，看 ptmalloc 是怎么从单线程时代一步步走到 2017 的。本集就到这里，下集见。
+
+---

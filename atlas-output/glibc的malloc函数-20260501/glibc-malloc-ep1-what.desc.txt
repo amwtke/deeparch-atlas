@@ -1,0 +1,14 @@
+glibc 的 malloc，你按了千万次但没真正想过它。
+
+第 1 集 What 阶段：建立骨架认知。让你能跟同事用一句话讲清楚 malloc 是什么、住在哪、邻居是谁、为什么 free 之后内存竟然不还给操作系统。
+
+本集内容：
+1. malloc 一句话定义（34 字，每个修饰语都不可省）
+2. 三层全景图：应用 → glibc malloc → Linux 内核 brk/mmap 双通道
+3. 邻居图：jemalloc / tcmalloc / mimalloc 等同接口替代实现
+4. 反直觉事实：free 默认根本不还内核
+5. 朴素方案撞三堵墙：syscall 太贵 + brk 还不掉中间 + 碎片必然累积
+
+适合人群：有 C/C++ 基础，第一次想理解"为什么需要 malloc"的工程师。
+
+#Linux #malloc #glibc #内存管理 #atlas系列

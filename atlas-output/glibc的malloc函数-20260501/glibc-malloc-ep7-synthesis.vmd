@@ -1,0 +1,237 @@
+# 第 7 集 Synthesis 阶段 — 4 条工程方法论 + 五步法
+
+## 1 Synthesis 阶段开场过场
+
+[visual: spotlight]
+现在我们抵达 Synthesis 阶段
+能带走什么方法论？
+
+[narration]
+现在进入第 7 集——Synthesis 阶段。这是整部 7 集大电影真正的归宿。前 6 集你拿了 ptmalloc 知识——大概 80 percent 的内容。但真正值钱的是这一集——4 条元规则。它们让你看任何技术系统都能问出对的问题，套到数据库索引、JVM GC、内核调度器、K8s scheduler 都成立。这一集是把 ptmalloc 从案例提升到方法论的关键。
+
+---
+
+## 2 ptmalloc 不是结论是案例
+
+[visual: spotlight]
+前 80% 是 ptmalloc 知识
+真正值钱的是 4 条元规则
+
+[narration]
+开篇我说过——这部大电影不是 malloc 教程，是用 ptmalloc 做一个 case study 提炼通用方法论。看任何技术系统时——先识别它面对的不可再分约束；看每个设计决策时——问"它化解哪条约束加付出什么代价"；看为什么没有"完美方案"——意识到所有设计都是局部最优；把这套方法论拿去看你工作中的系统——突然觉得它们都长得很像。这一集就是把方法论从 ptmalloc 抽出来。
+
+---
+
+## 3 跨领域同构图
+
+[visual: html_slide title=跨领域同构系统 image=pics/07-isomorphic-systems.png]
+
+[step: auto]
+scroll auto
+
+[narration]
+看这张同构系统图——把 ptmalloc 的设计哲学拿去对照 4 个看似无关的系统。JVM GC heap、Linux 内核 SLUB、数据库 buffer pool、K8s scheduler——你会突然发现它们都长得很像。每个系统都有"物理实体加索引加容器加 C5 处理加减锁"五个维度。这不是巧合——是相同约束张力下的必然收敛。
+
+---
+
+## 4 同构 1: JVM GC
+
+[visual: layers title=ptmalloc 对照 JVM GC]
+ptmalloc chunk     ↔ JVM Object (reference + headers)
+ptmalloc bin       ↔ JVM Generation (Eden / Survivor / Old)
+ptmalloc arena     ↔ JVM Heap (一个进程 1 个)
+ptmalloc tcache    ↔ TLAB (Thread Local Allocation Buffer)
+C5 处理           ↔ runtime tracking (GC 完全消解 C5)
+三路径            ↔ bump pointer / minor GC / full GC
+
+[narration]
+第一个同构——JVM GC heap。chunk 对应 Object，bin 对应 Generation 也就是 Eden、Survivor、Old，arena 对应整个 Heap，tcache 对应 TLAB Thread Local Allocation Buffer——1996 年 JVM 1.0 就有了，比 glibc tcache 早 21 年。GC 通过 type info 消解 C5——跟 Go runtime 同路线。generational hypothesis 年轻对象死得快等于 ptmalloc 的 fastbin 不合并——同一个时间局部性洞察的两种表达。这条对照让 C 程序员意识到——GC 不是性能负担，是 C5 消解加 C6 集中回收的工程整合。
+
+---
+
+## 5 同构 2: Linux SLUB
+
+[visual: layers title=ptmalloc 对照 Linux SLUB]
+ptmalloc chunk     ↔ slab (per kmem_cache 的 4KB / 8KB 页)
+ptmalloc bin       ↔ kmem_cache 内的 free list
+ptmalloc arena     ↔ kmem_cache (per-type 池)
+ptmalloc tcache    ↔ kmem_cache_cpu (per-CPU)
+C5 处理           ↔ kmem_cache_free 知道 cache (type-aware)
+多 arena          ↔ per-CPU kmem_cache_cpu
+
+[narration]
+第二个同构更精彩——Linux 内核 SLUB。chunk 对应 slab——每 kmem_cache 的 4KB 或 8KB 页。bin 对应 kmem_cache 内的 free list。arena 对应 kmem_cache——per-type 池比如 task_struct_cachep。tcache 对应 kmem_cache_cpu——per-CPU。SLUB 的 kmem_cache_cpu 等于 ptmalloc 的 tcache 只是更早出现——2007 SLUB 取代 SLAB 跟 jemalloc 同年开源。SLUB 不背 C5 债——内核知道每次 kfree 是哪个 cache，类似 Rust Layout 的 sized dealloc。用户态 ptmalloc 跟内核 SLUB 是同一套方法论的两种实现——同源同构。
+
+---
+
+## 6 同构 3: 数据库 buffer pool
+
+[visual: layers title=ptmalloc 对照 MySQL/PostgreSQL buffer pool]
+ptmalloc chunk     ↔ data page (8KB 或 16KB, 固定大小)
+ptmalloc bin       ↔ LRU list / free list
+ptmalloc arena     ↔ buffer pool 实例
+ptmalloc tcache    ↔ page lock-free path / hash bucket
+C5 处理           ↔ page id 反查 (hash table page_id → frame)
+多 arena 减锁     ↔ 多个 buffer pool 实例
+
+[narration]
+第三个同构——数据库 buffer pool。chunk 对应 data page 8KB 或 16KB 固定大小。bin 对应 LRU list 加 free list。arena 对应 buffer pool 实例——MySQL 的 innodb_buffer_pool_instances 配置。tcache 对应 page lock-free path 或 hash bucket。C5 处理通过 page id 反查 hash table——page_id 到 frame 的映射，跟 jemalloc 的 size class 反查同思路。多 buffer pool 实例等于 ptmalloc 的 multi-arena——为减锁同一动机。innodb_buffer_pool_instances 等于 8 跟 M_ARENA_MAX 等于 8 倍 cores 是同一个工程权衡。
+
+---
+
+## 7 同构 4: K8s scheduler
+
+[visual: layers title=ptmalloc 对照 K8s scheduler]
+ptmalloc chunk     ↔ Pod (运行的工作单元)
+ptmalloc bin       ↔ scheduling queue / priority class
+ptmalloc arena     ↔ Node (运行 pod 的物理资源池)
+ptmalloc tcache    ↔ scheduler shards / cache framework
+C5 处理           ↔ API server 知道 pod spec
+多 arena 减锁     ↔ scheduler shards / multiple schedulers
+
+[narration]
+第四个同构最让云原生工程师拍案——K8s scheduler。chunk 对应 Pod 运行的工作单元。bin 对应调度队列加 priority class。arena 对应 Node——运行 pod 的物理资源池。tcache 对应 scheduler shards。Cluster autoscaler 等于扩 heap，OOM-kill 等于进程被驱逐等于内存 trim。K8s 1.31 加的多 scheduler 协调等于 ptmalloc 的 arena 多池减锁。让云原生工程师意识到——K8s 调度本质是"分布式资源分配"问题跟用户态内存分配同构。
+
+---
+
+## 8 元方法论：5 维度解构
+
+[visual: spotlight]
+看到一个新系统
+先用 5 个维度去解构
+
+[narration]
+把 4 个同构系统拼起来看共同特征——每个系统都能填满"物理实体加索引加容器加 C5 处理加减锁"5 个维度。这就是元方法论第一条——看到一个新系统先用这 5 个维度去解构。如果每个维度都填得出，你已经看懂了它的设计哲学骨架。这 5 个维度是从 ptmalloc 抽象出来的工程模板——可以套到任何"在某组约束下分配、调度、复用资源"的同源工程问题上。
+
+---
+
+## 9 教训 1: 别把"不可能"当永恒
+
+[visual: spotlight]
+教训 1
+别把"不可能"当永恒
+约束有保质期
+
+[narration]
+现在进入最值钱的部分——4 条工程教训。第一条——别把"不可能"当永恒，约束有保质期。1989 C 标准说 free 不传 size，Doug Lea 1996 说这是"根本约束"。但 2017 年 Rust 通过 Layout 完全消解 C5，2024 C23 加了 free_sized，同年 PyTorch 出来 GB 级 alloc 让 C1 在 ML 里反过来。看到"不可避免"、"根本"、"绝对"这种词，先问三个问题——这约束哪个时代提出？依赖什么前提？新场景前提还在吗？
+
+---
+
+## 10 教训 2: "30 年没改"是复合阻力
+
+[visual: spotlight]
+教训 2
+"30 年没改"通常不是单一原因
+复合阻力比单点顽固
+
+[narration]
+教训二——"30 年没改"不是单一原因是复合阻力。为什么 C 的 free 不传 size 30 年没改？单看每个原因都觉得"应该能改"——技术上 C++17 Rust 做到了；政治上 C23 加了 free_sized；市场上新语言直接绕开。每个单独都不是阻力。真实原因是复合——allocator 仍要支持老 free(p)，chunk header 不能砍，新接口能省的内存因为兼容老接口而省不到，ROI 几乎为零。"为什么 X 这么久没改"别信单一解释——通常 3 到 4 个原因复合。
+
+---
+
+## 11 教训 3: 别让底层管上层
+
+[visual: spotlight]
+教训 3
+别让底层操心上层的事
+谁做最方便 ≠ 谁该做
+
+[narration]
+教训三——别让底层操心上层的事。一个常见的"聪明主意"——让 glibc 自动检测容器调 trim 阈值。听起来很美但绝对不该。第一跨 OS 兼容崩，proc 是 Linux 特有；第二容器定义不清；第三跨了 3 层职责——C 库到容器 runtime 到编排平台；第四 JVM 案例不能套，JVM 是应用 runtime 懂应用语义，glibc 是底层 C 库不懂。看到"自动检测自适应"提案先问跨了几层、policy 该哪层做。短期省事不等于长期合理。
+
+---
+
+## 12 教训 4: 空白可能是机会
+
+[visual: spotlight]
+教训 4
+"没人做" ≠ "做不到"
+空白可能是机会
+
+[narration]
+教训四——"没人做"不等于"做不到"。看 6 个 allocator 设计空间图，左上角空白。朴素结论说"物理不可能"。但实际算一下——chunk header 平均只占 5 到 10 percent RSS 根本不会让容器 OOM。真正决定容器友好的是 dirty page purging 频率跟 chunk header 完全独立——两个轴物理上正交，左上物理可能。空白只是历史路径依赖。看到任何空白角落先问两个轴是不是真正正交、为什么没人做、是不是潜在产品机会。跨领域都适用——数据库 HTAP、编程语言动态加高性能、存储 CAP 三选二，都是路径依赖不是物理约束。
+
+---
+
+## 13 4 条教训快速回顾
+
+[visual: recap title=4 条工程教训]
+教训 1 别把"不可能"当永恒
+教训 2 "30 年没改"不是单一原因
+教训 3 别让底层管上层
+教训 4 空白可能是机会
+对应 4 个判断问句
+
+[narration]
+4 条教训快速回顾。看到 X 是"根本约束"——问这条约束依赖什么前提，新场景下前提还在吗。看到"为什么 X 这么久没改"——问不是 1 个原因是 3 到 4 个复合，是哪几个。看到"让 X 自动检测 Y"——问跨了几层 policy 应该哪层做。看到设计空间图有空白角落——问这是物理不可能还是路径依赖，算一下。这 4 条加 4 个问句就是这次走完 ptmalloc atlas 拿到的最值钱的元工具——比"懂了 ptmalloc"价值大得多。
+
+---
+
+## 14 五步法
+
+[visual: text title=五步法分析任何技术系统]
+> 步骤 1 — 识别约束 (列出不可再分的 C1, C2, ...)
+        应用元规则 2: 给每条约束分类 (绝对 / 复合 / 时代性)
+> 步骤 2 — 列举候选 (抽象层面所有可能解, 含反事实候选)
+> 步骤 3 — 代价分析 (每个候选违反哪些约束, 付出什么代价)
+        应用元规则 3: 判断"该哪一层解决", 避免分层错位
+> 步骤 4 — 现实对照 (历史/工业界谁选了什么, 天然对照实验)
+        应用元规则 1: 观察约束随时代演化的现实证据
+> 步骤 5 — 局部最优证明 (为什么没"完美方案")
+        应用元规则 4: 看 2D 空间空白象限, 识别路径依赖机会
+
+[narration]
+最后把所有内容压缩成可执行的五步法。第一步识别约束——列出不可再分约束分类。第二步列举候选——所有可能解含反事实。第三步代价分析——违反哪些约束付出什么代价。第四步现实对照——历史和工业界谁选了什么，天然对照实验。第五步局部最优证明——为什么没"完美方案"，看空白象限识别路径依赖机会。这 5 步加 4 条元规则，拿去套你工作里的数据库索引、网络协议、GC tuning、调度策略——你会发现它们都长得像 ptmalloc。
+
+---
+
+## 15 Doug Lea 的最后一句话
+
+[visual: spotlight]
+"No set of compromises along these lines can be perfect"
+                    — Doug Lea, 1996
+
+[narration]
+最后送你 Doug Lea 1996 年论文里的一句话——No set of compromises along these lines can be perfect。沿这些方向的任何一组取舍都不可能完美。没有完美方案，只有"约束权重不同的局部最优"。这是工程的本质，也是这套方法论的精神。把它带到你的下一个系统设计去——下次看到一个组件别问"它好不好"，问"它在化解哪条约束、付出什么代价、可不可能反向演化"。
+
+---
+
+## 16 升华回到开场
+
+[visual: title]
+40 年的 ptmalloc
+教会我们的不是 malloc
+是看任何系统的 4 条元规则
+
+[narration]
+回到一开始的悬念——free 默认不还内核。我们花了一个多小时从这个反直觉事实出发，走过 What 骨架、Why 约束、How 组件、Origin 三代叠加、Deep 三路径、Comparison 五版本，最后到 Synthesis 4 条元规则。回头看——malloc 不是简单的库函数，是 40 年间由 Doug Lea、Wolfram Gloger、DJ Delorie、Jason Evans、Sanjay Ghemawat、Daan Leijen 一棒一棒接力打磨出的工程艺术品。每一行代码每一个数字都对应某条不可再分约束的具体化解。
+
+---
+
+## 17 全片关键词回顾
+
+[visual: recap title=全片关键词回顾]
+7 条约束 C1-C7
+三件事 + tcache 四个抽象
+三条主路径 tcache/brk/mmap
+6 个 allocator 设计空间
+4 个跨领域同构系统
+4 条工程教训
+五步法
+约束有保质期
+
+[narration]
+全片关键词最后回顾——7 条约束 C1 到 C7 是脊梁；三件事加 tcache 4 个抽象是骨架；三条主路径 tcache、brk、mmap 是工程实现；6 个 allocator 是设计空间；4 个跨领域同构是方法论的现实验证；4 条工程教训是带走的元工具；五步法是拿来就用的执行模板。最深的洞察——约束有保质期不是物理常数。这套思维方式比 malloc 知识本身值钱十倍。
+
+---
+
+## 18 一键三连收尾
+
+[visual: title]
+带走的不是 malloc 知识
+是看任何系统的方法论
+
+[narration]
+七集大电影一个多小时讲完一份 atlas 综合长文。如果你听完觉得"原来 malloc 不是只有 chunk 和 bin 这么简单"——欢迎你去把这套方法论用到你工作中的数据库、调度器、缓存、消息队列上。你会发现它们都长得像 ptmalloc。本期视频用到的 atlas 综合长文、源码 demo 链接都在视频简介里。如果觉得有收获，欢迎一键三连，我们下期见。
+
+---

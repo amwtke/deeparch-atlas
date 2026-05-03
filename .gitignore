@@ -1,1 +1,6 @@
 .DS_Store
+
+# deeparch-video 产物 — 视频文件不入 git(太大)
+*.mp4
+*.mp4.uploaded
+.deeparch_video_tmp/

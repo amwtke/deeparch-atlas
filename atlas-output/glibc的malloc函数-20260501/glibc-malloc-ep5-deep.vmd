@@ -1,0 +1,478 @@
+# 第 5 集 Deep 阶段 — 三路径源码追踪
+
+## 1 Deep 阶段开场过场
+
+[visual: spotlight]
+现在我们钻进 Deep 阶段
+真实源码到底长什么样？
+
+[narration]
+现在进入第 5 集——Deep 阶段。前 4 集你看到了 ptmalloc 的骨架、约束、组件、历史。Deep 阶段把这一切固定到一次真实的 malloc 调用上——挑三个有代表性的 size，让它们走完全不同的源码路径。三个 size 选得很精心，它们对赌了 ptmalloc 三个不同的假设。读完这一集你能解释 ptmalloc 里每个数字为什么是这个值不是别的。
+
+---
+
+## 2 同一个 malloc, 耗时差 300 倍
+
+[visual: spotlight]
+同一个 malloc()
+size 一变, 耗时差 300 倍
+
+[narration]
+先抛一个让你睡不着觉的事实——同一个 malloc 函数传不同的 size 耗时能差 300 倍。malloc(24) 大概 15 纳秒；malloc(8KB) 大概 500 到 1000 纳秒；malloc(200KB) 大概 5000 纳秒。差距不是因为算法变了——是因为它走的路径完全不同。我们一条一条看。
+
+---
+
+## 3 三路径 call stack 对比图
+
+[visual: html_slide title=三路径 call stack 对比 image=pics/05-call-stack-three-paths.png]
+
+[step: auto]
+scroll auto
+
+[narration]
+看这张三路径并列的 call stack 图。入口都是 __libc_malloc，然后立刻按 size 加 tcache 状态分叉。tcache 路径最短——大概 9 个调用完全在 user space。brk 路径最长——大概 14 个调用跨一次 syscall 加一次锁。mmap 路径中等——大概 10 个调用跨 syscall 但不需要锁因为绕过 arena。重点看 IS_MMAPED 标志位——它让 free 时能路由回 munmap。三条路径互补三个假设——tcache 假设高频小块，brk 假设中等长跑，mmap 假设大块短暂。哪条都不能"通吃"——它们组合起来才覆盖整个 size 乘频率空间。
+
+---
+
+## 4 demo 代码
+
+[visual: code_explain lang=c title=三场景演示代码]
+// 场景 1: tcache 路径
+void *p1a = malloc(24);  free(p1a);
+void *p1b = malloc(24);  free(p1b);
+
+// 场景 2: brk 路径
+void *p2 = malloc(8 * 1024);
+free(p2);
+
+// 场景 3: mmap 路径
+void *p3 = malloc(200 * 1024);
+free(p3);
+===HIGHLIGHT===
+lines=1-3
+场景 1 tcache 路径
+第 1 次 tcache 空, 走慢路径填 tcache
+第 2 次 tcache 命中, 约 15 ns 无锁
+===HIGHLIGHT===
+lines=5-7
+场景 2 brk 路径
+8KB tcache miss
+走 _int_malloc → sysmalloc → sbrk
+free 进 unsorted bin 不还内核
+===HIGHLIGHT===
+lines=9-11
+场景 3 mmap 路径
+200KB ≥ M_MMAP_THRESHOLD
+绕过 arena 直接 mmap syscall
+free 看到 IS_MMAPED 立即 munmap
+
+[narration]
+看一段 demo 代码——三个场景串起三条路径。场景一第一次 malloc 24 字节 tcache 空走慢路径填 tcache，第二次 malloc 24 命中 tcache 15 纳秒返回。场景二 malloc 8KB——tcache miss 因为 size 超过 1032 字节上限，走 _int_malloc 到 sysmalloc 触发 sbrk 扩 heap。场景三 malloc 200KB——超过 mmap 阈值 128KB 绕过 arena 直接 mmap。free 这边——场景一进 tcache，场景二进 unsorted bin 不还内核，场景三看到 IS_MMAPED 直接 munmap 立即还。strace 一跑就能验证。
+
+---
+
+## 5 场景 1 入口：malloc(24) → tcache
+
+[visual: spotlight]
+场景 1: malloc(24)
+路径长度 ~9 调用, 0 syscall, 0 锁
+
+[narration]
+场景一从 __libc_malloc 入口讲起。malloc(24) 进来——先 checked_request2size 算 chunk 大小 24 字节用户加 16 字节 header 对齐到 32 字节。tc_idx 等于 32 减 16 除 16 等于 1——命中 tcache 桶 1。如果 tcache entries 1 非空（第二次或之后的 alloc），直接命中无锁。整个 tcache 命中路径在 _int_malloc 之前就 return——完全跳过 arena lock 和 bin search。这就是 15 纳秒耗时的来源。
+
+---
+
+## 6 __libc_malloc 入口源码
+
+[visual: code_explain lang=c title=__libc_malloc 入口的 tcache 早期分支]
+void *
+__libc_malloc (size_t bytes)
+{
+  mstate ar_ptr;
+  void *victim;
+
+  /* (1) tcache 早期分支 — 在 arena_get 之前就检查 */
+  size_t tbytes = checked_request2size (bytes);
+  if (tbytes == 0) {
+    __set_errno (ENOMEM);
+    return NULL;
+  }
+  size_t tc_idx = csize2tidx (tbytes);
+
+  MAYBE_INIT_TCACHE ();
+
+  /* (2) 关键路径 - tcache 命中直接返回 */
+  if (tc_idx < mp_.tcache_bins
+      && tcache != NULL
+      && tcache->counts[tc_idx] > 0)
+    {
+      victim = tcache_get (tc_idx);
+      return tag_new_usable (victim);
+    }
+
+  /* (3) tcache miss, 走 arena 慢路径 */
+  ...
+}
+===HIGHLIGHT===
+lines=8-13
+checked_request2size
+24 字节用户 + 16 字节 header
+对齐到 32 字节, 桶号 = 1
+===HIGHLIGHT===
+lines=15-15
+MAYBE_INIT_TCACHE
+首次进入初始化 thread-local
+__thread 修饰符独占
+===HIGHLIGHT===
+lines=18-25
+tcache 命中三个条件
+桶号在范围 + 不为空 + counts > 0
+直接 tcache_get 返回, 完全跳过 arena lock
+===HIGHLIGHT===
+lines=27-28
+tcache miss
+fall through 到 _int_malloc
+但 90%+ 请求根本到不了这里
+
+[narration]
+看真实 glibc 2.34 源码。函数入口先做 checked_request2size 算 24 加 header 等于 32。csize2tidx 算桶号 1。MAYBE_INIT_TCACHE 首次进入时初始化 thread-local tcache。然后是关键的 if 分支——tcache 桶号在范围内 tcache 不为空 counts 数组该桶大于 0——就调 tcache_get 直接返回。整个分支在 _int_malloc 之前就 return——完全跳过 arena lock。这一段代码就是 90% 以上请求走的路径。
+
+---
+
+## 7 tcache_get_n 源码
+
+[visual: code_explain lang=c title=tcache_get_n 单链表 pop]
+static __always_inline void *
+tcache_get_n (size_t tc_idx, tcache_entry **ep)
+{
+  tcache_entry *e;
+  if (ep == &(tcache->entries[tc_idx]))
+    e = *ep;
+  else
+    e = REVEAL_PTR (*ep);
+
+  if (__glibc_unlikely (!aligned_OK (e)))
+    malloc_printerr ("malloc(): unaligned tcache chunk detected");
+
+  /* 链表 pop:把 entries[tc_idx] 指向下一个 chunk */
+  if (ep == &(tcache->entries[tc_idx]))
+    *ep = REVEAL_PTR (e->next);
+  else
+    *ep = PROTECT_PTR (ep, REVEAL_PTR (e->next));
+
+  --(tcache->counts[tc_idx]);
+  e->key = 0;
+  return (void *) e;
+}
+===HIGHLIGHT===
+lines=5-9
+读 entries 数组该桶的链表头
+REVEAL_PTR 解码加密指针
+2.32 加的防 ROP 防护
+===HIGHLIGHT===
+lines=11-12
+对齐校验
+chunk 地址必须 16 字节对齐
+不齐 → 抛 unaligned tcache chunk
+===HIGHLIGHT===
+lines=14-18
+单链表 pop 操作
+entries 头指向 e->next
+PROTECT_PTR 重新加密
+===HIGHLIGHT===
+lines=20-22
+counts 计数减 1
+清 e->key 为 0 代表已被取走
+下次 free 会重新写 key
+
+[narration]
+真正的 pop 操作在 tcache_get_n 函数里。读 entries 数组该桶的链表头 e，把链表头指向 e 的 next，counts 计数减 1。最后清 e 的 key 字段为 0——这一步是关键的安全检查。注意 REVEAL_PTR 和 PROTECT_PTR 这对宏——是 tcache 2.32 加的防护，把链表 next 指针跟 chunk 自己的地址做异或加密，防止攻击者改 next 让 malloc 返回任意地址。这是 CVE-2017-17426 之后陆续加上的硬功夫。
+
+---
+
+## 8 tcache_put 防 double-free
+
+[visual: code_explain lang=c title=tcache_put 防 double-free]
+static __always_inline void
+tcache_put (mchunkptr chunk, size_t tc_idx)
+{
+  tcache_entry *e = (tcache_entry *) chunk2mem (chunk);
+
+  e->key = tcache_key;
+  e->next = PROTECT_PTR (&e->next, tcache->entries[tc_idx]);
+  tcache->entries[tc_idx] = e;
+  ++(tcache->counts[tc_idx]);
+}
+===HIGHLIGHT===
+lines=4-4
+chunk2mem 把 chunk 头转 user data
+e 指向 user 区域用来存链表 next
+===HIGHLIGHT===
+lines=6-6
+e->key 写 tcache_key
+进程内唯一的随机数
+double free 检测的钥匙
+===HIGHLIGHT===
+lines=7-9
+PROTECT_PTR 加密 next
+单链表头插, counts 加 1
+完全无锁 thread-local
+
+[narration]
+看 free 这边——tcache_put 函数。free 进来 chunk 转成 e 指针，写 e 的 key 字段为 tcache_key——这个 tcache_key 是进程内唯一的随机数。然后加密 next 指针头插到链表。整个 push 完全无锁——tcache 是 __thread thread-local 每个线程独占一份。e 的 key 这个字段就是防 double free 的——如果同一个指针被 free 两次第二次会发现 key 已经等于 tcache_key 立即抛 double free or corruption fasttop 错误。这是 tcache 2.30 之后加的安全防护。
+
+---
+
+## 9 反事实：tcache 上限调到 16KB
+
+[visual: text title=反事实 — tcache 上限调到 16KB 会失控]
+> 默认 N=64 桶, 覆盖 16-1032B
+> 静态元数据 ~640B / thread → 1000 线程 = 640KB
+>
+> 调到 N=1024 桶, 覆盖 16-16KB
+> 静态元数据 ~10KB / thread → 1000 线程 = 10MB
+>
+> 但是动态 chunks 占用 (worst case 均匀触发 16B-16KB):
+>   平均 chunk = 8KB, 单线程 = 1024 × 7 × 8KB = 56 MB
+>   1000 线程 = 56 GB ⚠️ 失控
+>
+> 4KB→16KB 上限涨, 命中率只多 2pp, RSS 涨 16x
+> 1032B 是命中率/RSS 边际收益的最佳拐点
+
+[narration]
+反事实小试——如果把 tcache 上限调到 16KB 让 8KB 也走 tcache 会怎样？分两层看。第一层静态元数据——thread-local 元数据从 640 字节涨到 10KB，1000 线程总共 10MB 可接受。第二层动态 chunks 占用——worst case 假设 workload 均匀触发 16 字节到 16KB，平均 chunk 8KB，单线程 1024 桶乘 7 chunk 乘 8KB 等于 56MB，1000 线程总共 56GB——直接失控。DJ Delorie 测出来——上限从 4KB 涨到 16KB 命中率只多 2 个百分点，但 worst case RSS 涨 16 倍。1032 字节是命中率和 RSS 的最佳拐点——再大就是负收益。
+
+---
+
+## 10 场景 2: malloc(8KB) → brk
+
+[visual: spotlight]
+场景 2: malloc(8KB)
+tcache miss → arena lock → sbrk 扩 heap
+
+[narration]
+场景二切到 malloc(8KB) 这条路。8KB tcache miss——因为超过 1032 字节上限。tbytes 8208 字节，桶号算出来是 512 远超 mp_.tcache_bins 64。size 也超过 fastbin 上限 64 字节。落在 largebin 范围。假设是 fresh process largebin 和 unsorted 都空走 top_chunk。top_chunk 不够 8208 字节，触发 sysmalloc 扩 heap，调 sbrk syscall。这一条路径平均 500 到 1000 纳秒，慢了 30 多倍。
+
+---
+
+## 11 _int_malloc 中等大块路径
+
+[visual: code_explain lang=c title=_int_malloc 中等大块路径]
+static void *
+_int_malloc (mstate av, size_t bytes)
+{
+  INTERNAL_SIZE_T nb = checked_request2size (bytes);
+
+  if ((unsigned long) (nb) <= (unsigned long) (get_max_fast ()))
+    { /* fastbin pop ... */ }
+
+  if (in_smallbin_range (nb))
+    { idx = smallbin_index (nb); ... }
+  else
+    {
+      idx = largebin_index (nb);
+      if (atomic_load_relaxed (&av->have_fastchunks))
+        malloc_consolidate (av);
+    }
+
+  for (;;) {
+    while ((victim = unsorted_chunks (av)->bk) != unsorted_chunks (av)) { ... }
+
+    if (!in_smallbin_range (nb)) { bin = bin_at (av, idx); ... }
+
+    victim = av->top;
+    if ((unsigned long) (chunksize (victim)) >= nb + MINSIZE) {
+      remainder = chunk_at_offset (victim, nb);
+      av->top = remainder;
+      set_head (victim, nb | PREV_INUSE);
+      return chunk2mem (victim);
+    }
+
+    return sysmalloc (nb, av);
+  }
+}
+===HIGHLIGHT===
+lines=4-4
+checked_request2size 8192 → 8208
+===HIGHLIGHT===
+lines=6-10
+fastbin 跳过 (8208 > 64)
+smallbin 跳过 (8208 > 512)
+size 不在小块范围
+===HIGHLIGHT===
+lines=12-15
+进入 largebin 索引
+先 malloc_consolidate 合并所有 fastbin
+统一管理碎片
+===HIGHLIGHT===
+lines=18-21
+扫 unsorted bin 顺手归位
+扫 largebin 找 best-fit
+都没货继续往下
+===HIGHLIGHT===
+lines=23-30
+use_top 从 top_chunk 切
+top 是 arena 末端剩饭
+够大就切, 不够触发 sysmalloc
+
+[narration]
+_int_malloc 真实代码逻辑——一系列 if 分支按 size 分流。fastbin 8208 大于 64 跳过，smallbin 8208 大于 512 跳过，走 largebin 索引。先合并所有 fastbin chunk malloc_consolidate。然后扫 unsorted bin 找精确匹配，扫 largebin 找 best-fit。都没货——use_top 从 top_chunk 切。top_chunk 不够——触发 sysmalloc 扩 heap。这就是"三路径互补加 fallback 网络"的真实代码体现。
+
+---
+
+## 12 sysmalloc 触发 sbrk
+
+[visual: code_explain lang=c title=sysmalloc 触发 sbrk 扩 heap]
+static void *
+sysmalloc (INTERNAL_SIZE_T nb, mstate av)
+{
+  if ((unsigned long) (nb) >= (unsigned long) (mp_.mmap_threshold)
+      && (mp_.n_mmaps < mp_.n_mmaps_max))
+    {
+      mm = (char *) MMAP (0, size, PROT_READ | PROT_WRITE,
+                          MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE);
+      ...
+    }
+
+  size = nb + (av == &main_arena ? MINSIZE : (HEAP_MAX_SIZE - 1)) + ...;
+  size = ALIGN_UP (size, pagesize);
+  brk = (char *) (MORECORE (size));
+  if (brk != (char *) (MORECORE_FAILURE)) {
+    av->top = (mchunkptr) brk;
+    ...
+  }
+}
+===HIGHLIGHT===
+lines=4-9
+mmap 路径触发条件
+size ≥ 128KB 且 mmap 数未达上限
+绕过 arena 直接独立 VMA
+chunk header 设 IS_MMAPED 位
+===HIGHLIGHT===
+lines=12-16
+sbrk 路径
+size 加 header 后 ALIGN_UP 到一页
+MORECORE 是宏 Linux = sbrk syscall
+扩出来挂到 av->top, top_chunk 前进
+
+[narration]
+sysmalloc 这个函数是大块路径的分叉点。size 大于等于 mmap_threshold 默认 128KB——走 mmap 调 MMAP 宏申请整页对齐的内存。否则走 sbrk——MORECORE 这个宏在 Linux 上就是 sbrk syscall。扩出来的内存挂到 av top top_chunk 前进。这两条路径在源码层是同一个函数的两个分支。
+
+---
+
+## 13 _int_free 路由分发
+
+[visual: code_explain lang=c title=_int_free 的路由分发]
+static void
+_int_free (mstate av, mchunkptr p, int have_lock)
+{
+  size = chunksize (p);
+
+  if (chunk_is_mmapped (p)) {
+    munmap_chunk (p);
+    return;
+  }
+
+  size_t tc_idx = csize2tidx (size);
+  if (tcache != NULL && tc_idx < mp_.tcache_bins
+      && tcache->counts[tc_idx] < mp_.tcache_count) {
+    tcache_put (p, tc_idx);
+    return;
+  }
+
+  if ((unsigned long)(size) <= (unsigned long)(get_max_fast ())) {
+    fastbin_push (p, av);
+    return;
+  }
+
+  if (!have_lock) __libc_lock_lock (av->mutex);
+  /* coalesce_with_neighbors + unsorted_bin_push ... */
+}
+===HIGHLIGHT===
+lines=4-4
+chunksize(p) 反向偏移
+读 chunk header 拿 size + 标志位
+化解 C5 的核心
+===HIGHLIGHT===
+lines=6-9
+IS_MMAPED 分支
+场景 3 的 200KB 走这里
+直接 munmap 立即还
+===HIGHLIGHT===
+lines=11-16
+tcache 分支
+场景 1 的 24B 走这里
+tcache_put 无锁 push
+===HIGHLIGHT===
+lines=18-21
+fastbin 分支
+size ≤ 64B 小块快路径
+单链表头插 不合并
+===HIGHLIGHT===
+lines=23-25
+中等大块分支
+场景 2 的 8KB 走这里
+拿 arena lock + coalesce + unsorted
+
+[narration]
+free 反过来看——_int_free 函数也是按 IS_MMAPED 加 size 路由分发。第一个分支 IS_MMAPED 直接 munmap——场景三的 200KB 走这里。第二个分支 tcache 范围内 tcache_put 无锁 push——场景一走这里。第三个分支 fastbin 范围 fastbin_push——小块快路径。第四个分支中等大块 coalesce 合并相邻加挂 unsorted bin——场景二的 8KB 走这里。整个 free 的路径选择就是看 IS_MMAPED 标志位加 size 的简单路由——优雅至极。
+
+---
+
+## 14 场景 3: malloc(200KB) → mmap
+
+[visual: spotlight]
+场景 3: malloc(200KB)
+直接 mmap, 绕过 arena, 0 锁
+
+[narration]
+场景三 malloc 200KB——大于等于 mmap_threshold 128KB。直接走 mmap 路径——sysmalloc 第一个分支调 mmap syscall 申请独立 VMA。注意 mmap 路径完全绕过 arena——不需要 arena lock。这块内存的 chunk header 设置 IS_MMAPED 位为 1。free 时 _int_free 第一个分支看到 IS_MMAPED 直接 munmap 立即还给内核——这就是为什么大块 free 后 RSS 立刻下降。耗时大概 5000 纳秒——syscall 加缺页加页表更新都要算。
+
+---
+
+## 15 IS_MMAPED 精彩路由
+
+[visual: spotlight]
+IS_MMAPED 一个 bit
+让 free 自动路由回 munmap
+精确化解 C5
+
+[narration]
+IS_MMAPED 这个 bit 的作用要单独欣赏。chunk 头 size 字段第二位——只有一个 bit，但它让 free 时能正确路由。问题是——free(p) 不传 size 也不传"这块从哪条路径来"，allocator 怎么知道要 munmap 还是挂回 bin？答案就在这个 bit 里。alloc 走 mmap 路径时 set 这个 bit，free 时 _int_free 反向偏移读 chunk header 看到 IS_MMAPED 等于 1 就直接 munmap_chunk——bypass 整个 arena bin 路径。一个 bit 化解了"我从哪来"的问题。
+
+---
+
+## 16 三路径性能对比
+
+[visual: timeline title=三路径性能对比]
+T=0    场景 1 malloc(24)   tcache 命中
+T=15ns [完成] 0 syscall, 0 锁, 2 cache line
+T=0    场景 2 malloc(8KB)  brk 路径
+T=500ns [arena lock] 加锁
+T=600ns [bin search] 顺手归位 + best-fit
+T=900ns [sbrk] syscall 扩 heap
+T=1000ns [完成] 1 syscall, 1 锁, 6 cache line
+T=0    场景 3 malloc(200KB) mmap 路径
+T=2500ns [mmap] syscall 申请独立 VMA
+T=4500ns [缺页] 第一次访问 trigger 物理页
+T=5000ns [完成] 2 syscall, 0 锁, 4 cache line
+
+[narration]
+把三路径性能并列。tcache 路径 15 纳秒——零 syscall 零锁两条 cache line 全 thread-local。brk 路径 1000 纳秒——一次 sbrk syscall 加一次 arena lock 触六条 cache line。mmap 路径 5000 纳秒——两次 syscall 包括 mmap 加 munmap 零锁绕过 arena。差距就是这么大——同一个 malloc 函数耗时差 300 倍。但是没有"最优"路径——只有"最匹配场景"的路径。
+
+---
+
+## 17 三路径精确化解 C1-C7 + 收尾
+
+[visual: recap title=三路径化解约束]
+tcache 化解 C1 + C7
+brk arena 化解 C1+C2+C3+C6+C7
+mmap 化解 C2+C3+C4
+chunk header 16B 化解 C5
+arena 64MB 对齐 化解 C5+C7
+4 类 bin 化解 C1+C6
+
+[narration]
+最后回扣 C1 到 C7。tcache 化解 C1 高频小块加 C7 多核。brk arena 路径化解 C1 加 C2 加 C3 加 C6 加 C7。mmap 路径化解 C2 加 C3 加 C4。chunk header 16 字节化解 C5。arena 64MB 对齐加 NON_MAIN_ARENA bit 化解 C5 加 C7。所有这些都是被 C1 到 C7 单向逼出来的——三条路径不是"算法选择"而是"约束倒逼出的必然分叉"。Deep 阶段到这里灵魂问题已经百分之百闭环——malloc 用同一个 void star malloc size_t 接口在 7 条硬约束下覆盖 size 乘 frequency 乘多线程的整个空间。下一集 Comparison 阶段我们跳出 ptmalloc 看横向对比。本集就到这里，下集见。
+
+---

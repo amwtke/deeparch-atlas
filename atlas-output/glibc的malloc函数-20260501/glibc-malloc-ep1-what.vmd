@@ -1,0 +1,189 @@
+# 第 1 集 What 阶段 — glibc malloc 不就是个切内存的吗
+
+## 1 What 阶段开场过场
+
+[visual: spotlight]
+现在我们来看 What 阶段
+glibc 的 malloc 到底是什么？
+
+[narration]
+现在进入第 1 集——What 阶段。这一集的目标只有一个：让你能用一句话向同事讲清楚 malloc 是什么、住在哪、邻居是谁。我们不深入实现细节，先建立骨架认知，让后面 6 集都有承载点。准备好了吗？开始。
+
+---
+
+## 2 反直觉钩子：free 不还内核
+
+[visual: spotlight]
+你以为 free 就是还给操作系统？
+其实它默认根本不还
+
+[narration]
+先抛一个反直觉的事实给你。生产里你常听到一句抱怨——我明明 free 了那块内存，top 里 RSS 怎么纹丝不动？很多人第一反应是泄漏。错。它不是泄漏，是 malloc 故意攥着不放，等下次复用。这件看起来违反常识的事，恰好是 malloc 整个设计哲学的入口——我们顺着这个入口往下走。
+
+---
+
+## 3 类比锚点：酒店前台
+
+[visual: analogy title=malloc 就像酒店前台]
+[story: memory-apartment]
+
+[narration]
+先给你最贴切的类比——把 malloc 想象成酒店前台。客人入住等于 malloc(24)，前台从空闲房间挑一间够住的发钥匙。客人退房等于 free，前台把房间标记空闲，但绝不会立刻把房间拆掉。酒店满员了，前台才打电话给建房公司——也就是内核——加盖几间。malloc 整个存在意义，就是把"重复的小事"挡在建房公司门口。这个酒店比喻接下来反复出现，先装进脑子。
+
+---
+
+## 4 一句话定义
+
+[visual: spotlight]
+用户态分配器
+把内核给的大块虚拟内存
+切成可复用的小块给应用
+
+[narration]
+glibc 的 malloc 一句话定义——用户态分配器，把内核给的大块虚拟内存切成可复用的小块交给应用。三十四个字，每个修饰语都不可省。用户态——它跑在你的进程里，不在内核。分配器——它真的从无到有把字节切出来。切成小块——输入大块输出小块。可复用——这是它存在的全部理由，不复用就直接调内核了，要它干嘛？
+
+---
+
+## 5 三层全景
+
+[visual: ascii title=malloc 在系统中的位置]
+            ┌─────────────────────────────────────┐
+            │            应用程序                   │
+            │  p = malloc(24);   free(p);          │
+            └────────────┬────────────────────────┘
+                         │ 调 libc.so.6 提供的符号
+        ────────────────────────────── 用户态 ──
+            ┌────────────▼────────────────────────┐
+            │         glibc 的 malloc              │
+            │     (内部我们先当黑盒处理)            │
+            └────────────┬────────────────────────┘
+                         │ 调内核接口拿/还内存
+        ────────────────────────────── 内核态 ──
+            ┌────────────▼────────────────────────┐
+            │            Linux 内核                │
+            │   brk()  ── 调整 heap 段末尾         │
+            │   mmap() ── 申请匿名内存             │
+            └─────────────────────────────────────┘
+
+[narration]
+画一张极简骨架图你就明白了。最上层是应用程序，调 malloc 和 free。最底层是 Linux 内核，提供 brk 和 mmap 两条系统调用。中间薄薄一层就是 glibc 的 malloc——站在应用和内核之间。注意——它向下走的居然有两条通道，brk 和 mmap，不是一条。为什么是两条？这个问题先按住，后面会重重回扣。
+
+---
+
+## 6 四个关键词速查
+
+[visual: text]
+> malloc(n)  —— "给我 n 字节"，返回指针 p
+> free(p)   —— "我用完了"，注意只传指针，不传大小
+> chunk     —— malloc 切给你的"那一小块"的内部叫法
+> heap      —— 进程虚拟地址空间里专门给 malloc 用的那段
+
+[narration]
+四个关键词攥住——malloc(n) 给你 n 字节内存。free(p) 还回来，注意只传指针不传大小。chunk 是 malloc 内部对那一小块的叫法，每个 chunk 自带一点记账信息。heap 是进程虚拟地址空间里专门给 malloc 用的那段。其他名字 arena、bin、ptmalloc2 先按住，后面一个一个引进来。
+
+---
+
+## 7 邻居图
+
+[visual: ascii title=malloc 的邻居图]
+   上层 (谁在调用):
+     C 代码:        malloc / calloc / realloc / free
+     C++ 代码:      operator new / delete (默认走 malloc)
+     脚本语言:      Python / Lua / Ruby 的对象分配最终也落到这里
+
+   ▼ 本主题 ▼
+     glibc 的 malloc (实现叫 ptmalloc2,Wolfram Gloger 写的)
+
+     平行的 (同一组接口的可替换实现):
+       jemalloc      FreeBSD,Facebook 大量使用
+       tcmalloc      Google,Chrome / gRPC
+       mimalloc      Microsoft,2019 后起之秀
+
+   下层 (它依赖谁):
+     Linux 内核 syscall:brk / mmap / munmap
+
+[narration]
+看一下邻居生态。上层调它的——C 代码 malloc free，C++ 的 new delete 默认也走它，连 Python Lua Ruby 的对象分配最终都落到这里。它本身的实现叫 ptmalloc2，Wolfram Gloger 写的。同一组接口还有几个可替换实现——FreeBSD 和 Facebook 用的 jemalloc、Google 的 tcmalloc、微软 2019 出的 mimalloc——后面 Comparison 集一个个对比。下层就是 Linux 内核的三个 syscall——brk、mmap、munmap。
+
+---
+
+## 8 反问：朴素的 malloc 会怎么死
+
+[visual: spotlight]
+如果每次 malloc 都直接进内核
+会撞上哪三件事？
+
+[narration]
+做个思想实验。设想一个朴素 malloc——每次 malloc 都立即调 brk 或 mmap 跟内核要内存，每次 free 都立即调 munmap 还。它会撞上至少三堵墙——syscall 太贵、brk 物理上还不掉中间块、长跑必然碎片。我们一个一个看。
+
+---
+
+## 9 朴素方案崩塌一：syscall 太贵
+
+[visual: timeline title=朴素 malloc 的 syscall 开销]
+T=0us    [HTTP server] 每秒 10000 个请求
+T=0us    [每请求] 5 次 malloc + 5 次 free = 10 次 syscall
+T=0us    [总计] 每秒 10 万次 syscall
+T=300ns  [一次 brk] 几百 ns + 缺页 + 页表更新
+T=30ms   [每秒消耗] 100000 × 300ns = 30 ms
+T=结果   [单核 CPU] 3% 时间纯花在 syscall
+
+[narration]
+第一堵墙——syscall 太贵。HTTP 服务器每秒一万请求，每请求平均 5 次 malloc 5 次 free，加起来每秒十万次系统调用。一次 brk 在现代 Linux 上保守按 300 纳秒算——还没算缺页处理和页表更新——一秒就是 30 毫秒，单核 3% 时间纯花在 syscall 上。32 核服务器扔一两个核完全是常态。C++ STL 密集应用每秒几百万次分配释放，朴素方案直接被 syscall 漩涡吞掉。
+
+---
+
+## 10 朴素方案崩塌二：brk 还不掉中间
+
+[visual: ascii title=brk 的物理限制]
+   高地址 ─┤
+           │  ░░░░░░░░░░ ← heap 末尾 (brk 移动这条线)
+           │  ▓▓▓▓▓▓ chunk C (在用)
+           │  ░░░░░░ chunk B (刚 free 了 —— 还不掉!)
+           │  ▓▓▓▓▓▓ chunk A (在用)
+           │
+   低地址 ─┘
+
+[narration]
+第二堵墙更扎心。brk syscall 的语义只能移动 heap 段末尾那条线，上推扩张或下拉收缩。它根本无法把 heap 中间的某块单独还给内核。看图——A 在用，B 已经 free 了，C 在用。想还 B？没办法。除非 C 也 free 了把末尾下面所有内存空出来再整体回缩。这不是软件复杂，是 brk 接口的物理限制。这一条直接逼出两件事——必须存在第二条通道 mmap，以及 free 默认不还内核。
+
+---
+
+## 11 brk vs mmap 对比
+
+[visual: diff title=brk vs mmap 本质区别]
+- brk: 只能移动 program break 这条线
++ mmap: 任意位置申请,任意位置释放
+- brk: 字节级 (理论上)
++ mmap: 整页对齐 (4KB 起)
+- brk: 改一个 long, 便宜
++ mmap: 新增一条 VMA, 贵一点
+- brk: 中间块还不掉
++ mmap: munmap 可还任意一块
+
+[narration]
+brk 和 mmap 这两条通道是互补的。brk 便宜、字节级，但只能动末尾那条线，中间还不掉。mmap 可以任意位置申请释放，但最小粒度是一整页 4096 字节，小请求走它必然浪费 90% 以上。结论——malloc 必然需要两条通道。brk 服务高频小块，mmap 服务大块和必须能还的场景。具体多大走哪条是后面机制层的事。
+
+---
+
+## 12 朴素方案崩塌三：碎片必然累积
+
+[visual: spotlight]
+长跑应用必然产生碎片
+不是 bug, 是 Knuth 50% 规则
+
+[narration]
+第三堵墙是数学定律。即使前两件事都解决了，长跑分配器还要面对碎片——应用反复分配 24 释放 24、分配 80 释放 80——heap 里布满大小不一的洞。新来一个 100 字节请求，内部空闲表里有上万个洞，得有一套机制找够大的合并起来，否则又只能 brk 扩张。这就是 Knuth 50 percent 规则——一旦决定复用，数学上必然出现碎片。这一条逼出 malloc 的内部记账机制——空闲表、合并、拆分、分桶。
+
+---
+
+## 13 What 阶段收尾 + 下一集预告
+
+[visual: spotlight]
+What 阶段骨架已立
+下一集 Why 篇 — 7 条硬约束 C1-C7
+
+[narration]
+What 阶段到这儿，骨架已经立起来了——你能跟人说清楚 malloc 是什么、住在哪、邻居是谁、为什么 free 默认不还内核、朴素方案撞三堵墙。但骨架不回答它"为什么"长成这样。下一集 Why 阶段，我们要把刚才那三堵墙拆成 7 条精确的不可再分约束 C1 到 C7，贯穿后面所有讨论。本集就到这里，下集见。
+
+---

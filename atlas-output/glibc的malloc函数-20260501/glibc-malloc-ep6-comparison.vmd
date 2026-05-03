@@ -1,0 +1,181 @@
+# 第 6 集 Comparison 阶段 — 6 个 allocator 全景对比
+
+## 1 Comparison 阶段开场过场
+
+[visual: spotlight]
+现在我们跳到 Comparison 阶段
+除了 ptmalloc 还有谁？
+
+[narration]
+现在进入第 6 集——Comparison 阶段。前 5 集都在讲 ptmalloc，但 ptmalloc 不是唯一答案——同样面对 C1 到 C7，工业界做出了至少 5 套不同取舍。这一集我们横向对比 ptmalloc 加 jemalloc 加 tcmalloc 加 mimalloc 加 Go runtime 加 Rust Layout 共 6 个，看清同一个工程问题的设计空间有多大。读完你能精确说出 Facebook 选 jemalloc、Google 选 tcmalloc、点 NET 选 mimalloc 背后的约束权重差异。
+
+---
+
+## 2 同问题不同解
+
+[visual: spotlight]
+同样面对 C1-C7
+工业界做出了 5+ 套不同取舍
+
+[narration]
+6 个对比对象都解决"用户态高效动态内存分配"，都面对 C1 到 C7 这 7 条不可再分约束。但取舍方向截然不同。ptmalloc 保兼容稳定优先，jemalloc per-CPU 加积极还内存，tcmalloc thread-local 加中央堆，mimalloc sharded free list 加极小开销，Go runtime 整合 runtime 加 GC，Rust Layout 消解 C5。Comparison 阶段的核心价值不在"哪个最好"，而在"看清同一个工程问题的设计空间有多大"。
+
+---
+
+## 3 致敬 Jason Evans
+
+[visual: facetime title=Jason Evans]
+name: Jason Evans
+role: 软件工程师
+org: FreeBSD → Facebook (2009-)
+photo: http://tdli.sjtu.edu.cn/files/images/20191215/80040c6d-e6ed-43aa-a40e-a0b27d28b2b8/Jason Evans.jpg
+- 2005 在 FreeBSD 内部解决 phkmalloc 的多线程瓶颈
+- 2008 jemalloc 在 FreeBSD 7.0 默认部署
+- 2009 加入 Facebook, 优化数千线程数百 GB 内存的 RSS 控制
+- per-CPU arena (不是 per-thread), 默认 dirty_decay_ms 积极还内存
+
+[narration]
+讲到 jemalloc 必须停下来认识 Jason Evans。2005 年在 FreeBSD 内部解决 phkmalloc 的多线程瓶颈，2008 年 jemalloc 在 FreeBSD 7.0 默认部署。2009 年加入 Facebook 后优化数千线程数百 GB 内存的 RSS 控制——这就是为什么 Cassandra、Redis、ScyllaDB 这种大规模 long-running 服务都用 jemalloc。jemalloc 跟 ptmalloc 最大的差异是 per-CPU arena 不是 per-thread——thread 用 RDTSCP 拿当前 CPU 自动绑到对应 arena。还有就是默认 dirty_decay_ms 10 秒后还内核——容器友好的核心。
+
+---
+
+## 4 jemalloc 核心 trick
+
+[visual: text title=jemalloc 的核心差异]
+> per-CPU arena (不是 per-thread)
+>   4× cores 个 arena, thread 跑哪个 CPU 就绑到对应 arena
+>   减少 thread 数 ≫ cores 时的 arena 失控膨胀
+> size class 反查 (不靠 chunk header 反向偏移)
+>   alloc 时记 size, free 时通过 chunk 地址 / chunk_size_log2 反查
+> dirty page purging 默认积极
+>   opt.dirty_decay_ms 默认 10 秒后还内核 — 容器友好
+> 多 arena 间 lock-free transfer
+>   跨 arena 移块用 CAS, 不持跨 arena 锁
+
+[narration]
+看 jemalloc 的核心 trick——per-CPU arena 不是 per-thread。4 倍 cores 个 arena，thread 用 RDTSCP 拿当前 CPU 绑到对应 arena。这样 thread 数远超 cores 时 arena 数不会跟着 thread 涨——比 ptmalloc 8 倍 cores 上限更稳。size class 反查——不靠 chunk header 反向偏移，alloc 时记 size，free 时 chunk 地址除以 chunk_size_log2 反查 metadata。默认 dirty_decay_ms 10 秒后还内核——容器友好。多 arena 间用 CAS lock-free transfer。代价是 chunk metadata 外置比 ptmalloc 多一次 cache miss。
+
+---
+
+## 5 致敬 Sanjay Ghemawat
+
+[visual: facetime title=Sanjay Ghemawat]
+name: Sanjay Ghemawat
+role: Google Senior Fellow
+org: Google (1999-)
+photo: https://cdn.facesofopensource.com/wp-content/uploads/2018/12/29124900/sanjayghemawat32307-1.web_-819x1024.jpg
+- 设计 MapReduce / GFS / Bigtable 的核心架构师
+- 2003+ 主导 tcmalloc, Google 内部所有 C++ 服务默认
+- 2007 作为 gperftools 一部分开源
+- thread-local cache + 中央堆, 比 glibc tcache 早 10 年
+
+[narration]
+讲 tcmalloc 必须认识 Sanjay Ghemawat——MapReduce、GFS、Bigtable 的核心架构师之一，Google Senior Fellow。tcmalloc 2003 年起在 Google 内部就有，2007 年作为 gperftools 一部分开源。Google 内部所有 C plus plus 服务默认就是 tcmalloc，跑了 20 多年。最值得一提的是——tcmalloc 2007 年就实现 thread-local cache 加中央堆——比 glibc tcache 早整整 10 年。Chrome 浏览器、ClickHouse 数据库、部分 Cloudflare 服务都用 tcmalloc。
+
+---
+
+## 6 tcmalloc 核心 trick
+
+[visual: text title=tcmalloc 的核心差异]
+> thread-local cache + 中央堆
+>   每个 thread 自己的 free list cache; cache miss 才进 central freelist
+>   2007 就有 thread-local cache, 比 glibc tcache 早 10 年
+> size class — ~89 个固定 size class (8B/16B/32B/...)
+>   chunk metadata 通过 page-level radix tree 反查
+> CentralFreeList 基于 page (不是 chunk)
+>   中央堆按 4KB page 管理, page 内切多个相同 size class 的 chunk
+> page heap 用 radix tree 跟踪每个 page 的 size class
+
+[narration]
+tcmalloc 的核心 trick——thread-local cache 加中央堆。每 thread 自己的 free list cache 命中率高。size class 大概 89 个固定档——8 字节、16 字节、32 字节这样递增，所有 chunk 按 class 对齐。chunk metadata 通过 page-level radix tree 反查——比 chunk header 反向偏移多一次跳转，但跳转目标在小 radix tree 命中 cache 概率高。CentralFreeList 基于 page 不是 chunk——4KB page 内切多个相同 size class 的 chunk。最大代价是开源版没有 cgroup-aware 默认行为——Google 内部有 cgroup-aware fork 但不开源。
+
+---
+
+## 7 致敬 Daan Leijen
+
+[visual: facetime title=Daan Leijen]
+name: Daan Leijen
+role: 资深研究员
+org: Microsoft Research (Koka / Lean 4)
+photo: https://effect-handlers.org/images/people/daan-cropped.jpg
+- 函数式语言 Koka 的设计者, Effect Handlers 研究专家
+- 2019 在 MS Research 设计 mimalloc, 反思 jemalloc 复杂度
+- 3K LOC 极小代码量 vs jemalloc 30K, 易于 audit
+- mi_option_purge_delay 默认 100ms 还内存, 容器友好性极佳
+
+[narration]
+最后一位关键设计者 Daan Leijen——微软研究院的资深研究员。他原本研究函数式语言 Koka 和 Effect Handlers——一种比 monad 更优雅的副作用建模。2019 年他做 mimalloc 是反思 jemalloc 复杂度——3 万行代码太复杂。mimalloc 只有 3K 行代码，易于 audit 适合安全敏感场景。设计上是 sharded free list——单个 heap 内 free list 不是一条全局链，是分成 128 shard，同一线程不同时间访问不同 shard 大幅降低 cache line bouncing。mi_option_purge_delay 默认 100 毫秒后还内存——比 jemalloc 还激进，容器友好性极佳。今天 dot NET 6 plus runtime 默认就是 mimalloc，Rust 现代社区也大量从 jemalloc 切到 mimalloc。
+
+---
+
+## 8 mimalloc 极小开销
+
+[visual: spotlight]
+mimalloc 3K LOC
+极小代码量 + 极激进还内存
+2022+ Rust 现代主流
+
+[narration]
+mimalloc 的"小而美"是它最大的卖点。3K 行代码相比 jemalloc 30K 行简直十分之一。极小代码量带来三个好处——易于 audit 适合安全场景，编译时间短，调试容易。每个 thread 一个独立 heap，destroy 时整个 heap 一次释放比逐个 free 快很多。mi_option_purge_delay 100 毫秒积极还内存。代价是生态较年轻——2019 年起对比 jemalloc 2008，兼容性 patches 还在持续收。但点 NET 6 plus 默认它，Rust 社区主流切到它，Tauri、Lean 4、Koka 都用它——生态正在快速成熟。
+
+---
+
+## 9 Go runtime: 改 ABI 拿到精简
+
+[visual: spotlight]
+Go runtime 改语言 ABI
+拿到 ptmalloc 永远拿不到的精简
+
+[narration]
+讲两个特别的——Go runtime 和 Rust Layout。Go runtime 2012 年开始持续演化，基于 tcmalloc 设计但深度整合 GC 加 goroutine 调度。它是 per-P 不是 per-thread——P 是 GOMAXPROCS 等于 CPU 核数是 Go 调度器的"逻辑处理器"。三层结构 mcache 加 mcentral 加 mheap——mcache per-P 无锁，mcentral per-size-class 共享，mheap 全局。GC 整合让 free 不是用户调用是 GC 自动收。最关键 GOMEMLIMIT 环境变量自动跟踪 cgroup memory limit，GC 在接近 limit 时积极回收。改语言 ABI 让它拿到 ptmalloc 永远拿不到的精简——type info 已知不需要 chunk header。代价是绑死 Go 不能给 C C plus plus 用。
+
+---
+
+## 10 Rust Layout: 消解 C5
+
+[visual: spotlight]
+Rust Layout API
+sized dealloc 完全消解 C5
+
+[narration]
+Rust 2017 年加 core::alloc::Layout API——每次 alloc 和 free 都传 Layout 包含 size 和 align。完全消解 C5——sized dealloc。编译器通过 type tracking 自动填 layout 用户不用手动传——避免传错风险。理论上 allocator 后端可以扔掉 chunk header overhead。global_allocator 让用户挑底层——默认 System 也就是 glibc malloc，社区主流换 mimalloc 或 jemalloc-sys。Drop 自动调 dealloc 程序员不写 free。但是 Rust 默认 System allocator 仍是 glibc malloc 还背 chunk header 债。Layout 接口本身是消解 C5 但底层 allocator 不一定利用了——这是 C5 的"接口共存的结构性问题"的精确实例。
+
+---
+
+## 11 设计空间地图
+
+[visual: html_slide title=用户态 allocator 设计空间地图 image=pics/06-design-space-map.png]
+
+[step: auto]
+scroll auto
+
+[narration]
+看这张设计空间地图——把 6 个 allocator 在两个最关键维度上的位置画出来。横轴是对 C5 的处理方式——从"完全背 chunk header 债"到"完全消解"。纵轴是容器友好性——从"不友好默认不还"到"全自动整合 runtime 跟踪 cgroup"。ptmalloc 在最左下——最大兼容性等于最大约束债。jemalloc 中下偏右——chunk header 加积极 dirty purge。tcmalloc 中下——size class 加中等友好。mimalloc 中上——sharded 加极激进还。Go runtime 右上——runtime managed 加全自动。Rust Layout 横轴最右——sized dealloc 消解 C5 但纵轴漂移取决于底层 allocator。
+
+---
+
+## 12 左上空白
+
+[visual: spotlight]
+左上角空白 ≠ 物理不可能
+是历史路径依赖, 是产品机会
+
+[narration]
+仔细看这张图你会发现——左上角有空白。没有 allocator 同时做到"完全消解 C5"加"全自动容器跟踪"。最接近的是 Go runtime 但代价是绑死 Go 语言。朴素结论是——左上是物理不可能。但实际算一下——chunk header overhead 平均 5 到 10 percent RSS，不会让容器从"刚好够"变成"OOM-killed"。真正决定容器友好的是 dirty page purging 频率跟 chunk header 完全独立。所以两个轴物理上正交，左上物理可能。空白是历史路径依赖——没人单做"容器友好的 ptmalloc 改进版"。这是后面 Synthesis 集 4 条工程教训之一的预演——空白可能是机会。
+
+---
+
+## 13 6 个 allocator 快速选择 + 收尾
+
+[visual: recap title=6 allocator 快速选择指南]
+ptmalloc — C/C++ 任何程序的零依赖默认
+jemalloc — FB/Cassandra/Redis 大并发 long-running
+tcmalloc — Google 风格 high-density RPC
+mimalloc — 现代 cloud-native (Rust/.NET/容器)
+Go runtime — 所有 Go 程序
+Rust Layout — Rust 全栈 + 类型安全
+
+[narration]
+快速选择——ptmalloc 任何 C 程序的零依赖默认避开容器化高并发。jemalloc Facebook、Cassandra、Redis 风格大并发 long-running 避开单线程小工具。tcmalloc Google 风格 high-density RPC 开源版无 cgroup-aware。mimalloc 现代 cloud-native 避开稳定性敏感场景。Go runtime 所有 Go 程序避开跨语言。Rust Layout 全栈加类型安全。没有"最优 allocator"只有"约束权重不同的局部最优"——FB 重 C7 选 jemalloc，Google 重 C1 选 tcmalloc，点 NET 重容器化选 mimalloc。Comparison 阶段到这里你能看清同一个工程问题的设计空间有多大。下一集 Synthesis 阶段是整部大电影真正的归宿——把 ptmalloc 从案例提升到 4 条通用工程方法论。本集就到这里，下集见。
+
+---

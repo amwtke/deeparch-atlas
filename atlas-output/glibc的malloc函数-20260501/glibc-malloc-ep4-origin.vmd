@@ -1,0 +1,281 @@
+# 第 4 集 Origin 阶段 — 40 年三代接力
+
+## 1 Origin 阶段开场过场
+
+[visual: spotlight]
+现在我们回到 Origin 阶段
+这一切是从哪儿来的？
+
+[narration]
+现在进入第 4 集——Origin 阶段。前 3 集 What Why How 给你看了 ptmalloc 的成品骨架，但骨架不是凭空设计，是 1987 到 2026 这 40 年间约束随时代浮现、三代人接力叠加的产物。这一集换沉浸模式，回到一个个具体的人面前——1987 年纽约州立大学奥斯威戈分校的 Doug Lea、1996 年 Linux 加 POSIX threads 的转折点、2017 年 DJ Delorie 提交 tcache 同时引入 CVE 的争议时刻。每一段都有具体的人。
+
+---
+
+## 2 致敬 Doug Lea
+
+[visual: facetime title=Doug Lea]
+name: Doug Lea
+role: 计算机科学教授
+org: SUNY Oswego (1986-至今)
+photo: https://oss-emcsprod-public.modb.pro/wechatSpider/modb_20211206_9c0bb0c6-5633-11ec-92aa-fa163eb4f6be.png
+- 1987 年首发 dlmalloc, 单线程时代的 allocator 局部最优
+- 1996 年发表《A Memory Allocator》经典论文
+- 后来设计 java.util.concurrent — 多线程并发原语奠基人
+- 让 Wolfram Gloger fork dlmalloc 加多线程, 自己保护单线程嵌入式市场
+
+[narration]
+讲到 ptmalloc 的源头必须停下来认识 Doug Lea。1986 年起在纽约州立大学奥斯威戈分校做 C++ 研究，维护 GNU C++ 运行时库 libg plus plus。1987 年首发 dlmalloc，单线程时代的 allocator 局部最优。1996 年发表《A Memory Allocator》——这篇论文是后来所有用户态 allocator 设计的圣经。值得一提的是 Doug Lea 后来还设计了 Java util concurrent——Java 多线程并发原语的奠基人。1996 年 POSIX threads 兴起的时候他做了一个看似消极的选择——让 Wolfram Gloger fork dlmalloc 去加多线程，自己保护 dlmalloc 单线程嵌入式市场的简洁。
+
+---
+
+## 3 Doug Lea 的烦躁
+
+[visual: spotlight]
+1987, 我用了 SunOS / BSD 的 malloc
+"运行慢得让我抓狂, 内存膨胀得不可理解"
+
+[narration]
+讲故事——Doug Lea 1987 年到底在烦什么？他维护 libg plus plus，C++ 运行时库用了大量动态内存。但他撞墙了。他自己 1996 论文里的原话——"我发现它们运行慢得让我意想不到，并且占用的内存比我预期的大得多。这是因为我跑代码的系统——主要是当时的 SunOS 和 BSD——的 memory allocator 的特性。"两个具体痛点对应今天的 C1 加 C2 高频小块加 syscall 贵和 C6 碎片严重。
+
+---
+
+## 4 第一次失败：per-class 优化
+
+[visual: text title=Doug Lea 的第一次失败方向]
+> 第一次尝试 — 不写通用 allocator
+> 给 libg++ 里每个高频类 (string / list 节点) 写专用 allocator
+> 用 C++ 的 operator new overload
+>
+> 失败原因 —
+>   不能 scale 到通用库 — libg++ 之外用不上
+>   维护噩梦 — 每加新类就要写新 allocator
+>   不能解决"应用调用第三方库 malloc"的场景
+
+[narration]
+有意思的是 Doug Lea 第一次的尝试方向不是写通用 malloc——而是给具体 C++ 类做特殊化。每个高频类用 operator new overload 各写一个专用 allocator。但他很快发现这条路不通——不能 scale，不能服务 libg plus plus 之外的代码，每加一个类就要写一个新 allocator。这次失败把他逼向通用方向——既然每个类各自优化太累，不如一次把通用 malloc 做好所有人受益。
+
+---
+
+## 5 dlmalloc = Knuth 60 年代 trick 的组合
+
+[visual: layers title=dlmalloc = Knuth 60 年代 trick 的新组合]
+boundary tag — Knuth 1968 TAOCP §2.5
+bin 分桶 — 经典内存管理教材, 1960s
+best-fit 策略 — Knuth 1968, Wilson 1995 综述
+wilderness preservation — Kiem-Phong Vo 1994 命名
+mmap 大对象阈值 — Doug Lea 1990s 后期加
+
+[narration]
+dlmalloc 的内核不是发明新 trick，是把 Knuth 1968 年《计算机程序设计艺术》卷一第二点五节就讲过的几个 trick 组合起来。boundary tag 是 Knuth 1968 的；bin 分桶是 60 年代经典内存管理教材的；best-fit 策略是 Knuth 1968 的；wilderness preservation 也就是 top_chunk 概念是 Kiem-Phong Vo 1994 命名的；mmap 大对象阈值是 Doug Lea 自己 1990 年代后期加的。Doug Lea 自己说——两个核心算法元素从最早版本起就没变过，boundary tag 和 binning。他的真正贡献是工程组合加工作负载调优，不是算法发明。
+
+---
+
+## 6 40 年时间线鸟瞰图
+
+[visual: html_slide title=dlmalloc → ptmalloc → ptmalloc2 → tcache 时间线 image=pics/04-timeline.png]
+
+[step: auto]
+scroll auto
+
+[narration]
+看 40 年的鸟瞰图。关键里程碑只有 3 个——1987 dlmalloc 起点、2006 ptmalloc2 进 glibc、2017 tcache。中间 1994 wilderness、1996 ptmalloc fork 是渐进改进不是颠覆。注意 C7 是 1996 才浮现的——1987 时代根本没这个约束。支线虚线是 jemalloc 和 tcmalloc，不在 glibc 主线，FreeBSD 用 jemalloc Google 内部用 tcmalloc。最值得注意——2017 年 tcache 引入的同时 CVE-2017-17426 也来了。每一代都"叠加"上一代不是"替换"——你今天的 malloc 同时跑着 1987 chunk、1996 arena、2017 tcache 三层逻辑。
+
+---
+
+## 7 致敬 Linus：C7 浮现的源头
+
+[visual: facetime title=Linus Torvalds]
+name: Linus Torvalds
+role: Linux 内核发起者
+org: Linux Foundation
+photo: https://upload.wikimedia.org/wikipedia/commons/e/e8/Lc3_2018_%28263682303%29_%28cropped%29.jpeg
+- 1991 发布 Linux 0.01, 当时还是单线程
+- 1995 起 Linux SMP 内核稳定, 多核硬件登场
+- 1996 POSIX threads 在 Linux 上稳定 → C7 第一次浮现
+- 直接逼出 ptmalloc 的诞生
+
+[narration]
+Origin 篇里要致敬另一位关键人物——Linus Torvalds。1991 年 Linus 发布 Linux 0.01 时还是单线程跟 dlmalloc 一样。但 1995 年 Linux SMP 内核稳定，1996 年 POSIX threads 在 Linux 上稳定——C7 这条约束第一次浮现。这一刻直接逼出 ptmalloc 的诞生——dlmalloc 单全局锁在多线程下退化成串行，8 核机器 8 线程并发 malloc，8 倍 CPU 等于浪费 7 倍。Linus 不是 ptmalloc 作者，但他造的 Linux 加 POSIX threads 是 C7 浮现的源头。
+
+---
+
+## 8 1996 dlmalloc 撞上多核
+
+[visual: ascii title=dlmalloc 在多线程下的崩塌]
+线程 1 调 malloc(24)        线程 2 调 free(p)
+     ↓                            ↓
+   抢全局锁 ────────冲突────── 等锁
+     ↓
+   服务完成
+   释放锁
+                                  ↓
+                                抢到锁
+                                释放完成
+
+8 核机器 + 8 线程并发 → 退化成串行, 8x CPU 等于浪费 7x
+
+[narration]
+具体看 dlmalloc 在多线程下怎么死的。线程一调 malloc 抢到全局锁，线程二调 free 撞上锁等。线程一服务完成释放锁，线程二抢到锁释放。表面正常工作但本质上——任何时刻只有一个线程能进 malloc。8 核机器 8 线程并发 malloc 退化成串行，8 倍 CPU 浪费 7 倍。这就是 C7 给 dlmalloc 设计的"绝症"。
+
+---
+
+## 9 死胡同一：bin 各加锁
+
+[visual: text title=死胡同 1: 给 bin 各加细粒度锁]
+> 思路 — bin 各加一把锁, 不要全局一把
+> 为什么不行 —
+>   1. malloc/free 经常跨 bin 操作 (coalesce 需要在 unsorted/small/large 之间挪)
+>      → 同时持多把锁 → 死锁风险
+>   2. chunk 物理相邻关系跨越 bin
+>      锁 bin 不能保护 chunk 头的 PREV_INUSE 位
+>   3. 加锁开销可能比串行还大 (cache line bouncing)
+
+[narration]
+有人想——给 bin 各加一把锁不就行了？这条路走不通。第一 malloc 和 free 经常跨 bin 操作 coalesce 合并相邻 chunk 时可能需要在 unsorted、small、large 之间来回挪需要同时持多把锁有死锁风险。第二 chunk 物理相邻关系跨越 bin，锁 bin 不能保护 chunk 头的 PREV_INUSE 位。第三 加锁开销可能比串行还大每个 bin 锁的 cache line bouncing 抵消了细粒度收益。这条死胡同的教训——锁粒度不是越细越好，要跟数据的"独立单元"边界吻合。
+
+---
+
+## 10 死胡同二：per-thread 一池
+
+[visual: spotlight]
+死胡同 2: per-thread 一池
+1996 年 32 位地址空间根本不够
+
+[narration]
+另一条思路——每个线程独占一个 heap 完全无锁。1996 年看起来很美——但失败了。为什么？32 位地址空间用户态只有 2GB，几千线程各占独立 heap 容易爆。线程退出后 heap 回收难。跨线程 free 怎么处理？这条路在 1996 年根本走不通——要等 64 位普及 2003 年以后才算真有空间用 per-thread cache。tcache 2017 年才做到，整整等了 21 年。
+
+---
+
+## 11 致敬 Wolfram Gloger
+
+[visual: facetime title=Wolfram Gloger]
+name: Wolfram Gloger
+role: 软件工程师
+org: 独立开发者 (malloc.de)
+- 1996 fork dlmalloc 加多线程支持, 命名为 ptmalloc
+- 关键 insight: 锁分离 = 数据分离; 中间方案是 arena
+- 精彩的位压缩 trick: arena 1MB 对齐, NON_MAIN_ARENA bit 反查
+- 2006 ptmalloc2 整合进 glibc 2.3.x, 至今仍是 Linux 默认
+
+[narration]
+死胡同两条都走不通需要新思路。1996 年 Wolfram Gloger 做了关键顿悟——锁分离等于数据分离。死胡同一是细粒度锁，死胡同二是 per-thread；真正可行的是中间方案——数据按"线程平摊单元"分组组内一把锁组间无关。这个"线程平摊单元"就是 arena。Gloger 还做了一个精彩的位压缩——arena 创建时对齐到 1MB 边界，chunk 头的 size 字段低 3 位之一是 NON_MAIN_ARENA。线程 arena 内任何 chunk 的指针截掉低 N 位就拿到所属 arena 的 heap_info 头——O(1) 反查 arena。
+
+---
+
+## 12 跨 arena free 的位压缩
+
+[visual: code_explain lang=c title=Gloger 的位压缩反查 arena]
+chunk 指针 0x7f4a3c128020
+              ↓ & ~(HEAP_MAX_SIZE - 1)
+heap_info 头 0x7f4a3c100000
+              ↓
+找到本 chunk 所属的 arena
+
+代价:
+  每个 thread arena 必须对齐到 1 MB 边界
+  arena 大小有上限 (初版 1 MB, 后改 64 MB)
+  mmap 灵活性受限
+
+但换来 free 时 O(1) 的 arena 定位
+===HIGHLIGHT===
+lines=1-3
+chunk 指针截掉低 N 位
+按位与 ~(HEAP_MAX_SIZE - 1)
+直接拿到 heap_info 头地址
+===HIGHLIGHT===
+lines=4-5
+heap_info 头里存 arena 指针
+O(1) 反查所属 arena
+完全无需额外 metadata
+===HIGHLIGHT===
+lines=7-12
+代价是地址对齐约束
+1MB 边界浪费部分地址空间
+但换来 free 时 O(1) 反查
+ptmalloc 多线程支持最精彩的工程手笔
+
+[narration]
+代码层面看一眼这个 trick——chunk 指针 0x7f4a3c128020，跟 HEAP_MAX_SIZE 减一的反码做按位与，直接拿到 0x7f4a3c100000 这个 heap_info 头。代价是每个 thread arena 必须对齐到 1MB 边界浪费部分地址空间，arena 大小有上限，mmap 灵活性受限。但换来 free 时 O(1) 反查 arena 的精确化解。这是 ptmalloc 多线程支持里最精彩的工程手笔。
+
+---
+
+## 13 Doug Lea 的"D 选项"：拒绝改
+
+[visual: spotlight]
+最强的工程选择有时是"拒绝改"
+让别人 fork, 保护原产品的核心市场
+
+[narration]
+回到 Doug Lea 这边。1996 年多线程兴起的时候，他面前其实有四条路——A 单全局锁，B 自己做 multi-arena，C per-thread 地址空间不够，D 什么都不做让别人 fork。Doug Lea 选了 D。这不是懒——是对自己产品边界的清晰认知。dlmalloc 的核心市场是嵌入式加单进程——后来 Android Bionic、各种 RTOS、游戏机 SDK 都用 dlmalloc 单线程版。主线加多线程会污染这个市场。让 Gloger fork 是保护 dlmalloc 单线程市场的最优策略。
+
+---
+
+## 14 元洞察：fork 文化
+
+[visual: spotlight]
+1996 那次"拒绝改"
+是 jemalloc / tcmalloc / ptmalloc2
+三足鼎立的延迟回响
+
+[narration]
+今天我们看到 jemalloc、tcmalloc、ptmalloc2 三足鼎立，本质就是 1996 那次"拒绝改"的延迟回响。Doug Lea 1996 年的 D 选项开了个先例——通用 allocator 可以多版本并存，各服务各自的市场不必塞进一个版本。如果当时他选了 A 单全局锁——Gloger 也许会去给 dlmalloc 提 PR，Jason Evans 也许就不会写 jemalloc，Sanjay Ghemawat 也许会用魔改 dlmalloc。整个用户态 allocator 生态可能"统一在 dlmalloc 主线"失去多样性。fork 文化是一种集体选择——Doug Lea 1996 年的 D 是这颗早期种子。
+
+---
+
+## 15 致敬 DJ Delorie
+
+[visual: facetime title=DJ Delorie]
+name: DJ Delorie
+role: glibc 维护者
+org: Red Hat (glibc team)
+- 2017-07 提交 tcache patch, glibc 2.26 引入
+- per-thread 64 桶 × 7 chunk, 完全无锁
+- 让现代 malloc 90%+ 请求根本不进 arena
+- 同年同版本附带 CVE-2017-17426 — 安全 vs 性能尖锐权衡
+
+[narration]
+最后一位关键人物——DJ Delorie。Red Hat 的 glibc 维护者，2017 年 7 月在 glibc-alpha 邮件列表发布 tcache patch，glibc 2.26 正式引入。设计上 per-thread 64 桶每桶 7 chunk 完全无锁——典型多线程 workload 快 1.5 到 3 倍。但是同年同版本一起来的还有 CVE-2017-17426——tcache poisoning 让攻击者可以让 malloc 返回任意地址。后续几年 glibc 持续加防护——双链 key、count check、key reveal。这是 ptmalloc 历史上"安全 vs 性能"权衡最尖锐的一次。
+
+---
+
+## 16 tcache 的"原罪"
+
+[visual: spotlight]
+tcache 在性能赛道上前进 2x
+在安全赛道上退后 5 步
+后续 6 年 glibc 团队都在补这笔欠账
+
+[narration]
+tcache 为什么不安全？因为它的设计核心是"快"——绕过了 fastbin、unsorted、smallbin、largebin 路径上的大量 integrity check。chunk header 的 size 校验、PREV_INUSE 一致性检查、unlink 时 fd/bk 校验等等都被 tcache 跳过。这些 check 是 90 年代之后逐步加上的"硬功夫"——tcache 为了快把这堆硬功夫默认绕开。这是 Origin 阶段最值得记住的"遗憾"——性能优化和安全防御不是免费午餐。
+
+---
+
+## 17 2026+ 反向演化
+
+[visual: text title=约束的反向演化 — Origin 最深的洞察]
+> 1987-2017 是约束单调累积 — 无 C7 → C7 浮现 → C7 加深
+> 2026+ 可能是约束反向演化 —
+>   C1 高频小块 → ML 场景反过来变"低频巨块" (PyTorch GB 级 alloc)
+>   C7 多线程 → async 场景变"协作 task" (Go goroutine M:N)
+>   C5 free 不传 size → Rust / C++17 已经消解
+>
+> 通用 allocator 在 ML / async 场景已被边缘化
+>   — PyTorch CUDA caching allocator 自己写
+>   — Go runtime 自己写 (mcache/mcentral/mheap)
+>   — Rust 切到 mimalloc
+
+[narration]
+Origin 阶段最深的一层洞察——约束不是永恒的。1987 到 2017 是约束单调累积；2026 以后可能是约束反向演化。C1 高频小块在 ML 场景反过来变"低频巨块"——PyTorch 单次 alloc 是 GB 级寿命毫秒级。C7 多线程在 async 场景变"协作 task"——Go goroutine 数十万 M 比 N 调度到几十个 OS 线程上。C5 在 Rust 和 C++17 已经从根上消解。通用 allocator 在 ML 和 async 场景实际上已被边缘化——PyTorch 自己写 CUDA caching allocator，Go runtime 自己写，Rust 切到 mimalloc。约束不是物理常数，是某个语境某个时代视角下的不可再分。
+
+---
+
+## 18 Origin 阶段收尾 + 下一集预告
+
+[visual: spotlight]
+40 年三代叠加
+下一集 Deep 篇 — 钻 glibc 真实源码
+
+[narration]
+Origin 阶段收尾。你现在有 95% 闭环的回答——malloc 不是"一个工程问题"是"一组随时代演化的工程问题"。每个组件都有"出生时代"——看到一个组件要问它是哪个时代的解法、今天约束跟那时候比变化了什么。技术叠加是常态重写是例外。下一集 Deep 阶段我们换工程师视角钻 glibc 2.34 真实源码——三条主路径在同一个 malloc 函数里耗时差 300 倍。本集就到这里，下集见。
+
+---

@@ -1,0 +1,91 @@
+# glibc malloc 大电影 — 7 集目录预告
+
+## 1 大电影封面
+
+[visual: title]
+glibc malloc
+大电影
+
+[narration]
+你按了千万次 malloc，但你真的搞懂它了吗？接下来这部七集大电影，我们用一份硬核 atlas 综合长文，把 glibc 的 malloc 从骨架到源码、从 1987 年的第一行 dlmalloc 到 2026 年的反向演化，一刀一刀解剖给你看。这不是一个普通的技术视频，是一部分七集的大电影。先用一分钟告诉你这部电影长什么样。
+
+---
+
+## 2 这是 7 集大电影
+
+[visual: spotlight]
+不是普通视频
+是 7 集大电影
+
+[narration]
+为什么要拍成大电影？因为 malloc 这四个字母背后藏着 40 年的工程演化、7 条不可再分的硬约束、4 件核心组件、3 条主路径、6 个工业级 allocator 的不同取舍、4 个跨领域同构系统、4 条工程方法论。这些塞不进 30 分钟，也不应该塞——所以拆成 7 集，从 What 一路走到 Synthesis，每集 5 到 13 分钟，最后落到任何技术系统都通用的方法论。
+
+---
+
+## 3 7 集结构总览
+
+[visual: layers title=glibc malloc 大电影 — 7 集目录]
+第 1 集 What 篇       — 不就是个切内存的吗？(~7 min)
+第 2 集 Why 篇        — 7 条不可再分约束 C1-C7 (~7 min)
+第 3 集 How 篇        — chunk + bin + arena + tcache 四件事 (~13 min)
+第 4 集 Origin 篇     — 1987 → 1996 → 2017 三代接力 (~11 min)
+第 5 集 Deep 篇       — 三路径源码追踪, 耗时差 300 倍 (~11 min)
+第 6 集 Comparison 篇 — 6 个 allocator 横向全景对比 (~10 min)
+第 7 集 Synthesis 篇  — 4 条工程方法论 + 五步法 (~10 min)
+
+[narration]
+看这张目录。第 1 集 What——建立骨架，让你能用一句话讲清楚 malloc 是什么。第 2 集 Why——7 条不可再分硬约束，是后面所有讨论的脊梁。第 3 集 How——四件事 chunk、bin、arena、tcache，这一集最长，干货最密。第 4 集 Origin——回到 1987 看 ptmalloc 是怎么从单线程时代一步一步走到 2017 的。第 5 集 Deep——钻 glibc 2.34 真实源码，三条路径耗时差 300 倍。第 6 集 Comparison——跳出 ptmalloc 横向对比 jemalloc、tcmalloc、mimalloc 等 6 个工业级方案。第 7 集 Synthesis——这一集是真正值钱的归宿，4 条元规则可以套到任何技术系统。
+
+---
+
+## 4 致敬 6 位关键人物
+
+[visual: layers title=本片致敬的 6 位关键人物]
+Doug Lea          — 1987 dlmalloc, 后来的 java.util.concurrent
+Donald Knuth      — 1968 boundary tag + 50% 碎片规则
+Linus Torvalds    — 1991 Linux + 1996 POSIX threads, 让 C7 浮现
+Wolfram Gloger    — 1996 ptmalloc multi-arena, 1MB 对齐反查
+DJ Delorie        — 2017 tcache, 同年 CVE-2017-17426
+Jason / Sanjay / Daan — jemalloc / tcmalloc / mimalloc 三位作者
+
+[narration]
+这部电影会致敬六位关键人物。从 1968 年发明 boundary tag 的 Donald Knuth，到 1987 年第一行 dlmalloc 的 Doug Lea，到 1996 年 fork multi-arena 的 Wolfram Gloger，到 2017 年引入 tcache 的 DJ Delorie，再到工业界三位 allocator 设计者——Facebook 的 Jason Evans、Google 的 Sanjay Ghemawat、微软的 Daan Leijen。每一位都会拎出来单独讲一段，因为他们的工作叠加成了你今天看到的 malloc。
+
+---
+
+## 5 7 张架构图全部讲透
+
+[visual: spotlight]
+atlas 文档的 7 张架构图
+每张都讲透
+
+[narration]
+atlas 综合长文里有 7 张精心设计的架构图——三层骨架、arena 嵌套层级、物理 vs 逻辑双视图、40 年时间线、三路径 call stack、设计空间地图、跨领域同构。每一张都会在视频里完整展示，配上解说从头讲到尾。这些图本身就是 atlas 工作量的精华，看完每一张你都能从中读出至少 5 件事。
+
+---
+
+## 6 你将带走什么
+
+[visual: recap title=看完这部大电影你将带走]
+malloc 完整知识体系
+40 年技术演化叙事
+真实源码追踪能力
+6 allocator 选型判断
+4 条通用工程教训
+五步法分析任何系统
+
+[narration]
+看完 7 集你会带走六样东西。malloc 完整知识体系——一句话说清到源码追踪。40 年技术演化叙事——能跟人讲技术故事而不是只列功能。真实源码追踪能力——下次看 glibc 源码不再迷路。6 个 allocator 选型判断——给项目选 allocator 时知道为什么。4 条通用工程教训——可以套到数据库、调度器、缓存等任何技术系统。五步法——拿来就用的系统分析模板。
+
+---
+
+## 7 进入第 1 集
+
+[visual: title]
+准备好了吗？
+第 1 集 — What 阶段, 出发
+
+[narration]
+准备好了吗？接下来进入第 1 集——What 阶段。我们用 7 分钟建立 malloc 的骨架认知，让你能跟同事用一句话讲清楚它是什么、住在哪、邻居是谁、为什么 free 之后内存竟然不还给操作系统。如果觉得有收获，欢迎一键三连，七集大电影开始。
+
+---
