@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="600" fill="#0a0c10"/>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff8888"/>
+    </marker>
+  </defs>
+
+  <text x="600" y="35" text-anchor="middle" fill="#e0e0e0" font-size="20" font-weight="bold">Clean Architecture · 同心圆图</text>
+  <text x="600" y="58" text-anchor="middle" fill="#888" font-size="12">业务核心独立于框架/数据库/UI · 依赖箭头永远从外朝内</text>
+
+  <circle cx="380" cy="335" r="240" fill="#3a1e5f" stroke="#8040c0" stroke-width="2" opacity="0.5"/>
+  <circle cx="380" cy="335" r="180" fill="#5f3a1e" stroke="#c08040" stroke-width="2" opacity="0.6"/>
+  <circle cx="380" cy="335" r="120" fill="#1e5f3a" stroke="#40c060" stroke-width="2" opacity="0.7"/>
+  <circle cx="380" cy="335" r="60" fill="#1e3a5f" stroke="#4080c0" stroke-width="2" opacity="0.9"/>
+
+  <text x="380" y="125" text-anchor="middle" fill="#c088ff" font-size="14" font-weight="bold">Framework &amp; Driver / 框架与驱动</text>
+  <text x="380" y="185" text-anchor="middle" fill="#ffaa55" font-size="14" font-weight="bold">Adapter / 适配器</text>
+  <text x="380" y="240" text-anchor="middle" fill="#88ff88" font-size="14" font-weight="bold">Use Case / 用例</text>
+  <text x="380" y="333" text-anchor="middle" fill="#88c0ff" font-size="14" font-weight="bold">Entity</text>
+  <text x="380" y="351" text-anchor="middle" fill="#88c0ff" font-size="11">实体</text>
+
+  <path d="M 380 78 L 380 110" stroke="#ff8888" stroke-width="2.5" stroke-dasharray="6,4" marker-end="url(#arrow)"/>
+  <text x="395" y="95" fill="#ff8888" font-size="10">依赖方向</text>
+
+  <text x="700" y="100" fill="#e0e0e0" font-size="15" font-weight="bold">→ 在你的环境监测系统里</text>
+
+  <text x="700" y="140" fill="#c088ff" font-size="13" font-weight="bold">Framework / 最外层 (detail)</text>
+  <text x="720" y="160" fill="#aaa" font-size="11">Spring Boot · Oracle · MyBatis</text>
+  <text x="720" y="178" fill="#aaa" font-size="11">Vue · 微信开放平台 · 大屏展示</text>
+
+  <text x="700" y="215" fill="#ffaa55" font-size="13" font-weight="bold">Adapter / 翻译层</text>
+  <text x="720" y="235" fill="#aaa" font-size="11">REST Controller · @Mapper</text>
+  <text x="720" y="253" fill="#aaa" font-size="11">小程序 API 适配器 · DTO 转换</text>
+
+  <text x="700" y="290" fill="#88ff88" font-size="13" font-weight="bold">Use Case / 业务流程</text>
+  <text x="720" y="310" fill="#aaa" font-size="11">市民投诉 → 派单 → 区级 → 反馈</text>
+  <text x="720" y="328" fill="#aaa" font-size="11">"项目初期的通用流程模板"</text>
+
+  <text x="700" y="365" fill="#88c0ff" font-size="13" font-weight="bold">Entity / 业务核心</text>
+  <text x="720" y="385" fill="#aaa" font-size="11">Complaint · WorkOrder · District</text>
+  <text x="720" y="403" fill="#aaa" font-size="11">"投诉/工单的核心规则"</text>
+
+  <text x="700" y="450" fill="#e0e0e0" font-size="13" font-weight="bold">两条铁律</text>
+  <text x="720" y="472" fill="#aaa" font-size="11">1. 依赖箭头永远从外朝内</text>
+  <text x="720" y="490" fill="#aaa" font-size="11">2. 内层完全不知道外层的存在</text>
+  <text x="720" y="508" fill="#666" font-size="10">   (Entity 不 import Spring/Oracle/MyBatis)</text>
+
+  <text x="600" y="585" text-anchor="middle" fill="#555" font-size="10">BOB 大叔《架构整洁之道》第 22 章 · 简化同心圆</text>
+</svg>
