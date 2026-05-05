@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="660" fill="#0a0c10"/>
+
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#888"/>
+    </marker>
+  </defs>
+
+  <text x="600" y="32" text-anchor="middle" fill="#e0e0e0" font-size="20" font-weight="bold">Clean Architecture 在跟什么打架 —— 5 条不可再分约束</text>
+  <text x="600" y="55" text-anchor="middle" fill="#888" font-size="12">构成完整的"变化压力管理"框架 · C1~C5 是 11 条原则 + 同心圆的根因</text>
+
+  <text x="80" y="92" fill="#e0e0e0" font-size="14" font-weight="bold">① 变化从哪来 —— 系统必须 absorb 的压力源</text>
+
+  <rect x="80" y="108" width="510" height="80" rx="6" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="100" y="135" fill="#ff8888" font-size="14" font-weight="bold">C1 · 新需求持续到来</text>
+  <text x="100" y="155" fill="#ff8888" font-size="11">改老代码就引入回归(OCP 失败陷阱)</text>
+  <text x="100" y="178" fill="#ffaaaa" font-size="10" font-style="italic">→ 你的痛点:加 B 需求 A 又挂了</text>
+
+  <rect x="610" y="108" width="510" height="80" rx="6" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="630" y="135" fill="#ff8888" font-size="14" font-weight="bold">C2 · 技术栈/供应商不可控演化</text>
+  <text x="630" y="155" fill="#ff8888" font-size="11">框架 5 年换一茬 + 可能被强制替换</text>
+  <text x="630" y="178" fill="#ffaaaa" font-size="10" font-style="italic">→ 你的痛点:国产化(Oracle→达梦 / Spring→东方通)</text>
+
+  <line x1="600" y1="200" x2="600" y2="225" stroke="#888" stroke-width="2" marker-end="url(#ar)"/>
+
+  <text x="80" y="248" fill="#e0e0e0" font-size="14" font-weight="bold">② 系统承受变化的能力 —— 决定代码会不会僵化</text>
+
+  <rect x="80" y="264" width="510" height="80" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+  <text x="100" y="291" fill="#ffaa55" font-size="14" font-weight="bold">C3 · 系统复杂度上升,超级类必然涌现</text>
+  <text x="100" y="311" fill="#ffaa55" font-size="11">加新功能最省事的就是"塞进现有类",god class 趋势</text>
+  <text x="100" y="334" fill="#ffcc88" font-size="10" font-style="italic">→ 你的痛点:5000 行 Manager / 新人 3 周 / bus factor = 1</text>
+
+  <rect x="610" y="264" width="510" height="80" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+  <text x="630" y="291" fill="#ffaa55" font-size="14" font-weight="bold">C4 · 测试反馈速度决定生产力</text>
+  <text x="630" y="311" fill="#ffaa55" font-size="11">慢测试 → 不写 → 不敢改 → 僵化(正反馈循环)</text>
+  <text x="630" y="334" fill="#ffcc88" font-size="10" font-style="italic">→ 你的痛点:无 UT、上线即调试(测试塌方综合症)</text>
+
+  <line x1="600" y1="356" x2="600" y2="381" stroke="#888" stroke-width="2" marker-end="url(#ar)"/>
+
+  <text x="80" y="404" fill="#e0e0e0" font-size="14" font-weight="bold">③ 单次变化的成本上限 —— 经济基础</text>
+
+  <rect x="80" y="420" width="1040" height="80" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="600" y="447" text-anchor="middle" fill="#88c0ff" font-size="14" font-weight="bold">C5 · 改一处的代价跟波及面成正比 —— 统领所有原则的元约束</text>
+  <text x="600" y="467" text-anchor="middle" fill="#88c0ff" font-size="11">总成本 = 改动量 + 风险评估 + 测试 + 沟通,各项 ∝ 波及面</text>
+  <text x="600" y="490" text-anchor="middle" fill="#aaccff" font-size="10" font-style="italic">→ 你的痛点:改 1 字段触发 8 测试失败 / 国产化举步维艰(波及 = 80-90%)</text>
+
+  <line x1="600" y1="512" x2="600" y2="537" stroke="#888" stroke-width="2" marker-end="url(#ar)"/>
+
+  <rect x="200" y="552" width="800" height="90" rx="8" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="600" y="582" text-anchor="middle" fill="#88ff88" font-size="15" font-weight="bold">Clean Architecture 全部 11 条原则 + 4 层同心圆 + 依赖朝内 + plugin 架构</text>
+  <text x="600" y="606" text-anchor="middle" fill="#88ff88" font-size="13">都是对 C1~C5 这 5 条不可再分约束的工程响应</text>
+  <text x="600" y="628" text-anchor="middle" fill="#aaffaa" font-size="11" font-style="italic">"没引用约束的原则,就是开发者偏好,不是架构必然"</text>
+</svg>
