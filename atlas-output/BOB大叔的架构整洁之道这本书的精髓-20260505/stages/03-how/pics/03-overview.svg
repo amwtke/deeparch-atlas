@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="660" fill="#0a0c10"/>
+
+  <defs>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#c04040"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#c08040"/>
+    </marker>
+  </defs>
+
+  <text x="600" y="32" font-size="20" fill="#e0e0e0" text-anchor="middle" font-weight="bold">整洁架构骨架:同心圆 + Java 包映射 双视图</text>
+
+  <text x="290" y="62" font-size="13" fill="#888888" text-anchor="middle">[ 抽象 ] 依赖规则:箭头永远向内</text>
+  <text x="900" y="62" font-size="13" fill="#888888" text-anchor="middle">[ 物理 ] 代码该放哪个 Java 包</text>
+
+  <line x1="590" y1="80" x2="590" y2="620" stroke="#222222" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <circle cx="290" cy="340" r="240" fill="#3a1e5f" stroke="#8040c0" stroke-width="2"/>
+  <circle cx="290" cy="340" r="180" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+  <circle cx="290" cy="340" r="120" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <circle cx="290" cy="340" r="60" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+
+  <text x="290" y="125" font-size="14" fill="#c088ff" text-anchor="middle" font-weight="bold">Framework</text>
+  <text x="290" y="142" font-size="10" fill="#c088ff" text-anchor="middle">Spring Boot · JPA · 东方通</text>
+
+  <text x="290" y="185" font-size="14" fill="#ffaa55" text-anchor="middle" font-weight="bold">Adapter</text>
+  <text x="290" y="202" font-size="10" fill="#ffaa55" text-anchor="middle">Controller · Repository 实现</text>
+
+  <text x="290" y="245" font-size="14" fill="#88ff88" text-anchor="middle" font-weight="bold">Use Case</text>
+  <text x="290" y="262" font-size="10" fill="#88ff88" text-anchor="middle">应用业务规则</text>
+
+  <text x="290" y="334" font-size="14" fill="#88c0ff" text-anchor="middle" font-weight="bold">Entity</text>
+  <text x="290" y="350" font-size="10" fill="#88c0ff" text-anchor="middle">企业业务规则</text>
+  <text x="290" y="365" font-size="9" fill="#88c0ff" text-anchor="middle">最稳定 · 不依赖谁</text>
+
+  <path d="M 290 100 L 290 130" stroke="#c04040" stroke-width="2" fill="none" marker-end="url(#arrow-red)"/>
+  <path d="M 70 340 L 100 340" stroke="#c04040" stroke-width="2" fill="none" marker-end="url(#arrow-red)"/>
+  <path d="M 510 340 L 480 340" stroke="#c04040" stroke-width="2" fill="none" marker-end="url(#arrow-red)"/>
+  <path d="M 290 580 L 290 555" stroke="#c04040" stroke-width="2" fill="none" marker-end="url(#arrow-red)"/>
+
+  <text x="290" y="608" font-size="11" fill="#ff8888" text-anchor="middle" font-style="italic">⟶ 红箭头 = 依赖方向(永远从外层指向内层)</text>
+
+  <text x="620" y="100" font-size="14" fill="#e0e0e0" font-weight="bold">com.workorder</text>
+
+  <rect x="640" y="115" width="540" height="80" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5" rx="4"/>
+  <text x="650" y="135" font-size="12" fill="#88c0ff" font-weight="bold">├── .entity                                    [Entity 层]</text>
+  <text x="660" y="155" font-size="11" fill="#88c0ff">WorkOrder.java          ← 状态机 + 不变性</text>
+  <text x="660" y="172" font-size="11" fill="#88c0ff">WorkOrderStatus.java    ← PENDING/IN_PROGRESS/CLOSED</text>
+  <text x="660" y="189" font-size="10" fill="#88c0ff" font-style="italic">(纯 Java,不 import 任何框架)</text>
+
+  <rect x="640" y="205" width="540" height="105" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5" rx="4"/>
+  <text x="650" y="225" font-size="12" fill="#88ff88" font-weight="bold">├── .usecase                                   [Use Case 层]</text>
+  <text x="660" y="245" font-size="11" fill="#88ff88">TransitionWorkOrderUseCase.java   ← 协调状态扭转</text>
+  <text x="660" y="262" font-size="11" fill="#88ff88">WorkOrderRepository.java          ← 输出边界(接口)</text>
+  <text x="660" y="282" font-size="10" fill="#ffaa55" font-style="italic">                          ↑ DIP 反转点:接口在内层定义</text>
+  <text x="660" y="298" font-size="10" fill="#ffaa55" font-style="italic">                            外层来实现 (反转依赖方向)</text>
+
+  <rect x="640" y="320" width="540" height="120" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5" rx="4"/>
+  <text x="650" y="340" font-size="12" fill="#ffaa55" font-weight="bold">├── .adapter                                   [Adapter 层]</text>
+  <text x="660" y="360" font-size="11" fill="#ffaa55">.web/WorkOrderController.java         ← HTTP 翻译(入)</text>
+  <text x="660" y="377" font-size="11" fill="#ffaa55">.persistence/OracleWorkOrderRepository ← 实现(Oracle)</text>
+  <text x="660" y="394" font-size="11" fill="#ffaa55">.persistence/DmWorkOrderRepository    ← 实现(达梦)★国产化</text>
+  <text x="660" y="414" font-size="10" fill="#ff8888" font-style="italic">                                       ↑ 切这里,内层零修改</text>
+  <text x="660" y="430" font-size="10" fill="#ff8888" font-style="italic">                                         (= DIP 的工程兑现)</text>
+
+  <rect x="640" y="450" width="540" height="80" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5" rx="4"/>
+  <text x="650" y="470" font-size="12" fill="#c088ff" font-weight="bold">└── .framework                                 [Framework 层]</text>
+  <text x="660" y="490" font-size="11" fill="#c088ff">SpringBootApplication.java   ← 启动器</text>
+  <text x="660" y="507" font-size="11" fill="#c088ff">UseCaseConfig.java           ← @Bean 装配 Use Case ★教科书派关键</text>
+  <text x="660" y="524" font-size="11" fill="#c088ff">application.yml + 容器         ← DataSource / Dialect / 东方通</text>
+
+  <rect x="640" y="545" width="540" height="65" fill="#0a0c10" stroke="#444444" stroke-width="1" rx="4"/>
+  <text x="650" y="565" font-size="11" fill="#e0e0e0" font-weight="bold">📌 一句话观察</text>
+  <text x="650" y="583" font-size="10" fill="#a0a0a0">Repository 接口在内层(.usecase),实现在外层(.adapter.persistence)</text>
+  <text x="650" y="600" font-size="10" fill="#a0a0a0">→ Oracle → 达梦 = 加一个 Dm 实现 + 改 yml,内层(entity/usecase)零修改</text>
+
+  <g transform="translate(0, 630)">
+    <rect x="20" y="0" width="12" height="12" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="38" y="10" font-size="10" fill="#88c0ff">Entity (业务核心)</text>
+    <rect x="170" y="0" width="12" height="12" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="188" y="10" font-size="10" fill="#88ff88">Use Case (协调)</text>
+    <rect x="310" y="0" width="12" height="12" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="328" y="10" font-size="10" fill="#ffaa55">Adapter (翻译)</text>
+    <rect x="440" y="0" width="12" height="12" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="458" y="10" font-size="10" fill="#c088ff">Framework (容器)</text>
+    <line x1="600" y1="6" x2="630" y2="6" stroke="#c04040" stroke-width="2" marker-end="url(#arrow-red)"/>
+    <text x="640" y="10" font-size="10" fill="#ff8888">依赖方向(向内)</text>
+  </g>
+</svg>

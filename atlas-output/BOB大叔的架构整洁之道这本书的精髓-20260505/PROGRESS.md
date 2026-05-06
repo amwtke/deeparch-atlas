@@ -5,8 +5,8 @@
 - **短名**: BOB大叔的架构整洁之道这本书的精髓
 - **工作目录**: atlas-output/BOB大叔的架构整洁之道这本书的精髓-20260505/
 - **创建时间**: 2026-05-05
-- **上次更新**: 2026-05-06(Why 阶段封存,推进到 How)
-- **当前阶段**: How
+- **上次更新**: 2026-05-06(How 阶段封存,推进到 Origin —— 今日暂停)
+- **当前阶段**: Origin(待启动)
 
 ## 灵魂问题(Discovery 收集)
 > "完整理解《架构整洁之道》的设计哲学与可落地方法"
@@ -17,7 +17,7 @@
 - [x] 0. Discovery
 - [x] 1. What
 - [x] 2. Why(含约束清单建立)
-- [ ] 3. How
+- [x] 3. How
 - [ ] 4. Origin
 - [ ] 5. 分水岭决定
 - [ ] 6. Deep
@@ -71,7 +71,23 @@
 - 第 2 次 Why 产物迭代(patch-2): §3.5 C5"所有 11 条原则的最终目标都是控制波及面"对照表,11 条缩写全部展开为英文全称 + 中文翻译 | 用户反馈:11 条都是缩写不便记忆
 
 ### How 阶段
-- (无)
+- 渐进对齐 4 问收敛:深度档=骨架级;三件事=A(同心圆四层+依赖规则+边界DIP);主场景=C(工单状态扭转,Vue→Oracle 全链路);加分项=国产化 Oracle→达梦 Repository 切换实战;概览图=同心圆 + Java 包映射 双视图
+- 用户给"ok"信号,How 阶段初稿生成 + SVG 双视图概览图(`pics/03-overview.svg`,viewBox 1200×660,5 类语义色 + 包树映射)
+- 文件落在 `stages/03-how/03-how.md`,~430 行,§0 三件事 / §1 概览 / §2 四层细看 / §3 端到端走查 / §4 demo / §5 朴素 vs 真实 / §6 三个误解 / §7 国产化实战 / §8 约束回扣 / §9 呼应灵魂问题
+- 第 1 次 How 产物迭代(patch-1): §2.2 后追加 §2.2.1「Use Case 是 Spring Bean 吗?」—— 教科书派(纯 Java + Framework 层 `@Bean` 装配) vs 务实派(直接 `@Service`)对照,判断尺子(换 Spring 为 Guice 要不要改类),4 层 Spring 注解政策对照表(Entity 绝对禁止 / Use Case 看 C2 承受度 / Adapter 完全可以 / Framework 必须) | 用户追问"TransitionWorkOrderUseCase 是 spring bean 吗?" —— 落地最易踩的坑,初稿 §2.2 未覆盖
+- 第 2 次 How 产物迭代(patch-2): §2.2.1 内追加「澄清:`@Bean` 装配 ≠ 每次请求实例化一次」子节 —— `@Bean` 方法只在 Spring 启动时调 1 次 → singleton 缓存 → 所有请求共享同一实例;两派运行时性能零差异(差别全在编译时 Use Case 是否依赖 Spring);提及 `@Scope("prototype")` 应加在 Framework 层 `@Bean` 方法上保持 Use Case 类纯净 | 用户追问"如果不是 bean,Framework 层每次都要实例化一个 Use Case 对象了" —— 真实运行时认知误区
+- 用户表态:基于"架构要干净 / 不能依赖 Spring 才能跑"的认知,明确选教科书派(对照 §2.2.1 怎么选 box 中的"要应对国产化迁移 / 信创要换框架 → 严格教科书派");这跟 What 阶段的 信创/国产化 真实案例完全对齐,Use Case 类零 Spring 依赖是用户对 [C2](#c2) 承受度做出的明确选择
+- 第 3 次 How 产物迭代(patch-3): §2.2.1 「戳破」后追加「『是 Bean』的两个不同精度」子节 —— 区分编译时(类是否依赖 Spring,❌ 不要)vs 运行时(实例是否进容器,✅ 必须进);精炼教科书派精髓 = 「类不是 Bean 类型,但实例是 Bean 对象」「借力 Spring 装配,不让它穿到内层」;给出两条判别尺子:类干净(看不到 Spring import) + 装配通(Controller 能注入到实例);解释了"为什么实例必须进容器" —— 否则 Controller 自己 new 等于手写 mini DI 容器 | 用户用"不能是 Bean"模糊术语承诺教科书派,精度补强:他能达成的是"类不依赖",不是"实例不进容器"(后者做不到也不需要)
+- 用户独立推出 BOB 整本书的核心论点:"Spring 是运行时的容器,所以编译时业务代码可以零依赖。用了 Spring 在运行时生成,保持代码的整洁也用了框架。" —— 这跟 BOB 原话 "Frameworks are tools to be used, not architectures to conform to" 同构;是 What 阶段「框架是配件 vs 必须用 Spring 不矛盾」的更深一层表述(那时聚焦"换核心还在 = 配件",这里聚焦"DI 在运行时所以编译时干净")
+- 第 4 次 How 产物迭代(patch-4): §2.2.1 末追加「这一节的 takeaway:借力,不依赖」box —— 引 BOB 原话 + 精炼口诀「借力,不依赖」;解释 Spring 运行时装配性质让"代码干净 + 复用框架"不矛盾;补充更深一层根源:Spring 之所以能这样做,因为它基于先于它的两个思想(Fowler 2004 DI Pattern + BOB 1996 DIP),Guice/Dagger/CDI 同源,Spring 只是其优秀实现之一 —— 教科书派的 Use Case 换 DI 框架几乎零修改;末尾把用户原话与 BOB 原话并列双引
+- 第 5 次 How 产物迭代(patch-5): §4 demo 末追加 `.framework/UseCaseConfig.java` 显式装配代码(`@Configuration` + `@Bean` 方法) + 4 行说明(位置 = .framework / 作用 = 装配纯 Java Use Case / 效果 = 内层零 Spring 但容器仍有 Bean 实例 / 务实派对比 = 用 `@Service` 省此类但破坏纯净);同步更新 SVG `pics/03-overview.svg` framework 层显式列 `UseCaseConfig.java` 标 ★教科书派关键 | 用户敏锐指出原稿 §4 demo / §1 SVG 漏 `@Configuration` 类 —— 选教科书派后必须显式装配,否则原文跟 §2.2.1 不一致
+- 用户独立提出"依赖 = import = 编译顺序"的物理元定义 + 循环依赖示例(虽然举例时把 Controller 误归 framework 层,但核心 insight 完全正确);精度纠正:Controller 物理上在 Adapter 层,Framework 层只放装配工具(`@Configuration`/`SpringBootApplication`/yml);真循环出现在"Use Case import Adapter 实现类"的朴素方案,DIP 反转就是断开此循环
+- 第 6 次 How 产物迭代(patch-6): §0.2 内追加 §0.2.0「『依赖』到底是什么意思?(物理本质)」—— 依赖元定义 = `A import B`,B 不存在 A 编译不过;依赖向内 = DAG 拓扑序(Entity→Use Case→Adapter→Framework);4 条关键推论表(业务核心可独立编译 / 单测快 / 信创 jar 可换 / 改 Entity 是地震 vs 改 Framework 是地皮),每条挂一个 Cn;真循环反例(Use Case import OracleRepo 形成 .usecase ↔ .adapter 双向 import → Maven 多模块编译失败);DIP 反转怎么物理断开循环;记忆口诀「依赖 = import = 编译顺序 = 谁能没有谁活下来 = 删掉外层内层仍能 javac」;原 §0.2 主线内容拆成 §0.2.1「依赖规则的具体形态」保留 Java import 限制条款 | 把用户独立提出的元定义钉为 §0.2 的物理基底,把 §0.2 从"抽象规则"升华为"编译时的物理事实"
+- 用户提出 4 条直觉判断:(1) Entity+UseCase 不依赖 spring/mysql/kafka 等 framework(✅ 完全正确,确认理解);(2) 自检方法 = 移除 spring jar 从 classpath 看核心代码能否编译过(✅ 新洞察,可操作);(3) 核心可单独发 jar 跨项目共享(✅ 新洞察,正是 REP 原则物理实现);(4) Adapter 与 Framework 可合并(⚠️ 直觉对部分,工程现实合,但信创场景必须分)
+- 第 7 次 How 产物迭代(patch-7): §0.2.0 末追加「自检方法:你的项目算不算干净?」—— 实验 1 classpath 移除测试(`mvn compile` 看能否过)+ 实验 2 独立 jar 发布测试(`workorder-core.jar` 只依赖 JDK,< 100KB,跨项目可复用 = REP 原则物理实现);两实验关系(1 ⊃ 2,1 是必要条件);末尾把用户原话作 evidence
+- 第 8 次 How 产物迭代(patch-8): §2 末追加 §2.5「⚠️ 常见疑问:Adapter 和 Framework 为什么是两层?(很多人会问能不能合并)」—— 承认直觉来自工程现实(Spring Boot 教程很多合一);但戳破两层本质不同(Adapter = 行为代码/翻译器/高频改/增量替换 vs Framework = 元信息/装配/低频改/整体替换);信创场景两类迁移改动范围对照(Oracle→达梦只动 Adapter / Spring Boot→东方通只动 Framework);判别尺子(信创预期内 → 必须分;短期项目 → 可妥协合并);末尾给用户公司现实落地建议(信创预期内 → 必须 4 层分);末尾把用户原话作 evidence
+- 用户诊断文档过长(818 行)抽象信号稀释,明确要求大重构:删 §3 端到端走查 / §5 朴素 vs 真实对照 / §8 约束回扣表 / §7 国产化实战(精华挪到 §2.3/§2.4);§2 强调 Entity+UseCase 是内核可单独编译;§2.2 删 Spring 派别讨论;§7 信创对照表(Oracle→达梦 / Spring Boot→东方通)挪 §2.3/§2.4("非常不错")
+- 第 9 次 How 产物迭代(patch-9 大重构): 文档从 818 行 → 463 行(-43%);删 4 大块(旧 §3 / §5 / §7 / §8 整章);§2.2 删除 §2.2.1 整段(Spring 派别讨论 + 借力不依赖 takeaway 等 5 次 patch 内容);§2 新增 §2.0「核心命题:Entity + Use Case 是内核,可单独编译」作为四层细看的引言段;§2.3 内嵌 Oracle→达梦 信创对照表(从旧 §7.2 + §7.3 提取);§2.4 内嵌 Spring Boot→东方通 信创对照表;§2.5 精简,只留"能不能合并"判别 + 信创证据指引;每层介绍末尾加 1 行「关联约束 → Cn」收口;§3 demo 末尾「关键点」精简到 4 条;§5 呼应灵魂问题去掉"端到端走查"提法 | 用户主导的诊断 + 重构,文档单一聚焦"内核 = Entity+UseCase 可单独编译 + 4 层分离的工程价值"
 
 ### Origin 阶段
 - (无)
