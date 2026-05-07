@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="720" fill="#0a0c10"/>
+
+  <defs>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#8040c0"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#c08040"/>
+    </marker>
+  </defs>
+
+  <!-- 标题 -->
+  <text x="600" y="32" font-size="20" fill="#e0e0e0" text-anchor="middle" font-weight="bold">2012 那一刻:Bob 大叔合 4 套架构为 1</text>
+  <text x="600" y="56" font-size="12" fill="#888888" text-anchor="middle">从 1972 Parnas 信息隐藏到 2017 《Clean Architecture》成书,聚焦 1990s-2010s 关键 20 年</text>
+
+  <!-- 三条 lane 标签 -->
+  <text x="50" y="125" font-size="11" fill="#c08040" text-anchor="start">思想源头</text>
+  <text x="50" y="280" font-size="11" fill="#88c0ff" text-anchor="start">Bob 大叔</text>
+  <text x="50" y="295" font-size="11" fill="#88c0ff" text-anchor="start">主线</text>
+  <text x="50" y="465" font-size="11" fill="#c088ff" text-anchor="start">4 套架构</text>
+  <text x="50" y="480" font-size="11" fill="#c088ff" text-anchor="start">前身</text>
+
+  <!-- 时间轴底层网格 -->
+  <line x1="80" y1="290" x2="1170" y2="290" stroke="#333333" stroke-width="1"/>
+
+  <!-- 年份刻度 -->
+  <g font-size="9" fill="#666666" text-anchor="middle">
+    <text x="80"  y="310">1968</text>
+    <text x="154" y="310">1972</text>
+    <text x="413" y="310">1986</text>
+    <text x="524" y="310">1992</text>
+    <text x="580" y="310">1995</text>
+    <text x="691" y="310">2001</text>
+    <text x="765" y="310">2005</text>
+    <text x="820" y="310">2008</text>
+    <text x="839" y="310">2009</text>
+    <text x="894" y="310">2012</text>
+    <text x="987" y="310">2017</text>
+    <text x="1005" y="310">2018</text>
+    <text x="1153" y="310">2026</text>
+  </g>
+
+  <!-- 顶部 lane: 思想源头 (橙) -->
+  <!-- 1972 Parnas -->
+  <line x1="154" y1="290" x2="154" y2="180" stroke="#c08040" stroke-width="1" stroke-dasharray="3,3"/>
+  <rect x="100" y="140" width="120" height="44" rx="3" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+  <text x="160" y="158" font-size="11" fill="#ffaa55" text-anchor="middle" font-weight="bold">1972 Parnas</text>
+  <text x="160" y="172" font-size="9" fill="#ffaa55" text-anchor="middle">Information Hiding</text>
+  <text x="160" y="183" font-size="8" fill="#ffaa55" text-anchor="middle">(DIP 思想源头)</text>
+
+  <!-- 1986 Meyer -->
+  <line x1="413" y1="290" x2="413" y2="180" stroke="#c08040" stroke-width="1" stroke-dasharray="3,3"/>
+  <rect x="360" y="140" width="120" height="44" rx="3" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+  <text x="420" y="158" font-size="11" fill="#ffaa55" text-anchor="middle" font-weight="bold">1986 Meyer</text>
+  <text x="420" y="172" font-size="9" fill="#ffaa55" text-anchor="middle">Open-Closed</text>
+  <text x="420" y="183" font-size="8" fill="#ffaa55" text-anchor="middle">(OCP 命名者)</text>
+
+  <!-- 中间 lane: Bob 大叔主线 (蓝) -->
+
+  <!-- 1995 Booch book — 死胡同(红) -->
+  <line x1="580" y1="290" x2="580" y2="220" stroke="#c04040" stroke-width="1" stroke-dasharray="3,3"/>
+  <rect x="525" y="216" width="115" height="48" rx="3" fill="#5f1e1e" stroke="#c04040" stroke-width="1.5"/>
+  <text x="582" y="232" font-size="10" fill="#ff8888" text-anchor="middle" font-weight="bold">1995 Booch 书</text>
+  <text x="582" y="245" font-size="8" fill="#ff8888" text-anchor="middle">用 Booch method</text>
+  <text x="582" y="258" font-size="8" fill="#ff8888" text-anchor="middle">★ 被 UML 替代(死胡同)</text>
+
+  <!-- 1995 Object Mentor 创立 -->
+  <line x1="580" y1="290" x2="580" y2="358" stroke="#4080c0" stroke-width="1" stroke-dasharray="3,3"/>
+  <rect x="525" y="358" width="115" height="32" rx="3" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+  <text x="582" y="374" font-size="10" fill="#88c0ff" text-anchor="middle" font-weight="bold">1995 Object Mentor</text>
+  <text x="582" y="386" font-size="8" fill="#88c0ff" text-anchor="middle">咨询公司创立</text>
+
+  <!-- 1998-2001 SOLID -->
+  <line x1="660" y1="290" x2="660" y2="220" stroke="#4080c0" stroke-width="1" stroke-dasharray="3,3"/>
+  <rect x="640" y="194" width="155" height="48" rx="3" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+  <text x="717" y="210" font-size="11" fill="#88c0ff" text-anchor="middle" font-weight="bold">1998~2001 SOLID</text>
+  <text x="717" y="224" font-size="8" fill="#88c0ff" text-anchor="middle">SRP / OCP / LSP / ISP / DIP</text>
+  <text x="717" y="236" font-size="8" fill="#88c0ff" text-anchor="middle">5 原则陆续到位</text>
+
+  <!-- 2001 Agile Manifesto -->
+  <line x1="691" y1="290" x2="691" y2="358" stroke="#4080c0" stroke-width="1" stroke-dasharray="3,3"/>
+  <rect x="640" y="358" width="105" height="32" rx="3" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+  <text x="692" y="374" font-size="10" fill="#88c0ff" text-anchor="middle" font-weight="bold">2001 Agile</text>
+  <text x="692" y="386" font-size="8" fill="#88c0ff" text-anchor="middle">17 人签署</text>
+
+  <!-- 2010 DI Inversion blog -->
+  <line x1="857" y1="290" x2="857" y2="358" stroke="#4080c0" stroke-width="1" stroke-dasharray="3,3"/>
+  <rect x="800" y="358" width="115" height="32" rx="3" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+  <text x="857" y="374" font-size="10" fill="#88c0ff" text-anchor="middle" font-weight="bold">2010 DI 反转</text>
+  <text x="857" y="386" font-size="8" fill="#88c0ff" text-anchor="middle">博客谈框架边界</text>
+
+  <!-- 2012 Clean Architecture 博客 — 戏剧高潮(绿色大星标) -->
+  <line x1="894" y1="290" x2="894" y2="220" stroke="#40c060" stroke-width="2"/>
+  <rect x="830" y="180" width="135" height="44" rx="4" fill="#1e5f3a" stroke="#40c060" stroke-width="2.5"/>
+  <text x="897" y="200" font-size="12" fill="#88ff88" text-anchor="middle" font-weight="bold">★ 2012 8/13</text>
+  <text x="897" y="216" font-size="9" fill="#88ff88" text-anchor="middle">《The Clean Architecture》</text>
+  <polygon points="897,148 907,170 932,172 912,188 920,212 897,200 874,212 882,188 862,172 887,170" fill="#40c060" stroke="#88ff88" stroke-width="1"/>
+  <text x="897" y="180" font-size="10" fill="#0a0c10" text-anchor="middle" font-weight="bold">合一</text>
+
+  <!-- 2017 成书 -->
+  <line x1="987" y1="290" x2="987" y2="358" stroke="#4080c0" stroke-width="1" stroke-dasharray="3,3"/>
+  <rect x="935" y="358" width="105" height="32" rx="3" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+  <text x="987" y="374" font-size="10" fill="#88c0ff" text-anchor="middle" font-weight="bold">2017 成书</text>
+  <text x="987" y="386" font-size="8" fill="#88c0ff" text-anchor="middle">《Clean Architecture》</text>
+
+  <!-- 2018 反思 — 遗憾(红) -->
+  <line x1="1005" y1="290" x2="1005" y2="220" stroke="#c04040" stroke-width="1" stroke-dasharray="3,3"/>
+  <rect x="1050" y="200" width="120" height="80" rx="3" fill="#5f1e1e" stroke="#c04040" stroke-width="1.5"/>
+  <text x="1110" y="218" font-size="10" fill="#ff8888" text-anchor="middle" font-weight="bold">2018+ 遗憾</text>
+  <text x="1110" y="234" font-size="8" fill="#ff8888" text-anchor="middle">A. 被误读为</text>
+  <text x="1110" y="245" font-size="8" fill="#ff8888" text-anchor="middle">  "4 层文件夹模板"</text>
+  <text x="1110" y="259" font-size="8" fill="#ff8888" text-anchor="middle">B. DI 框架滥用</text>
+  <text x="1110" y="270" font-size="8" fill="#ff8888" text-anchor="middle">  (Spring 穿到内层)</text>
+  <text x="1110" y="284" font-size="7" fill="#ff8888" text-anchor="middle" font-style="italic">C. Agile Industrial Complex</text>
+  <line x1="1005" y1="220" x2="1052" y2="240" stroke="#c04040" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- 底部 lane: 4 套架构 (紫) — 4 个候选都用箭头汇向 2012 -->
+
+  <!-- 1992 Jacobson BCE -->
+  <line x1="524" y1="290" x2="524" y2="430" stroke="#8040c0" stroke-width="1" stroke-dasharray="3,3"/>
+  <rect x="465" y="430" width="120" height="48" rx="3" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+  <text x="525" y="448" font-size="11" fill="#c088ff" text-anchor="middle" font-weight="bold">1992 Jacobson</text>
+  <text x="525" y="461" font-size="9" fill="#c088ff" text-anchor="middle">BCE (E-I-C)</text>
+  <text x="525" y="473" font-size="8" fill="#c088ff" text-anchor="middle">Use Case 驱动</text>
+  <path d="M 585 454 Q 740 540 870 220" stroke="#8040c0" stroke-width="1.5" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-purple)"/>
+
+  <!-- 2005 Cockburn Hexagonal -->
+  <line x1="765" y1="290" x2="765" y2="430" stroke="#8040c0" stroke-width="1" stroke-dasharray="3,3"/>
+  <rect x="700" y="430" width="125" height="48" rx="3" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+  <text x="762" y="448" font-size="11" fill="#c088ff" text-anchor="middle" font-weight="bold">2005 Cockburn</text>
+  <text x="762" y="461" font-size="9" fill="#c088ff" text-anchor="middle">Hexagonal</text>
+  <text x="762" y="473" font-size="8" fill="#c088ff" text-anchor="middle">Ports &amp; Adapters</text>
+  <path d="M 765 430 Q 800 360 870 224" stroke="#8040c0" stroke-width="1.5" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-purple)"/>
+
+  <!-- 2008 Palermo Onion -->
+  <line x1="820" y1="290" x2="820" y2="498" stroke="#8040c0" stroke-width="1" stroke-dasharray="3,3"/>
+  <rect x="845" y="498" width="115" height="48" rx="3" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+  <text x="902" y="516" font-size="11" fill="#c088ff" text-anchor="middle" font-weight="bold">2008 Palermo</text>
+  <text x="902" y="529" font-size="9" fill="#c088ff" text-anchor="middle">Onion</text>
+  <text x="902" y="541" font-size="8" fill="#c088ff" text-anchor="middle">同心圆 + 依赖向内</text>
+  <path d="M 902 498 Q 920 350 905 224" stroke="#8040c0" stroke-width="1.5" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-purple)"/>
+
+  <!-- 2009 DCI -->
+  <line x1="839" y1="290" x2="839" y2="430" stroke="#8040c0" stroke-width="1" stroke-dasharray="3,3"/>
+  <rect x="985" y="430" width="155" height="48" rx="3" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+  <text x="1062" y="448" font-size="11" fill="#c088ff" text-anchor="middle" font-weight="bold">2009 Coplien &amp; Reenskaug</text>
+  <text x="1062" y="461" font-size="9" fill="#c088ff" text-anchor="middle">DCI</text>
+  <text x="1062" y="473" font-size="8" fill="#c088ff" text-anchor="middle">Data-Context-Interaction</text>
+  <path d="M 985 454 Q 950 380 925 224" stroke="#8040c0" stroke-width="1.5" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-purple)"/>
+
+  <!-- "4 套架构合一"标签 -->
+  <text x="897" y="615" font-size="13" fill="#88ff88" text-anchor="middle" font-weight="bold">↑ 4 套架构虚线箭头汇向 2012:Bob 大叔提炼"依赖规则"统一它们</text>
+
+  <!-- 图例 -->
+  <g transform="translate(60, 660)">
+    <text x="0" y="0" font-size="11" fill="#888888" font-weight="bold">图例:</text>
+    <rect x="60" y="-10" width="14" height="14" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="80" y="2" font-size="10" fill="#ffaa55">思想源头</text>
+    <rect x="170" y="-10" width="14" height="14" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="190" y="2" font-size="10" fill="#88c0ff">Bob 大叔正向工作</text>
+    <rect x="320" y="-10" width="14" height="14" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="340" y="2" font-size="10" fill="#88ff88">★ 戏剧高潮(2012 合一)</text>
+    <rect x="510" y="-10" width="14" height="14" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="530" y="2" font-size="10" fill="#c088ff">4 套架构前身(被合并)</text>
+    <rect x="700" y="-10" width="14" height="14" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="720" y="2" font-size="10" fill="#ff8888">死胡同 / 遗憾</text>
+    <text x="840" y="2" font-size="10" fill="#888888" font-style="italic">虚线箭头 = "4 套合一"</text>
+  </g>
+
+  <text x="600" y="700" font-size="10" fill="#666666" text-anchor="middle">x 轴 = 时间(1968→2026,18.5 px/年);y 轴 = 三条 lane(思想源头 / Bob 主线 / 4 套架构)</text>
+
+</svg>
