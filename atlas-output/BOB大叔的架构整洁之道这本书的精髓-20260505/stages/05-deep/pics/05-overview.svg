@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="720" fill="#0a0c10"/>
+
+  <defs>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#c04040"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#40c060"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#c08040"/>
+    </marker>
+  </defs>
+
+  <text x="600" y="32" font-size="20" fill="#e0e0e0" text-anchor="middle" font-weight="bold">三步增量重构:订单系统从 α 屎山 → β 形似神离 → γ 真做对</text>
+  <text x="600" y="55" font-size="12" fill="#888888" text-anchor="middle">每个 panel 4 层 box 自顶向下 = Framework → Adapter → Use Case → Entity;import 箭头方向 = 依赖方向</text>
+
+  <!-- ============= Panel α (left, x: 30~390) ============= -->
+  <rect x="30" y="80" width="360" height="500" rx="5" fill="#1a1c20" stroke="#5f1e1e" stroke-width="2"/>
+  <rect x="30" y="80" width="360" height="34" rx="5" fill="#5f1e1e"/>
+  <text x="210" y="102" font-size="14" fill="#ff8888" text-anchor="middle" font-weight="bold">α 屎山:无层级,全在 OrderService</text>
+
+  <!-- α 主体: 一个大 OrderService 方块,内嵌混乱 -->
+  <rect x="60" y="140" width="300" height="280" rx="3" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="210" y="160" font-size="12" fill="#ff8888" text-anchor="middle" font-weight="bold">OrderService.java (~120 行)</text>
+  <line x1="60" y1="170" x2="360" y2="170" stroke="#c04040" stroke-width="0.5"/>
+  <text x="75" y="188" font-size="9" fill="#ffaaaa">@Service / @Transactional</text>
+  <text x="75" y="204" font-size="9" fill="#ffaaaa">@Autowired OrderRepository (extends JpaRepository)</text>
+  <text x="75" y="218" font-size="9" fill="#ffaaaa">@Autowired WeChatPaymentClient</text>
+  <text x="75" y="232" font-size="9" fill="#ffaaaa">@Autowired AliyunSmsClient</text>
+  <text x="75" y="246" font-size="9" fill="#ffaaaa">@Autowired InventoryFeignClient</text>
+  <text x="75" y="270" font-size="9" fill="#ffcccc" font-style="italic">// 业务规则 + 数据访问 + 外部 API</text>
+  <text x="75" y="284" font-size="9" fill="#ffcccc" font-style="italic">// 全在一个方法里 if-else</text>
+  <text x="75" y="305" font-size="10" fill="#ff8888" font-weight="bold">↓ 状态扭转</text>
+  <text x="75" y="320" font-size="9" fill="#ffaaaa">if(status == "created") {</text>
+  <text x="75" y="333" font-size="9" fill="#ffaaaa">  weChatPayment.pay();</text>
+  <text x="75" y="346" font-size="9" fill="#ffaaaa">  inventory.decrease();</text>
+  <text x="75" y="359" font-size="9" fill="#ffaaaa">  smsClient.send();</text>
+  <text x="75" y="372" font-size="9" fill="#ffaaaa">  repository.save();  /* JPA */</text>
+  <text x="75" y="385" font-size="9" fill="#ffaaaa">} else if(status == ...)</text>
+  <text x="75" y="406" font-size="9" fill="#ffcccc" font-style="italic">// 加新状态 → 改这一坨 if-else</text>
+
+  <!-- α 周围依赖 -->
+  <text x="20" y="450" font-size="9" fill="#ff8888">MySQL ↗</text>
+  <text x="170" y="450" font-size="9" fill="#ff8888" text-anchor="middle">支付 ↗</text>
+  <text x="280" y="450" font-size="9" fill="#ff8888" text-anchor="middle">短信 ↗</text>
+  <text x="380" y="450" font-size="9" fill="#ff8888" text-anchor="end">库存 ↗</text>
+  <text x="210" y="478" font-size="10" fill="#ffcccc" text-anchor="middle" font-style="italic">所有外部依赖直接绑死到内部</text>
+
+  <!-- α caption -->
+  <rect x="40" y="495" width="340" height="78" rx="3" fill="#0a0c10" stroke="#5f1e1e" stroke-width="1"/>
+  <text x="210" y="512" font-size="11" fill="#ff8888" text-anchor="middle" font-weight="bold">问题:0 边界 / 0 接口反转 / 全 Spring 全家桶</text>
+  <text x="50" y="530" font-size="9" fill="#ff8888">• 信创时 Spring Boot → 东方通: 全部 @Autowired 重写</text>
+  <text x="50" y="544" font-size="9" fill="#ff8888">• MySQL → 达梦: extends JpaRepository 也要重写</text>
+  <text x="50" y="558" font-size="9" fill="#ff8888">• 单测必启 Spring (慢) / 加新状态改 N 处 / 业务规则散</text>
+  <text x="210" y="572" font-size="10" fill="#ffcccc" text-anchor="middle" font-weight="bold">工业占比:50-60%(α)</text>
+
+  <!-- ============= Panel β (middle, x: 410~770) ============= -->
+  <rect x="410" y="80" width="360" height="500" rx="5" fill="#1a1c20" stroke="#5f3a1e" stroke-width="2"/>
+  <rect x="410" y="80" width="360" height="34" rx="5" fill="#5f3a1e"/>
+  <text x="590" y="102" font-size="14" fill="#ffaa55" text-anchor="middle" font-weight="bold">β 形似神离:分了文件夹但内层污染</text>
+
+  <!-- β 主体: 4 层 box 堆叠 -->
+  <rect x="430" y="140" width="320" height="60" rx="3" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+  <text x="590" y="160" font-size="11" fill="#ffaa55" text-anchor="middle" font-weight="bold">com.example.framework/</text>
+  <text x="590" y="178" font-size="9" fill="#ffcc88" text-anchor="middle">SpringBootApplication / yml / @Bean</text>
+
+  <rect x="445" y="210" width="290" height="60" rx="3" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+  <text x="590" y="230" font-size="11" fill="#ffaa55" text-anchor="middle" font-weight="bold">com.example.adapter/</text>
+  <text x="590" y="248" font-size="9" fill="#ffcc88" text-anchor="middle">OrderController / OrderRepositoryImpl(空 — 因 JPA 自动)</text>
+
+  <rect x="460" y="280" width="260" height="80" rx="3" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="590" y="300" font-size="11" fill="#ff8888" text-anchor="middle" font-weight="bold">com.example.usecase/</text>
+  <text x="590" y="316" font-size="9" fill="#ffaaaa" text-anchor="middle">OrderUseCase</text>
+  <text x="475" y="332" font-size="8" fill="#ffaaaa">⚠ import org.springframework.*</text>
+  <text x="475" y="344" font-size="8" fill="#ffaaaa">⚠ @Autowired WeChatPaymentClient</text>
+  <text x="475" y="356" font-size="8" fill="#ffaaaa">⚠ extends JpaRepository(在 Repository 接口)</text>
+
+  <rect x="475" y="375" width="230" height="55" rx="3" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+  <text x="590" y="392" font-size="11" fill="#88c0ff" text-anchor="middle" font-weight="bold">com.example.entity/</text>
+  <text x="590" y="408" font-size="9" fill="#aaccff" text-anchor="middle">Order(还在,只是个 POJO,没业务规则)</text>
+  <text x="590" y="421" font-size="8" fill="#aaccff" text-anchor="middle" font-style="italic">业务规则仍在 OrderUseCase 里</text>
+
+  <!-- β 错误的依赖箭头(usecase→framework / usecase→adapter,反向) -->
+  <path d="M 460 295 Q 420 235 430 165" stroke="#c04040" stroke-width="2" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-red)"/>
+  <text x="395" y="200" font-size="8" fill="#ff8888" text-anchor="middle">向外 ✗</text>
+
+  <!-- β caption -->
+  <rect x="420" y="445" width="340" height="128" rx="3" fill="#0a0c10" stroke="#5f3a1e" stroke-width="1"/>
+  <text x="590" y="462" font-size="11" fill="#ffaa55" text-anchor="middle" font-weight="bold">看起来像 Clean Arch,实则:</text>
+  <text x="430" y="478" font-size="9" fill="#ffaa55">• 4 文件夹齐活 ✓ (视觉直觉合规)</text>
+  <text x="430" y="492" font-size="9" fill="#ff8888">• 但 Use Case 还 import Spring ✗ (内层依赖外层)</text>
+  <text x="430" y="506" font-size="9" fill="#ff8888">• Repository 接口 extends JpaRepository ✗ (假 DIP)</text>
+  <text x="430" y="520" font-size="9" fill="#ff8888">• 业务规则散在 Use Case,没上提到 Entity</text>
+  <text x="590" y="540" font-size="10" fill="#ffcc88" text-anchor="middle" font-weight="bold">代价:跟 α 几乎一样</text>
+  <text x="430" y="554" font-size="9" fill="#ffaa55">• 信创时 Use Case 还要重写(因 import Spring)</text>
+  <text x="590" y="570" font-size="10" fill="#ffcccc" text-anchor="middle" font-weight="bold">工业占比:30-40%(β)</text>
+
+  <!-- ============= Panel γ (right, x: 790~1170) ============= -->
+  <rect x="790" y="80" width="380" height="500" rx="5" fill="#1a1c20" stroke="#1e5f3a" stroke-width="2"/>
+  <rect x="790" y="80" width="380" height="34" rx="5" fill="#1e5f3a"/>
+  <text x="980" y="102" font-size="14" fill="#88ff88" text-anchor="middle" font-weight="bold">γ 真做对:依赖向内而生</text>
+
+  <!-- γ 4 层 box 堆叠 -->
+  <rect x="810" y="140" width="340" height="60" rx="3" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+  <text x="980" y="160" font-size="11" fill="#ffaa55" text-anchor="middle" font-weight="bold">.framework/</text>
+  <text x="980" y="178" font-size="9" fill="#ffcc88" text-anchor="middle">UseCaseConfig.java(显式 @Bean 装配)+ yml</text>
+
+  <rect x="825" y="210" width="310" height="60" rx="3" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+  <text x="980" y="228" font-size="11" fill="#ffaa55" text-anchor="middle" font-weight="bold">.adapter/</text>
+  <text x="980" y="244" font-size="8" fill="#ffcc88" text-anchor="middle">JpaOrderRepository implements OrderRepository</text>
+  <text x="980" y="256" font-size="8" fill="#ffcc88" text-anchor="middle">WeChatPaymentAdapter implements PaymentGateway</text>
+
+  <rect x="840" y="280" width="280" height="80" rx="3" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="980" y="298" font-size="11" fill="#88ff88" text-anchor="middle" font-weight="bold">.usecase/</text>
+  <text x="980" y="313" font-size="9" fill="#aaffaa" text-anchor="middle">OrderUseCase(纯 Java,零 Spring 依赖)</text>
+  <text x="855" y="330" font-size="8" fill="#88ff88">interface OrderRepository(只 import JDK)</text>
+  <text x="855" y="342" font-size="8" fill="#88ff88">interface PaymentGateway(业务定义)</text>
+  <text x="855" y="354" font-size="8" fill="#88ff88">interface SmsNotifier / InventoryClient</text>
+
+  <rect x="855" y="375" width="250" height="55" rx="3" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+  <text x="980" y="392" font-size="11" fill="#88c0ff" text-anchor="middle" font-weight="bold">.entity/</text>
+  <text x="980" y="408" font-size="9" fill="#aaccff" text-anchor="middle">Order(状态机自封 + 业务规则上提)</text>
+  <text x="980" y="421" font-size="8" fill="#aaccff" text-anchor="middle" font-style="italic">order.payTo(...) → 状态变更只在 Entity 内</text>
+
+  <!-- γ 正确依赖箭头(向内,从 Framework → Adapter → UseCase → Entity)-->
+  <path d="M 980 200 L 980 210" stroke="#40c060" stroke-width="2" fill="none" marker-end="url(#arrow-green)"/>
+  <path d="M 980 270 L 980 280" stroke="#40c060" stroke-width="2" fill="none" marker-end="url(#arrow-green)"/>
+  <path d="M 980 360 L 980 375" stroke="#40c060" stroke-width="2" fill="none" marker-end="url(#arrow-green)"/>
+  <text x="1130" y="265" font-size="9" fill="#88ff88" text-anchor="end">向内 ✓</text>
+
+  <!-- γ caption -->
+  <rect x="800" y="445" width="360" height="128" rx="3" fill="#0a0c10" stroke="#1e5f3a" stroke-width="1"/>
+  <text x="980" y="462" font-size="11" fill="#88ff88" text-anchor="middle" font-weight="bold">三步反转都做对:</text>
+  <text x="810" y="478" font-size="9" fill="#88ff88">• 接口位置反转:OrderRepository 在 Use Case 层</text>
+  <text x="810" y="492" font-size="9" fill="#88ff88">• 框架边界外推:Spring 只在 Framework 层装配</text>
+  <text x="810" y="506" font-size="9" fill="#88ff88">• 状态机上提:Order.payTo() / cancel() 在 Entity</text>
+  <text x="810" y="525" font-size="9" fill="#88ccff">• Use Case 物理上能脱 Spring 单独 javac ✓</text>
+  <text x="810" y="539" font-size="9" fill="#88ccff">• 单测毫秒级(无 Spring 容器)✓</text>
+  <text x="810" y="553" font-size="9" fill="#88ccff">• 信创换 Spring → 东方通 / Oracle → 达梦:0 改 Use Case</text>
+  <text x="980" y="570" font-size="10" fill="#aaffaa" text-anchor="middle" font-weight="bold">工业占比:&lt;5%(γ)</text>
+
+  <!-- 三步重构横向箭头 -->
+  <path d="M 392 320 L 408 320" stroke="#c08040" stroke-width="3" fill="none" marker-end="url(#arrow-orange)"/>
+  <path d="M 772 320 L 788 320" stroke="#40c060" stroke-width="3" fill="none" marker-end="url(#arrow-green)"/>
+  <text x="400" y="310" font-size="9" fill="#ffaa55" text-anchor="middle" font-weight="bold">step 1</text>
+  <text x="400" y="340" font-size="8" fill="#ffaa55" text-anchor="middle">分文件夹</text>
+  <text x="780" y="310" font-size="9" fill="#88ff88" text-anchor="middle" font-weight="bold">step 2</text>
+  <text x="780" y="340" font-size="8" fill="#88ff88" text-anchor="middle">真反转</text>
+
+  <!-- 底部图例 -->
+  <g transform="translate(60, 620)">
+    <text x="0" y="0" font-size="11" fill="#888888" font-weight="bold">图例:</text>
+    <rect x="60" y="-10" width="14" height="14" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="80" y="2" font-size="10" fill="#ff8888">α 屎山(无层级 / 假 DIP / 全 Spring 污染)</text>
+    <rect x="340" y="-10" width="14" height="14" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="360" y="2" font-size="10" fill="#ffaa55">β 形似神离(分文件夹但内层仍污染)</text>
+    <rect x="610" y="-10" width="14" height="14" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="630" y="2" font-size="10" fill="#88ff88">γ 真做对(依赖向内而生)</text>
+    <rect x="850" y="-10" width="14" height="14" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="870" y="2" font-size="10" fill="#88c0ff">Entity 层(最稳定)</text>
+  </g>
+
+  <text x="600" y="685" font-size="10" fill="#666666" text-anchor="middle">三步重构 = α (混乱) → β (分文件夹) → γ (反转 import 方向);只有 step 2 是真重构,step 1 是表面工作</text>
+  <text x="600" y="703" font-size="9" fill="#666666" text-anchor="middle" font-style="italic">注:这张图是 stages/05-deep/05-deep.md §1 的开篇视图;§2/§3/§4 各 panel 详细代码片段</text>
+
+</svg>

@@ -5,8 +5,8 @@
 - **短名**: BOB大叔的架构整洁之道这本书的精髓
 - **工作目录**: atlas-output/BOB大叔的架构整洁之道这本书的精髓-20260505/
 - **创建时间**: 2026-05-05
-- **上次更新**: 2026-05-07(Origin 阶段封存,推进到 Deep)
-- **当前阶段**: Deep(待启动 —— 一段屎山代码按 Bob 端口适配器重构的实操)
+- **上次更新**: 2026-05-08(Deep 阶段封存,推进到 Comparison;§4.5 内容移到 Comparison)
+- **当前阶段**: Comparison(待启动 —— 主对照 Clean Arch vs DDD,Deep §4.5 内容作为基底扩展)
 
 ## 灵魂问题(Discovery 收集)
 > "完整理解《架构整洁之道》的设计哲学与可落地方法"
@@ -20,8 +20,8 @@
 - [x] 3. How
 - [x] 4. Origin
 - [x] 5. 分水岭决定(用户明确选择继续 Deep + Synthesis 主轴已锁定)
-- [ ] 6. Deep
-- [ ] 7. Comparison(可选)
+- [x] 6. Deep
+- [x] 7. Comparison(用户明确选择对比 Clean Arch vs DDD)
 - [ ] 8. Synthesis
 - [ ] 9. 导出格式询问
 - [ ] 10. 融合输出
@@ -111,7 +111,17 @@
 - 第 5 次 Origin 产物迭代(patch-5): §6.7 桥梁段末尾追加「社会性反转」box;§8 关键转折追加第 4 条主线;PROGRESS.md Synthesis §E 锁定最终命题 | 用户提出"Synthesis 可以引出有趣结论:Bob 的理论在人的社会里行不通,但在 AI 的社会里会成为软件工程的第一性原理被 AI 遵守" —— 一句话闭环整个 arc
 
 ### Deep 阶段
-- (无)
+- 渐进对齐 4 问收敛(2026-05-07): 业务场景=Spring Boot + CRUD + MySQL 订单系统(用户主动 redirect 从环境监测系统改到通用订单系统,理由:工业界最有共鸣,Synthesis §A 引子最强);状态机+依赖=5 状态(created/paid/shipped/delivered/cancelled)+ 4 外部依赖(MySQL/微信支付/阿里短信/库存 RPC);重构步数=B 三步增量(α→β→γ);代码形式=片段(不做可运行 Maven);戏剧化=带工程师内心独白
+- 用户给"可以,先做一版"信号,Deep 阶段初稿生成 + SVG 三联图(`pics/05-overview.svg`,viewBox 1200×720,3 panel 横排展示三态依赖方向变化,每 panel 4 层 box 自顶向下 framework→adapter→usecase→entity)
+- 文件落在 `stages/05-deep/05-deep.md`,§0 三件事(战术级:接口位置反转 / 框架边界外推 / 状态机上提)/ §1 概览三联图 / §2 α 屎山初稿(完整代码片段 + 内心戏) / §3 β 形似神离(代码片段 + 内心戏 + 反事实小试"为什么不能停在 β?")/ §4 γ 真做对(完整 4 interface + Use Case 零 Spring + 状态机上提到 Entity + 反事实小试"除 Bob 端口适配器还有什么选项")/ §5 难度落点复盘表(5 个落点,每个对应 §6 人性短板 + Synthesis §C 经济约束 + AI 弥补) / §6 约束回扣 / §7 呼应灵魂问题 95% 闭环
+- **关键洞察(Deep 阶段独立留下)**:三步重构里只有 step 2(β→γ)是真重构,step 1(α→β)是表面工作但给人"已经做完了"的安慰剂效应 —— 这是工业界 30-40% 项目停在 β 的核心心理机制;Bob 真正难做的不是技术,是"不被 step 1 安慰剂骗住"
+- 第 1 次 Deep 产物迭代(patch-1): §4.5 新增「Clean Arch vs DDD —— 区别与联系」整段(放在 §4.3 反事实小试结论后) —— 5 个子节:同构关系对照表(9 行映射,Clean Arch γ ≈ DDD 战术级子集 / DDD 早 14 年 / Bob 主动 cite Evans) / 区别 4 维度(粒度 / 关注点 / 学习曲线 / 适用场景) / 同一个 Order.payTo() 两种风格代码对比(Clean Arch sync 调用 vs DDD async 事件 + 5 维度差异) / 选用建议(订单系统:先 γ 再 DDD;什么时候上 DDD 三信号) / 一句话总结(Clean Arch = 工程师友好版 DDD 战术级;DDD = 业务专家协作版 Clean Arch + 战略设计;跳级摔死) | 用户追问"Bob 4 层 Clean Arch 跟 DDD 的区别与联系" —— 大多数读者读完两本书仍困惑的常见点
+- 用户决定推进到 Comparison(2026-05-07): "推进 Comparison,主要对比同心圆 vs DDD 吧。deep 里面的对比可以挪到 comparison 里面我觉得更合适"
+- 第 2 次 Deep 产物迭代(patch-2): §4.5 整段内容移到 Comparison 阶段;Deep §4.5 缩成 1 段 pointer 指向 06-comparison.md + 摘要列出 5 个子点 | 用户主导决定 —— 横向对照是 Comparison 阶段的天然位置,Deep 阶段不承担
+
+### Comparison 阶段
+- 用户明确选定 Comparison 主对照对象:**Clean Arch vs DDD**(对应 Deep §4.3 反事实小试候选 B 的深入展开)
+- Deep §4.5 5 个子节作为 Comparison 内容基底,需扩展为 atlas Comparison 标准结构(§1 设计动机简表 4 件事 / §2 详细对照 / 五元组对比 / 约束回扣 / 灵魂问题闭环)
 
 ### Comparison 阶段
 - (无)
