@@ -10,38 +10,23 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
   :root {
-    --bg: #0a0c10;
-    --bg-card: #12151b;
-    --bg-elev: #1a1d24;
-    --fg: #d8dee9;
-    --fg-dim: #888c95;
-    --fg-faint: #5a606b;
-    --accent-blue: #88c0ff;
-    --accent-blue-bg: #1e3a5f;
-    --accent-green: #88ff88;
-    --accent-green-bg: #1e5f3a;
-    --accent-red: #ff8888;
-    --accent-red-bg: #5f1e1e;
-    --accent-orange: #ffaa55;
-    --accent-orange-bg: #5f3a1e;
-    --accent-purple: #c088ff;
-    --accent-purple-bg: #3a1e5f;
-    --border: #2a2e36;
-    --code-bg: #161a21;
-    --code-inline-bg: #1f242c;
-    --link: #88c0ff;
-    --link-hover: #aaccff;
+    --bg: #0a0c10; --bg-card: #12151b; --bg-elev: #1a1d24;
+    --fg: #d8dee9; --fg-dim: #888c95; --fg-faint: #5a606b;
+    --accent-blue: #88c0ff; --accent-blue-bg: #1e3a5f;
+    --accent-green: #88ff88; --accent-green-bg: #1e5f3a;
+    --accent-red: #ff8888; --accent-red-bg: #5f1e1e;
+    --accent-orange: #ffaa55; --accent-orange-bg: #5f3a1e;
+    --accent-purple: #c088ff; --accent-purple-bg: #3a1e5f;
+    --border: #2a2e36; --code-bg: #161a21; --code-inline-bg: #1f242c;
+    --link: #88c0ff; --link-hover: #aaccff;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
   body {
-    background: var(--bg);
-    color: var(--fg);
+    background: var(--bg); color: var(--fg);
     font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, sans-serif;
-    line-height: 1.7;
-    font-size: 15px;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.7; font-size: 15px;
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
   }
   code, pre, .mono { font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace; }
 
@@ -98,8 +83,7 @@
   pre {
     background: var(--code-bg); border: 1px solid var(--border);
     border-radius: 6px; padding: 16px 20px;
-    overflow-x: auto; margin: 16px 0;
-    font-size: 13px; line-height: 1.55;
+    overflow-x: auto; margin: 16px 0; font-size: 13px; line-height: 1.55;
   }
   pre code { background: none; border: none; padding: 0; color: var(--fg); font-size: 13px; }
 
@@ -158,19 +142,8 @@
 <div class="layout">
   <aside class="sidebar">
     <h2>atlas 7 阶段</h2>
-    <nav>
-      <a href="#架构整洁之道-atlas-综合长文">📚 总览</a>
-      <a href="#导读地图">  导读地图</a>
-      <a href="#约束清单速查c0c5">  约束速查 C0~C5</a>
-      <a href="#阶段-1什么是整洁架构" class="stage-marker s1">①  What</a>
-      <a href="#阶段-2为什么需要整洁架构" class="stage-marker s2">②  Why</a>
-      <a href="#阶段-3整洁架构-大致怎么工作" class="stage-marker s3">③  How</a>
-      <a href="#阶段-4架构整洁之道是怎么来的" class="stage-marker s4">④  Origin</a>
-      <a href="#阶段-5订单系统的实操重构----从-α-屎山到-γ-真做对" class="stage-marker s5">⑤  Deep</a>
-      <a href="#阶段-6bob-4-层-clean-arch-与-ddd-的对照" class="stage-marker s6">⑥  Comparison</a>
-      <a href="#阶段-7架构整洁之道的设计哲学与方法论沉淀" class="stage-marker s7">⑦  Synthesis</a>
-      <a href="#延伸阅读">  延伸阅读</a>
-      <a href="#qa-钩子开放问题">  Q&A 钩子</a>
+    <nav id="sidebar-nav">
+      <div class="loading">渲染中...</div>
     </nav>
   </aside>
 
@@ -3959,26 +3932,72 @@ AI 时代:能力分布扁平化
 </script>
 
 <script>
-  const renderer = new marked.Renderer();
-  renderer.heading = function(text, level) {
-    // marked 4.x might pass an object; coerce
-    const t = (typeof text === 'object' && text.text) ? text.text : String(text);
-    const slug = t.toLowerCase()
-      .replace(/[^\w一-龥]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-    return '<h' + level + ' id="' + slug + '">' + t + '</h' + level + '>';
-  };
-
-  marked.setOptions({ breaks: false, gfm: true, headerIds: true, mangle: false });
-  marked.use({ renderer });
+  // 1. 渲染 markdown
+  marked.setOptions({ breaks: false, gfm: true });
 
   try {
     const md = document.getElementById('md-content').textContent;
-    document.getElementById('article-content').innerHTML = marked.parse(md);
+    const article = document.getElementById('article-content');
+    article.innerHTML = marked.parse(md);
+
+    // 2. 给所有 heading 手动分配 id(marked 9+ 不再自动生成)
+    function slugify(text) {
+      return text.toLowerCase()
+        .replace(/[^\w一-鿿]+/g, '-')   // 保留 ASCII word + CJK 字符
+        .replace(/^-+|-+$/g, '');
+    }
+    const usedIds = new Set();
+    article.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(h => {
+      const base = slugify(h.textContent);
+      let id = base, counter = 1;
+      while (usedIds.has(id)) { id = base + '-' + (counter++); }
+      usedIds.add(id);
+      h.id = id;
+    });
+
+    // 3. 动态构建 sidebar(根据实际 heading id)
+    const sidebarNav = document.getElementById('sidebar-nav');
+    sidebarNav.innerHTML = '';
+
+    function addLink(targetEl, text, cls) {
+      const a = document.createElement('a');
+      a.href = '#' + targetEl.id;
+      a.textContent = text;
+      if (cls) a.className = cls;
+      sidebarNav.appendChild(a);
+    }
+
+    const h1s = Array.from(article.querySelectorAll('h1'));
+    const h2s = Array.from(article.querySelectorAll('h2'));
+
+    // 文档总标题(第 1 个 h1)
+    if (h1s.length > 0) addLink(h1s[0], '📚 总览');
+
+    // 顶部 h2:导读地图 + 约束速查
+    h2s.forEach(h2 => {
+      const t = h2.textContent.trim();
+      if (t === '导读地图') addLink(h2, '  导读地图');
+      else if (t.indexOf('约束清单速查') === 0) addLink(h2, '  约束速查 C0~C5');
+    });
+
+    // 7 个 stage(h1[1..7])
+    const stageColors = ['s1','s2','s3','s4','s5','s6','s7'];
+    const stageEmojis = ['①','②','③','④','⑤','⑥','⑦'];
+    const stageNames = ['What','Why','How','Origin','Deep','Comparison','Synthesis'];
+    for (let i = 1; i < h1s.length && i <= 7; i++) {
+      addLink(h1s[i], stageEmojis[i-1] + '  ' + stageNames[i-1], 'stage-marker ' + stageColors[i-1]);
+    }
+
+    // 末尾 h2:延伸阅读 + Q&A
+    h2s.forEach(h2 => {
+      const t = h2.textContent.trim();
+      if (t === '延伸阅读') addLink(h2, '  延伸阅读');
+      else if (t.indexOf('Q&A') === 0 || t.indexOf('Q & A') === 0) addLink(h2, '  Q&A 钩子');
+    });
   } catch (err) {
     document.getElementById('article-content').innerHTML =
       '<div class="hint-banner" style="color:var(--accent-red);background:var(--accent-red-bg);border-color:var(--accent-red);">' +
-      '⚠ 渲染异常:' + err.message + '<br>请确认 marked.js CDN 可访问;离线请下载 marked.min.js 替换 script src。' +
+      '⚠ 渲染异常:' + err.message + '<br>请确认 marked.js CDN 可访问。' +
       '</div>';
   }
 </script>
