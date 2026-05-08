@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>《架构整洁之道》| atlas 综合长文</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --bg-card: #12151b;
+    --bg-elev: #1a1d24;
+    --fg: #d8dee9;
+    --fg-dim: #888c95;
+    --fg-faint: #5a606b;
+    --accent-blue: #88c0ff;
+    --accent-blue-bg: #1e3a5f;
+    --accent-green: #88ff88;
+    --accent-green-bg: #1e5f3a;
+    --accent-red: #ff8888;
+    --accent-red-bg: #5f1e1e;
+    --accent-orange: #ffaa55;
+    --accent-orange-bg: #5f3a1e;
+    --accent-purple: #c088ff;
+    --accent-purple-bg: #3a1e5f;
+    --border: #2a2e36;
+    --code-bg: #161a21;
+    --code-inline-bg: #1f242c;
+    --link: #88c0ff;
+    --link-hover: #aaccff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, sans-serif;
+    line-height: 1.7;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  code, pre, .mono { font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace; }
+
+  /* Layout */
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 100vh;
+  }
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+  }
+  .sidebar h2 {
+    color: var(--accent-orange);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar nav { font-size: 13px; }
+  .sidebar nav a {
+    display: block;
+    color: var(--fg-dim);
+    text-decoration: none;
+    padding: 6px 10px;
+    margin-bottom: 2px;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    border-radius: 0 3px 3px 0;
+  }
+  .sidebar nav a:hover {
+    background: var(--bg-elev);
+    color: var(--fg);
+    border-left-color: var(--accent-blue);
+  }
+  .sidebar nav a.stage-marker { font-weight: 700; color: var(--fg); margin-top: 12px; }
+  .sidebar nav a.s1 { border-left-color: #4080c0; }
+  .sidebar nav a.s2 { border-left-color: #c04040; }
+  .sidebar nav a.s3 { border-left-color: #c08040; }
+  .sidebar nav a.s4 { border-left-color: #8040c0; }
+  .sidebar nav a.s5 { border-left-color: #40c060; }
+  .sidebar nav a.s6 { border-left-color: #c0a040; }
+  .sidebar nav a.s7 { border-left-color: #40c0c0; }
+
+  .content {
+    padding: 32px 56px;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* Typography */
+  h1 { font-size: 28px; font-weight: 700; color: var(--fg); margin: 32px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-orange); }
+  h2 { font-size: 22px; font-weight: 700; color: var(--accent-orange); margin: 36px 0 14px; padding-left: 12px; border-left: 4px solid var(--accent-orange); }
+  h3 { font-size: 18px; font-weight: 700; color: var(--accent-blue); margin: 24px 0 10px; }
+  h4 { font-size: 16px; font-weight: 700; color: var(--accent-green); margin: 18px 0 8px; }
+  h5 { font-size: 14px; font-weight: 700; color: var(--accent-purple); margin: 14px 0 6px; }
+
+  p { margin: 12px 0; }
+  strong { color: var(--accent-orange); font-weight: 600; }
+  em { color: var(--accent-green); font-style: italic; }
+
+  /* Links */
+  a { color: var(--link); text-decoration: none; border-bottom: 1px dotted var(--link); }
+  a:hover { color: var(--link-hover); border-bottom-style: solid; }
+
+  /* Lists */
+  ul, ol { margin: 12px 0 12px 24px; }
+  li { margin: 6px 0; }
+
+  /* Code */
+  code {
+    background: var(--code-inline-bg);
+    color: var(--accent-blue);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 13px;
+    border: 1px solid var(--border);
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    margin: 16px 0;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--fg);
+    font-size: 13px;
+  }
+
+  /* Tables */
+  table {
+    border-collapse: collapse;
+    margin: 16px 0;
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 14px;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--bg-elev);
+    color: var(--accent-orange);
+    font-weight: 700;
+    font-size: 13px;
+  }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
+
+  /* Blockquote */
+  blockquote {
+    border-left: 4px solid var(--accent-purple);
+    background: var(--bg-card);
+    padding: 12px 20px;
+    margin: 16px 0;
+    color: var(--fg-dim);
+    border-radius: 0 6px 6px 0;
+  }
+  blockquote strong { color: var(--accent-purple); }
+  blockquote p { margin: 6px 0; }
+
+  /* HR */
+  hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border) 20%, var(--border) 80%, transparent);
+    margin: 32px 0;
+  }
+
+  /* SVG / images */
+  img {
+    max-width: 100%;
+    height: auto;
+    margin: 16px 0;
+    border-radius: 6px;
+    background: var(--bg);
+    display: block;
+  }
+
+  /* Stage markers */
+  .stage-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 6px solid var(--accent-blue);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 24px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  /* Loading spinner */
+  .loading {
+    text-align: center;
+    color: var(--fg-faint);
+    padding: 64px;
+    font-size: 14px;
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .layout { grid-template-columns: 240px 1fr; }
+    .content { padding: 24px 32px; }
+  }
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; max-height: 320px; }
+    .content { padding: 16px 20px; }
+    h1 { font-size: 22px; }
+    h2 { font-size: 18px; }
+  }
+
+  /* Anchor offset for sticky-like behavior */
+  h1, h2, h3, h4 { scroll-margin-top: 24px; }
+
+  /* Hint banner */
+  .hint-banner {
+    background: var(--accent-orange-bg);
+    border: 1px solid var(--accent-orange);
+    color: var(--accent-orange);
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <h2>atlas 7 阶段</h2>
+    <nav>
+      <a href="#架构整洁之道-atlas-综合长文">📚 总览</a>
+      <a href="#导读地图">  导读地图</a>
+      <a href="#约束清单速查c0c5">  约束速查 C0~C5</a>
+      <a href="#阶段-1什么是整洁架构" class="stage-marker s1">①  What</a>
+      <a href="#阶段-2为什么需要整洁架构" class="stage-marker s2">②  Why</a>
+      <a href="#阶段-3整洁架构-大致怎么工作" class="stage-marker s3">③  How</a>
+      <a href="#阶段-4架构整洁之道是怎么来的" class="stage-marker s4">④  Origin</a>
+      <a href="#阶段-5订单系统的实操重构----从-α-屎山到-γ-真做对" class="stage-marker s5">⑤  Deep</a>
+      <a href="#阶段-6bob-4-层-clean-arch-与-ddd-的对照" class="stage-marker s6">⑥  Comparison</a>
+      <a href="#阶段-7架构整洁之道的设计哲学与方法论沉淀" class="stage-marker s7">⑦  Synthesis</a>
+      <a href="#延伸阅读">  延伸阅读</a>
+      <a href="#qa-钩子开放问题">  Q&A 钩子</a>
+    </nav>
+  </aside>
+
+  <main class="content">
+    <div class="hint-banner">📖 这是 atlas 套件的产物 —— 7 阶段第一性原理拆解《架构整洁之道》。深读 ~2.5 小时,跳读 ~40 分钟。SVG 图右键可保存。</div>
+    <article id="article-content">
+      <div class="loading">正在渲染综合长文...</div>
+    </article>
+  </main>
+</div>
+
+<script>
+  // 路径相对 HTML 文件;markdown 文件跟 HTML 同级
+  const MD_URL = './架构整洁之道-atlas.md';
+
+  marked.setOptions({
+    breaks: false,
+    gfm: true,
+    headerIds: true,
+    mangle: false,
+  });
+
+  // Custom renderer: identify stage cards
+  const renderer = new marked.Renderer();
+  const originalHeading = renderer.heading.bind(renderer);
+  renderer.heading = function(text, level, raw) {
+    const slug = String(text).toLowerCase()
+      .replace(/[^\w一-龥]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    return `<h${level} id="${slug}">${text}</h${level}>`;
+  };
+  marked.use({ renderer });
+
+  fetch(MD_URL)
+    .then(r => {
+      if (!r.ok) throw new Error('MD 文件加载失败:HTTP ' + r.status);
+      return r.text();
+    })
+    .then(md => {
+      document.getElementById('article-content').innerHTML = marked.parse(md);
+    })
+    .catch(err => {
+      document.getElementById('article-content').innerHTML =
+        '<div class="hint-banner" style="color:var(--accent-red);background:var(--accent-red-bg);border-color:var(--accent-red);">' +
+        '⚠ 渲染失败:' + err.message + '<br><br>' +
+        '可能原因:本地用 file:// 协议打开,浏览器禁止 fetch 本地文件。<br>' +
+        '解决方法:在 atlas-output/&lt;短名&gt;-&lt;日期&gt;/ 目录下启动一个简单 HTTP server,例如:' +
+        '<pre style="margin-top:8px;">python3 -m http.server 8080</pre>' +
+        '然后浏览器访问 http://localhost:8080/架构整洁之道-atlas.html' +
+        '</div>';
+    });
+</script>
+</body>
+</html>
