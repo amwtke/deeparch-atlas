@@ -1,0 +1,265 @@
+# 第 3 集 How 阶段 — 同心圆 4 层 + 依赖规则 + DIP 反转
+
+## 1 How 阶段开场过场
+
+[visual: spotlight]
+现在我们来拆解 How 阶段
+《架构整洁之道》内部到底怎么工作？
+
+[narration]
+现在进入第 3 集——How 阶段。Why 阶段建立了 5 条约束，但约束本身没告诉你代码该长什么样。这一集我们把 5 条约束精确化成 3 个具体可落地的结构——同心圆四层、依赖规则、DIP 反转。落到 Java 包，落到信创对照，落到一段最小可运行 demo。准备好把"理论"变成"代码"。开始。
+
+---
+
+## 2 三件事记住 — 同心圆 + 依赖规则 + DIP
+
+[visual: layers title=Why 走到 How 的 3 件事]
+1 同心圆四层结构 — Entity / Use Case / Adapter / Framework
+2 依赖规则 — 任何 import 只能指向更内的层
+3 边界 + DIP 反转 — 内层定义接口 外层实现接口
+解决约束 — C3 + C5 / C2 + C5 / C1 + C2
+
+[narration]
+从 Why 走到 How，要记住 3 件事。第一同心圆四层结构——把代码分到 4 个圈，内圈最稳外圈最易变。第二依赖规则——任何 import 引用只能指向更内的层。第三边界加 DIP 反转——内层定义接口，外层实现接口。三件事的关系是——同心圆是容器代码摆在哪一格；依赖规则是铁律格之间怎么连；DIP 是穿越规则的合法通道——没有它内层就被外层卡住没法工作。
+
+---
+
+## 3 一张概览图 — 同心圆 + Java 包映射 双视图
+
+[visual: html_slide title=Clean Architecture 4 层 Java 包映射 image=pics/03-overview.png]
+
+[narration]
+这张图是 How 阶段最浓缩的一张。左半是抽象的同心圆——告诉你 4 层各装什么。右半是物理的 Java 包树——告诉你代码该放哪个包。颜色代表层级——蓝色 Entity、绿色 Use Case、橙色 Adapter、紫色 Framework。注意右图最关键的一处——WorkOrderRepository 接口在 .usecase 内层定义，OracleWorkOrderRepository 实现在 .adapter.persistence 外层。这就是 DIP 反转的物理位置。信创时换 Oracle 为达梦，只在 .adapter.persistence 这个橙色框里加一个新实现，内层零修改。
+
+---
+
+## 4 依赖到底是什么意思 — 物理本质
+
+[visual: spotlight]
+依赖等于 import
+等于编译顺序
+等于谁能没有谁活下来
+
+[narration]
+谈"依赖"之前要把这个词钉死。最朴素也最准确的定义——A 依赖 B 等于 A 的 java 文件里有 import B 语句；B 不存在 A 编译不过。这是物理事实，不是抽象比喻。所以"依赖向内而生"——外层依赖内层，内层绝不依赖外层——不是设计美学偏好，而是编译顺序的物理约束。Entity 不 import 任何外层第 1 个能编译；Use Case 只 import Entity 第 2 个能编译；Adapter 第 3 个；Framework 最后。这是个 DAG 拓扑序。
+
+---
+
+## 5 你的项目算不算干净 — 两个物理实验
+
+[visual: spotlight]
+实验 1 移除 spring-boot 等所有框架 jar
+让 .entity 和 .usecase 模块编译
+能过 = 干净 / 不能过 = 不干净
+实验 2 把 .entity + .usecase 单独打 jar
+能跨项目复用 = 干净
+
+[narration]
+怎么判断你的项目算不算真 Clean Arch？两个物理实验。实验一——把 spring-boot、mysql-connector、kafka-clients 等框架 jar 从 .entity 和 .usecase 模块的 classpath 移除，然后 mvn compile 看能不能编译过。能过等于干净，不能过等于已被框架污染。实验二——把 .entity 和 .usecase 这两个包单独打成一个 workorder-core.jar，发布到 Maven 仓库。这个 jar 应该只依赖 JDK 标准库，体积通常小于 100KB。其他项目想接入这套业务核心，直接 dependency 引入就行。这就是 REP 原则在整洁架构里的物理实现——业务核心等于一个可独立发布的单元。
+
+---
+
+## 6 同心圆 4 层各装什么 + 不装什么
+
+[visual: diff title=Entity 和 Use Case 层的纪律]
++ Entity 装什么
++ 企业业务规则 — WorkOrder 状态机 已关闭单不能再扭转
++ 只依赖 JDK 标准库
+- Entity 不装什么
+- @Entity @Column @JsonProperty @Service 等任何注解
+- 任何 ORM 序列化 Spring 的依赖
++ Use Case 装什么
++ 单个用例的工作流编排 — TransitionWorkOrderUseCase
++ 自己定义输出边界接口（如 WorkOrderRepository）
+- Use Case 不装什么
+- Entity 自身的不变性（那是 Entity 的事）
+- HTTP/DB/MQ 的具体翻译（那是 Adapter 的事）
+
+[narration]
+Entity 层最内最稳定，装企业业务规则——比如 WorkOrder 的状态机：已关闭单不能再扭转。Entity 不装任何 ORM 注解、任何序列化注解、任何 Spring 注解——它只依赖 JDK 标准库。Use Case 层稍外，装单个用例的工作流编排——一个 Use Case 类负责一个用例。Use Case 不装 Entity 自身的不变性那是 Entity 的事，也不装 HTTP 数据库的具体翻译那是 Adapter 的事。Entity 加 Use Case 一起构成业务内核，可独立编译独立发布 jar。这是整洁架构最值钱的工程价值。
+
+---
+
+## 7 Adapter 层 + Framework 层
+
+[visual: diff title=Adapter 和 Framework 的边界]
++ Adapter 装什么
++ 入站 Driver — WorkOrderController（HTTP 转命令）
++ 出站 Driven — OracleWorkOrderRepository（Entity 转 SQL）
++ 依赖 Use Case + Entity + 框架的标准接口
+- Adapter 不装业务规则 — 都该往内层挪
++ Framework 装什么
++ Spring Boot 启动器 / application.yml
++ @Configuration + @Bean 装配代码
++ UseCaseConfig — 把 Use Case 纯 Java 类装配进 Spring 容器
+- Framework 不装任何业务代码 — 这一层是组装厂
+
+[narration]
+Adapter 层是翻译层，分两类——入站 Driver 比如 WorkOrderController 把 HTTP 转成命令，MQ Consumer 把消息转成命令；出站 Driven 比如 OracleWorkOrderRepository 把 Entity 转成 SQL，外部 HTTP 客户端把命令转成第三方 API。Adapter 不装业务规则——所有业务规则都该往内层挪。Framework 层是最外的"组装厂"——只装 Spring Boot 启动器、application.yml、@Configuration 装配代码。最关键是 UseCaseConfig 这个类——在最外层把 .usecase 的纯 Java 类装配进 Spring 容器。Framework 不装任何业务代码。
+
+---
+
+## 8 信创对照 — Oracle 换达梦 + Spring Boot 换东方通
+
+[visual: diff title=两类信创迁移改动的层完全不同]
++ Oracle 换达梦 — 只动 Adapter 层
++ .adapter.persistence/
++   OracleWorkOrderRepository.java — 旧实现保留可灰度
++   DmWorkOrderRepository.java — 新加实现同一接口
++ 内层（.entity + .usecase） — 0 处改动
++ 改 application.yml 一行 DataSource
+- Spring Boot 换东方通 — 只动 Framework 层
+- Framework 层 — 重写启动器和装配代码
+- Adapter 层 — 0 改动（@RestController 是 Servlet 标准接口）
+- Use Case + Entity — 0 改动（本来就不依赖框架）
+
+[narration]
+信创带来两类迁移——Oracle 换达梦，Spring Boot 换东方通。这两类迁移改动的层完全不同。换数据库只动 Adapter 层——加一个 DmWorkOrderRepository 实现同一个接口，内层零修改，改 application.yml 一行 DataSource。换框架容器只动 Framework 层——重写启动器和 @Configuration 装配代码，Adapter 层零改动因为 @RestController 是 Servlet 标准接口东方通也支持，Use Case 和 Entity 零改动因为本来就不依赖框架。这是 4 层分离的工程价值最尖锐的体现——你能精确预测哪些代码要改、哪些代码不动。
+
+---
+
+## 9 一段最小可运行 demo — Entity 层的状态机
+
+[visual: code lang=java title=WorkOrder Entity — 0 框架依赖]
+package com.workorder.entity;
+
+public class WorkOrder {                    // [ARCH] 普通 POJO 无任何注解
+    private Long id;
+    private WorkOrderStatus status;
+    private Long assigneeId;
+    private Instant dispatchedAt;
+
+    public void transitionTo(WorkOrderStatus target) {
+        if (this.status == WorkOrderStatus.CLOSED) {
+            // [ARCH] 业务不变性自封 — 已关闭工单不能再扭转
+            throw new IllegalStateException("已关闭工单不能再扭转");
+        }
+        if (!isLegalTransition(this.status, target)) {
+            throw new IllegalStateException("非法扭转");
+        }
+        this.status = target;
+    }
+}
+
+[narration]
+看一段最小可运行 demo。这是 Entity 层的 WorkOrder。注意头部的 import——只有 java.time.Instant，没有任何 Spring，没有任何 JPA，没有任何 Lombok。class 上没有任何注解。这就是 Entity 该长的样子。transitionTo 方法把"已关闭工单不能再扭转"这条核心业务规则封装在类内——任何调用方都不能绕过它。这条规则不依赖任何技术——Java、Kotlin、Python 都能表达。这就是企业业务规则的本质——跨多个用例稳定、跨应用复用、生命周期最长。
+
+---
+
+## 10 Use Case 层 — 业务定义接口
+
+[visual: code lang=java title=Use Case 层 — 接口和 Use Case 类]
+// .usecase/WorkOrderRepository.java — 输出边界（接口在内层）
+package com.workorder.usecase;
+import com.workorder.entity.WorkOrder;
+
+public interface WorkOrderRepository {       // [ARCH] 业务定义接口
+    WorkOrder findById(Long id);
+    void save(WorkOrder w);
+}
+
+// .usecase/TransitionWorkOrderUseCase.java — 纯 Java 零 Spring
+public class TransitionWorkOrderUseCase {
+    private final WorkOrderRepository repo;
+    private final NotificationGateway notifier;
+    // [ARCH] Constructor injection — 不用 @Autowired
+    public TransitionWorkOrderUseCase(
+            WorkOrderRepository repo, NotificationGateway notifier) {
+        this.repo = repo;
+        this.notifier = notifier;
+    }
+    public void execute(Long id, WorkOrderStatus target) {
+        WorkOrder w = repo.findById(id);
+        w.transitionTo(target);   // [ARCH] 进 Entity 不变性由 Entity 守
+        repo.save(w);
+        notifier.notifyTransition(w);
+    }
+}
+
+[narration]
+Use Case 层的关键有两个——业务定义接口和纯 Java Use Case 类。WorkOrderRepository 接口由业务定义，放在 .usecase 包里，只 import com.workorder.entity 和 java.util。注意它没 extends 任何框架接口。TransitionWorkOrderUseCase 是协调编排——通过 Repository 接口取 Entity，调 Entity 的业务方法把不变性的校验交给 Entity 自己做，通过 Repository 接口落库，通过 Notifier 接口发通知。注意构造函数——不用 @Autowired，用 Constructor injection。整个类零 Spring 依赖。这就是教科书派 Use Case 的样子。
+
+---
+
+## 11 Adapter 层和 Framework 层 — 装配点
+
+[visual: code lang=java title=Adapter 实现 + Framework 装配]
+// .adapter.persistence/OracleWorkOrderRepository.java
+@Repository                                  // [ARCH] Spring 在 Adapter 层 OK
+public class OracleWorkOrderRepository
+        implements WorkOrderRepository {     // [ARCH] 实现内层定义的接口
+    @Autowired private JdbcTemplate jdbc;
+    public WorkOrder findById(Long id) {
+        WorkOrderPo po = jdbc.queryForObject(
+            "SELECT * FROM WORK_ORDER WHERE ID = ?", new WorkOrderPoMapper(), id);
+        return po.toEntity();
+    }
+}
+
+// .framework/UseCaseConfig.java — 在最外层装配 .usecase 的纯 Java 类
+@Configuration                               // [ARCH] Spring 在最外层 OK
+public class UseCaseConfig {
+    @Bean
+    public TransitionWorkOrderUseCase transitionWorkOrderUseCase(
+            WorkOrderRepository repo, NotificationGateway notifier) {
+        return new TransitionWorkOrderUseCase(repo, notifier);
+    }
+}
+
+[narration]
+最后看 Adapter 和 Framework 层。OracleWorkOrderRepository 实现内层定义的 WorkOrderRepository 接口，把 Entity 翻译成 SQL。注意——Spring 注解在这一层是 OK 的——@Repository、@Autowired 都可以用，因为这就是它的职责。换达梦时只需要加一个 DmWorkOrderRepository 实现同一个接口。Framework 层的 UseCaseConfig 是关键——它在最外层用 @Bean 把 .usecase 的纯 Java 类装配进 Spring 容器。这是教科书派和务实派的分水岭——务实派直接给 Use Case 加 @Service 是省事，但破坏 Use Case 纯净。
+
+---
+
+## 12 真 DIP vs 假 DIP — 业内 80% 项目的死穴
+
+[visual: diff title=真 DIP 和假 DIP 的关键差别]
++ ✓ 真 DIP — 接口由业务定义放在业务 jar 里
++ public interface WorkOrderRepository {  // 业务模块自定义
++     Optional<WorkOrder> findById(Long id);
++     void save(WorkOrder wo);
++ }
++ MyBatis 在 Adapter 层 implements 这个接口
++ 换 framework 时业务一行不动
+- ✗ 假 DIP — 接口由 Spring 定义业务被锁死
+- public interface WorkOrderRepository
+-     extends JpaRepository<WorkOrder, Long> {  // ← 业务依赖框架
+- }
+- 换框架时接口本身要换 — 业务代码全要改
+
+[narration]
+这一节是 How 阶段最容易被偷换的概念——真 DIP 和假 DIP。Bob 大叔最深的遗憾就在这里。真 DIP 长这样——业务模块自己定义 WorkOrderRepository 接口，只依赖 JDK，MyBatis 在 framework jar 里 implements 这个接口。换 framework 时业务一行不动。假 DIP 长这样——业务接口直接 extends Spring 的 JpaRepository。这是业内 80% 项目的写法。它看上去用了接口反转，但接口本身是 Spring 定义的——换框架时接口签名也要换，业务代码全要改。判别尺子很简单——看 WorkOrderRepository 接口在哪个 Maven 模块。在业务模块就是真 DIP，在 Spring 模块就是假 DIP。
+
+---
+
+## 13 三个常见误解 — 边界塌缩的常见路径
+
+[visual: diff title=三个常见误解一次戳破]
++ 误解 1 — Use Case 不就是 Service 改了个名？
+- 戳破 — Spring 的 Service 不区分应用业务规则和协调编排
+- 经常一个 Service 既校验业务又拼数据 — 慢慢变成超级类
++ 误解 2 — Entity 就是 JPA 的 @Entity？
+- 戳破 — JPA @Entity 是 ORM 标记 业务上的 Entity 是企业业务规则的载体
+- 整洁架构里 Entity 不能 import javax.persistence
++ 误解 3 — Adapter 等于 MVC Controller？
+- 戳破 — Adapter 是更广义的"翻译器" 不是 Controller 一种
+- 出站 Adapter 才是 DIP 反转的主战场
+
+[narration]
+最后讲三个常见误解。误解 1 ——Use Case 不就是 Service 改了个名？戳破——Spring 的 Service 不区分"应用业务规则"和"协调编排"，经常一个 Service 既校验业务又拼数据，慢慢变成超级类。Use Case 严格只做协调，业务不变性留给 Entity。误解 2 ——Entity 就是 JPA 的 @Entity？戳破——JPA @Entity 是 ORM 标记，业务上的 Entity 是企业业务规则的载体，两者维度完全正交。整洁架构里 Domain Entity 不能 import javax.persistence。误解 3 ——Adapter 等于 MVC Controller？戳破——Adapter 是更广义的"翻译器"概念，不只是 Controller。出站 Adapter 比如 Repository 实现才是 DIP 反转的主战场。
+
+---
+
+## 14 How 阶段总结 + 下一集预告
+
+[visual: recap title=How 阶段你应该带走的 5 件事]
+3 个核心结构 — 同心圆 / 依赖规则 / DIP 反转
+2 个物理自检实验 — classpath 移除 + 独立 jar 发布
+1 段最小 demo — Entity Use Case Adapter Framework
+1 张信创对照表 — 换 DB 动 Adapter / 换框架动 Framework
+1 把 DIP 判别尺子 — 看接口在哪个 Maven 模块
+
+[narration]
+How 阶段就到这里。你应该带走 5 件事——3 个核心结构、2 个物理自检实验、1 段最小 demo、1 张信创对照表、1 把 DIP 判别尺子。但你可能还在好奇——这套结构是 Bob 大叔凭空发明的吗？他凭什么 2017 年还能把这套总结成经典？下一集我们切换到讲故事的人模式——时间倒回 1972 年，看 Parnas、Meyer、Jacobson、Cockburn、Palermo、Coplien-Reenskaug 这条 50 年接力棒。戏剧高潮在 2012 年 8 月 13 日那篇博客。本集就到这里，下集见。
+
+---

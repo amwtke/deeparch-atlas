@@ -1,0 +1,256 @@
+# 第 4 集 Origin 阶段 — 50 年接力棒和 2012 那一刻的顿悟
+
+## 1 Origin 阶段开场过场
+
+[visual: spotlight]
+现在我们回到 Origin 阶段
+这一切是从哪儿来的？
+
+[narration]
+现在进入第 4 集——Origin 阶段。前面三集我们看清了 Clean Architecture 是什么、为什么、怎么工作。但还有一个关键问题没回答——这套结构是 Bob 大叔凭空发明的吗？他凭什么 2017 年还能把这套总结成经典？这一集我们切换到讲故事的人模式——时间倒回 1972 年，看一条横跨 50 年的接力棒。戏剧高潮在 2012 年 8 月 13 日那篇博客。开始。
+
+---
+
+## 2 三件事记住 — 撞墙 / 顿悟 / 反思
+
+[visual: layers title=Bob 大叔思想史的三个时刻]
+1995 撞墙时刻 — Booch method 被 UML 替代 → 转向"原则优先"
+2012 顿悟时刻 — 4 套架构合一 提炼"依赖规则"
+2018 反思时刻 — 工业界把"原则"误读成"模板"
+
+[narration]
+Origin 阶段记住三个时刻。1995 撞墙——Bob 大叔写的那本基于 Booch 方法论的书，3 年后被 UML 替代直接被时代淘汰。这件事让他领悟到——方法论会过时但原则更稳定。2012 顿悟——8 月 13 日那篇博客，把 4 套已存在的架构合成同心圆，提出"依赖规则"。2018 反思——工业界把同心圆当成 4 个文件夹的模板，DIP 被 Spring 滥用变成假反转。这三个时刻是这本书诞生的全部弧线。
+
+---
+
+## 3 一张时间线 — 1968 到 2026 横跨 58 年
+
+[visual: html_slide title=58 年时间线 — 思想源头 + 4 套架构前身 + Bob 大叔主线 image=pics/04-timeline.png]
+
+[narration]
+这张时间线是 Origin 阶段最浓缩的一张图。从图上你能直接读出 5 件事。第一，顶部橙色是思想源头——Parnas 1972 提出信息隐藏，Meyer 1986 命名 OCP。Bob 大叔的核心原则不是他原创，是从前辈接的接力棒。第二，底部紫色是 4 套架构前身——Jacobson 1992 BCE、Cockburn 2005 Hexagonal、Palermo 2008 Onion、Coplien-Reenskaug 2009 DCI——全部用虚线箭头汇向 2012，代表"4 合 1"的合成动作。第三，中间蓝色是 Bob 大叔的正向工作。第四，绿色大星标就是 2012 那一刻。第五，红色是死胡同——1995 那本被 UML 替代的书。
+
+---
+
+## 4 1995 撞墙 — 一本被时代淘汰的书
+
+[visual: timeline title=1995 - 1997 那本书的命运]
+T=1995 — Bob 大叔出版基于 Booch method 的 C++ 设计书
+T=1996 — Booch + Rumbaugh + Jacobson 合作开发 UML
+T=1997 — UML 1.0 发布 Booch method 被 UML 替代
+T=1997 - 1998 — Bob 大叔的书核心方法论部分直接过时
+T=1998 之后 — Bob 转向"原则优先" → SOLID 5 原则成型
+
+[narration]
+故事从 1995 年开始。Bob 大叔 1995 年出版了《Designing Object-Oriented C++ Applications using the Booch Method》——一本完全建立在 Grady Booch 方法论之上的书。Booch method 在 1990 年代早期是 OO 设计的主流之一，跟 Rumbaugh 的 OMT、Jacobson 的 OOSE 三足鼎立。结果两年后——1996 到 1997 年，UML 1.0 发布，Booch、Rumbaugh、Jacobson 三人合作把 3 套方法论合并成 UML 标准。Booch method 作为独立方法论被替代，Bob 大叔这本 1995 年的书核心方法论部分直接过时。
+
+---
+
+## 5 撞墙带来的领悟 — 方法论是手段原则是目的
+
+[visual: spotlight]
+方法论是手段
+原则是目的
+这本被淘汰的书逼 Bob 大叔从
+"教 Booch method"
+走向"提炼跨方法论的依赖原则"
+
+[narration]
+这是 Bob 大叔的第一本独立专著，出版 2 年就遭遇被时代淘汰——这件事对他思想转向有决定性意义。他后来多次在博客和访谈里强调——方法论会过时，但其背后的原则更稳定。1995 同年他创立 Object Mentor 咨询公司，但客户的真实问题是"OO 写久了照样变屎山"——这跟用什么方法论画 UML 关系不大，跟"依赖怎么管"关系巨大。他的核心问题从"工具"转向"原则"——什么样的依赖关系下，代码不会变屎山？这是后来 SOLID 1998 到 2001 和 Clean Architecture 2012 的萌生土壤。
+
+---
+
+## 6 接力棒前辈 — 致敬 Parnas 思想源头
+
+[visual: facetime title=David Parnas]
+name: David Parnas
+role: 信息隐藏 / 模块化思想之父
+org: McMaster University / 加拿大皇家科学院院士
+photo: https://mbohlen.de/content/images/wordpress/2014/07/david_parnas.jpg
+- 1972 年发表《On the Criteria To Be Used in Decomposing Systems into Modules》
+- 提出"信息隐藏"原则 — DIP 的思想源头
+- ACM Communications 史上引用最多论文之一
+- Bob 大叔多次在演讲和博客中致敬 Parnas
+
+[narration]
+Bob 大叔的 SOLID 5 原则中最关键的两条——DIP 和 OCP——都有更早的源头。第一位致敬的人是 David Parnas。他 1972 年在 ACM Communications 发表了一篇论文——《On the Criteria To Be Used in Decomposing Systems into Modules》，提出了"信息隐藏"原则。这是 DIP 的思想源头。Bob 大叔在多次演讲和博客里致敬 Parnas——他说"我做的不是发明，是把 Parnas 在 1972 年说的话用工业界能听懂的方式重新讲一遍"。
+
+---
+
+## 7 接力棒前辈 — 致敬 Meyer 给 OCP 命名
+
+[visual: facetime title=Bertrand Meyer]
+name: Bertrand Meyer
+role: Eiffel 编程语言之父 / OCP 命名者
+org: ETH Zürich Emeritus Professor
+photo: https://inf.ethz.ch/people/faculty/emeriti/_jcr_content/par/accordion/accordionitem_1628634743/par/textimage/image.imageformat.text50percent.1789432268.png
+- 1988 年出版《Object-Oriented Software Construction》
+- 在书中首次系统化命名 OCP — 开闭原则
+- 设计 Eiffel 编程语言 — 契约式设计的先驱
+- Bob 大叔的 OCP 直接接 Meyer 的命名
+
+[narration]
+第二位致敬的人是 Bertrand Meyer。他是 Eiffel 编程语言之父，1986 年和 1988 年的著作《Object-Oriented Software Construction》里首次系统化命名了 OCP——开闭原则。Bob 大叔后来把 OCP 列进 SOLID 五条，命名直接接的就是 Meyer 的工作。Meyer 还是契约式设计的先驱——前置条件、后置条件、不变量这些 LSP 的核心概念，最早在 Eiffel 语言里就以语法级支持。Bob 大叔自己也说——"OCP 我没发明，是从 Meyer 那儿借的"。
+
+---
+
+## 8 4 套架构前身 — 致敬 Jacobson 和 BCE
+
+[visual: facetime title=Ivar Jacobson]
+name: Ivar Jacobson
+role: OOSE 之父 / UML 三巨头之一
+org: Ivar Jacobson International
+photo: https://www.ecured.cu/images/thumb/8/80/Ivarjacobson.jpeg/520px-Ivarjacobson.jpeg
+- 1992 年出版《Object-Oriented Software Engineering》
+- 提出 BCE 模式 — Boundary / Control / Entity
+- UML 三巨头之一（另两位 Booch / Rumbaugh）
+- Use Case 概念的最早系统化提出者
+- Bob 大叔的 Use Case 层概念直接来自 Jacobson
+
+[narration]
+第三位致敬的人是 Ivar Jacobson——OOSE 之父，UML 三巨头之一。他 1992 年出版《Object-Oriented Software Engineering: A Use Case Driven Approach》，提出 BCE 模式——Boundary 边界、Control 控制、Entity 实体。Entity 这个名字直接被 Bob 大叔保留进了 2012 同心圆图最内层。Use Case 层的概念也直接来自 Jacobson 的 Control 加 Entity 拆分——应用业务规则和企业业务规则的区分，几乎就是 Jacobson 1992 年 Control 和 Entity 的现代命名。
+
+---
+
+## 9 4 套架构前身 — 致敬 Cockburn 和 Hexagonal
+
+[visual: facetime title=Alistair Cockburn]
+name: Alistair Cockburn
+role: Hexagonal Architecture 创作者
+org: 敏捷宣言 17 位签署人之一
+photo: https://alistaircockburn.com/gallery_gen/41388a073231f5cb572c5a3a6bcd99d6_1454x814_fit.png?ts=1739385268
+- 2005 年提出 Hexagonal Architecture（Ports & Adapters）
+- 跟 Bob 大叔同框签 2001 年敏捷宣言
+- Use Cases 著作 — Use Case 写作的标准教材
+- Bob 大叔 2012 博客里第一个 cite 的就是 Cockburn
+
+[narration]
+第四位致敬的人是 Alistair Cockburn。他和 Bob 大叔一样，是 2001 年敏捷宣言 17 位签署人之一。他 2005 年提出了 Hexagonal Architecture——也叫 Ports and Adapters。当年的痛点用他自己的原话——"避免 OO 软件设计的已知结构缺陷，比如层间不当依赖和 UI 代码污染业务逻辑"。核心贡献是 Ports 和 Adapters 模型——业务核心是中央六边形，外围都是端口和适配器。端口是业务定义的抽象，适配器是业务的具体实现。这条 30 年后还在每本架构书里被复述。Bob 大叔 2012 博客里第一个 cite 的就是他。
+
+---
+
+## 10 4 套架构前身 — 致敬 Palermo 和 Onion
+
+[visual: facetime title=Jeffrey Palermo]
+name: Jeffrey Palermo
+role: Onion Architecture 创作者
+org: Clear Measure / Headspring 联合创始人
+photo: https://clearmeasure.com/wp-content/uploads/2025/01/Jeffrey-Palermo-Portrait-v2.jpg
+- 2008 年发表《The Onion Architecture: part 1》
+- 第一个画出"同心圆 + 依赖向心"的雏形
+- .NET 社区资深架构师
+- 几乎是 Bob 大叔 2012 依赖规则的直接前身
+
+[narration]
+第五位致敬的人是 Jeffrey Palermo——Onion Architecture 的作者。他 2008 年发表《The Onion Architecture: part 1》，提出了同心圆加依赖向心的雏形。他的原话是——"所有代码可以依赖更靠中心的层，但不能依赖更外层；一切耦合都向中心"。这一句话几乎就是 Bob 大叔 2012 依赖规则的直接前身。Palermo 已经画出了同心圆，Bob 大叔做的是把它和其他 3 套架构合并加上更响亮的命名。Bob 大叔自己也承认——这本书里没有一条想法是新的。
+
+---
+
+## 11 4 套架构前身 — 致敬 Coplien 和 Reenskaug
+
+[visual: facetime title=James Coplien]
+name: James Coplien
+role: DCI 架构联合创作者 / Pattern 社区核心
+org: Independent Consultant
+photo: https://agileexperts.at/wp-content/uploads/2023/12/12.jpg
+- 2009 年跟 Reenskaug 合作发表 DCI 论文
+- Pattern 社区核心成员 / 多模式书作者
+- 强调 Use Case 在运行时是临时角色组合
+- 给 Clean Arch 的接力棒 — Use Case 层薄 Entity 层稳
+
+[narration]
+第六位是 James Coplien——他 2009 年跟 Trygve Reenskaug 合作发表了 DCI 论文。DCI 全称是 Data Context Interaction——稳定的数据结构、用例运行的上下文、用例中对象间的交互角色。它强调 Use Case 在运行时是临时的、由角色组合而成的"剧本"，而 Data 是跨用例稳定的部分——这跟 Clean Arch 的"Use Case 层薄、Entity 层稳"完全同构。Bob 大叔把 DCI 的 Data 折叠进了 Entity 层，把 Context 加 Interaction 折叠进了 Use Case 层。
+
+---
+
+## 12 4 套架构前身 — 致敬 Reenskaug MVC 之父
+
+[visual: facetime title=Trygve Reenskaug]
+name: Trygve Reenskaug
+role: MVC 模式发明人 / DCI 架构联合创作者
+org: Oslo University Emeritus Professor
+photo: https://ucc.alicdn.com/pic/developer-ecology/e3liy6l4boc5u_bf65e65fe41342eaa3fc411b9d350b7c.png
+- 1979 年发明 MVC 模式 — 给 Smalltalk-76
+- 2009 年跟 Coplien 合作 DCI
+- 挪威奥斯陆大学终身名誉教授
+- 整个 GUI 软件分层的鼻祖
+
+[narration]
+第七位是 Trygve Reenskaug——MVC 模式的发明人，挪威人，奥斯陆大学终身名誉教授。他 1979 年在 Xerox 给 Smalltalk-76 设计了 MVC——Model View Controller，这是整个 GUI 软件分层的鼻祖。30 年后他和 Coplien 合作 DCI，给 Bob 大叔合成同心圆贡献了"Data 稳 Context 短"的思维框架。Reenskaug 的工作横跨 30 年，从 GUI 分层到对象交互角色，是软件架构思想史上最低调但最深刻的人物之一。
+
+---
+
+## 13 戏剧高潮 — 2012 年 8 月 13 日那篇博客
+
+[visual: timeline title=2012 年 8 月 13 日那一刻]
+T=2012-08-13 — Bob 大叔在 blog.cleancoder.com 发表《The Clean Architecture》
+T=博客开篇 — 列出 5 套已有架构（Hexagonal/Onion/Screaming/DCI/BCE）
+T=核心一句 — 让架构起作用的统领规则是"依赖规则"
+T=核心三句 — Source code dependencies can only point inwards
+T=戏剧高潮 — 同心圆图第一次被画出来
+T=2012 起 — "Dependency Rule"成为术语 → 5 年后成书
+T=2017 — Clean Architecture 一书出版 65 岁
+
+[narration]
+现在到 Origin 阶段最戏剧性的一刻。2012 年 8 月 13 日，Bob 大叔在他个人博客 blog.cleancoder.com 上发了一篇短文，标题就叫《The Clean Architecture》。这篇博客的开篇就在做"合并"动作——他自己列出了 5 套架构。然后他提出了一条统领规则——依赖规则——3 句英文我念一下原文："The overriding rule that makes this architecture work is The Dependency Rule. Source code dependencies can only point inwards. Nothing in an inner circle can know anything at all about something in an outer circle." 翻译过来——让这个架构起作用的统领规则是依赖规则——同心圆的依赖只能向内而生。这一刻同心圆图第一次被画出来，Dependency Rule 这个名字第一次被提出。
+
+---
+
+## 14 这一刻为什么是 Origin 的戏剧高潮
+
+[visual: spotlight]
+合成 + 命名 + 推广 — 三件事一篇博客同时完成
+这 3 件事单独看每件都不算原创
+但合在一起做并被工业界接受
+是 Clean Architecture 5 年后能成经典的根本原因
+
+[narration]
+这一刻为什么是戏剧高潮？三个理由。第一，同心圆图第一次被画出来——此前 Hexagonal 是六边形，Onion 已经有同心圆但只到 4 层，DCI 没图，BCE 是三角形。Bob 大叔 2012 第一次给出了今天我们熟悉的 4 层同心圆。第二，"依赖规则"这个名字第一次被提出——一个专属命名让概念有了传播抓手。第三，"合成加命名加推广"3 件事被一篇博客同时完成。这 3 件事单独看每件都不算原创，但合在一起做并被工业界接受，就是 Clean Architecture 这本书 5 年后能成经典的根本原因。
+
+---
+
+## 15 Bob 大叔的反思 — 工业界 9 年没好转
+
+[visual: facetime title=Robert C. Martin]
+name: Robert C. Martin
+role: Clean Architecture 作者
+org: Object Mentor / Clean Coders
+photo: https://davelaslett.com/wp-content/uploads/2020/01/unclebob.jpg
+- 2017 年 65 岁出版《Clean Architecture》
+- 2018 年发表《The Tragedy of Craftsmanship》坦承对 Agile 的失望
+- 多次反复说 "Clean Architecture is NOT a folder structure"
+- 9 年来工业界仍 80% 项目停在 α/β 状态
+- 这是他思想最深的遗憾
+
+[narration]
+2017 年 Bob 大叔 65 岁出版了《Clean Architecture》一书。但出版至今 9 年，工业界的现实远比这本书复杂。Bob 大叔自己也多次反思——核心遗憾有两个。第一个遗憾——被工业界误读为 4 层文件夹模板。Bob 大叔本人在多个演讲里反复说——Clean Architecture 不是文件夹结构，它是关于依赖的。第二个遗憾——DI Framework 滥用——业务接口大量 extends Spring 的 JpaRepository，DIP 失真成假反转。这是他在 2010 年就预警但工业界几乎完全没听的问题。
+
+---
+
+## 16 9 年没好转的根因不是技术问题 — 是人性
+
+[visual: layers title=5 条人性短板让方法论难以落地]
+趋利避害 — 当季的人不承担 5 年后的账
+短视 — 5 年后的代价生理性看不见
+想当然 — 看图就懂谁还读 3 句话原文
+没真正理解就自以为是 — "懂了" 不等于 "能做"
+不求甚解 + 变现导向 — 学了皮毛就鼓吹快速变现
+
+[narration]
+为什么 9 年了工业界还是 α 屎山或者 β 形似神离？根因不是技术问题，是人性问题。Bob 大叔的方法论假设了"理性程序员"，但人不自律。具体有 5 条人性短板。趋利避害——extends JpaRepository 比自定义接口少写 10 行少花半小时。短视——5 年后信创代价生理性看不见。想当然——看图就懂，3 句话原文被绕过。没真正理解就自以为是——懂了不等于能做。不求甚解加变现导向——皮毛高变现深究低变现，理性程序员应该选皮毛。这 5 条让 Bob 大叔的方法论在 9 年间始终是少数。这条历史性反思我们留到第 7 集 Synthesis 阶段深挖。
+
+---
+
+## 17 Origin 阶段总结 + 下一集预告
+
+[visual: recap title=Origin 阶段你应该带走的 5 件事]
+50 年接力棒 — Parnas / Meyer / Jacobson / Cockburn / Palermo / Coplien-Reenskaug
+1995 撞墙时刻 — 方法论会过时原则更稳定
+2012 顿悟时刻 — 4 套架构合一提炼"依赖规则"
+2 个核心遗憾 — 4 文件夹误读 + 假 DIP
+9 年没好转的根因 — 5 条人性短板
+
+[narration]
+Origin 阶段就到这里。你应该带走 5 件事——50 年接力棒、1995 撞墙时刻、2012 顿悟时刻、2 个核心遗憾、9 年没好转的根因。Bob 大叔的核心贡献始终是合成加简化加命名加推广，不是发明。但理论上的"理想态"和真实工程师面对的"屎山态"之间，差距具体长什么样？下一集我们切换到工程师模式——用一段 Spring Boot 加 CRUD 加 MySQL 订单系统屎山，走完三步增量重构 α 到 β 到 γ，配代码片段加工程师内心戏，把 5 条人性短板具体演绎给你看。本集就到这里，下集见。
+
+---

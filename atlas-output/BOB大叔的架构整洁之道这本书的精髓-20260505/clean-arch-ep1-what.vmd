@@ -1,0 +1,207 @@
+# 第 1 集 What 阶段 — 框架是配件，业务核心才是主角
+
+## 1 What 阶段开场过场
+
+[visual: spotlight]
+现在我们来看 What 阶段
+《架构整洁之道》到底是什么？
+
+[narration]
+现在进入第 1 集——What 阶段。这一集的本分只有一个——建立骨架认知。读完这一集，你能用一句话跟同事说清楚这本书在讲什么、长什么样、11 条原则各管什么事。我们不深入机制、不讲历史、不展开源码——那些是后面 Why、How、Origin、Deep 阶段的事。准备好了吗？开始。
+
+---
+
+## 2 一句 28 字的定义
+
+[visual: spotlight]
+业务核心独立于框架数据库 UI
+它们都是可替换的配件
+依赖方向永远从外朝内
+
+[narration]
+开门见山。整本《架构整洁之道》如果只能浓缩成一句话，就是这 28 个字——业务核心独立于框架、数据库、UI；它们都是可替换的配件；依赖方向永远从外朝内。这一句话给出了三个关键命题。一，业务核心是主角。二，框架数据库 UI 是配件，是 detail，是非主角的可替换部分。三，整本书最硬的硬规矩——依赖方向永远从外朝内。后面 11 条原则、4 层同心圆、所有讨论，都是这一句话在不同尺度上的展开。
+
+---
+
+## 3 致敬本书的作者
+
+[visual: facetime title=Robert C. Martin]
+name: Robert C. Martin
+role: Clean Architecture 作者 / SOLID 5 原则提出者
+org: Object Mentor / Clean Coders
+photo: https://davelaslett.com/wp-content/uploads/2020/01/unclebob.jpg
+- 1952 年生 / 50 多年软件从业经验
+- 2001 年敏捷宣言 17 位签署人之一
+- 2012 年 8 月 13 日博客《The Clean Architecture》合 4 套架构为同心圆
+- 2017 年 65 岁出版《Clean Architecture》一书
+- 圈内人称 Uncle Bob — 软件工艺运动核心人物
+
+[narration]
+说这本书绕不开的人——Bob 大叔，本名 Robert C. Martin。他生于 1952 年，是 2001 年敏捷宣言 17 位签署人之一。他在 2000 年首次系统化整理出 SOLID 5 原则，2012 年 8 月 13 日那篇博客把已有的 4 套架构合成了今天的同心圆图，2017 年 65 岁那年出版了这本《架构整洁之道》。圈内人都叫他 Uncle Bob，他是软件工艺运动的核心人物。我们后面 7 集会反复回到他。
+
+---
+
+## 4 一把日常都能用的尺子 — 身份测试
+
+[visual: spotlight]
+身份测试
+换掉它系统还是同一个东西吗？
+NO 等于核心 / YES 等于配件
+
+[narration]
+怎么判断一段代码是核心还是配件？Bob 大叔给了一把简单到家的尺子，叫身份测试。问一句——如果换掉它，系统还是同一个东西吗？把电商的订单业务规则换了，系统就不是这个电商了，那订单业务规则就是核心。把 Java 换成 Python、Spring 换成 FastAPI，业务规则还在，系统还是这个电商，那这些技术栈就是配件。把这把尺子套到任何一段代码上，回答 NO 就是核心，回答 YES 就是配件。简单粗暴，但管用。
+
+---
+
+## 5 信创把"框架是配件"变成法律级硬约束
+
+[visual: diff title=信创迁移代价对比 — Clean Arch vs 屎山项目]
++ Clean Arch 项目
++ Entity 业务核心 — 0 改动
++ Use Case 应用流程 — 0 改动
++ Adapter 全部重写 — 工作量有边界
++ Framework 整体换装 — 底盘切换
++ 总代价大约 10 到 20 percent 代码
+- 业务核心被框架渗透的项目
+- Entity 改 — Spring 注解长在领域类上
+- Use Case 改 — 流程方法直接调 Mapper
+- Adapter 改 — 边界塌掉一处牵动十处
+- Framework 改 — Oracle 方言 SQL 散落
+- 总代价大约 80 到 90 percent 代码 + 不可控风险
+
+[narration]
+你可能还在想——5 年后的事，跟我现在写代码有什么关系？放心，国产化政策已经把这件事变成了当下。Oracle 换达梦，Spring Boot 换东方通，全套中间件换装。如果你的项目按 Clean Architecture 建，业务核心一行不动，只重写适配层和框架层，总代价大概十到二十 percent。如果你的项目业务核心被框架渗透了，差距是 5 到 10 倍工作量。这就是 Bob 大叔反复警告"框架是配件"的工程经济价值——不是哲学，是真金白银的迁移代价。
+
+---
+
+## 6 著名的同心圆 — 一张全景图
+
+[visual: html_slide title=Clean Architecture 同心圆 4 层 image=pics/01-overview.png]
+
+[narration]
+这张图就是整本书最有名的同心圆。从图上你能直接读出 5 件事。第一，4 层从内到外——Entity 实体、Use Case 用例、Adapter 适配器、Framework 框架与驱动。第二，越内层越稳定。Entity 是企业级业务规则，几十年不变；Framework 是流行技术，5 年换一茬。第三，依赖箭头永远朝内——外层知道内层的存在，内层完全不知道外层。第四，每一层只跟相邻层打交道。第五，所有架构图最终都会归结到这一张图——这是 Bob 大叔自己说的。
+
+---
+
+## 7 用电商订单系统建立直觉
+
+[visual: layers title=电商订单四层映射]
+Entity 订单业务规则 — 状态机 / 总金额计算 / 不变性
+Use Case 订单流程 — 下单 / 校验库存 / 调支付 / 发货
+Adapter 接口适配层 — REST Controller / Repository 实现 / Kafka
+Framework 基础设施 — Spring Boot / Oracle / Redis / 微信小程序
+
+[narration]
+抽象有点烧脑，我们用电商订单系统落地一下。最里层是订单业务规则——订单包含哪些字段、状态机怎么转、总金额怎么算、已发货的订单不能直接取消。这一层不依赖任何技术。再往外是订单流程——下单、校验库存、调支付、发货。这一层跨电商平台几乎相同。再外层是接口适配层——REST Controller、Repository 实现、Kafka 消息适配。最外层是 Spring Boot、Oracle、Redis 这些纯粹的基础设施。这就是 Bob 大叔同心圆 4 层在你最熟悉的业务场景里的样子。
+
+---
+
+## 8 11 条原则的尺度地图
+
+[visual: html_slide title=11 条原则各管什么 — SOLID 5 + 组件 6 image=pics/01-scale-map.png]
+
+[narration]
+说到原则，Bob 大叔给了 11 条。先看这张地图——它告诉你每一条原则在哪个尺度上用。SOLID 5 条管"类内部"——单个类该怎么设计；组件 6 条管"组件之间"——一个 jar 一个包之间该怎么依赖；最外层是同心圆 4 层 + 依赖规则——整个系统怎么组织。三个尺度跟同心圆 4 层是正交的两个独立维度，不要混。下面我们快速过一遍 SOLID 5 条最具代表性的两条。
+
+---
+
+## 9 SOLID 中最关键的 D — 依赖反转
+
+[visual: code lang=java title=DIP 真假反转的关键差别]
+// ❌ 假 DIP — 接口由 Spring 定义
+public interface WorkOrderRepository
+        extends JpaRepository<WorkOrder, Long> {  // [ARCH] 业务依赖框架定义的接口
+}
+
+// ✓ 真 DIP — 接口由业务定义
+public interface WorkOrderRepository {           // [ARCH] 业务模块自己定义
+    Optional<WorkOrder> findById(Long id);
+    void save(WorkOrder order);
+}
+// MyBatis 在 framework jar 实现这个接口
+// 换框架时业务代码一行不动
+
+[narration]
+SOLID 五条里最重要的是 D——依赖反转原则。它说：高层模块不应依赖低层模块，二者都应依赖于抽象。但这里有一个最容易被偷换的概念——抽象由谁定义。看这两段代码。第一段，业务接口直接 extends Spring 的 JpaRepository——这是 80 percent 项目的写法，但它是假 DIP。换框架的时候接口本身要改，业务代码全要跟着改。第二段，业务模块自己定义接口——这才是真 DIP。换框架时业务一行不动。这一条就是后面所有阶段最关键的判别尺子。记住：真 DIP 的接口必须由高层定义，放在高层模块里。
+
+---
+
+## 10 SOLID 的 O — 开闭原则
+
+[visual: spotlight]
+对扩展开放
+对修改关闭
+加新功能不靠改老代码
+靠加新代码实现
+
+[narration]
+另一条最实用的原则是 O——开闭原则。一句话——对扩展开放，对修改关闭。加新功能不靠改老代码，而是靠加新代码实现。你想想你公司屎山里那种 A 区代码整片 copy 到 B 区然后改的场景——这就是没找到扩展点、只能靠"修改"的典型 OCP 失败。如果当初有 OCP 思维，B 区的差异应该写成一个插入点——A 区代码一行都不该被改。这是后面 plugin 架构的精神祖父。
+
+---
+
+## 11 组件 6 条 — REP CCP CRP + ADP SDP SAP
+
+[visual: layers title=组件 6 原则 — 一个 jar 该装什么和怎么连]
+聚合 3 条 — 决定一个组件包含哪些类
+REP 复用发布等价 — 复用粒度等于发布粒度
+CCP 共同闭包 — 一起变化的类放一起
+CRP 共同复用 — 不在一起被复用的别放一起
+耦合 3 条 — 决定组件之间怎么依赖
+ADP 无环依赖 — 组件依赖图必须是 DAG
+SDP 稳定依赖 — 依赖永远指向更稳定的组件
+SAP 稳定抽象 — 稳定的应该是抽象的
+
+[narration]
+SOLID 5 条上一层就是组件 6 条。聚合 3 条管"一个组件该包含哪些类"——REP 复用发布等价、CCP 共同闭包、CRP 共同复用。耦合 3 条管"组件之间怎么依赖"——ADP 无环依赖、SDP 稳定依赖、SAP 稳定抽象。注意 SDP 这一条——依赖方向永远指向更稳定的组件——这就是同心圆"依赖箭头朝内"在组件级的化身。三件事其实是同一件事在三个尺度上的体现：让稳定且抽象的核心被不稳定且具体的细节依赖。
+
+---
+
+## 12 Clean Arch 不是孤立创新
+
+[visual: timeline title=Clean Arch 的"邻居"]
+T=2003 Eric Evans — DDD 领域驱动设计
+T=2005 Cockburn — Hexagonal 六边形架构
+T=2008 Palermo — Onion 洋葱架构
+T=2012 Bob Martin — Clean Architecture 合一
+T=2017 Bob Martin — 出书 512 页
+
+[narration]
+讲到这里你可能问——这套思想是 Bob 大叔原创的吗？答案是不。Clean Architecture 站在一个有 30 年历史的"业务核心独立于技术细节"思想脉络里。Cockburn 2005 年提出 Hexagonal 六边形架构，Palermo 2008 年提出 Onion 洋葱架构，Evans 2003 年提出 DDD。三者跟 Clean Architecture 是同一个思想的不同叙事。Bob 大叔在书里第 22 章自己也承认——我把它叫做 Clean Architecture，但你也可以叫它 Onion 或 Hexagonal，内核是一样的。这条历史链是第 4 集 Origin 阶段的主题。
+
+---
+
+## 13 把屎山映射到同心圆 — 诊断你公司的项目
+
+[visual: ascii title=用同心圆透视镜看你的屎山]
+┌──────────────────────────────────────────┐
+│ ◆ Entity 应该独立                         │
+│   实际：跟 Spring/MyBatis 长在一起          │
+├──────────────────────────────────────────┤
+│ ◆ Use Case 应该是流程载体                  │
+│   实际：被打散在 Service/Util/Listener      │
+├──────────────────────────────────────────┤
+│ ◆ Adapter 应该只翻译                      │
+│   实际：Controller 里直接写业务             │
+├──────────────────────────────────────────┤
+│ ◆ Framework 应该可换皮                    │
+│   实际：渗透到所有层 — 这就是病              │
+└──────────────────────────────────────────┘
+
+[narration]
+拿这把同心圆透视镜照一下你公司的项目。Entity 应该独立，但实际上跟 Spring 和 MyBatis 长在一起。Use Case 应该是流程载体，但实际上被打散在 Service、Util、Listener 里。Adapter 应该只翻译，但实际上 Controller 里直接写业务。Framework 应该可以换皮，但实际上它已经渗透到所有层。诊断结论——你的项目当前状态是"四层全部塌缩成一坨"。Entity Use Case Adapter Framework 之间的边界不存在，或者反向了——框架在指挥业务。这就是为什么你加一个功能修一个 bug 都十分窝火。
+
+---
+
+## 14 What 阶段总结 + 下一集预告
+
+[visual: recap title=What 阶段你应该带走的 5 件事]
+1 句话定义 — 业务核心独立于框架，依赖向内而生
+1 把身份测试尺子 — NO 等于核心 / YES 等于配件
+4 层同心圆 — Entity / Use Case / Adapter / Framework
+11 条原则 — SOLID 5 + 组件 6
+1 个真实工程价值 — 信创迁移 5 到 10 倍代价差距
+
+[narration]
+What 阶段就到这里。你应该带走 5 件事——一句话定义、身份测试尺子、4 层同心圆、11 条原则的尺度地图、信创迁移的真实经济价值。但 What 阶段不能完整回答你的问题——它给了你词汇表，但没回答 Bob 大叔为什么要发明这套东西。下一集我们切换到共情模式——回到原点，看看没有 Clean Architecture 的世界会怎样，立起 5 条不可再分的物理约束。这是后面所有阶段的脊梁。本集就到这里，下集见。
+
+---

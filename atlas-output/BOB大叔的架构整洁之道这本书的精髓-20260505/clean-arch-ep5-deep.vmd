@@ -1,0 +1,373 @@
+# 第 5 集 Deep 阶段 — 订单系统三步增量重构 α 到 β 到 γ
+
+## 1 Deep 阶段开场过场
+
+[visual: spotlight]
+现在我们钻进 Deep 阶段
+一段真实订单屎山
+怎么走到 γ 真做对？
+
+[narration]
+现在进入第 5 集——Deep 阶段。前面四集是理论，这一集是实操。我们用一段真实工业界的 Spring Boot 加 CRUD 加 MySQL 订单系统屎山，按 Bob 大叔端口适配器走完整 α 到 β 到 γ 的三步增量重构。每一步都配代码片段加工程师内心独白，把 Origin 那 5 条人性短板用真实场景演绎给你看。开始。
+
+---
+
+## 2 三件事记住 — 战术级 3 个具体动作
+
+[visual: layers title=从 α 到 γ 必做的 3 个物理动作]
+1 接口位置反转 — 4 个 interface 从 Spring → 业务模块
+2 框架边界外推 — Spring 注解只在外两层 内两层 0 Spring
+3 状态机上提 — 状态扭转规则从 UseCase 移到 Entity
+做对一件 = 推进一步 / 3 件全做对 = 真 Clean Arch
+
+[narration]
+Origin §6 立了 5 条人性短板这是战略级抽象。Deep 阶段把这 5 条精炼成 3 个具体战术动作。第一接口位置反转——4 个 interface 从 Spring 移到业务模块。第二框架边界外推——Spring 注解只允许出现在 Adapter 和 Framework 层，Use Case 和 Entity 类禁止 import 任何 org.springframework。第三状态机上提——订单状态扭转规则从 OrderUseCase 上提到 Order 实体类。三件事不是 4 件不是 7 件，就是 3 件。每件单独做都不难，3 件一起做并坚持下来才难——因为每件都需要克服一条人性短板。
+
+---
+
+## 3 一张三联图 — α 屎山 / β 形似神离 / γ 真做对
+
+[visual: html_slide title=三步重构概览图 — α / β / γ 三联对比 image=pics/05-overview.png]
+
+[narration]
+这张三联图是 Deep 阶段最浓缩的一张。从图上你能直接读出 4 件事。第一α 屎山——OrderService.java 单类大约 120 行，4 个 @Autowired 全家桶加 extends JpaRepository 加 if-else 状态扭转——0 边界 0 接口反转全部 Spring 污染——工业界 50 到 60 percent 的活样本。第二β 形似神离——分了 4 个文件夹看上去合规，但 OrderUseCase 还 import org.springframework，OrderRepository 还 extends JpaRepository——依赖箭头还反着，信创代价跟 α 几乎一样——80 percent 自称做了 Clean Arch 的项目就停在这层。第三γ 真做对——4 个 interface 全在 Use Case 层只 import JDK，OrderUseCase 类零 Spring，Order.payTo cancel 状态机自封——依赖向内而生，信创时 Use Case 0 修改。第四关键洞察——三步中只有 step 2 也就是 β 到 γ 是真重构。
+
+---
+
+## 4 α 屎山初稿 — 周五下午 6 点的 OrderService
+
+[visual: code lang=java title=α 屎山 — 单一 Service 类承担所有事]
+@Service
+@Transactional
+public class OrderService {                  // [ARCH] 单类 ~120 行 全家桶
+    @Autowired private OrderRepository repo; // extends JpaRepository<Order, Long>
+    @Autowired private WeChatPaymentClient payment;
+    @Autowired private AliyunSmsClient sms;
+    @Autowired private InventoryFeignClient inv;
+
+    public void changeStatus(Long orderId, String newStatus) {
+        Order order = repo.findById(orderId).orElseThrow();
+
+        if (newStatus.equals("paid")) {       // [ARCH] 状态规则散在 if-else
+            if (!order.getStatus().equals("created"))
+                throw new IllegalStateException("非 created 不能支付");
+            payment.pay(order.getAmount(), order.getUserId());
+            inv.decrease(order.getProductId(), order.getQty());
+            sms.send(order.getUserPhone(), "您的订单已支付成功");
+            order.setStatus("paid");
+            repo.save(order);
+        }
+        else if (newStatus.equals("shipped")) { /* 类似 */ }
+        else if (newStatus.equals("cancelled")) { /* 复杂 */ }
+    }
+}
+
+[narration]
+看 α 屎山初稿。这是工业界最常见的状态——单一 Service 类承担所有事。@Service 加 @Transactional 在最外层，4 个 @Autowired 把 Repository、微信支付、阿里云短信、内部 RPC 全注入进来。changeStatus 方法 80 行 if-else 分支——paid 一段 shipped 一段 delivered 一段 cancelled 一段。状态规则散在每个 if-else 里——已 created 才能 paid，已 paid 才能 shipped。Order 类是纯 POJO 加 Lombok @Data，0 业务规则。整个项目 0 接口反转 0 框架边界 0 状态机封装——工业界 50 到 60 percent 的活样本就是这样。
+
+---
+
+## 5 工程师内心独白 — 周五下午 6 点
+
+[visual: spotlight]
+"@Autowired 多方便啊
+一行注解 Spring 帮我注入
+我都不用写 constructor
+状态扭转 if-else 一通
+1 小时能下班"
+
+[narration]
+听一段工程师的内心独白——周五下午 6 点产品经理刚拍下来一个新需求，订单要加状态扭转功能带支付发货取消退款，下周一上线。打开 IDE 新建 OrderService.java，@Service 注解，@Autowired 一通，if-else 写起来——这是最快的写法 1 小时能下班。我也听过 Clean Architecture SOLID 这些词，但那是"理论"我现在是"实战"。把代码写出来跑通周一不被骂，这才是当下唯一重要的事。这段独白浓缩了 §6.1 趋利避害和 §6.4 没真正理解就自以为是——5 条人性短板的活样本。
+
+---
+
+## 6 第一次重构 → β 形似神离 — 只动文件位置
+
+[visual: code lang=java title=β 形似神离 — 改了名挪了文件夹代码内容没动]
+// com/example/usecase/OrderUseCase.java
+@Service                                    // ⚠ 还在 Spring 上
+@Transactional                              // ⚠
+public class OrderUseCase {
+    @Autowired private OrderRepository repo;  // ⚠ 仍 import Spring 注解
+    @Autowired private WeChatPaymentClient payment;
+    public void changeStatus(Long orderId, String newStatus) {
+        // ... 跟 α 完全一样的 80 行 if-else
+    }
+}
+
+// com/example/usecase/OrderRepository.java
+public interface OrderRepository
+        extends JpaRepository<Order, Long> {  // ⚠ 假 DIP 原封不动
+}
+
+// com/example/entity/Order.java
+@Entity                                       // ⚠ JPA 注解
+@Data                                         // ⚠ 0 业务规则
+public class Order { /* ... */ }
+
+[narration]
+周一周会上 leader 说我们项目要做 Clean Architecture。我打开网上一篇 Spring Boot Clean Architecture 模板文章，照葫芦画瓢——entity usecase adapter framework 4 个文件夹分好。我把 OrderService 改名为 OrderUseCase 挪到 usecase 包，把 Order 挪到 entity 包，OrderRepository 挪到 usecase 包。代码内容也没大改——我就是把文件挪了挪位置。Use Case 类还是 @Service @Autowired，OrderRepository 还是 extends JpaRepository——反正 Spring 全家桶用着也很顺，改了反而麻烦。周三汇报 leader 看着 4 文件夹结构图很满意——好你做完了这就是 Clean Architecture。我心里也松了口气——这个"大重构"比我想的简单。
+
+---
+
+## 7 反事实小试 — 为什么不能停在 β
+
+[visual: diff title=Trap 1 — 信创迁移代价 α / β / γ 对比]
++ Spring Boot → 东方通
++ α — Use Case 全部 import 改
++ β — Use Case 全部 import 改（因还在 import Spring）
++ γ — 0 改 Use Case
++ MySQL → 达梦
++ α — extends JpaRepository 重写
++ β — extends JpaRepository 重写（因接口仍是 Spring 定义）
++ γ — 改 Adapter 的 1 个 implements 类
+- β 跟 α 的真实差距
+- = 0 工程价值
+- 只是分了 4 个文件夹的视觉魔法
+
+[narration]
+β 看上去合规但代价跟 α 几乎一样。两个 trap 让 β 必须走到 γ。Trap 1 信创迁移代价——Spring Boot 换东方通，α 和 β 的 Use Case 全部 import 都要改因为都 import Spring；γ 是 0 改。MySQL 换达梦，α 和 β 都要重写 extends JpaRepository 因为接口仍是 Spring 定义；γ 只改 Adapter 的 1 个 implements 类。微信支付换支付宝同样的情况。β 跟 α 的真实差距等于 0 工程价值，只是分了 4 个文件夹的视觉魔法。
+
+---
+
+## 8 反事实小试 — Trap 2 测试速度
+
+[visual: diff title=Trap 2 — 测试速度 β vs γ]
++ β 状态测 Order 状态扭转规则
++ @SpringBootTest 必启 Spring 容器
++ @Autowired OrderUseCase useCase
++ @MockBean × 4 — Mock 复杂
++ 启动需 5-30 秒 → 团队默认放弃 TDD
+- γ 状态测 Order.payTo() 状态规则
+- class OrderTest — 纯 JUnit 0 Spring
+- PaymentGateway pg = mock(PaymentGateway.class)
+- 测试运行 < 1 ms
+- 1 秒能跑 1000 个测试 → TDD 才有可能
+
+[narration]
+Trap 2 是测试速度。β 状态下测 Order 状态扭转规则要 @SpringBootTest 必启 Spring 容器，@MockBean 4 个外部依赖 Mock 起来很复杂——启动需要 5 到 30 秒，运行测试 0.05 秒。测一遍要 30 秒改一行代码再测 30 秒——团队默认放弃 TDD，C4 测试反馈速度恶性循环。γ 状态下测 Order.payTo 状态规则只用纯 JUnit 0 Spring——PaymentGateway 用普通 Mockito mock 一下，测试运行小于 1 毫秒，1 秒能跑 1000 个测试——TDD 才有可能。β 失去 Bob 方法论 90 percent 的工程价值。视觉合规不等于工程合规。
+
+---
+
+## 9 第二次重构 → γ 真做对 — 动作 1 接口位置反转
+
+[visual: code lang=java title=γ 动作 1 — 4 个 interface 由业务定义只 import JDK]
+// com/example/usecase/OrderRepository.java
+package com.example.usecase;
+import com.example.entity.Order;
+import java.util.Optional;
+
+public interface OrderRepository {           // [ARCH] ✓ 不 extends 任何框架接口
+    Optional<Order> findById(Long id);
+    void save(Order order);
+}
+
+// com/example/usecase/PaymentGateway.java
+public interface PaymentGateway {            // [ARCH] ✓ 业务领域语言
+    PaymentResult pay(Money amount, String userId);
+    void refund(Money amount, String orderNo);
+}
+
+// com/example/usecase/SmsNotifier.java
+public interface SmsNotifier {
+    void notifyOrderPaid(String phone, String orderNo);
+}
+
+// com/example/usecase/InventoryClient.java
+public interface InventoryClient {
+    void decrease(String productId, int qty);
+}
+
+[narration]
+γ 重构动作 1 是接口位置反转。把 OrderRepository、PaymentGateway、SmsNotifier、InventoryClient 这 4 个接口全部由业务定义放在 .usecase 包里，只 import JDK 和 com.example.entity。注意 OrderRepository 不再 extends JpaRepository，PaymentGateway 不再依赖 WeChatPaymentClient，SmsNotifier 不再依赖 AliyunSmsClient——它们用的都是业务领域语言而不是技术语言。这就是 §0.1 接口位置反转，对应 Origin §6.5 不求甚解和 §6.3 想当然——80 percent 项目以为 extends JpaRepository 就是 DIP，其实只有自定义接口才是真 DIP。
+
+---
+
+## 10 γ 重构动作 2 — Use Case 类零 Spring
+
+[visual: code lang=java title=γ 动作 2 — Use Case 类纯 Java 0 Spring 依赖]
+package com.example.usecase;
+import com.example.entity.Order;
+import java.util.Objects;
+
+public class OrderUseCase {                  // [ARCH] ✓ 没 @Service / @Autowired
+    private final OrderRepository repo;
+    private final PaymentGateway paymentGateway;
+    private final SmsNotifier smsNotifier;
+    private final InventoryClient inventoryClient;
+
+    public OrderUseCase(OrderRepository repo, PaymentGateway pg,
+                        SmsNotifier sn, InventoryClient ic) {
+        // [ARCH] ✓ Constructor injection
+        this.repo = Objects.requireNonNull(repo);
+        this.paymentGateway = Objects.requireNonNull(pg);
+        this.smsNotifier = Objects.requireNonNull(sn);
+        this.inventoryClient = Objects.requireNonNull(ic);
+    }
+
+    public void payOrder(Long orderId) {
+        Order order = repo.findById(orderId).orElseThrow();
+        order.payTo(paymentGateway, inventoryClient);  // [ARCH] 状态机在 Entity
+        smsNotifier.notifyOrderPaid(order.getUserPhone(), order.getOrderNo());
+        repo.save(order);
+    }
+}
+
+[narration]
+γ 重构动作 2 是框架边界外推。OrderUseCase 类完全去除 Spring 依赖——没有 @Service 没有 @Autowired 没有 @Transactional。改用 Constructor injection——4 个 final 字段加 Constructor 加 Objects.requireNonNull。每个方法做协调编排——通过 Repository 接口取 Entity，调 Entity 的业务方法，通过 Repository 接口落库，通过 SmsNotifier 接口发通知。整个类 0 行 Spring 代码——它是纯 Java 类，能在没有任何框架的环境下编译跑通。这一步对应 §6.4 没真正理解就自以为是——克服"@Autowired 比 Constructor 省事"这条人性短板。
+
+---
+
+## 11 γ 重构动作 3 — 状态机上提到 Entity
+
+[visual: code lang=java title=γ 动作 3 — Order 状态机自封 0 框架依赖]
+package com.example.entity;
+import com.example.usecase.PaymentGateway;
+import com.example.usecase.InventoryClient;
+
+public class Order {                         // [ARCH] ✓ 没 @Entity / @Data
+    private final Long id;
+    private final Money amount;
+    private OrderStatus status;
+    private LocalDateTime paidAt;
+
+    public void payTo(PaymentGateway pg, InventoryClient ic) {
+        // [ARCH] 业务规则上提到 Entity
+        ensureStatus(OrderStatus.CREATED, "已支付/已取消订单不能再支付");
+        pg.pay(this.amount, this.userId);
+        ic.decrease(this.productId, this.qty);
+        this.status = OrderStatus.PAID;
+        this.paidAt = LocalDateTime.now();
+    }
+
+    public void cancel(PaymentGateway pg, InventoryClient ic) {
+        if (this.status == OrderStatus.PAID) {
+            pg.refund(this.amount, this.orderNo);
+        }
+        ic.increase(this.productId, this.qty);
+        this.status = OrderStatus.CANCELLED;
+    }
+
+    private void ensureStatus(OrderStatus expected, String msg) {
+        if (this.status != expected)
+            throw new IllegalStateException(msg + ":当前 " + this.status);
+    }
+}
+
+[narration]
+γ 重构动作 3 是状态机上提。Order 类不再是贫血 POJO——它有自己的业务方法 payTo、ship、cancel。每个方法封装状态扭转规则——payTo 第一行就是 ensureStatus 校验当前必须是 CREATED 状态。注意 Order 类没有 @Entity 没有 @Data 没有任何框架注解——它是纯 Java 类，0 框架依赖。状态规则集中在 Entity 内——任何调用方都不能绕过它。新加状态时只需要改 Order 类，不需要散落在多个 if-else 里。这一步对应 §6.3 想当然——克服"以为 Entity 就是 POJO 加 getter setter"这条人性短板。
+
+---
+
+## 12 Adapter 层 implements + Framework 层显式装配
+
+[visual: code lang=java title=Adapter 实现 + Framework 装配 — Spring 在外两层是 OK 的]
+// com/example/adapter/JpaOrderRepository.java
+@Repository                                  // [ARCH] Spring 在 Adapter 层 OK
+public class JpaOrderRepository implements OrderRepository {
+    private final SpringDataOrderJpaRepository jpaRepo;
+    public JpaOrderRepository(SpringDataOrderJpaRepository jpaRepo) {
+        this.jpaRepo = jpaRepo;
+    }
+    @Override public Optional<Order> findById(Long id) {
+        return jpaRepo.findById(id).map(this::toDomain);
+    }
+}
+
+// com/example/adapter/WeChatPaymentAdapter.java
+@Component
+public class WeChatPaymentAdapter implements PaymentGateway {
+    private final WeChatPaySdkClient sdkClient;
+    public PaymentResult pay(Money amount, String userId) {
+        WxPayResponse resp = sdkClient.transact(amount.toFen(), userId);
+        return resp.isSuccess() ? PaymentResult.success() : PaymentResult.fail();
+    }
+}
+
+// com/example/framework/UseCaseConfig.java
+@Configuration                               // [ARCH] 显式装配纯 Java Use Case
+public class UseCaseConfig {
+    @Bean
+    public OrderUseCase orderUseCase(OrderRepository repo, PaymentGateway pg,
+                                     SmsNotifier sn, InventoryClient ic) {
+        return new OrderUseCase(repo, pg, sn, ic);
+    }
+}
+
+[narration]
+Adapter 和 Framework 层。JpaOrderRepository 在 Adapter 层 implements 业务定义的 OrderRepository 接口——内部调 Spring Data 的 SpringDataOrderJpaRepository。注意 @Repository 注解在这一层是 OK 的，因为这就是它的职责。WeChatPaymentAdapter 同样 implements PaymentGateway——把业务的 pay 方法翻译成微信支付 SDK 调用。换支付宝时只需要加一个 AlipayPaymentAdapter 实现同一接口，业务零修改。最后 UseCaseConfig 在 Framework 层用 @Bean 显式装配 OrderUseCase。这是教科书派和务实派的分水岭——务实派直接给 Use Case 加 @Service 是省事，但破坏 Use Case 纯净。
+
+---
+
+## 13 工程师内心独白 — 重构 γ 完成那一刻
+
+[visual: spotlight]
+"多写 100 行代码 = 多花 1 小时
+短期收益 0（线上没区别）
+长期收益要等 5 年信创时刻才显形
+如果今天是周五 6 点 deadline
+我大概率会跳过这一步继续 β
+今天是周二 我咬咬牙决定走完 γ"
+
+[narration]
+听一段重构 γ 完成那一刻的工程师独白——做完 4 个 interface 反转加 Use Case 类去 Spring 化，我盯着代码看了 5 分钟。多了 50 行 interface，2 个新 Adapter 类，1 个 Configuration——总共多写了大概 100 行代码。我心里其实在算账——多写 100 行等于多花 1 小时。短期收益 0 线上没区别。长期收益等 5 年信创不重写、单测 1ms、业务规则集中。如果今天是周五下午 6 点 deadline，我大概率会跳过这一步继续 β。但今天是周二下午，leader 又说 5 年后我们大概率信创换框架，我咬咬牙决定走完 γ。多写 50 行接口值不值？只有当你真的在 5 年后做信创那一刻才知道值得。但当下你不知道。这就是为什么 80 percent 的人停在 β。
+
+---
+
+## 14 5 个难度落点复盘 — 80% 工程师停在 β 的具体原因
+
+[visual: layers title=5 个让人放弃的具体难度落点]
+1 从 α 看不出需要重构 — 代码跑得通 KPI 满足
+2 从 β 看不出还要继续 — 4 文件夹分了 leader 满意
+3 写 4 个 interface 反转觉得"多此一举" — 短期收益 0
+4 去掉 @Autowired 改 constructor 觉得"费力" — 1 行变 5 行
+5 状态机上提到 Entity 觉得"陌生" — 贫血模型是默认范式
+
+[narration]
+整个 α 到 γ 重构走完，5 个具体"难度落点"让 80 percent 工程师中途放弃。第一从 α 看不出需要重构——代码跑得通 KPI 满足，重构等于给当下加 5 小时工作量，换 5 年后才显形的收益。第二从 β 看不出还要继续——4 文件夹分了看起来跟博客示例一样，leader 满意自己心安。第三写 4 个 interface 反转觉得"多此一举"——多写 50 行短期收益 0。第四去掉 @Autowired 改 constructor 觉得"费力"——1 行注解变成 5 行 constructor 加 4 个 final 字段。第五状态机上提到 Entity 觉得"陌生"——工作 5 年都没在 Entity 里写过业务规则，getter setter 是默认范式。这 5 个落点我们留到 Synthesis 阶段看 AI 怎么抹平。
+
+---
+
+## 15 4 个反事实候选 — 为什么 Bob 端口适配器是局部最优
+
+[visual: diff title=4 个候选方案的对比]
++ Bob 端口适配器（γ）— 中等复杂度 + 信创预期 + 长期项目 → 本节主选
+- 候选 A Hexagonal-only — Cockburn 2005 / 业务规则没地方放
+- 候选 B DDD — 学习陡 + 过度设计 / 概念上是 Bob 同心圆超集
+- 候选 C Layered Architecture — Spring Boot 教程 99% 教这个 / 信创代价 100%
+- 候选 D Anemic Domain Model — 90%+ Spring Boot 项目默认 / Bob 反对的反模式
+
+[narration]
+有人问——除了 Bob 端口适配器还有什么选项？4 个反事实候选我们一次过。候选 A Hexagonal-only——Cockburn 2005 的六边形，只两层不分 Use Case 和 Entity——业务规则没地方放，订单系统这种含明确 Use Case 加 Entity 区分的场景退化到 β 状态。候选 B DDD——比 Bob 端口适配器更细化，但学习成本高过度设计风险大；概念上是 Bob 同心圆的同构超集。候选 C Layered Architecture——传统三层 Controller 到 Service 到 Repository，Spring Boot 教程 99 percent 教这个，但信创代价 100 percent。候选 D Anemic Domain Model 加 Service 厚重——90 percent 以上 Spring Boot 项目的默认，Bob 大叔在书里专门批判过。结论——对中等复杂度加信创预期加长期项目的场景，Bob 端口适配器是局部最优。
+
+---
+
+## 16 约束回扣 — 重构每一步对应的 Cn
+
+[visual: layers title=5 个动作的主辅约束]
+接口位置反转 — 主 C2 + C5 / 辅 C0
+框架边界外推 — 主 C2 + C4 / 辅 C0
+状态机上提 — 主 C3 + C5 / 辅 C0
+4 个 interface 反转 — 主 C2 + C5 / 辅 C0
+显式装配 UseCaseConfig — 主 C2 + C4 / 辅 C0
+关键发现 — 5 个动作的辅约束都是 C0（人不自律）
+C0 是这 5 个动作落地的真正瓶颈 不是技术问题
+
+[narration]
+最后做约束回扣。5 个重构动作的主约束是 C2 加 C5——技术栈不可控加改动跟波及面成正比。但所有动作的辅约束都是 C0——人不自律。关键发现——C0 才是这 5 个动作落地的真正瓶颈，不是技术问题。这正是 Origin §6 立的 5 条人性短板加 Synthesis §C 立的 2 条组织经济约束的落地证明。技术上每件事都不难，但每件都要克服一条人性。这就是为什么 9 年来 80 percent 项目还停在 α 或者 β。
+
+---
+
+## 17 Deep 阶段总结 + 下一集预告
+
+[visual: recap title=Deep 阶段你应该带走的 5 件事]
+3 件战术动作 — 接口反转 边界外推 状态机上提
+1 段完整重构走查 — α / β / γ 三步
+5 个难度落点 — 80% 工程师放弃的具体瞬间
+1 个洞察 — 只有 β 到 γ 是真重构 α 到 β 是安慰剂
+1 个真相 — C0 人不自律才是真正的瓶颈
+
+[narration]
+Deep 阶段就到这里。你应该带走 5 件事——3 件战术动作、α 到 γ 三步重构走查、5 个难度落点、一个洞察"只有 β 到 γ 是真重构"、一个真相"C0 人不自律才是真正的瓶颈"。但 Clean Arch 不是孤立设计——它在 2017 年成书时已经站在前人肩膀上 14 年。下一集我们切换到评论家模式——把 Clean Arch 跟 DDD 放在一起对照——同构 9 行映射加区别 4 维度加单体 vs 微服务。让你看清 Bob 大叔不是在"发明"是在"搬运加提炼"。本集就到这里，下集见。
+
+---

@@ -1,0 +1,33 @@
+《架构整洁之道》7 集大电影 — 6 条不可再分约束 C0~C5：
+[C0] 人不自律 — 方法论假设了"理性程序员"，但行业激励惩罚自律
+[C1] OCP 失败陷阱 — 新需求持续到来，加新需求被迫改老代码
+[C2] 技术栈/供应商不可控 — 政策（信创）+ 市场让技术栈被迫切换
+[C3] 复杂度涌现 — 超级类必然涌现，除非架构主动对抗
+[C4] 测试反馈速度 — 慢测试导致负反馈深渊
+[C5] 改动 ∝ 波及面（元约束）— 总成本跟波及面成正比，统领所有 11 条原则
+
+──────────────────
+
+Bob 大叔（Robert C. Martin）这本 2017 年 512 页的书，工业界遗憾了 9 年——50 万册全球销量、各大公司必读，但 80% 自称做了 Clean Arch 的项目还停在"假分层"。这部 7 集大电影把这本书从是什么、为什么必须存在、内部怎么工作、50 年怎么来的、订单系统怎么落地、跟 DDD 怎么对照、最后到 2024 AI 时代命运转折——一次讲透。
+
+本系列分 7 集：
+EP1 What — 同心圆 4 层 + 11 条原则 + 信创真实案例
+EP2 Why — 5 条不可再分的物理约束 C1~C5
+EP3 How — 依赖规则 + DIP 反转 + Java 包映射
+EP4 Origin — 50 年接力棒 + 2012 年 8 月 13 日那篇博客的顿悟
+EP5 Deep — 订单系统三步增量重构 α → β → γ + 工程师内心戏
+EP6 Comparison — Clean Arch vs DDD + 单体 vs 微服务 + 中台战略失败潮
+EP7 Synthesis — AI 抹平 7 条约束 + 1968 以来软件工程最大利好
+
+致敬 10 位前辈：
+Robert C. Martin（Bob 大叔）/ David Parnas（信息隐藏 1972）/ Bertrand Meyer（OCP 命名 1986）/ Manny Lehman（Lehman 定律 1980）/ Ivar Jacobson（BCE 1992）/ Alistair Cockburn（Hexagonal 2005）/ Jeffrey Palermo（Onion 2008）/ James Coplien & Trygve Reenskaug（DCI 2009）/ Eric Evans（DDD 2003）
+
+适合人群：
+1. 写过 Spring Boot 项目、被屎山折磨过的 Java 后端开发者
+2. 听过 Clean Architecture / SOLID 但没真正落地过的工程师
+3. 公司有信创 / 国产化迁移预期、想算清楚技术债代价的架构师
+4. 对软件工程史、AI 时代如何重塑架构方法论感兴趣的技术人
+
+7 张架构图全部完整展示并配详细解说：同心圆 4 层、11 原则尺度地图、5 条约束因果链、Java 包映射、1968-2026 时间线、α/β/γ 三步重构、人的社会 vs AI 的社会两幅对照图。
+
+标签：架构整洁之道, Clean Architecture, Bob大叔, SOLID, DDD, Spring Boot, 软件架构, 依赖反转, 信创, 微服务, AI编程

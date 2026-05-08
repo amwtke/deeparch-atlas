@@ -1,0 +1,242 @@
+# 第 6 集 Comparison 阶段 — Clean Arch vs DDD + 单体 vs 微服务
+
+## 1 Comparison 阶段开场过场
+
+[visual: spotlight]
+现在我们跳到 Comparison 阶段
+除了 Clean Arch 还有谁？
+
+[narration]
+现在进入第 6 集——Comparison 阶段。前面五集我们走完了 Clean Arch 的来龙去脉和实操重构。但 Clean Arch 不是孤立设计——它在 2017 年成书时已经站在前人肩膀上 14 年——Eric Evans 的 DDD 早在 2003 年就提出了。这一集我们把 Clean Arch 跟 DDD 放在一起对照——同构关系、战略级差异、历史血脉、单体 vs 微服务、最后是国内 2018 到 2022 中台战略失败潮的人性根因。开始。
+
+---
+
+## 2 三件事记住 — 同构 / 差异 / 血脉
+
+[visual: layers title=Clean Arch 跟 DDD 的 3 件事]
+1 同构关系 — Clean Arch γ 工程层面 ≈ DDD 战术级子集
+2 战略级差异 — DDD 多了 4 件 Clean Arch 没有的事
+3 历史血脉 — Bob 大叔合成 + 简化 DDD 不是原创
+
+[narration]
+Comparison 阶段记住三件事。第一同构关系——Clean Arch γ 工程层面约等于 DDD 战术级子集。Entity 约等于 Aggregate Root，Use Case 约等于 Application Service，Repository 几乎一对一映射。第二战略级差异——DDD 多了 4 件 Clean Arch 没有的事——Bounded Context 限界上下文、Domain Event 领域事件、Ubiquitous Language 统一语言、Strategic Design 战略设计加上下文映射。第三历史血脉——Bob 大叔做的是把 DDD 战术级简化加工程化加推广，降低落地门槛——Clean Arch 是 DDD 的工程入门版。
+
+---
+
+## 3 致敬 DDD 之父 Eric Evans
+
+[visual: facetime title=Eric Evans]
+name: Eric Evans
+role: Domain-Driven Design 之父
+org: Domain Language Inc.
+photo: https://res.cloudinary.com/value-object/image/upload/c_thumb,g_face,w_1920,h_1080/t_dddeuoverlay/f_auto/v1/hm/v1486747579/DDD17/DDDEurope2017-471.jpg
+- 2003 年出版《Domain-Driven Design》（蓝皮书）
+- 提出聚合根 / 限界上下文 / 统一语言 / 战略设计
+- 1990 年代末做企业级 ERP 咨询积累 10 年经验
+- DDD 早 Bob Clean Arch 14 年（2003 vs 2017）
+- Bob 大叔在 Clean Architecture References 里主动引用 Evans
+
+[narration]
+讲 DDD 绕不开的人——Eric Evans。他 1990 年代末做企业级 ERP 和 CRM 软件咨询，看到一个反复出现的问题——业务复杂度爆炸时代码无法承载业务规则，业务团队和技术团队术语不统一，需求每改一次代码都要重写。2003 年他出版了《Domain-Driven Design》——业内简称蓝皮书——提出聚合根加限界上下文加统一语言加战略设计 4 件套，目标是让业务复杂度可被工程承载。DDD 早 Bob Clean Arch 整整 14 年。Bob 大叔在 Clean Architecture References 里主动引用 Evans——这暗示 Bob 大叔的工作部分是把 DDD 战术级简化加工程化加推广。
+
+---
+
+## 4 同构关系 — 9 行映射表
+
+[visual: layers title=Clean Arch 跟 DDD 的 9 行同构映射]
+Entity（最内层） ≈ Aggregate Root（聚合根）
+Use Case（应用业务规则） ≈ Application Service（应用服务）
+Use Case 层业务定义的 Repository ≈ Repository（DDD 仓储）
+Adapter（持久化 / 外部 API） ≈ Infrastructure（基础设施）
+Framework（Spring 装配） ≈ DDD 不强调这层
+（Clean Arch 不强调） ≈ Bounded Context（限界上下文）
+（Clean Arch 不强调） ≈ Domain Event（领域事件）
+（Clean Arch 不强调） ≈ Ubiquitous Language（统一语言）
+（Clean Arch 不强调） ≈ Strategic Design（战略设计）
+
+[narration]
+看这张 9 行同构映射表。前 4 行——Entity 对应 DDD 的 Aggregate Root；Use Case 对应 Application Service；Use Case 层业务定义的 Repository 对应 DDD Repository；Adapter 对应 Infrastructure。Bob 大叔 Clean Arch 多了一层 Framework——DDD 不强调这层。最重要的是后 4 行——Bounded Context、Domain Event、Ubiquitous Language、Strategic Design——这 4 件事 Clean Arch 完全没有。这就是 Clean Arch 是 DDD 战术级子集这句话的物理含义。
+
+---
+
+## 5 三个关键观察
+
+[visual: spotlight]
+观察 1 — Clean Arch γ 工程层面 = DDD 战术级子集
+观察 2 — DDD 多出来的是战略级 + 业务建模深度
+观察 3 — DDD 比 Clean Arch 早 14 年
+
+[narration]
+从同构表里能读出三个关键观察。观察 1 ——Clean Arch γ 工程层面约等于 DDD 战术级子集。DDD 战术级的"聚合根加仓储加应用服务"几乎一对一映射到 Clean Arch 的 Entity 加 Use Case 层 interface 加 Use Case 实现。观察 2 ——DDD 比 Clean Arch 多出来的部分是战略级加业务建模深度——这些 Clean Arch 没有。观察 3 ——DDD 比 Clean Arch 早 14 年。Bob 大叔在 Clean Architecture References 里主动引用 Evans，这暗示 Bob 大叔的工作部分是把 DDD 战术级简化加工程化加推广。
+
+---
+
+## 6 区别 4 维度对比
+
+[visual: diff title=Clean Arch 跟 DDD 的 4 维度区别]
++ Clean Arch
++ 粒度 — 战术级 + 工程实施级（4 层物理结构）
++ 关注点 — 依赖方向（怎么解耦框架）
++ 学习曲线 — 相对简单（3 件事就能落地）
++ 适用场景 — 中等复杂度 + 需解耦框架 + 信创预期
+- DDD
+- 粒度 — 战略级 + 战术级双层
+- 关注点 — 业务语义（怎么把业务领域精确建模）
+- 学习曲线 — 复杂（聚合根 + 限界上下文 = 30 年功夫）
+- 适用场景 — 高复杂度业务 + 业务专家驻场
+
+[narration]
+Clean Arch 跟 DDD 的 4 维度区别。粒度——Clean Arch 是战术级加工程实施级 4 层物理结构；DDD 是战略级加战术级双层——Bounded Context 战略加 Aggregate Service 战术。关注点——Clean Arch 关注依赖方向也就是怎么解耦框架；DDD 关注业务语义也就是怎么把业务领域精确建模。学习曲线——Clean Arch 相对简单 3 件事就能落地；DDD 复杂——聚合根设计加限界上下文识别加统一语言等于 30 年功夫，需要业务专家驻场。适用场景——Clean Arch 适合中等复杂度加需解耦框架加信创预期；DDD 适合高复杂度业务加业务专家驻场。
+
+---
+
+## 7 同一个 Order.payTo 两种风格 — Sync vs Async
+
+[visual: code lang=java title=Clean Arch γ 风格 — Sync 调用]
+public class Order {
+    public void payTo(PaymentGateway pg, InventoryClient ic) {
+        // [ARCH] 依赖通过参数注入
+        ensureStatus(OrderStatus.CREATED, "...");
+        pg.pay(this.amount, this.userId);     // [ARCH] 直接同步调外部
+        ic.decrease(this.productId, this.qty);
+        this.status = OrderStatus.PAID;
+    }
+}
+
+[narration]
+最直观的差异是同一个 Order.payTo 两种风格。Clean Arch γ 风格——Order.payTo 把 PaymentGateway 和 InventoryClient 通过参数注入，方法内部直接同步调用外部。这就是 Deep §4.1 立的写法。一个事务包裹整个流程——强一致同步调用。适合单聚合根加单上下文加强一致业务。
+
+---
+
+## 8 DDD 风格 — 发领域事件异步处理
+
+[visual: code lang=java title=DDD 风格 — Async 解耦发领域事件]
+public class Order extends AggregateRoot<OrderId> {
+    private final List<DomainEvent> events = new ArrayList<>();
+
+    public void pay() {                       // [ARCH] ⚠ 不传外部依赖
+        ensureStatus(OrderStatus.CREATED, "...");
+        this.status = OrderStatus.PAID;
+        // [ARCH] 不直接调外部 — 发领域事件
+        this.events.add(new OrderPaidEvent(this.id, this.amount));
+    }
+}
+
+public class PaymentEventHandler {
+    @EventListener
+    public void handle(OrderPaidEvent event) {
+        paymentGateway.pay(event.amount(), event.userId());  // [ARCH] 异步处理
+    }
+}
+
+[narration]
+DDD 风格完全不同——Order.pay 不传外部依赖，方法内只改状态加发领域事件。OrderPaidEvent 由独立的事件处理器异步处理——PaymentEventHandler 监听事件调微信支付，InventoryEventHandler 监听事件减库存。这是异步解耦——事件总线加 Saga 补偿机制加最终一致性处理——实现复杂度高但适合多聚合根跨上下文异步业务。直觉判断——DDD 的 Async 解耦适合多聚合根加跨上下文加异步业务；Clean Arch 的 Sync 调用适合单聚合根加单上下文加强一致业务。订单系统单聚合根强一致的话，Clean Arch γ 就够了。
+
+---
+
+## 9 为什么 DDD 这么选 — 追溯到约束差异
+
+[visual: diff title=DDD 跟 Clean Arch 面对的约束权重不同]
++ DDD（Evans 2003）面对的约束
++ C3 复杂度涌现 — 极高（企业 ERP 业务复杂度爆炸）
++ 跨团队协作 — 核心（大企业咨询是日常）
++ 异步事件驱动 — 核心（银行结算 / 电商履约）
+- Clean Arch（Bob 2017）面对的约束
+- C2 技术栈不可控 — 高（Spring 框架频繁切换）
+- 跨团队协作 — 不在视野（单团队为主）
+- 异步事件驱动 — 不在视野
+结论 — Clean Arch 跟 DDD 不是谁好谁坏 是适配场景不同
+
+[narration]
+DDD 跟 Clean Arch 选择不同的根本原因——它们面对的约束权重不同。Evans 2003 年做企业 ERP 咨询，面对的是超大复杂度加多团队加异步业务——C3 复杂度涌现极高，跨团队协作是核心，异步事件驱动是日常。所以 DDD 引入了 Bounded Context 加战略设计应对超大复杂度，引入 Ubiquitous Language 加 Context Map 应对跨团队协作，引入 Domain Event 应对异步业务。Bob 大叔 2017 年面对的是中等复杂度加单团队加同步业务为主的工程现实，加上 Spring 框架频繁切换。所以 Clean Arch 强调依赖方向加教科书派——但跨团队协作和异步事件驱动这两件事 Clean Arch 完全没有。结论——两套都不是"最好"，都是约束组合下的"局部最好"。
+
+---
+
+## 10 关键洞察 — DDD 每个 BC 都可以用 Bob 4 层架构
+
+[visual: ascii title=DDD 整体 = 多个 Clean Arch 化的 BC + 战略级]
+   ┌─ BC 订单 ──┐  ┌─ BC 履约 ──┐  ┌─ BC 财务 ──┐
+   │ Framework  │  │ Framework  │  │ Framework  │
+   │ Adapter    │  │ Adapter    │  │ Adapter    │  ← 每个 BC 内部
+   │ Use Case   │  │ Use Case   │  │ Use Case   │     完整应用 Bob
+   │ Entity     │  │ Entity     │  │ Entity     │     4 层 Clean Arch
+   └──────┬─────┘  └──────┬─────┘  └──────┬─────┘
+          │                │              │
+          └─── Context Map / 领域事件 / Saga 补偿 ───┘
+                          ↑
+                   这部分是 DDD 战略级
+                  （Clean Arch 完全没有）
+
+[narration]
+这个观察是 Comparison 阶段最关键的洞察——DDD 每个 Bounded Context 内部都可以完整应用 Bob 大叔的 4 层 Clean Arch。也就是说 Clean Arch 是 DDD 战术级在单个 BC 内部的实现细则。DDD 整体看等于多个 Clean Arch 化的 BC 加上 BC 之间的 Context Map、领域事件、Saga——这部分是 DDD 战略级。含义是——你今天写 Clean Arch γ 本身就是在用 DDD 战术级，只是不叫这个名字。当你升级到 DDD 模块化单体时，只是多加了 BC 边界加 Context Map——单 BC 内部的 4 层 Clean Arch 一行不用改。Clean Arch 的工程价值在 DDD 任何阶段都有效，不会因为升级到 DDD 而被淘汰。
+
+---
+
+## 11 单体 vs 微服务 — DDD ≠ 微服务但 DDD = 微服务划分最佳工具
+
+[visual: spotlight]
+DDD 2003 提出时微服务还没诞生
+微服务 2014 才被 Martin Fowler 提出
+Bounded Context ≈ 微服务边界
+但这是事后被借用 — 不是 DDD 本来就是为微服务设计
+
+[narration]
+讲到这里要澄清一个关键概念——DDD 不等于微服务。DDD 2003 提出时，微服务还没诞生。"微服务"概念是 2014 年 Martin Fowler 和 James Lewis 提出的。Evans 的 DDD 本来是给模块化单体用的。Bounded Context 约等于微服务边界这是 2015 年之后业内的共识——Sam Newman 2014 年《Building Microservices》直接说"Bounded Context 是识别微服务边界的最重要工具"——但这是事后被借用，不是 DDD 本来就是为微服务设计。所以工业界的实际状态——概念层 DDD 不等于微服务；工程实施层 DDD 等于微服务划分的最佳实践。
+
+---
+
+## 12 选用建议 — 4 阶段渐进路径
+
+[visual: timeline title=订单系统 4 阶段渐进路径]
+T=阶段 1 现在 — Clean Arch γ 单体 — 局部最优
+T=阶段 2 3-5 年后 — DDD 模块化单体 — 业务到多 BC
+T=阶段 3 更后期 — 拆部分 BC 为微服务 — 独立扩展需求
+T=阶段 4 成熟期 — DDD 战略级 — 多团队微服务
+
+[narration]
+对你公司订单系统场景的现实选用建议——4 阶段渐进路径。阶段 1 现在用 Clean Arch γ 单体——这是当前最大化收益的局部最优。阶段 2 3 到 5 年后业务扩展到多业务模块——升级到 DDD 模块化单体，Maven 多模块每模块按 BC 划分但仍在一个进程。阶段 3 更后期当某个 BC 真的需要独立部署时——拆出部分 BC 为独立服务加 DDD 战略级 Context Map。阶段 4 成熟期——多个事业部加业务领域专家驻场加异步事件驱动业务——上完整 DDD 战略级。关键 takeaway——不是"Clean Arch 单体" vs "DDD 微服务"二选一，而是 4 阶段渐进。跳级摔死。
+
+---
+
+## 13 中台战略失败潮 — 6 大表象 + 1 个根因
+
+[visual: layers title=2018 - 2022 中台战略失败潮 6 大表象]
+1 同时学多个独立大主题（DDD + 微服务 + K8s + 服务网格 + 分布式事务）
+2 聚合根边界识别错误的灾难放大（单体 1 周代价 / 微服务 1 年代价）
+3 网络调用失败模式 — 超时重试幂等熔断 DDD 没讲
+4 分布式事务的根本困难 — Saga TCC 补偿逻辑漏写
+5 基础设施成本超过业务收益 — K8s + 监控 + 链路追踪 一整套
+6 团队组织结构不适配 Conway's Law — 跨职能协调比单体还慢
+最深层根因 — 不是技术问题 是人性问题
+急于求成 + 急功近利 + 不求甚解 = 跟 5 条人性短板同源
+
+[narration]
+国内 2018 到 2022 年中台战略失败潮 6 大表象——第一同时学 DDD 加微服务加 K8s 加服务网格加分布式事务 5 件事一起没有一件学好。第二聚合根边界识别错误的灾难被微服务放大 100 倍。第三网络调用的失败模式 DDD 战术级根本没讲。第四分布式事务的根本困难——Saga TCC 补偿逻辑漏写一个分支就大量投诉。第五基础设施成本超过业务收益——100 人公司硬上微服务通常需要 5 到 8 名专职 SRE。第六团队组织结构不适配 Conway's Law。但这 6 个原因都是表象——最深层根因不是技术问题，是人性问题。急于求成加急功近利加不求甚解——跟 Origin §6 立的 5 条人性短板同源。
+
+---
+
+## 14 一句话精确总结 — 三层包含关系
+
+[visual: spotlight]
+Clean Arch ⊂ DDD 战术级 ⊂（DDD 战略级 + 微服务架构）
+每升一级
+适用场景的复杂度跃升一个数量级
+
+[narration]
+最后用一句话精确总结。Clean Arch 是单体应用加中等复杂度的工程依赖管理——进程内 4 层物理隔离。DDD 战术级是模块化单体或微服务加单 Bounded Context 内部的工程依赖管理——跟 Clean Arch 几乎同构。DDD 战略级是多 Bounded Context 协作或微服务编排——跨 BC 跨服务的业务边界加 Context Map 加异步事件加 Saga 补偿。包含关系——Clean Arch 是 DDD 战术级的子集，DDD 战术级是 DDD 战略级加微服务架构的子集。每升一级，适用场景的复杂度跃升一个数量级。所以学习路径必须是 Clean Arch γ 到 DDD 战术级到 DDD 战略级——逐级升级不跳。
+
+---
+
+## 15 Comparison 阶段总结 + 下一集预告
+
+[visual: recap title=Comparison 阶段你应该带走的 5 件事]
+1 张同构表 — Clean Arch γ ≈ DDD 战术级子集
+4 件 DDD 多的事 — Bounded Context / Domain Event / 统一语言 / 战略设计
+4 阶段渐进路径 — Clean Arch γ → 模块化单体 → 部分微服务 → 战略级
+1 个失败根因 — 中台战略失败潮 = 急于求成 + 不求甚解
+1 个真相 — Bob 大叔不是发明 是合成 + 简化 + 推广 DDD
+
+[narration]
+Comparison 阶段就到这里。你应该带走 5 件事——同构表、DDD 多的 4 件事、4 阶段渐进路径、中台战略失败潮的人性根因、Bob 大叔的真实贡献。Comparison 让你彻底理解——Bob 大叔不是在"发明"是在"搬运加提炼"——把 1972 Parnas 到 2009 Coplien-Reenskaug 50 年的工作合成简化命名为一本工业界能用的书。这是工程书写经典最稀缺的本事。但所有这些前因都指向一个最终命题——下一集我们切换到哲学家模式——同一套方法论在两个社会里命运彻底相反。看完你会理解为什么这本书在 2024 年的命运拐点等于 1968 年 Dijkstra 以来软件工程最大的一次利好。本集就到这里，下集见。
+
+---
