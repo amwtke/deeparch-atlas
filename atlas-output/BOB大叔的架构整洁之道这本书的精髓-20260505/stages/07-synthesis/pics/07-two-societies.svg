@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="760" fill="#0a0c10"/>
+
+  <defs>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#c04040"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#40c060"/>
+    </marker>
+  </defs>
+
+  <text x="600" y="32" font-size="20" fill="#e0e0e0" text-anchor="middle" font-weight="bold">社会性反转:Bob 方法论在两个社会里的命运</text>
+  <text x="600" y="56" font-size="12" fill="#888888" text-anchor="middle">同一套方法论 —— 在人的社会里是悖论(80% 失败);在 AI 的社会里是默认行为(7 条约束全部为零)</text>
+
+  <!-- 中间分隔线 -->
+  <line x1="600" y1="80" x2="600" y2="700" stroke="#333333" stroke-width="2" stroke-dasharray="4,4"/>
+
+  <!-- 左侧:人的社会 -->
+  <rect x="30" y="90" width="540" height="46" rx="5" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="300" y="115" font-size="16" fill="#ff8888" text-anchor="middle" font-weight="bold">人的社会(1995-2024,30 年)</text>
+  <text x="300" y="130" font-size="10" fill="#ffaaaa" text-anchor="middle">Bob 方法论 = 难以落地的理想 / 80% 项目失败</text>
+
+  <!-- 左侧 7 道栅栏 -->
+  <text x="50" y="160" font-size="11" fill="#ffaaaa" font-weight="bold">7 条约束阻挡 Bob 方法论的工程实施:</text>
+
+  <g font-size="10" fill="#ff8888">
+    <rect x="50" y="172" width="490" height="32" rx="3" fill="#3a1010" stroke="#c04040" stroke-width="1"/>
+    <text x="60" y="188" font-weight="bold">栅栏 1</text>
+    <text x="120" y="188">§6.1 趋利避害</text>
+    <text x="60" y="200" fill="#ffcccc">→ @Autowired 比手写 constructor 省事;省事是 dominant strategy</text>
+
+    <rect x="50" y="208" width="490" height="32" rx="3" fill="#3a1010" stroke="#c04040" stroke-width="1"/>
+    <text x="60" y="224" font-weight="bold">栅栏 2</text>
+    <text x="120" y="224">§6.2 短视</text>
+    <text x="60" y="236" fill="#ffcccc">→ Kahneman discounting bias;5 年后代价生理性看不见</text>
+
+    <rect x="50" y="244" width="490" height="32" rx="3" fill="#3a1010" stroke="#c04040" stroke-width="1"/>
+    <text x="60" y="260" font-weight="bold">栅栏 3</text>
+    <text x="120" y="260">§6.3 想当然</text>
+    <text x="60" y="272" fill="#ffcccc">→ 看图就懂,3 句话原文被绕过;视觉直觉胜过原文</text>
+
+    <rect x="50" y="280" width="490" height="32" rx="3" fill="#3a1010" stroke="#c04040" stroke-width="1"/>
+    <text x="60" y="296" font-weight="bold">栅栏 4</text>
+    <text x="120" y="296">§6.4 没真正理解就自以为是</text>
+    <text x="60" y="308" fill="#ffcccc">→ System 2 慢思考费力;赶进度时自动滑向 System 1</text>
+
+    <rect x="50" y="316" width="490" height="32" rx="3" fill="#3a1010" stroke="#c04040" stroke-width="1"/>
+    <text x="60" y="332" font-weight="bold">栅栏 5</text>
+    <text x="120" y="332">§6.5 不求甚解 + 变现导向</text>
+    <text x="60" y="344" fill="#ffcccc">→ 皮毛高变现,深究低变现;经济激励奖励皮毛</text>
+
+    <rect x="50" y="352" width="490" height="32" rx="3" fill="#3a1010" stroke="#c04040" stroke-width="1"/>
+    <text x="60" y="368" font-weight="bold">栅栏 6</text>
+    <text x="120" y="368">§C.X1 财务思维</text>
+    <text x="60" y="380" fill="#ffcccc">→ Leader 受财务训练,不肯为 5 年后投资</text>
+
+    <rect x="50" y="388" width="490" height="32" rx="3" fill="#3a1010" stroke="#c04040" stroke-width="1"/>
+    <text x="60" y="404" font-weight="bold">栅栏 7</text>
+    <text x="120" y="404">§C.X2 培养架构师成本太高时间太长</text>
+    <text x="60" y="416" fill="#ffcccc">→ 8-10 年实战 vs 1-2 年项目周期;预算 cover 不了</text>
+  </g>
+
+  <!-- 左侧 工程现实 -->
+  <rect x="50" y="438" width="490" height="100" rx="5" fill="#3a1010" stroke="#c04040" stroke-width="2"/>
+  <text x="295" y="458" font-size="12" fill="#ff8888" text-anchor="middle" font-weight="bold">工程实施现实(2018-2022 中台战略失败潮)</text>
+  <text x="60" y="478" font-size="9" fill="#ffaaaa">• Clean Arch 单体:50-60% α / 30-40% β / &lt;5% γ</text>
+  <text x="60" y="492" font-size="9" fill="#ffaaaa">• DDD 微服务化:80% 中台战略失败(同时学 5 件事 / BC 边界错代价 100x)</text>
+  <text x="60" y="506" font-size="9" fill="#ffaaaa">• 假 DIP / 形似神离 / Spring 全家桶 / 业务被框架锁死</text>
+  <text x="60" y="520" font-size="9" fill="#ffaaaa">• 信创时核心代码全要重写(C2 不可控的代价被时间错位转嫁)</text>
+  <text x="295" y="535" font-size="11" fill="#ff8888" text-anchor="middle" font-weight="bold">"Bob 方法论是给『不存在的理性程序员』设计的"</text>
+
+  <!-- 左侧 时间线 -->
+  <text x="50" y="560" font-size="10" fill="#ff8888" font-weight="bold">时间证据:</text>
+  <text x="50" y="578" font-size="9" fill="#ffaaaa">• 1972 Parnas 信息隐藏 → 30 年没普及到基层</text>
+  <text x="50" y="592" font-size="9" fill="#ffaaaa">• 2003 Evans DDD → 14 年只在大厂中台用</text>
+  <text x="50" y="606" font-size="9" fill="#ffaaaa">• 2017 Bob Clean Arch → 9 年 80% 项目仍 α/β</text>
+  <text x="50" y="620" font-size="9" fill="#ffaaaa">• 2018 Bob《Tragedy of Craftsmanship》→ 自己也认输</text>
+
+  <!-- 右侧:AI 的社会 -->
+  <rect x="630" y="90" width="540" height="46" rx="5" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="900" y="115" font-size="16" fill="#88ff88" text-anchor="middle" font-weight="bold">AI 的社会(2024+)</text>
+  <text x="900" y="130" font-size="10" fill="#aaffaa" text-anchor="middle">Bob 方法论 = 软件工程的第一性原理 / AI 默认遵守</text>
+
+  <!-- 右侧 7 条约束全部为零 -->
+  <text x="650" y="160" font-size="11" fill="#aaffaa" font-weight="bold">7 条约束对 AI 全部为零:</text>
+
+  <g font-size="10" fill="#88ff88">
+    <rect x="650" y="172" width="490" height="32" rx="3" fill="#103a10" stroke="#40c060" stroke-width="1"/>
+    <text x="660" y="188" font-weight="bold">→ 0</text>
+    <text x="700" y="188">趋利避害</text>
+    <text x="660" y="200" fill="#aaffaa">→ AI 写 50 行 interface 跟 1 行 @Autowired 一样快;省事诱因消失</text>
+
+    <rect x="650" y="208" width="490" height="32" rx="3" fill="#103a10" stroke="#40c060" stroke-width="1"/>
+    <text x="660" y="224" font-weight="bold">→ 0</text>
+    <text x="700" y="224">短视</text>
+    <text x="660" y="236" fill="#aaffaa">→ AI 主动预测 5 年后信创代价;5 年后变成"当下可见"</text>
+
+    <rect x="650" y="244" width="490" height="32" rx="3" fill="#103a10" stroke="#40c060" stroke-width="1"/>
+    <text x="660" y="260" font-weight="bold">→ 0</text>
+    <text x="700" y="260">想当然</text>
+    <text x="660" y="272" fill="#aaffaa">→ AI 主动追问"OrderUseCase 为什么 import Spring?";绕原文被卡住</text>
+
+    <rect x="650" y="280" width="490" height="32" rx="3" fill="#103a10" stroke="#40c060" stroke-width="1"/>
+    <text x="660" y="296" font-weight="bold">→ 0</text>
+    <text x="700" y="296">没真正理解就自以为是</text>
+    <text x="660" y="308" fill="#aaffaa">→ AI 把 System 2 成本从 30 分钟降到 30 秒;不再被迫滑向 System 1</text>
+
+    <rect x="650" y="316" width="490" height="32" rx="3" fill="#103a10" stroke="#40c060" stroke-width="1"/>
+    <text x="660" y="332" font-weight="bold">→ 0</text>
+    <text x="700" y="332">不求甚解 + 变现导向</text>
+    <text x="660" y="344" fill="#aaffaa">→ AI 即时引用 Bob/Evans 原话;深究边际成本接近零</text>
+
+    <rect x="650" y="352" width="490" height="32" rx="3" fill="#103a10" stroke="#40c060" stroke-width="1"/>
+    <text x="660" y="368" font-weight="bold">→ 0</text>
+    <text x="700" y="368">财务思维(X1)</text>
+    <text x="660" y="380" fill="#aaffaa">→ AI 让卓越架构边际成本逼近零;财务无理由砍</text>
+
+    <rect x="650" y="388" width="490" height="32" rx="3" fill="#103a10" stroke="#40c060" stroke-width="1"/>
+    <text x="660" y="404" font-weight="bold">→ 0</text>
+    <text x="700" y="404">架构师培养成本(X2)</text>
+    <text x="660" y="416" fill="#aaffaa">→ AI 在编码现场提供架构师级建议;8 年实战门槛大降</text>
+  </g>
+
+  <!-- 右侧 工程现实 -->
+  <rect x="650" y="438" width="490" height="100" rx="5" fill="#103a10" stroke="#40c060" stroke-width="2"/>
+  <text x="895" y="458" font-size="12" fill="#88ff88" text-anchor="middle" font-weight="bold">工程实施现实(2024+ 拐点)</text>
+  <text x="660" y="478" font-size="9" fill="#aaffaa">• Cursor / Claude Code / Copilot:让"做对"边际成本第一次 &lt; "省事"成本</text>
+  <text x="660" y="492" font-size="9" fill="#aaffaa">• AI 默认生成 γ 状态代码(业务定义 interface + 状态机自封)</text>
+  <text x="660" y="506" font-size="9" fill="#aaffaa">• AI 实时识别假 DIP + 主动建议反转</text>
+  <text x="660" y="520" font-size="9" fill="#aaffaa">• AI 帮做 BC 边界识别 + Saga 补偿模板;DDD 微服务门槛大降</text>
+  <text x="895" y="535" font-size="11" fill="#88ff88" text-anchor="middle" font-weight="bold">"Bob 方法论从『理想』变成『默认选项』"</text>
+
+  <!-- 右侧 时间线 -->
+  <text x="650" y="560" font-size="10" fill="#88ff88" font-weight="bold">2024 拐点:</text>
+  <text x="650" y="578" font-size="9" fill="#aaffaa">• ChatGPT GPT-4 (2023.3) → 第一次能精确遵守 Clean Arch 模式</text>
+  <text x="650" y="592" font-size="9" fill="#aaffaa">• Cursor (2023) / Claude Code (2024) → 编码现场即时建议</text>
+  <text x="650" y="606" font-size="9" fill="#aaffaa">• Devin / Aider / GPT Engineer (2024) → 端到端项目生成</text>
+  <text x="650" y="620" font-size="9" fill="#aaffaa">• Anthropic / OpenAI 推论模型 (2024-2025) → 深度推理系统设计</text>
+
+  <!-- 底部:历史性结论 -->
+  <rect x="80" y="650" width="1040" height="80" rx="5" fill="#1a1c20" stroke="#c08040" stroke-width="2"/>
+  <text x="600" y="671" font-size="13" fill="#ffaa55" text-anchor="middle" font-weight="bold">最终命题:Bob 方法论本身从来都是正确的,问题始终在『载体是人还是 AI』</text>
+  <text x="600" y="690" font-size="10" fill="#ffcc88" text-anchor="middle">在 AI 主导代码生成的时代,这本书会从『难以落地的理想』升格为『软件工程的第一性原理』,被 AI 默认遵守</text>
+  <text x="600" y="708" font-size="10" fill="#ffcc88" text-anchor="middle">同一套方法论,在两个社会里命运彻底相反 —— 这恰好证明思想本身没问题,问题在工程实施中的人性力量</text>
+  <text x="600" y="724" font-size="10" fill="#88ff88" text-anchor="middle" font-weight="bold">→ 软件工程可能正在迎来 1968 年 Dijkstra《Goto Considered Harmful》以来最大的一次利好</text>
+
+</svg>
