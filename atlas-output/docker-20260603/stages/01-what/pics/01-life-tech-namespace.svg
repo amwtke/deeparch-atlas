@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="nm" markerWidth="11" markerHeight="11" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#8a96a4"/>
+    </marker>
+    <marker id="nmok" markerWidth="11" markerHeight="11" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#40c060"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="680" fill="#0a0c10"/>
+
+  <text x="600" y="38" text-anchor="middle" font-size="25" fill="#e8eef5" font-weight="bold">namespace = 一间"单向玻璃房",六扇窗各管一类视图</text>
+  <text x="600" y="63" text-anchor="middle" font-size="13" fill="#7a8694">左:住户只看得见自己那一类东西,而且单向(物业看得进,你看不出);右:6 类 namespace 各自的真细节</text>
+
+  <line x1="560" y1="84" x2="560" y2="600" stroke="#2a3340" stroke-width="1.5" stroke-dasharray="4,5"/>
+  <text x="290" y="108" text-anchor="middle" font-size="17" fill="#ffd28a" font-weight="bold">🏠 生活:单向玻璃房</text>
+  <text x="860" y="108" text-anchor="middle" font-size="17" fill="#ffaa55" font-weight="bold">⚙ 技术:6 类 namespace</text>
+
+  <!-- the room -->
+  <rect x="120" y="140" width="320" height="200" rx="8" fill="#16120a" stroke="#c08040" stroke-width="3"/>
+  <circle cx="220" cy="240" r="20" fill="#2a1c0c" stroke="#c08040" stroke-width="1.8"/>
+  <text x="220" y="246" text-anchor="middle" font-size="14" fill="#ffc88a">住户</text>
+  <text x="220" y="285" text-anchor="middle" font-size="11" fill="#d2b48c">容器里的进程</text>
+  <text x="220" y="303" text-anchor="middle" font-size="10" fill="#9a8868">以为整个世界就这间屋</text>
+
+  <!-- one-way mirror on right wall -->
+  <rect x="435" y="170" width="12" height="140" fill="#3a4a5a" stroke="#88c0ff" stroke-width="1.5"/>
+  <text x="441" y="328" text-anchor="middle" font-size="9.5" fill="#88c0ff">单向玻璃</text>
+
+  <!-- property/host eye outside, looking IN (allowed) -->
+  <circle cx="500" cy="210" r="16" fill="#11161d" stroke="#40c060" stroke-width="1.6"/>
+  <text x="500" y="215" text-anchor="middle" font-size="13" fill="#88ff88">👁</text>
+  <text x="500" y="240" text-anchor="middle" font-size="9.5" fill="#88ff88">物业/宿主</text>
+  <line x1="484" y1="210" x2="450" y2="210" stroke="#40c060" stroke-width="2" marker-end="url(#nmok)"/>
+  <text x="467" y="200" text-anchor="middle" font-size="9" fill="#88ff88">✓看得进</text>
+
+  <!-- resident looking OUT (blocked) -->
+  <line x1="240" y1="230" x2="430" y2="230" stroke="#c04040" stroke-width="2" stroke-dasharray="5,4"/>
+  <text x="340" y="222" text-anchor="middle" font-size="9.5" fill="#ff8888">✗ 看不出去</text>
+
+  <!-- 6 windows tag list -->
+  <text x="130" y="368" font-size="11.5" fill="#ffaa55" font-weight="bold">六扇窗,各管一类:</text>
+  <text x="130" y="390" font-size="11" fill="#d2b48c">① 邻居  ② 水电网络  ③ 室内布局</text>
+  <text x="130" y="410" font-size="11" fill="#d2b48c">④ 门牌号  ⑤ 对讲系统  ⑥ 身份证</text>
+  <text x="130" y="438" font-size="10.5" fill="#9a8868" font-style="italic">关掉哪扇窗,你就看不见那一类 ——</text>
+  <text x="130" y="455" font-size="10.5" fill="#9a8868" font-style="italic">这正是"隔离视图"的含义</text>
+
+  <!-- arrow to tech -->
+  <line x1="448" y1="480" x2="556" y2="480" stroke="#8a96a4" stroke-width="1.6" stroke-dasharray="5,4" marker-end="url(#nm)"/>
+  <text x="300" y="500" text-anchor="middle" font-size="11" fill="#7a8694">六扇窗 = 六类 namespace</text>
+
+  <!-- ===== RIGHT: 6 ns rows ===== -->
+  <!-- header -->
+  <rect x="600" y="128" width="560" height="26" rx="4" fill="#241808" stroke="#7a5a2a" stroke-width="1"/>
+  <text x="612" y="146" font-size="11" fill="#c89868">窗 → namespace · 隔离什么 · 真实细节</text>
+
+  <!-- row1 pid -->
+  <rect x="600" y="160" width="560" height="68" rx="6" fill="#1a1206" stroke="#c08040" stroke-width="1.4"/>
+  <text x="615" y="184" font-size="13" fill="#ffaa55" font-weight="bold">① pid</text>
+  <text x="615" y="204" font-size="10.5" fill="#c89868">隔离:进程号空间(邻居)</text>
+  <text x="615" y="221" font-size="10" fill="#8a96a4">容器内自己是 PID 1;/proc 只列本 ns;unshare --pid --fork</text>
+
+  <!-- row2 net -->
+  <rect x="600" y="234" width="560" height="68" rx="6" fill="#1a1206" stroke="#c08040" stroke-width="1.4"/>
+  <text x="615" y="258" font-size="13" fill="#ffaa55" font-weight="bold">② net</text>
+  <text x="615" y="278" font-size="10.5" fill="#c89868">隔离:网络栈(水电网络入口)</text>
+  <text x="615" y="295" font-size="10" fill="#8a96a4">独立 eth0 / 路由表 / iptables / 端口;容器 80 ≠ 宿主 80</text>
+
+  <!-- row3 mnt -->
+  <rect x="600" y="308" width="560" height="68" rx="6" fill="#1a1206" stroke="#c08040" stroke-width="1.4"/>
+  <text x="615" y="332" font-size="13" fill="#ffaa55" font-weight="bold">③ mnt</text>
+  <text x="615" y="352" font-size="10.5" fill="#c89868">隔离:挂载点 / 文件系统视图(室内布局)</text>
+  <text x="615" y="369" font-size="10" fill="#8a96a4">独立挂载树;配 overlayfs + pivot_root 给出容器自己的 /</text>
+
+  <!-- row4 uts -->
+  <rect x="600" y="382" width="560" height="68" rx="6" fill="#1a1206" stroke="#c08040" stroke-width="1.4"/>
+  <text x="615" y="406" font-size="13" fill="#ffaa55" font-weight="bold">④ uts</text>
+  <text x="615" y="426" font-size="10.5" fill="#c89868">隔离:主机名 / 域名(门牌号)</text>
+  <text x="615" y="443" font-size="10" fill="#8a96a4">容器可设自己的 hostname,不影响宿主</text>
+
+  <!-- row5 ipc -->
+  <rect x="600" y="456" width="560" height="68" rx="6" fill="#1a1206" stroke="#c08040" stroke-width="1.4"/>
+  <text x="615" y="480" font-size="13" fill="#ffaa55" font-weight="bold">⑤ ipc</text>
+  <text x="615" y="500" font-size="10.5" fill="#c89868">隔离:进程间通信(对讲系统)</text>
+  <text x="615" y="517" font-size="10" fill="#8a96a4">独立 System V 信号量 / 共享内存 / 消息队列</text>
+
+  <!-- row6 user -->
+  <rect x="600" y="530" width="560" height="68" rx="6" fill="#1a1206" stroke="#c08040" stroke-width="1.4"/>
+  <text x="615" y="554" font-size="13" fill="#ffaa55" font-weight="bold">⑥ user</text>
+  <text x="615" y="574" font-size="10.5" fill="#c89868">隔离:UID / GID 映射(身份证)</text>
+  <text x="615" y="591" font-size="10" fill="#8a96a4">容器内 root(uid 0)↔ 宿主一个非特权用户 → 提权也伤不到宿主</text>
+
+  <!-- bottom one-liner -->
+  <rect x="120" y="618" width="1040" height="46" rx="9" fill="#11161d" stroke="#c08040" stroke-width="1.6"/>
+  <text x="640" y="640" text-anchor="middle" font-size="13" fill="#ffc48a" font-weight="bold">namespace 管"你能看见什么" —— 六扇窗各挡一类视图,而且单向:宿主俯瞰全部,容器只见自己。</text>
+  <text x="640" y="658" text-anchor="middle" font-size="10.5" fill="#c8a878">这就是为什么宿主能 ps 到容器进程,容器却看不到宿主(回看 01-what.md §2.1)。</text>
+</svg>

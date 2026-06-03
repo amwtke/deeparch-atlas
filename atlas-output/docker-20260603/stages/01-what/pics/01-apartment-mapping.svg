@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 730" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="730" fill="#0a0c10"/>
+
+  <text x="600" y="40" text-anchor="middle" font-size="26" fill="#e8eef5" font-weight="bold">类比映射:合租公寓 ↔ 容器</text>
+  <text x="600" y="66" text-anchor="middle" font-size="13.5" fill="#7a8694">一个类比兜住全部四个区。最关键的是第 2 行 —— "共用大楼地基" = "共用内核"</text>
+
+  <!-- column headers -->
+  <rect x="90" y="92" width="430" height="38" rx="7" fill="#11161d" stroke="#4a5568" stroke-width="1.4"/>
+  <text x="305" y="117" text-anchor="middle" font-size="15" fill="#cdd6e0" font-weight="bold">公寓楼(现实世界)</text>
+  <rect x="680" y="92" width="430" height="38" rx="7" fill="#11161d" stroke="#4080c0" stroke-width="1.4"/>
+  <text x="895" y="117" text-anchor="middle" font-size="15" fill="#bfe0ff" font-weight="bold">容器(技术世界)</text>
+
+  <!-- ===== Row 1: 别墅 / VM ===== -->
+  <rect x="90" y="148" width="430" height="50" rx="7" fill="#161a20" stroke="#4a5568" stroke-width="1.4"/>
+  <text x="305" y="170" text-anchor="middle" font-size="13" fill="#cdd6e0">独栋别墅 · 自带地基与水电系统</text>
+  <text x="305" y="188" text-anchor="middle" font-size="11" fill="#8a96a4">什么都自己来,贵且重</text>
+  <text x="600" y="180" text-anchor="middle" font-size="20" fill="#c04040">↔</text>
+  <rect x="680" y="148" width="430" height="50" rx="7" fill="#2a1212" stroke="#c04040" stroke-width="1.6"/>
+  <text x="895" y="170" text-anchor="middle" font-size="13" fill="#ff8888">虚拟机 · 自带一整套内核</text>
+  <text x="895" y="188" text-anchor="middle" font-size="11" fill="#d2a0a0">GB 级、秒级启动 —— 这就是"重"的来源</text>
+
+  <!-- ===== Row 2: 合租公寓 / 容器 —— 本质,强调 ===== -->
+  <rect x="80" y="208" width="1030" height="60" rx="9" fill="#0e1a12" stroke="#40c060" stroke-width="2.6"/>
+  <rect x="92" y="216" width="426" height="44" rx="6" fill="#13251a" stroke="#40c060" stroke-width="1.6"/>
+  <text x="305" y="236" text-anchor="middle" font-size="13.5" fill="#9bffb5" font-weight="bold">合租公寓楼 · 共用大楼地基 / 承重墙 / 主管道</text>
+  <text x="305" y="253" text-anchor="middle" font-size="11" fill="#7fd99f">你只租一套,地基是全楼共用的</text>
+  <text x="600" y="244" text-anchor="middle" font-size="22" fill="#40c060" font-weight="bold">↔</text>
+  <text x="600" y="226" text-anchor="middle" font-size="11" fill="#88ff88" font-weight="bold">★本质</text>
+  <rect x="682" y="216" width="426" height="44" rx="6" fill="#13251a" stroke="#40c060" stroke-width="1.6"/>
+  <text x="895" y="236" text-anchor="middle" font-size="13.5" fill="#9bffb5" font-weight="bold">容器 · 共用宿主机内核</text>
+  <text x="895" y="253" text-anchor="middle" font-size="11" fill="#7fd99f">没有自己的内核 —— 这一行解释了"为什么不是 VM"</text>
+
+  <!-- ===== Row 3: 防盗门 / namespace ===== -->
+  <rect x="90" y="278" width="430" height="50" rx="7" fill="#161a20" stroke="#4a5568" stroke-width="1.4"/>
+  <text x="305" y="300" text-anchor="middle" font-size="13" fill="#cdd6e0">防盗门 + 隔墙 · 看不见邻居家</text>
+  <text x="305" y="318" text-anchor="middle" font-size="11" fill="#8a96a4">你以为整个世界就你这套房</text>
+  <text x="600" y="310" text-anchor="middle" font-size="20" fill="#c08040">↔</text>
+  <text x="600" y="293" text-anchor="middle" font-size="10" fill="#ffaa55">墙一</text>
+  <rect x="680" y="278" width="430" height="50" rx="7" fill="#241808" stroke="#c08040" stroke-width="1.6"/>
+  <text x="895" y="300" text-anchor="middle" font-size="13" fill="#ffaa55">namespace · 看不见别的进程</text>
+  <text x="895" y="318" text-anchor="middle" font-size="11" fill="#c89868">pid / net / mnt / uts / ipc / user 各管一类视图</text>
+
+  <!-- ===== Row 4: 水电表 / cgroups ===== -->
+  <rect x="90" y="338" width="430" height="50" rx="7" fill="#161a20" stroke="#4a5568" stroke-width="1.4"/>
+  <text x="305" y="360" text-anchor="middle" font-size="13" fill="#cdd6e0">独立水电表 · 用量有上限</text>
+  <text x="305" y="378" text-anchor="middle" font-size="11" fill="#8a96a4">超额了物业给你限流</text>
+  <text x="600" y="370" text-anchor="middle" font-size="20" fill="#c08040">↔</text>
+  <text x="600" y="353" text-anchor="middle" font-size="10" fill="#ffaa55">墙二</text>
+  <rect x="680" y="338" width="430" height="50" rx="7" fill="#241808" stroke="#c08040" stroke-width="1.6"/>
+  <text x="895" y="360" text-anchor="middle" font-size="13" fill="#ffaa55">cgroups · CPU / 内存 / IO 配额</text>
+  <text x="895" y="378" text-anchor="middle" font-size="11" fill="#c89868">限制"能用多少",namespace 限制"能看见什么"</text>
+
+  <!-- ===== Row 5: 装修 / overlayfs ===== -->
+  <rect x="90" y="398" width="430" height="50" rx="7" fill="#161a20" stroke="#4a5568" stroke-width="1.4"/>
+  <text x="305" y="420" text-anchor="middle" font-size="13" fill="#cdd6e0">室内装修 · 退租拆了就没</text>
+  <text x="305" y="438" text-anchor="middle" font-size="11" fill="#8a96a4">墙、地板、家具,都是这套房的"内容"</text>
+  <text x="600" y="430" text-anchor="middle" font-size="20" fill="#4080c0">↔</text>
+  <text x="600" y="413" text-anchor="middle" font-size="10" fill="#88c0ff">易失</text>
+  <rect x="680" y="398" width="430" height="50" rx="7" fill="#142838" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="895" y="420" text-anchor="middle" font-size="13" fill="#88c0ff">overlayfs 根文件系统 · 容器删就没</text>
+  <text x="895" y="438" text-anchor="middle" font-size="11" fill="#7fa8cc">镜像层只读 + 容器层可写,叠出一个 /</text>
+
+  <!-- ===== Row 6: 储藏间 / volume ===== -->
+  <rect x="90" y="458" width="430" height="50" rx="7" fill="#161a20" stroke="#4a5568" stroke-width="1.4"/>
+  <text x="305" y="480" text-anchor="middle" font-size="13" fill="#cdd6e0">地下室储藏间 · 公寓拆了它还在</text>
+  <text x="305" y="498" text-anchor="middle" font-size="11" fill="#8a96a4">不属于这套房,独立存在</text>
+  <text x="600" y="490" text-anchor="middle" font-size="20" fill="#40c060">↔</text>
+  <text x="600" y="473" text-anchor="middle" font-size="10" fill="#88ff88">持久</text>
+  <rect x="680" y="458" width="430" height="50" rx="7" fill="#13251a" stroke="#40c060" stroke-width="1.6"/>
+  <text x="895" y="480" text-anchor="middle" font-size="13" fill="#88ff88">volume 数据卷 · 容器删了数据还在</text>
+  <text x="895" y="498" text-anchor="middle" font-size="11" fill="#7fd99f">在墙上凿洞,挂宿主的持久存储(数据库就靠它)</text>
+
+  <!-- ===== Row 7: 管道 / veth ===== -->
+  <rect x="90" y="518" width="430" height="50" rx="7" fill="#161a20" stroke="#4a5568" stroke-width="1.4"/>
+  <text x="305" y="540" text-anchor="middle" font-size="13" fill="#cdd6e0">管道井 + 接到市政的水管</text>
+  <text x="305" y="558" text-anchor="middle" font-size="11" fill="#8a96a4">楼内互通 + 通向外面世界</text>
+  <text x="600" y="550" text-anchor="middle" font-size="20" fill="#40c060">↔</text>
+  <text x="600" y="533" text-anchor="middle" font-size="10" fill="#88c0ff">网络</text>
+  <rect x="680" y="518" width="430" height="50" rx="7" fill="#13251a" stroke="#40c060" stroke-width="1.6"/>
+  <text x="895" y="540" text-anchor="middle" font-size="13" fill="#88ff88">veth pair + bridge · 接回宿主网络</text>
+  <text x="895" y="558" text-anchor="middle" font-size="11" fill="#7fd99f">一对虚拟网卡像一根管子,bridge 是虚拟交换机</text>
+
+  <!-- ===== Row 8: 物业 / runtime ===== -->
+  <rect x="90" y="578" width="430" height="50" rx="7" fill="#161a20" stroke="#4a5568" stroke-width="1.4"/>
+  <text x="305" y="600" text-anchor="middle" font-size="13" fill="#cdd6e0">物业 · 给你分房、发钥匙、签合同</text>
+  <text x="305" y="618" text-anchor="middle" font-size="11" fill="#8a96a4">你不自己砌墙,物业替你办妥</text>
+  <text x="600" y="610" text-anchor="middle" font-size="20" fill="#8040c0">↔</text>
+  <text x="600" y="593" text-anchor="middle" font-size="10" fill="#c088ff">出生</text>
+  <rect x="680" y="578" width="430" height="50" rx="7" fill="#1f1133" stroke="#8040c0" stroke-width="1.6"/>
+  <text x="895" y="600" text-anchor="middle" font-size="13" fill="#c088ff">docker → containerd → runc</text>
+  <text x="895" y="618" text-anchor="middle" font-size="11" fill="#a888d0">你敲一行命令,这条流水线替你把容器造出来</text>
+
+  <!-- bottom note -->
+  <rect x="160" y="648" width="880" height="60" rx="9" fill="#11161d" stroke="#c08040" stroke-width="1.6"/>
+  <text x="600" y="673" text-anchor="middle" font-size="14" fill="#ffc48a" font-weight="bold">记住这张表你就拿到了整套骨架:别墅(VM)自带地基,公寓(容器)共用地基。</text>
+  <text x="600" y="694" text-anchor="middle" font-size="12.5" fill="#c8a878">剩下的 namespace / cgroups / overlayfs / volume / veth / 物业流水线,都是"合住"这件事的配套细节。</text>
+</svg>

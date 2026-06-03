@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="arrowG" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#40c060"/>
+    </marker>
+  </defs>
+
+  <!-- dark background -->
+  <rect width="1200" height="700" fill="#0a0c10"/>
+
+  <!-- title -->
+  <text x="600" y="42" text-anchor="middle" font-size="27" fill="#e8eef5" font-weight="bold">虚拟机 vs 容器 —— 本质差别只在一层:谁拥有内核</text>
+  <text x="600" y="70" text-anchor="middle" font-size="14" fill="#7a8694">左边每个客人自带一整套地基；右边所有客人合住、共用一套地基</text>
+
+  <!-- divider -->
+  <line x1="600" y1="95" x2="600" y2="560" stroke="#2a3340" stroke-width="1.5" stroke-dasharray="4,5"/>
+
+  <!-- ============ LEFT: VM ============ -->
+  <text x="305" y="120" text-anchor="middle" font-size="19" fill="#ff8888" font-weight="bold">虚拟机 (VM)</text>
+
+  <!-- 3 VM stacks: App / Bin-Libs / Guest Kernel -->
+  <!-- VM1 -->
+  <rect x="65"  y="138" width="140" height="36" rx="5" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="135" y="161" text-anchor="middle" font-size="13" fill="#88c0ff">App</text>
+  <rect x="65"  y="178" width="140" height="32" rx="5" fill="#13202e" stroke="#3a5168" stroke-width="1.4"/>
+  <text x="135" y="199" text-anchor="middle" font-size="12" fill="#9fb4c8">Bin / Libs</text>
+  <rect x="65"  y="214" width="140" height="48" rx="5" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="135" y="237" text-anchor="middle" font-size="13" fill="#ff8888" font-weight="bold">Guest 内核</text>
+  <text x="135" y="253" text-anchor="middle" font-size="10.5" fill="#d99">一整套 OS</text>
+
+  <!-- VM2 -->
+  <rect x="235" y="138" width="140" height="36" rx="5" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="305" y="161" text-anchor="middle" font-size="13" fill="#88c0ff">App</text>
+  <rect x="235" y="178" width="140" height="32" rx="5" fill="#13202e" stroke="#3a5168" stroke-width="1.4"/>
+  <text x="305" y="199" text-anchor="middle" font-size="12" fill="#9fb4c8">Bin / Libs</text>
+  <rect x="235" y="214" width="140" height="48" rx="5" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="305" y="237" text-anchor="middle" font-size="13" fill="#ff8888" font-weight="bold">Guest 内核</text>
+  <text x="305" y="253" text-anchor="middle" font-size="10.5" fill="#d99">一整套 OS</text>
+
+  <!-- VM3 -->
+  <rect x="405" y="138" width="140" height="36" rx="5" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="475" y="161" text-anchor="middle" font-size="13" fill="#88c0ff">App</text>
+  <rect x="405" y="178" width="140" height="32" rx="5" fill="#13202e" stroke="#3a5168" stroke-width="1.4"/>
+  <text x="475" y="199" text-anchor="middle" font-size="12" fill="#9fb4c8">Bin / Libs</text>
+  <rect x="405" y="214" width="140" height="48" rx="5" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="475" y="237" text-anchor="middle" font-size="13" fill="#ff8888" font-weight="bold">Guest 内核</text>
+  <text x="475" y="253" text-anchor="middle" font-size="10.5" fill="#d99">一整套 OS</text>
+
+  <!-- Hypervisor band -->
+  <rect x="65" y="280" width="480" height="44" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="2"/>
+  <text x="305" y="307" text-anchor="middle" font-size="15" fill="#c088ff" font-weight="bold">Hypervisor (VMware / KVM / Xen)</text>
+
+  <!-- Host OS / kernel -->
+  <rect x="65" y="334" width="480" height="42" rx="6" fill="#1e3a30" stroke="#40c060" stroke-width="1.6"/>
+  <text x="305" y="360" text-anchor="middle" font-size="14" fill="#88ffbb">宿主机 OS / 内核</text>
+
+  <!-- Hardware -->
+  <rect x="65" y="386" width="480" height="42" rx="6" fill="#161a20" stroke="#4a5568" stroke-width="1.6"/>
+  <text x="305" y="412" text-anchor="middle" font-size="13.5" fill="#aab6c4">物理硬件  CPU · 内存 · 磁盘 · 网卡</text>
+
+  <!-- left callout -->
+  <rect x="65" y="452" width="480" height="74" rx="8" fill="#1a0e0e" stroke="#7a2a2a" stroke-width="1.4"/>
+  <text x="305" y="478" text-anchor="middle" font-size="13.5" fill="#ff9b9b" font-weight="bold">代价:每台 VM 扛一套 Guest 内核</text>
+  <text x="305" y="500" text-anchor="middle" font-size="12.5" fill="#d2a0a0">镜像 GB 级 · 启动 秒~分钟 · 内存先被内核吃掉一截</text>
+  <text x="305" y="518" text-anchor="middle" font-size="12.5" fill="#d2a0a0">强隔离:邻居崩了内核也不影响你</text>
+
+  <!-- ============ RIGHT: Container ============ -->
+  <text x="895" y="120" text-anchor="middle" font-size="19" fill="#88c0ff" font-weight="bold">容器 (Container)</text>
+
+  <!-- 3 containers: App / Bin-Libs ONLY (no kernel) -->
+  <!-- C1 -->
+  <rect x="655" y="138" width="140" height="36" rx="5" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="725" y="161" text-anchor="middle" font-size="13" fill="#88c0ff">App</text>
+  <rect x="655" y="178" width="140" height="32" rx="5" fill="#13202e" stroke="#3a5168" stroke-width="1.4"/>
+  <text x="725" y="199" text-anchor="middle" font-size="12" fill="#9fb4c8">Bin / Libs</text>
+  <text x="725" y="230" text-anchor="middle" font-size="11" fill="#5f6b78" font-style="italic">无 Guest 内核</text>
+
+  <!-- C2 -->
+  <rect x="825" y="138" width="140" height="36" rx="5" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="895" y="161" text-anchor="middle" font-size="13" fill="#88c0ff">App</text>
+  <rect x="825" y="178" width="140" height="32" rx="5" fill="#13202e" stroke="#3a5168" stroke-width="1.4"/>
+  <text x="895" y="199" text-anchor="middle" font-size="12" fill="#9fb4c8">Bin / Libs</text>
+  <text x="895" y="230" text-anchor="middle" font-size="11" fill="#5f6b78" font-style="italic">无 Guest 内核</text>
+
+  <!-- C3 -->
+  <rect x="995" y="138" width="140" height="36" rx="5" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="1065" y="161" text-anchor="middle" font-size="13" fill="#88c0ff">App</text>
+  <rect x="995" y="178" width="140" height="32" rx="5" fill="#13202e" stroke="#3a5168" stroke-width="1.4"/>
+  <text x="1065" y="199" text-anchor="middle" font-size="12" fill="#9fb4c8">Bin / Libs</text>
+  <text x="1065" y="230" text-anchor="middle" font-size="11" fill="#5f6b78" font-style="italic">无 Guest 内核</text>
+
+  <!-- container runtime band -->
+  <rect x="655" y="244" width="480" height="36" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.8"/>
+  <text x="895" y="267" text-anchor="middle" font-size="13.5" fill="#c088ff">容器运行时  containerd / runc(薄薄一层)</text>
+
+  <!-- shared host kernel - emphasized green, aligned with VM kernel row -->
+  <rect x="655" y="334" width="480" height="42" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="2.4"/>
+  <text x="895" y="354" text-anchor="middle" font-size="14.5" fill="#88ff88" font-weight="bold">宿主机内核(就这一个,所有容器共用)</text>
+  <text x="895" y="370" text-anchor="middle" font-size="11" fill="#7fd99f">namespace 隔离视图 · cgroups 限额 · 都在这里发生</text>
+
+  <!-- arrows from 3 containers down to shared kernel -->
+  <line x1="725" y1="244" x2="725" y2="332" stroke="#40c060" stroke-width="1.6" stroke-dasharray="5,4" marker-end="url(#arrowG)"/>
+  <line x1="895" y1="280" x2="895" y2="332" stroke="#40c060" stroke-width="1.6" stroke-dasharray="5,4" marker-end="url(#arrowG)"/>
+  <line x1="1065" y1="244" x2="1065" y2="332" stroke="#40c060" stroke-width="1.6" stroke-dasharray="5,4" marker-end="url(#arrowG)"/>
+
+  <!-- Hardware -->
+  <rect x="655" y="386" width="480" height="42" rx="6" fill="#161a20" stroke="#4a5568" stroke-width="1.6"/>
+  <text x="895" y="412" text-anchor="middle" font-size="13.5" fill="#aab6c4">物理硬件  CPU · 内存 · 磁盘 · 网卡</text>
+
+  <!-- right callout -->
+  <rect x="655" y="452" width="480" height="74" rx="8" fill="#0e1a12" stroke="#2a7a44" stroke-width="1.4"/>
+  <text x="895" y="478" text-anchor="middle" font-size="13.5" fill="#9bffb5" font-weight="bold">收益:0 个 Guest 内核,直接共用宿主内核</text>
+  <text x="895" y="500" text-anchor="middle" font-size="12.5" fill="#a0d2b0">镜像 MB 级 · 启动 毫秒级 · 几乎零额外开销</text>
+  <text x="895" y="518" text-anchor="middle" font-size="12.5" fill="#a0d2b0">弱隔离:大家共用一个内核,内核是共同命门</text>
+
+  <!-- punch line banner -->
+  <rect x="160" y="558" width="880" height="50" rx="9" fill="#11161d" stroke="#c08040" stroke-width="1.8"/>
+  <text x="600" y="580" text-anchor="middle" font-size="15" fill="#ffc48a" font-weight="bold">一句话:容器不是"轻量虚拟机"。它根本没有自己的内核 —— 它就是一个被内核圈起来的普通进程。</text>
+  <text x="600" y="600" text-anchor="middle" font-size="12.5" fill="#c8a878">VM 在硬件之上虚拟出"另一台机器";容器在同一个内核之上虚拟出"另一个视图"。</text>
+
+  <!-- legend -->
+  <rect x="430" y="632" width="340" height="56" rx="7" fill="#0d1117" stroke="#2a3340" stroke-width="1"/>
+  <rect x="446" y="645" width="14" height="14" rx="2" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="466" y="657" font-size="11" fill="#9fb4c8">共享内核 / 宿主</text>
+  <rect x="446" y="666" width="14" height="14" rx="2" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="466" y="678" font-size="11" fill="#9fb4c8">VM 自带内核(重)</text>
+  <rect x="606" y="645" width="14" height="14" rx="2" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="626" y="657" font-size="11" fill="#9fb4c8">应用 / 容器进程</text>
+  <rect x="606" y="666" width="14" height="14" rx="2" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="626" y="678" font-size="11" fill="#9fb4c8">虚拟化 / 运行时层</text>
+</svg>

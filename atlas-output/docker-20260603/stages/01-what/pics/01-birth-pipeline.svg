@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="bp" markerWidth="11" markerHeight="11" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#c088ff"/>
+    </marker>
+    <marker id="bg" markerWidth="11" markerHeight="11" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#40c060"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="620" fill="#0a0c10"/>
+
+  <text x="600" y="40" text-anchor="middle" font-size="26" fill="#e8eef5" font-weight="bold">出生流水线:一行 docker run 怎么变成一个容器</text>
+  <text x="600" y="66" text-anchor="middle" font-size="13.5" fill="#7a8694">四个角色接力,层与层之间靠 unix socket 上的 RPC 说话;真正"砌墙生孩子"的只有最后的 runc</text>
+
+  <!-- user actor -->
+  <circle cx="115" cy="120" r="20" fill="#161a20" stroke="#aab6c4" stroke-width="1.6"/>
+  <text x="115" y="126" text-anchor="middle" font-size="16" fill="#cdd6e0">你</text>
+  <rect x="155" y="102" width="300" height="38" rx="6" fill="#11161d" stroke="#4a5568" stroke-width="1.3"/>
+  <text x="305" y="126" text-anchor="middle" font-size="13.5" fill="#cdd6e0">$ docker run -d nginx</text>
+  <line x1="305" y1="142" x2="150" y2="186" stroke="#aab6c4" stroke-width="1.4" stroke-dasharray="4,3" marker-end="url(#bp)"/>
+
+  <!-- pipeline boxes -->
+  <!-- docker CLI -->
+  <rect x="70" y="190" width="160" height="74" rx="8" fill="#2a1648" stroke="#8040c0" stroke-width="1.8"/>
+  <text x="150" y="216" text-anchor="middle" font-size="14.5" fill="#c088ff" font-weight="bold">docker CLI</text>
+  <text x="150" y="236" text-anchor="middle" font-size="10.5" fill="#a888d0">人机交互</text>
+  <text x="150" y="252" text-anchor="middle" font-size="10.5" fill="#a888d0">把命令翻成 API 请求</text>
+
+  <!-- dockerd -->
+  <rect x="290" y="190" width="160" height="74" rx="8" fill="#2a1648" stroke="#8040c0" stroke-width="1.8"/>
+  <text x="370" y="216" text-anchor="middle" font-size="14.5" fill="#c088ff" font-weight="bold">dockerd</text>
+  <text x="370" y="236" text-anchor="middle" font-size="10.5" fill="#a888d0">Docker 守护进程</text>
+  <text x="370" y="252" text-anchor="middle" font-size="10.5" fill="#a888d0">管 build / 网络 / volume</text>
+
+  <!-- containerd -->
+  <rect x="510" y="190" width="160" height="74" rx="8" fill="#2a1648" stroke="#8040c0" stroke-width="1.8"/>
+  <text x="590" y="216" text-anchor="middle" font-size="14.5" fill="#c088ff" font-weight="bold">containerd</text>
+  <text x="590" y="236" text-anchor="middle" font-size="10.5" fill="#a888d0">容器生命周期管理</text>
+  <text x="590" y="252" text-anchor="middle" font-size="10.5" fill="#a888d0">拉镜像 / 管运行状态</text>
+
+  <!-- shim -->
+  <rect x="730" y="190" width="160" height="74" rx="8" fill="#2a1648" stroke="#8040c0" stroke-width="1.8"/>
+  <text x="810" y="214" text-anchor="middle" font-size="13.5" fill="#c088ff" font-weight="bold">containerd-shim</text>
+  <text x="810" y="234" text-anchor="middle" font-size="10.5" fill="#a888d0">每个容器一个</text>
+  <text x="810" y="250" text-anchor="middle" font-size="10.5" fill="#a888d0">容器的"常驻监护人"</text>
+
+  <!-- runc -->
+  <rect x="950" y="190" width="160" height="74" rx="8" fill="#3a1e5f" stroke="#8040c0" stroke-width="2.4"/>
+  <text x="1030" y="214" text-anchor="middle" font-size="14.5" fill="#c088ff" font-weight="bold">runc</text>
+  <text x="1030" y="234" text-anchor="middle" font-size="10.5" fill="#ffaa55">真正砌墙的人</text>
+  <text x="1030" y="250" text-anchor="middle" font-size="10.5" fill="#ffaa55">用完即退(exit)</text>
+
+  <!-- arrows + socket labels -->
+  <line x1="230" y1="227" x2="288" y2="227" stroke="#8040c0" stroke-width="1.8" marker-end="url(#bp)"/>
+  <line x1="450" y1="227" x2="508" y2="227" stroke="#8040c0" stroke-width="1.8" marker-end="url(#bp)"/>
+  <line x1="670" y1="227" x2="728" y2="227" stroke="#8040c0" stroke-width="1.8" marker-end="url(#bp)"/>
+  <line x1="890" y1="227" x2="948" y2="227" stroke="#8040c0" stroke-width="1.8" marker-end="url(#bp)"/>
+
+  <!-- socket tags below arrows -->
+  <text x="259" y="294" text-anchor="middle" font-size="9.5" fill="#7fa8cc">REST / HTTP</text>
+  <text x="259" y="307" text-anchor="middle" font-size="9" fill="#5f7488">/var/run/docker.sock</text>
+  <text x="479" y="294" text-anchor="middle" font-size="9.5" fill="#7fa8cc">gRPC</text>
+  <text x="479" y="307" text-anchor="middle" font-size="9" fill="#5f7488">containerd.sock</text>
+  <text x="699" y="294" text-anchor="middle" font-size="9.5" fill="#7fa8cc">创建 shim 进程</text>
+  <text x="699" y="307" text-anchor="middle" font-size="9" fill="#5f7488">每容器一个</text>
+  <text x="919" y="294" text-anchor="middle" font-size="9.5" fill="#ffaa55">fork + exec runc</text>
+  <text x="919" y="307" text-anchor="middle" font-size="9" fill="#5f7488">跑一个程序,非 RPC</text>
+
+  <!-- unix socket little nodes -->
+  <circle cx="259" cy="227" r="6" fill="#1e5f3a" stroke="#40c060" stroke-width="1.4"/>
+  <circle cx="479" cy="227" r="6" fill="#1e5f3a" stroke="#40c060" stroke-width="1.4"/>
+
+  <!-- runc -> container (the actual wall-building) -->
+  <rect x="860" y="430" width="260" height="90" rx="9" fill="#142838" stroke="#4080c0" stroke-width="2"/>
+  <text x="990" y="456" text-anchor="middle" font-size="14" fill="#88c0ff" font-weight="bold">容器进程(PID 1)</text>
+  <text x="990" y="478" text-anchor="middle" font-size="11" fill="#7fa8cc">nginx 真正跑起来</text>
+  <text x="990" y="498" text-anchor="middle" font-size="11" fill="#7fa8cc">墙都砌好了,它住进去</text>
+
+  <line x1="1030" y1="264" x2="1010" y2="428" stroke="#40c060" stroke-width="2.2" stroke-dasharray="6,4" marker-end="url(#bg)"/>
+  <rect x="700" y="350" width="330" height="56" rx="7" fill="#0e1a12" stroke="#2a7a44" stroke-width="1.4"/>
+  <text x="865" y="372" text-anchor="middle" font-size="11.5" fill="#9bffb5" font-weight="bold">runc 调内核三件套:</text>
+  <text x="865" y="392" text-anchor="middle" font-size="10.5" fill="#7fd99f">clone(CLONE_NEW*) 建 namespace · 写 cgroups · pivot_root 换根</text>
+
+  <!-- shim adopts container -->
+  <line x1="810" y1="264" x2="900" y2="428" stroke="#8040c0" stroke-width="1.6" stroke-dasharray="3,3"/>
+  <text x="770" y="470" text-anchor="middle" font-size="11" fill="#a888d0">runc 退出后,</text>
+  <text x="770" y="487" text-anchor="middle" font-size="11" fill="#a888d0">容器被 shim "收养"</text>
+  <text x="770" y="504" text-anchor="middle" font-size="10" fill="#7a6090">(所以重启 dockerd 容器不死)</text>
+
+  <!-- bottom note -->
+  <rect x="70" y="546" width="1040" height="56" rx="9" fill="#11161d" stroke="#c08040" stroke-width="1.6"/>
+  <text x="590" y="569" text-anchor="middle" font-size="13.5" fill="#ffc48a" font-weight="bold">为什么拆这么多层?每层只干一件事,用 socket 解耦 —— 这正是 Docker 后来被"拆解"的伏笔。</text>
+  <text x="590" y="590" text-anchor="middle" font-size="12" fill="#c8a878">这一节先记住"谁是谁";每层为什么独立、socket 上报文长什么样,留到后面专门钻。</text>
+
+  <!-- legend -->
+  <rect x="70" y="430" width="250" height="90" rx="7" fill="#0d1117" stroke="#2a3340" stroke-width="1"/>
+  <text x="80" y="450" font-size="11" fill="#9fb4c8" font-weight="bold">读图例</text>
+  <rect x="80" y="460" width="13" height="13" rx="2" fill="#2a1648" stroke="#8040c0"/>
+  <text x="99" y="471" font-size="10.5" fill="#9fb4c8">常驻守护进程</text>
+  <rect x="80" y="480" width="13" height="13" rx="2" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="99" y="491" font-size="10.5" fill="#9fb4c8">用完即退(runc)</text>
+  <circle cx="86" cy="506" r="6" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="99" y="510" font-size="10.5" fill="#9fb4c8">unix socket 端点</text>
+</svg>

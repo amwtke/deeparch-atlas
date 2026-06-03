@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="pg" markerWidth="11" markerHeight="11" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#40c060"/>
+    </marker>
+    <marker id="pr" markerWidth="11" markerHeight="11" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#c04040"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="680" fill="#0a0c10"/>
+
+  <text x="600" y="40" text-anchor="middle" font-size="25" fill="#e8eef5" font-weight="bold">集装箱的真正创新:不是箱子,是"标准接口" → 可移植</text>
+  <text x="600" y="66" text-anchor="middle" font-size="13.5" fill="#7a8694">工人+机器封进箱子一起搬;只要大楼的"水电制式"对得上,搬到哪栋楼都能开工,箱里的人无感</text>
+
+  <!-- ===== the container (workshop) ===== -->
+  <rect x="455" y="96" width="290" height="150" rx="8" fill="#142838" stroke="#4080c0" stroke-width="2.4"/>
+  <text x="600" y="120" text-anchor="middle" font-size="14.5" fill="#88c0ff" font-weight="bold">集装箱 = 车间(造铅笔)</text>
+  <!-- worker icon -->
+  <circle cx="530" cy="158" r="13" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="530" y="163" text-anchor="middle" font-size="12" fill="#bfe0ff">人</text>
+  <text x="530" y="190" text-anchor="middle" font-size="10.5" fill="#88c0ff">工人 = 进程</text>
+  <!-- machine icon -->
+  <rect x="600" y="145" width="28" height="26" rx="4" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="614" y="163" text-anchor="middle" font-size="12" fill="#bfe0ff">⚙</text>
+  <text x="640" y="190" text-anchor="middle" font-size="10.5" fill="#88c0ff">机器 = 依赖/libs</text>
+  <text x="600" y="216" text-anchor="middle" font-size="11.5" fill="#7fa8cc" font-weight="bold">= 应用 + 它自带的运行时(一起封进箱子)</text>
+
+  <!-- standardized interface strip -->
+  <rect x="455" y="252" width="290" height="34" rx="5" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+  <text x="600" y="274" text-anchor="middle" font-size="12" fill="#ffaa55" font-weight="bold">标准接口:OCI 镜像格式 + Linux syscall ABI</text>
+  <!-- 3 plugs -->
+  <rect x="500" y="286" width="40" height="14" rx="2" fill="#c08040"/>
+  <rect x="580" y="286" width="40" height="14" rx="2" fill="#c08040"/>
+  <rect x="660" y="286" width="40" height="14" rx="2" fill="#c08040"/>
+  <text x="600" y="316" text-anchor="middle" font-size="10.5" fill="#c89868">箱子底部是"标准插头"(水/电/煤气接口都按统一规格)</text>
+
+  <!-- ===== Linux hosts (compatible) ===== -->
+  <!-- host sockets row -->
+  <g>
+    <!-- Ubuntu -->
+    <rect x="70" y="470" width="200" height="150" rx="8" fill="#11161d" stroke="#40c060" stroke-width="1.8"/>
+    <rect x="110" y="456" width="120" height="16" rx="3" fill="#1e5f3a" stroke="#40c060" stroke-width="1.4"/>
+    <text x="170" y="500" text-anchor="middle" font-size="13.5" fill="#88ff88" font-weight="bold">Ubuntu 主机</text>
+    <text x="170" y="524" text-anchor="middle" font-size="11" fill="#7fd99f">Linux 内核 ABI</text>
+    <text x="170" y="542" text-anchor="middle" font-size="10.5" fill="#7fd99f">(标准水电制式)</text>
+    <text x="170" y="572" text-anchor="middle" font-size="12" fill="#88ff88">✓ 插上就开工</text>
+    <text x="170" y="592" text-anchor="middle" font-size="10" fill="#5f8a6f">箱里工人无感</text>
+
+    <!-- CentOS -->
+    <rect x="300" y="470" width="200" height="150" rx="8" fill="#11161d" stroke="#40c060" stroke-width="1.8"/>
+    <rect x="340" y="456" width="120" height="16" rx="3" fill="#1e5f3a" stroke="#40c060" stroke-width="1.4"/>
+    <text x="400" y="500" text-anchor="middle" font-size="13.5" fill="#88ff88" font-weight="bold">CentOS 主机</text>
+    <text x="400" y="524" text-anchor="middle" font-size="11" fill="#7fd99f">Linux 内核 ABI</text>
+    <text x="400" y="542" text-anchor="middle" font-size="10.5" fill="#7fd99f">(标准水电制式)</text>
+    <text x="400" y="572" text-anchor="middle" font-size="12" fill="#88ff88">✓ 插上就开工</text>
+    <text x="400" y="592" text-anchor="middle" font-size="10" fill="#5f8a6f">不同发行版也没事</text>
+
+    <!-- Cloud -->
+    <rect x="530" y="470" width="200" height="150" rx="8" fill="#11161d" stroke="#40c060" stroke-width="1.8"/>
+    <rect x="570" y="456" width="120" height="16" rx="3" fill="#1e5f3a" stroke="#40c060" stroke-width="1.4"/>
+    <text x="630" y="500" text-anchor="middle" font-size="13.5" fill="#88ff88" font-weight="bold">云主机</text>
+    <text x="630" y="524" text-anchor="middle" font-size="11" fill="#7fd99f">Linux 内核 ABI</text>
+    <text x="630" y="542" text-anchor="middle" font-size="10.5" fill="#7fd99f">(标准水电制式)</text>
+    <text x="630" y="572" text-anchor="middle" font-size="12" fill="#88ff88">✓ 插上就开工</text>
+    <text x="630" y="592" text-anchor="middle" font-size="10" fill="#5f8a6f">本机→云,一键搬</text>
+  </g>
+
+  <!-- ===== Windows/Mac host (incompatible, needs adapter) ===== -->
+  <rect x="800" y="470" width="320" height="150" rx="8" fill="#1a0e0e" stroke="#c04040" stroke-width="1.8"/>
+  <rect x="900" y="456" width="120" height="16" rx="3" fill="#5f1e1e" stroke="#c04040" stroke-width="1.4"/>
+  <text x="960" y="498" text-anchor="middle" font-size="13.5" fill="#ff8888" font-weight="bold">Windows / Mac 主机</text>
+  <text x="960" y="520" text-anchor="middle" font-size="11" fill="#d2a0a0">内核制式不同(电压不对)</text>
+  <!-- adapter box -->
+  <rect x="845" y="536" width="230" height="38" rx="6" fill="#241808" stroke="#c08040" stroke-width="1.8"/>
+  <text x="960" y="559" text-anchor="middle" font-size="11.5" fill="#ffaa55" font-weight="bold">转换器:偷偷塞一台 Linux VM</text>
+  <text x="960" y="592" text-anchor="middle" font-size="10.5" fill="#c89868">⚠ 必须先接适配器,才能插这个标准箱(Docker Desktop 就这么干的)</text>
+
+  <!-- arrows: container -> Linux hosts (direct) -->
+  <line x1="540" y1="300" x2="200" y2="452" stroke="#40c060" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#pg)"/>
+  <line x1="590" y1="302" x2="400" y2="452" stroke="#40c060" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#pg)"/>
+  <line x1="640" y1="300" x2="630" y2="452" stroke="#40c060" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#pg)"/>
+  <!-- arrow: container -> Windows (needs adapter) -->
+  <line x1="700" y1="300" x2="945" y2="452" stroke="#c04040" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#pr)"/>
+
+  <text x="270" y="360" text-anchor="middle" font-size="12.5" fill="#88ff88" font-weight="bold">同一个箱子,Linux 大楼之间随便搬 →</text>
+  <text x="880" y="362" text-anchor="middle" font-size="12" fill="#ff9b9b" font-weight="bold">← 搬到"异制式"大楼,得先接转换器</text>
+
+  <!-- bottom caption -->
+  <rect x="110" y="632" width="980" height="42" rx="8" fill="#11161d" stroke="#c08040" stroke-width="1.6"/>
+  <text x="600" y="652" text-anchor="middle" font-size="13" fill="#ffc48a" font-weight="bold">可移植 = 把"工人+机器"和接口一起标准化(这就是 OCI 存在的理由);但前提是目标大楼提供兼容的"水电"(内核 ABI)。</text>
+  <text x="600" y="668" text-anchor="middle" font-size="10.5" fill="#9a8868">这也回扣了灵魂问题:正因为共用内核,容器才轻、才能"插上就跑";也正因为共用内核,它只能插到"同制式"的内核上。</text>
+</svg>

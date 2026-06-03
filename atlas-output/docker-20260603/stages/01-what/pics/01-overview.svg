@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="aP" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#c088ff"/>
+    </marker>
+    <marker id="aB" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#4080c0"/>
+    </marker>
+    <marker id="aGn" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#40c060"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="660" fill="#0a0c10"/>
+
+  <text x="600" y="40" text-anchor="middle" font-size="26" fill="#e8eef5" font-weight="bold">Docker 容器全景骨架图 —— 四个区,一眼摆位置</text>
+  <text x="600" y="66" text-anchor="middle" font-size="13.5" fill="#7a8694">中心是容器本体;三条手臂分别是「怎么造出来」「网络」「存储」;所有墙都落在底部那条共享内核上</text>
+
+  <!-- ===== 区③ 出生流水线 (top) ===== -->
+  <circle cx="92" cy="112" r="15" fill="#3a1e5f" stroke="#8040c0" stroke-width="2"/>
+  <text x="92" y="118" text-anchor="middle" font-size="15" fill="#c088ff" font-weight="bold">③</text>
+  <text x="118" y="118" font-size="14.5" fill="#c088ff" font-weight="bold">出生流水线:你敲的 docker run 怎么变成一个容器</text>
+
+  <rect x="150" y="135" width="115" height="40" rx="6" fill="#2a1648" stroke="#8040c0" stroke-width="1.8"/>
+  <text x="207" y="160" text-anchor="middle" font-size="13" fill="#c088ff">docker CLI</text>
+  <rect x="310" y="135" width="115" height="40" rx="6" fill="#2a1648" stroke="#8040c0" stroke-width="1.8"/>
+  <text x="367" y="160" text-anchor="middle" font-size="13" fill="#c088ff">dockerd</text>
+  <rect x="470" y="135" width="115" height="40" rx="6" fill="#2a1648" stroke="#8040c0" stroke-width="1.8"/>
+  <text x="527" y="160" text-anchor="middle" font-size="13" fill="#c088ff">containerd</text>
+  <rect x="630" y="135" width="115" height="40" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="2.2"/>
+  <text x="687" y="155" text-anchor="middle" font-size="13" fill="#c088ff" font-weight="bold">runc</text>
+  <text x="687" y="169" text-anchor="middle" font-size="9.5" fill="#a070d0">真正砌墙</text>
+
+  <line x1="265" y1="155" x2="308" y2="155" stroke="#8040c0" stroke-width="1.6" marker-end="url(#aP)"/>
+  <line x1="425" y1="155" x2="468" y2="155" stroke="#8040c0" stroke-width="1.6" marker-end="url(#aP)"/>
+  <line x1="585" y1="155" x2="628" y2="155" stroke="#8040c0" stroke-width="1.6" marker-end="url(#aP)"/>
+  <text x="425" y="128" text-anchor="middle" font-size="9.5" fill="#7a6090">unix socket 上的 RPC,一跳一跳下传</text>
+
+  <!-- runc creates the container: arrow down -->
+  <line x1="687" y1="175" x2="687" y2="232" stroke="#8040c0" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#aP)"/>
+  <text x="700" y="208" font-size="10.5" fill="#a070d0">clone() + 砌墙</text>
+
+  <!-- ===== 中心:容器本体 (区①) ===== -->
+  <circle cx="92" cy="270" r="15" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+  <text x="92" y="276" text-anchor="middle" font-size="15" fill="#ffaa55" font-weight="bold">①</text>
+  <text x="118" y="276" font-size="14.5" fill="#ffaa55" font-weight="bold">容器本体:一个被三道墙圈起来的进程</text>
+
+  <!-- namespace ring (outer dashed orange) -->
+  <rect x="360" y="296" width="430" height="208" rx="14" fill="none" stroke="#c08040" stroke-width="2.2" stroke-dasharray="8,5"/>
+  <text x="575" y="288" text-anchor="middle" font-size="12.5" fill="#ffaa55">墙一 · namespace(只能看见墙内:pid / net / mnt / uts / ipc / user)</text>
+
+  <!-- container body (blue) -->
+  <rect x="392" y="318" width="366" height="138" rx="9" fill="#142838" stroke="#4080c0" stroke-width="2"/>
+  <text x="575" y="342" text-anchor="middle" font-size="15" fill="#88c0ff" font-weight="bold">容器 = 一个普通进程</text>
+  <rect x="470" y="356" width="210" height="40" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="575" y="381" text-anchor="middle" font-size="13" fill="#bfe0ff">PID 1 : nginx / java / ...</text>
+  <text x="575" y="420" text-anchor="middle" font-size="11" fill="#7fa8cc">在容器里看自己是 1 号进程,在宿主上其实只是某个普通 PID</text>
+  <text x="575" y="438" text-anchor="middle" font-size="11" fill="#7fa8cc">它以为自己独占整台机器 —— 那是"墙"造出来的错觉</text>
+
+  <!-- cgroups meter (orange, left edge inside ring) -->
+  <rect x="372" y="356" width="14" height="100" rx="3" fill="#3a2410" stroke="#c08040" stroke-width="1.6"/>
+  <rect x="372" y="406" width="14" height="50" rx="3" fill="#c08040"/>
+  <text x="379" y="476" text-anchor="middle" font-size="10.5" fill="#ffaa55">墙二 cgroups</text>
+  <text x="379" y="490" text-anchor="middle" font-size="9.5" fill="#c89868">用量有顶</text>
+
+  <!-- overlay floor (区④ left link) -->
+  <rect x="392" y="464" width="366" height="30" rx="6" fill="#173b2a" stroke="#40c060" stroke-width="1.6"/>
+  <text x="575" y="484" text-anchor="middle" font-size="11.5" fill="#88ffbb">墙三 · overlayfs 根文件系统 /(镜像分层叠出来的)</text>
+
+  <!-- ===== 区② 网络 (right) ===== -->
+  <circle cx="828" cy="270" r="15" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="828" y="276" text-anchor="middle" font-size="15" fill="#88c0ff" font-weight="bold">②</text>
+  <text x="854" y="276" font-size="14" fill="#88c0ff" font-weight="bold">网络</text>
+
+  <!-- container eth0 -->
+  <rect x="820" y="330" width="80" height="34" rx="5" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="860" y="352" text-anchor="middle" font-size="11.5" fill="#88c0ff">eth0</text>
+  <!-- veth -->
+  <line x1="790" y1="347" x2="818" y2="347" stroke="#4080c0" stroke-width="2"/>
+  <text x="930" y="352" font-size="10.5" fill="#7fa8cc">veth pair</text>
+  <line x1="900" y1="347" x2="945" y2="347" stroke="#4080c0" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#aGn)"/>
+  <!-- bridge -->
+  <rect x="948" y="328" width="100" height="38" rx="5" fill="#1e5f3a" stroke="#40c060" stroke-width="1.8"/>
+  <text x="998" y="346" text-anchor="middle" font-size="11.5" fill="#88ff88">bridge</text>
+  <text x="998" y="360" text-anchor="middle" font-size="10" fill="#7fd99f">docker0</text>
+  <!-- host nic -->
+  <rect x="948" y="392" width="100" height="34" rx="5" fill="#1e5f3a" stroke="#40c060" stroke-width="1.6"/>
+  <text x="998" y="414" text-anchor="middle" font-size="11" fill="#88ff88">宿主 eth0</text>
+  <line x1="998" y1="366" x2="998" y2="390" stroke="#40c060" stroke-width="1.8" marker-end="url(#aGn)"/>
+  <!-- to internet -->
+  <rect x="1070" y="392" width="78" height="34" rx="5" fill="#161a20" stroke="#4a5568" stroke-width="1.4"/>
+  <text x="1109" y="414" text-anchor="middle" font-size="11" fill="#aab6c4">外网</text>
+  <line x1="1048" y1="409" x2="1068" y2="409" stroke="#40c060" stroke-width="1.6" marker-end="url(#aGn)"/>
+  <text x="934" y="450" text-anchor="middle" font-size="10.5" fill="#7fa8cc">net namespace 把网络栈隔离,再用 veth + bridge 接回宿主</text>
+
+  <!-- ===== 区④ 存储 (bottom-left) ===== -->
+  <circle cx="92" cy="540" r="15" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="92" y="546" text-anchor="middle" font-size="15" fill="#88ff88" font-weight="bold">④</text>
+  <text x="118" y="546" font-size="14.5" fill="#88ff88" font-weight="bold">存储:易失的根 ⨯ 持久的卷</text>
+
+  <rect x="150" y="558" width="240" height="74" rx="7" fill="#142838" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="270" y="580" text-anchor="middle" font-size="12" fill="#88c0ff" font-weight="bold">overlayfs 根</text>
+  <text x="270" y="600" text-anchor="middle" font-size="10.5" fill="#7fa8cc">镜像层叠出来,容器写在最上层</text>
+  <text x="270" y="618" text-anchor="middle" font-size="10.5" fill="#d99">容器删 → 写的东西全没</text>
+
+  <rect x="410" y="558" width="240" height="74" rx="7" fill="#173b2a" stroke="#40c060" stroke-width="1.8"/>
+  <text x="530" y="580" text-anchor="middle" font-size="12" fill="#88ff88" font-weight="bold">volume(数据卷)</text>
+  <text x="530" y="600" text-anchor="middle" font-size="10.5" fill="#7fd99f">在墙上凿洞,挂宿主的持久存储</text>
+  <text x="530" y="618" text-anchor="middle" font-size="10.5" fill="#7fd99f">容器删 → 数据还在</text>
+
+  <!-- ===== 底部:共享内核 ===== -->
+  <rect x="700" y="520" width="448" height="58" rx="8" fill="#1e5f3a" stroke="#40c060" stroke-width="2.4"/>
+  <text x="924" y="544" text-anchor="middle" font-size="14" fill="#88ff88" font-weight="bold">Linux 宿主机内核(共享地基)</text>
+  <text x="924" y="565" text-anchor="middle" font-size="10.5" fill="#7fd99f">三道墙 + 网络 + 存储,全是这个内核提供的能力</text>
+
+  <!-- legend -->
+  <rect x="700" y="592" width="448" height="52" rx="7" fill="#0d1117" stroke="#2a3340" stroke-width="1"/>
+  <rect x="714" y="604" width="13" height="13" rx="2" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="733" y="615" font-size="10.5" fill="#9fb4c8">容器/进程</text>
+  <rect x="822" y="604" width="13" height="13" rx="2" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="841" y="615" font-size="10.5" fill="#9fb4c8">隔离原语</text>
+  <rect x="930" y="604" width="13" height="13" rx="2" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="949" y="615" font-size="10.5" fill="#9fb4c8">运行时栈</text>
+  <rect x="1038" y="604" width="13" height="13" rx="2" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="1057" y="615" font-size="10.5" fill="#9fb4c8">内核/宿主</text>
+  <text x="714" y="635" font-size="10" fill="#6a7684">虚线 = 逻辑连接 / 砌墙动作 · 实线 = 物理边界</text>
+</svg>

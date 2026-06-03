@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="cm" markerWidth="11" markerHeight="11" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#8a96a4"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="620" fill="#0a0c10"/>
+
+  <text x="600" y="38" text-anchor="middle" font-size="25" fill="#e8eef5" font-weight="bold">cgroups = 墙上三块表:计量、配额、超额就处理</text>
+  <text x="600" y="63" text-anchor="middle" font-size="13" fill="#7a8694">左:电/水/煤气三块表,各有上限;右:cgroup v2 的三个真实控制器,带真参数</text>
+
+  <line x1="560" y1="84" x2="560" y2="540" stroke="#2a3340" stroke-width="1.5" stroke-dasharray="4,5"/>
+  <text x="290" y="108" text-anchor="middle" font-size="17" fill="#ffd28a" font-weight="bold">🏠 生活:三块表</text>
+  <text x="860" y="108" text-anchor="middle" font-size="17" fill="#ffaa55" font-weight="bold">⚙ 技术:cgroup v2 控制器</text>
+
+  <!-- ===== 电表 / CPU ===== -->
+  <rect x="90" y="135" width="430" height="108" rx="8" fill="#16120a" stroke="#c08040" stroke-width="2"/>
+  <circle cx="145" cy="189" r="30" fill="#2a1c0c" stroke="#c08040" stroke-width="2"/>
+  <line x1="145" y1="189" x2="162" y2="172" stroke="#ffaa55" stroke-width="2.4"/>
+  <text x="145" y="234" text-anchor="middle" font-size="10" fill="#ffaa55">电表</text>
+  <text x="200" y="162" font-size="13" fill="#ffc88a" font-weight="bold">电(CPU)</text>
+  <text x="200" y="184" font-size="11" fill="#d2b48c">配额:半颗 CPU</text>
+  <text x="200" y="206" font-size="11" fill="#88ff88">超额 → 限流(降速,不断电)</text>
+  <text x="200" y="227" font-size="9.5" fill="#9a8868">用太猛?给你调慢,但不杀你</text>
+
+  <!-- ===== 水表 / IO ===== -->
+  <rect x="90" y="253" width="430" height="108" rx="8" fill="#16120a" stroke="#c08040" stroke-width="2"/>
+  <circle cx="145" cy="307" r="30" fill="#2a1c0c" stroke="#4080c0" stroke-width="2"/>
+  <line x1="145" y1="307" x2="130" y2="290" stroke="#88c0ff" stroke-width="2.4"/>
+  <text x="145" y="352" text-anchor="middle" font-size="10" fill="#88c0ff">水表</text>
+  <text x="200" y="280" font-size="13" fill="#bfe0ff" font-weight="bold">水(磁盘 IO)</text>
+  <text x="200" y="302" font-size="11" fill="#d2b48c">配额:读 10 MB/s</text>
+  <text x="200" y="324" font-size="11" fill="#88ff88">超额 → 限流(降速)</text>
+  <text x="200" y="345" font-size="9.5" fill="#9a8868">放水太快?把龙头拧小</text>
+
+  <!-- ===== 煤气表 / 内存 ===== -->
+  <rect x="90" y="371" width="430" height="108" rx="8" fill="#1a0e0e" stroke="#c04040" stroke-width="2"/>
+  <circle cx="145" cy="425" r="30" fill="#2a0c0c" stroke="#c04040" stroke-width="2"/>
+  <line x1="145" y1="425" x2="160" y2="442" stroke="#ff8888" stroke-width="2.4"/>
+  <text x="145" y="470" text-anchor="middle" font-size="10" fill="#ff8888">煤气表</text>
+  <text x="200" y="398" font-size="13" fill="#ff9b9b" font-weight="bold">煤气(内存)</text>
+  <text x="200" y="420" font-size="11" fill="#d2a0a0">配额:512 MB</text>
+  <text x="200" y="442" font-size="11" fill="#ff8888">超额 → 掐断(危险!直接断)</text>
+  <text x="200" y="463" font-size="9.5" fill="#b88">内存不能"慢慢用",超了只能杀</text>
+
+  <!-- ===== RIGHT: cgroup v2 ===== -->
+  <!-- cpu.max -->
+  <rect x="600" y="135" width="560" height="108" rx="8" fill="#1a1206" stroke="#c08040" stroke-width="1.6"/>
+  <text x="615" y="160" font-size="13" fill="#ffaa55" font-weight="bold">cpu.max</text>
+  <rect x="700" y="146" width="200" height="24" rx="4" fill="#0d1117" stroke="#3a5168"/>
+  <text x="800" y="163" text-anchor="middle" font-size="11" fill="#9fd9a0">50000 100000</text>
+  <text x="615" y="190" font-size="10.5" fill="#c89868">含义:每 100ms 只给 50ms CPU = 半颗</text>
+  <text x="615" y="212" font-size="10.5" fill="#88ff88">超了 → CFS 节流(throttle),任务被调慢</text>
+  <text x="615" y="232" font-size="9.5" fill="#8a96a4">nr_throttled / throttled_usec 可在 cpu.stat 看到</text>
+
+  <!-- io.max -->
+  <rect x="600" y="253" width="560" height="108" rx="8" fill="#1a1206" stroke="#c08040" stroke-width="1.6"/>
+  <text x="615" y="278" font-size="13" fill="#ffaa55" font-weight="bold">io.max</text>
+  <rect x="690" y="264" width="280" height="24" rx="4" fill="#0d1117" stroke="#3a5168"/>
+  <text x="830" y="281" text-anchor="middle" font-size="10.5" fill="#9fd9a0">8:0 rbps=10485760</text>
+  <text x="615" y="308" font-size="10.5" fill="#c89868">含义:设备 8:0 读限速 10 MB/s</text>
+  <text x="615" y="330" font-size="10.5" fill="#88ff88">超了 → blk 限流,IO 被排队拖慢</text>
+  <text x="615" y="350" font-size="9.5" fill="#8a96a4">wbps / riops / wiops 同理可设</text>
+
+  <!-- memory.max -->
+  <rect x="600" y="371" width="560" height="108" rx="8" fill="#1f0e0e" stroke="#c04040" stroke-width="1.6"/>
+  <text x="615" y="396" font-size="13" fill="#ff9b9b" font-weight="bold">memory.max</text>
+  <rect x="740" y="382" width="170" height="24" rx="4" fill="#0d1117" stroke="#5f3a3a"/>
+  <text x="825" y="399" text-anchor="middle" font-size="11" fill="#ffb0b0">536870912</text>
+  <text x="615" y="426" font-size="10.5" fill="#d2a0a0">含义:硬上限 512 MiB(= 512×1024×1024)</text>
+  <text x="615" y="448" font-size="10.5" fill="#ff8888">超了 → OOM killer 直接杀进程</text>
+  <text x="615" y="468" font-size="9.5" fill="#8a96a4">memory.events 里 oom_kill 计数 +1</text>
+
+  <!-- mapping arrows -->
+  <line x1="522" y1="189" x2="598" y2="189" stroke="#8a96a4" stroke-width="1.4" stroke-dasharray="5,4" marker-end="url(#cm)"/>
+  <line x1="522" y1="307" x2="598" y2="307" stroke="#8a96a4" stroke-width="1.4" stroke-dasharray="5,4" marker-end="url(#cm)"/>
+  <line x1="522" y1="425" x2="598" y2="425" stroke="#c04040" stroke-width="1.6" stroke-dasharray="5,4" marker-end="url(#cm)"/>
+
+  <!-- bottom note -->
+  <rect x="90" y="494" width="1070" height="50" rx="8" fill="#11161d" stroke="#c08040" stroke-width="1.6"/>
+  <text x="625" y="516" text-anchor="middle" font-size="12.5" fill="#ffc48a" font-weight="bold">真实位置:/sys/fs/cgroup/&lt;容器&gt;/{cpu.max, memory.max, io.max} —— cgroup v2 把所有控制器收进同一棵层级树。</text>
+  <text x="625" y="534" text-anchor="middle" font-size="10.5" fill="#c8a878">关键区别:CPU/IO 超额是"限速"(降级),内存超额是"OOM kill"(处决)—— 因为内存超了无法降速使用。</text>
+
+  <!-- bottom caption -->
+  <text x="600" y="572" text-anchor="middle" font-size="13" fill="#9fb4c8">namespace 管"看得见什么",cgroups 管"用得了多少" —— 两道独立的墙。</text>
+  <text x="600" y="594" text-anchor="middle" font-size="11" fill="#6a7684">所以"容器里 free -m 看到宿主全部内存"才会发生:那是 namespace 没挡住的视图,cgroups 只挡用量。</text>
+</svg>

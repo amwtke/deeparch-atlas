@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="wg" markerWidth="11" markerHeight="11" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#40c060"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="640" fill="#0a0c10"/>
+
+  <text x="600" y="40" text-anchor="middle" font-size="26" fill="#e8eef5" font-weight="bold">心法:Docker = 砌墙(隔离) + 凿洞(受控连通)</text>
+  <text x="600" y="66" text-anchor="middle" font-size="13.5" fill="#7a8694">墙把容器关起来;洞是在某一扇 namespace 墙上,为"通信"和"持久化"特意开的受控通道</text>
+
+  <!-- ===== cgroups ceiling (墙①) ===== -->
+  <rect x="330" y="150" width="440" height="34" rx="5" fill="#5f3a1e" stroke="#c08040" stroke-width="2.2"/>
+  <text x="550" y="172" text-anchor="middle" font-size="13" fill="#ffaa55" font-weight="bold">墙① cgroups 天花板 —— 你能用多少(CPU / 内存 / IO 限高)</text>
+
+  <!-- ===== room body, namespace walls (墙②) ===== -->
+  <rect x="330" y="190" width="440" height="234" rx="4" fill="#0e1a26" stroke="#c08040" stroke-width="4"/>
+  <text x="550" y="210" text-anchor="middle" font-size="12.5" fill="#ffaa55">墙② namespace 视图墙 —— 你能看见什么</text>
+  <text x="550" y="227" text-anchor="middle" font-size="10.5" fill="#c89868">6 扇窗:pid · net · mnt · uts · ipc · user(图中只画被凿洞的 net 和 mnt)</text>
+
+  <!-- process inside -->
+  <rect x="430" y="250" width="240" height="56" rx="8" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="550" y="274" text-anchor="middle" font-size="14" fill="#bfe0ff" font-weight="bold">PID 1 · nginx</text>
+  <text x="550" y="293" text-anchor="middle" font-size="10.5" fill="#88c0ff">墙内的那个普通进程</text>
+
+  <!-- overlayfs floor (地板,不是墙) -->
+  <rect x="334" y="392" width="432" height="28" rx="3" fill="#173b2a" stroke="#40c060" stroke-width="1.6"/>
+  <text x="550" y="411" text-anchor="middle" font-size="11.5" fill="#88ffbb">地板:overlayfs 根 /(镜像分层叠出来 —— 是地板,不是墙)</text>
+
+  <!-- ===== 洞① net 窗 on right wall -> veth -> 外网 ===== -->
+  <!-- hole in right wall -->
+  <rect x="762" y="250" width="16" height="44" fill="#0a0c10" stroke="#40c060" stroke-width="2"/>
+  <text x="745" y="244" text-anchor="middle" font-size="10" fill="#88ff88">net 窗(开洞)</text>
+  <!-- veth host end -->
+  <rect x="828" y="252" width="86" height="40" rx="6" fill="#173b2a" stroke="#40c060" stroke-width="1.6"/>
+  <text x="871" y="270" text-anchor="middle" font-size="10.5" fill="#88ffbb">veth</text>
+  <text x="871" y="284" text-anchor="middle" font-size="9" fill="#7fd99f">host 端</text>
+  <line x1="670" y1="272" x2="826" y2="272" stroke="#40c060" stroke-width="2.4" marker-end="url(#wg)"/>
+  <!-- to bridge / internet -->
+  <rect x="960" y="248" width="120" height="48" rx="7" fill="#1e5f3a" stroke="#40c060" stroke-width="1.8"/>
+  <text x="1020" y="268" text-anchor="middle" font-size="11.5" fill="#88ff88">docker0 → 外网</text>
+  <text x="1020" y="285" text-anchor="middle" font-size="9.5" fill="#7fd99f">bridge + NAT</text>
+  <line x1="914" y1="272" x2="958" y2="272" stroke="#40c060" stroke-width="2" marker-end="url(#wg)"/>
+  <text x="935" y="330" text-anchor="middle" font-size="12.5" fill="#88ff88" font-weight="bold">洞① veth pair</text>
+  <text x="935" y="348" text-anchor="middle" font-size="11" fill="#7fd99f">凿穿 net 墙 → 对外通信</text>
+  <text x="935" y="364" text-anchor="middle" font-size="10" fill="#5f8a6f">没这个洞,容器被网络墙焖死</text>
+
+  <!-- ===== 洞② mnt hole in floor -> volume -> host disk ===== -->
+  <rect x="492" y="392" width="36" height="28" fill="#0a0c10" stroke="#40c060" stroke-width="2"/>
+  <text x="510" y="384" text-anchor="middle" font-size="9.5" fill="#88ff88">mnt 开洞</text>
+  <line x1="510" y1="420" x2="510" y2="470" stroke="#40c060" stroke-width="2.4" stroke-dasharray="6,4" marker-end="url(#wg)"/>
+  <!-- host disk cylinder -->
+  <ellipse cx="510" cy="478" rx="92" ry="13" fill="#1e5f3a" stroke="#40c060" stroke-width="1.8"/>
+  <rect x="418" y="478" width="184" height="54" fill="#1e5f3a" stroke="#40c060" stroke-width="1.8"/>
+  <ellipse cx="510" cy="532" rx="92" ry="13" fill="#173b2a" stroke="#40c060" stroke-width="1.8"/>
+  <line x1="418" y1="478" x2="418" y2="532" stroke="#40c060" stroke-width="1.8"/>
+  <line x1="602" y1="478" x2="602" y2="532" stroke="#40c060" stroke-width="1.8"/>
+  <text x="510" y="505" text-anchor="middle" font-size="11" fill="#88ff88" font-weight="bold">宿主持久磁盘</text>
+  <text x="510" y="521" text-anchor="middle" font-size="9" fill="#7fd99f">/var/lib/docker/volumes</text>
+  <text x="690" y="492" text-anchor="middle" font-size="12.5" fill="#88ff88" font-weight="bold">洞② volume</text>
+  <text x="690" y="510" text-anchor="middle" font-size="11" fill="#7fd99f">凿穿 mnt 墙 → 持久化</text>
+  <text x="690" y="526" text-anchor="middle" font-size="10" fill="#5f8a6f">没这个洞,数据随容器死</text>
+
+  <!-- left summary panel -->
+  <rect x="40" y="190" width="250" height="234" rx="9" fill="#11161d" stroke="#2a3340" stroke-width="1.3"/>
+  <text x="55" y="214" font-size="13.5" fill="#e8eef5" font-weight="bold">数清楚</text>
+  <text x="55" y="240" font-size="12" fill="#ffaa55" font-weight="bold">墙(隔离)= 2 类</text>
+  <text x="55" y="260" font-size="11" fill="#c89868">· namespace(一排 6 扇窗)</text>
+  <text x="55" y="277" font-size="11" fill="#c89868">· cgroups(配额天花板)</text>
+  <text x="55" y="300" font-size="11.5" fill="#88ffbb" font-weight="bold">地板 = overlayfs</text>
+  <text x="55" y="317" font-size="10.5" fill="#7fd99f">(墙内的根 /,不算墙)</text>
+  <text x="55" y="342" font-size="12" fill="#88ff88" font-weight="bold">洞(连通)= 2 个</text>
+  <text x="55" y="362" font-size="11" fill="#7fd99f">· veth → 凿 net 墙</text>
+  <text x="55" y="379" font-size="11" fill="#7fd99f">· volume → 凿 mnt 墙</text>
+  <text x="55" y="404" font-size="10.5" fill="#9fb4c8" font-style="italic">妙:每个洞都凿在</text>
+  <text x="55" y="419" font-size="10.5" fill="#9fb4c8" font-style="italic">某一扇 ns 墙上</text>
+
+  <!-- bottom one-liner -->
+  <rect x="120" y="566" width="960" height="54" rx="9" fill="#11161d" stroke="#c08040" stroke-width="1.8"/>
+  <text x="600" y="589" text-anchor="middle" font-size="14" fill="#ffc48a" font-weight="bold">Docker = 用 namespace + cgroups 砌墙(隔离),再在 net 墙和 mnt 墙上各凿一个受控的洞(veth 通信 / volume 持久)。</text>
+  <text x="600" y="609" text-anchor="middle" font-size="12" fill="#c8a878">overlayfs 是墙内的地板。整套容器,就这么点东西。</text>
+</svg>

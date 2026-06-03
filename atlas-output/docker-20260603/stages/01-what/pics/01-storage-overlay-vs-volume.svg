@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 580" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="su" markerWidth="11" markerHeight="11" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#88c0ff"/>
+    </marker>
+    <marker id="sg" markerWidth="11" markerHeight="11" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#40c060"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="580" fill="#0a0c10"/>
+
+  <text x="600" y="40" text-anchor="middle" font-size="26" fill="#e8eef5" font-weight="bold">存储:易失的 overlayfs 根 ⨯ 持久的 volume 卷</text>
+  <text x="600" y="66" text-anchor="middle" font-size="13.5" fill="#7a8694">它俩是反义词:一个随容器生死,一个独立于容器存在。数据库为什么必须挂卷,这张图就解释了</text>
+
+  <line x1="600" y1="92" x2="600" y2="520" stroke="#2a3340" stroke-width="1.5" stroke-dasharray="4,5"/>
+
+  <!-- ===== LEFT: overlayfs ===== -->
+  <text x="305" y="118" text-anchor="middle" font-size="17" fill="#88c0ff" font-weight="bold">overlayfs — 镜像叠出来的根(易失)</text>
+
+  <!-- merged -->
+  <rect x="95" y="138" width="420" height="42" rx="6" fill="#142838" stroke="#4080c0" stroke-width="2"/>
+  <text x="305" y="164" text-anchor="middle" font-size="13" fill="#88c0ff" font-weight="bold">merged:容器眼里那个统一的 /</text>
+
+  <!-- upperdir (writable) -->
+  <rect x="95" y="196" width="420" height="48" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="305" y="216" text-anchor="middle" font-size="13" fill="#bfe0ff" font-weight="bold">upperdir — 容器可写层</text>
+  <text x="305" y="234" text-anchor="middle" font-size="10.5" fill="#88c0ff">容器启动后所有的写都落在这里</text>
+
+  <!-- lowerdirs (image read-only layers) -->
+  <rect x="115" y="258" width="380" height="34" rx="5" fill="#173b2a" stroke="#40c060" stroke-width="1.5"/>
+  <text x="305" y="280" text-anchor="middle" font-size="11.5" fill="#88ffbb">镜像层 3(只读)  例:你 COPY 进去的代码</text>
+  <rect x="115" y="296" width="380" height="34" rx="5" fill="#163524" stroke="#40c060" stroke-width="1.5"/>
+  <text x="305" y="318" text-anchor="middle" font-size="11.5" fill="#88ffbb">镜像层 2(只读)  例:apt install 的依赖</text>
+  <rect x="115" y="334" width="380" height="34" rx="5" fill="#142f1f" stroke="#40c060" stroke-width="1.5"/>
+  <text x="305" y="356" text-anchor="middle" font-size="11.5" fill="#88ffbb">镜像层 1(只读)  base:debian rootfs</text>
+
+  <text x="305" y="388" text-anchor="middle" font-size="11" fill="#7fd99f">多个只读层 + 一个可写层,从下往上叠 → merged</text>
+
+  <!-- copy-up illustration -->
+  <rect x="150" y="408" width="120" height="30" rx="5" fill="#163524" stroke="#40c060" stroke-width="1.4"/>
+  <text x="210" y="428" text-anchor="middle" font-size="10.5" fill="#88ffbb">只读层的 a.conf</text>
+  <line x1="270" y1="423" x2="350" y2="423" stroke="#88c0ff" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#su)"/>
+  <text x="310" y="414" text-anchor="middle" font-size="9.5" fill="#7fa8cc">改它 → copy-up</text>
+  <rect x="352" y="408" width="120" height="30" rx="5" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.4"/>
+  <text x="412" y="428" text-anchor="middle" font-size="10.5" fill="#bfe0ff">复制到可写层再改</text>
+
+  <!-- ephemeral warning -->
+  <rect x="95" y="452" width="420" height="56" rx="8" fill="#1a0e0e" stroke="#7a2a2a" stroke-width="1.4"/>
+  <text x="305" y="475" text-anchor="middle" font-size="12.5" fill="#ff9b9b" font-weight="bold">容器删除 → upperdir 连同所有写入一起蒸发</text>
+  <text x="305" y="495" text-anchor="middle" font-size="11" fill="#d2a0a0">所以容器是"无状态"的:重建一个,写过的东西全没了</text>
+
+  <!-- ===== RIGHT: volume ===== -->
+  <text x="895" y="118" text-anchor="middle" font-size="17" fill="#88ff88" font-weight="bold">volume — 挂宿主的持久存储(持久)</text>
+
+  <!-- container with mountpoint -->
+  <rect x="700" y="140" width="390" height="120" rx="9" fill="#142838" stroke="#4080c0" stroke-width="2"/>
+  <text x="895" y="166" text-anchor="middle" font-size="13.5" fill="#88c0ff" font-weight="bold">容器(mysql)</text>
+  <text x="895" y="188" text-anchor="middle" font-size="11" fill="#7fa8cc">容器里大部分路径走 overlayfs(易失)</text>
+  <rect x="745" y="204" width="300" height="42" rx="6" fill="#13251a" stroke="#40c060" stroke-width="2"/>
+  <text x="895" y="224" text-anchor="middle" font-size="12.5" fill="#88ff88" font-weight="bold">挂载点 /var/lib/mysql</text>
+  <text x="895" y="240" text-anchor="middle" font-size="10" fill="#7fd99f">这个目录被"凿洞",直通宿主</text>
+
+  <!-- pipe down to host disk -->
+  <line x1="895" y1="260" x2="895" y2="338" stroke="#40c060" stroke-width="2.4" stroke-dasharray="6,4" marker-end="url(#sg)"/>
+  <text x="980" y="302" text-anchor="middle" font-size="10.5" fill="#7fd99f">bind mount</text>
+  <text x="980" y="316" text-anchor="middle" font-size="9.5" fill="#5f8a6f">绕过 overlay,直接落盘</text>
+
+  <!-- host disk cylinder -->
+  <ellipse cx="895" cy="350" rx="120" ry="16" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <rect x="775" y="350" width="240" height="70" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <ellipse cx="895" cy="420" rx="120" ry="16" fill="#173b2a" stroke="#40c060" stroke-width="2"/>
+  <line x1="775" y1="350" x2="775" y2="420" stroke="#40c060" stroke-width="2"/>
+  <line x1="1015" y1="350" x2="1015" y2="420" stroke="#40c060" stroke-width="2"/>
+  <text x="895" y="384" text-anchor="middle" font-size="12" fill="#88ff88" font-weight="bold">宿主磁盘</text>
+  <text x="895" y="402" text-anchor="middle" font-size="9.5" fill="#7fd99f">/var/lib/docker/volumes/db/_data</text>
+
+  <!-- persistent note -->
+  <rect x="700" y="452" width="390" height="56" rx="8" fill="#0e1a12" stroke="#2a7a44" stroke-width="1.4"/>
+  <text x="895" y="475" text-anchor="middle" font-size="12.5" fill="#9bffb5" font-weight="bold">容器删除 → 卷还在宿主上,数据毫发无损</text>
+  <text x="895" y="495" text-anchor="middle" font-size="11" fill="#a0d2b0">新容器挂上同一个卷 → 数据库立刻恢复(有状态服务靠这个)</text>
+
+  <!-- bottom takeaway -->
+  <rect x="170" y="526" width="860" height="44" rx="8" fill="#11161d" stroke="#c08040" stroke-width="1.6"/>
+  <text x="600" y="553" text-anchor="middle" font-size="13.5" fill="#ffc48a" font-weight="bold">口诀:无状态的东西交给 overlayfs(随容器生死),有状态的数据挂 volume(独立于容器活着)。</text>
+</svg>
