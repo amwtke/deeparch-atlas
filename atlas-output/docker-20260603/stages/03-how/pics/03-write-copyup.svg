@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="cu" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#88c0ff"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="640" fill="#0a0c10"/>
+
+  <text x="600" y="36" text-anchor="middle" font-size="24" fill="#e8eef5" font-weight="bold">支线二:三次写操作,穿过 overlay 的三条路</text>
+  <text x="600" y="60" text-anchor="middle" font-size="12.5" fill="#7a8694">新写直落 upper;改旧先 copy_up 再改;删除放 whiteout 遮挡 —— 下层永远不动</text>
+
+  <!-- ===== left: three ops ===== -->
+  <rect x="50" y="110" width="310" height="76" rx="8" fill="#0d1117" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="205" y="134" text-anchor="middle" font-size="11" fill="#9fd9a0">① echo hit &gt;&gt; /var/log/access.log</text>
+  <text x="205" y="156" text-anchor="middle" font-size="9.5" fill="#7fa8cc">写一个镜像里没有的新文件</text>
+  <text x="205" y="174" text-anchor="middle" font-size="9.5" fill="#88c0ff">→ 直接落 upper,最简单</text>
+
+  <rect x="50" y="206" width="310" height="86" rx="8" fill="#0d1117" stroke="#c08040" stroke-width="1.6"/>
+  <text x="205" y="230" text-anchor="middle" font-size="11" fill="#9fd9a0">② vi /etc/nginx/nginx.conf</text>
+  <text x="205" y="252" text-anchor="middle" font-size="9.5" fill="#7fa8cc">改一个躺在只读层 L2 里的旧文件</text>
+  <text x="205" y="270" text-anchor="middle" font-size="9.5" fill="#ffaa55">→ 内核先把整个文件复制到 upper</text>
+  <text x="205" y="286" text-anchor="middle" font-size="9.5" fill="#ffaa55">(copy_up),再在副本上改</text>
+
+  <rect x="50" y="312" width="310" height="76" rx="8" fill="#0d1117" stroke="#c04040" stroke-width="1.6"/>
+  <text x="205" y="336" text-anchor="middle" font-size="11" fill="#9fd9a0">③ rm /usr/share/nginx/default.html</text>
+  <text x="205" y="358" text-anchor="middle" font-size="9.5" fill="#7fa8cc">删一个只读层里的文件 —— 烧死的盘怎么删?</text>
+  <text x="205" y="376" text-anchor="middle" font-size="9.5" fill="#ff8888">→ 在 upper 放一个 whiteout 标记,遮住它</text>
+
+  <!-- ===== center stack ===== -->
+  <rect x="430" y="110" width="380" height="48" rx="7" fill="#142838" stroke="#4080c0" stroke-width="2"/>
+  <text x="620" y="130" text-anchor="middle" font-size="11.5" fill="#88c0ff" font-weight="bold">merged —— 容器看到的 /</text>
+  <text x="620" y="148" text-anchor="middle" font-size="8.5" fill="#7fa8cc">读取查找顺序:upper → L3 → L2 → L1(从上往下,先见即得)</text>
+
+  <rect x="430" y="174" width="380" height="118" rx="7" fill="#16263a" stroke="#4080c0" stroke-width="2"/>
+  <text x="620" y="196" text-anchor="middle" font-size="11" fill="#bfe0ff" font-weight="bold">upper(本容器私有可写层)</text>
+  <rect x="455" y="208" width="330" height="22" rx="3" fill="#1e3a5f" stroke="#4080c0" stroke-width="1"/>
+  <text x="620" y="223" text-anchor="middle" font-size="9" fill="#bfe0ff">access.log(①新写的)</text>
+  <rect x="455" y="234" width="330" height="22" rx="3" fill="#3a2410" stroke="#c08040" stroke-width="1"/>
+  <text x="620" y="249" text-anchor="middle" font-size="9" fill="#ffd9a8">nginx.conf(② copy_up 来的副本,已改)</text>
+  <rect x="455" y="260" width="330" height="22" rx="3" fill="#2a1212" stroke="#c04040" stroke-width="1"/>
+  <text x="620" y="275" text-anchor="middle" font-size="9" fill="#ff9b9b">.wh.default.html(③ whiteout:字符设备 0:0)</text>
+
+  <rect x="430" y="306" width="380" height="34" rx="6" fill="#173b2a" stroke="#40c060" stroke-width="1.4"/>
+  <text x="620" y="328" text-anchor="middle" font-size="9.5" fill="#88ffbb">L3 你的站点文件(只读)</text>
+  <rect x="430" y="344" width="380" height="34" rx="6" fill="#163524" stroke="#40c060" stroke-width="1.4"/>
+  <text x="620" y="366" text-anchor="middle" font-size="9.5" fill="#88ffbb">L2 nginx(只读)← nginx.conf 原版还在这,一字未动</text>
+  <rect x="430" y="382" width="380" height="34" rx="6" fill="#142f1f" stroke="#40c060" stroke-width="1.4"/>
+  <text x="620" y="404" text-anchor="middle" font-size="9.5" fill="#88ffbb">L1 debian(只读)</text>
+
+  <line x1="360" y1="148" x2="452" y2="216" stroke="#88c0ff" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#cu)"/>
+  <line x1="360" y1="250" x2="452" y2="245" stroke="#c08040" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#cu)"/>
+  <line x1="360" y1="350" x2="452" y2="271" stroke="#c04040" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#cu)"/>
+  <line x1="560" y1="366" x2="530" y2="248" stroke="#c08040" stroke-width="1.4" stroke-dasharray="3,3"/>
+  <text x="528" y="300" text-anchor="middle" font-size="8.5" fill="#9a8868">copy_up</text>
+
+  <!-- ===== right: what container sees ===== -->
+  <rect x="850" y="110" width="300" height="282" rx="9" fill="#11161d" stroke="#2a3340" stroke-width="1.3"/>
+  <text x="1000" y="136" text-anchor="middle" font-size="11.5" fill="#e8eef5" font-weight="bold">容器随后读到的世界</text>
+  <text x="870" y="166" font-size="10" fill="#88c0ff">cat access.log → 有(来自 upper)</text>
+  <text x="870" y="192" font-size="10" fill="#ffd9a8">cat nginx.conf → 改过的版本</text>
+  <text x="870" y="210" font-size="8.5" fill="#9a8868">(upper 的副本遮住了 L2 的原版)</text>
+  <text x="870" y="236" font-size="10" fill="#ff9b9b">ls default.html → 不存在</text>
+  <text x="870" y="254" font-size="8.5" fill="#9a8868">(whiteout 在 merged 里隐藏了它)</text>
+  <text x="870" y="284" font-size="10" fill="#7fd99f">另一个共享同样镜像的容器:</text>
+  <text x="870" y="304" font-size="10" fill="#7fd99f">nginx.conf 还是原版,default.html 还在</text>
+  <text x="870" y="322" font-size="8.5" fill="#5f8a6f">(它有自己的 upper,互不污染)</text>
+  <text x="870" y="350" font-size="10" fill="#88c0ff">docker rm 本容器 →</text>
+  <text x="870" y="368" font-size="10" fill="#88c0ff">upper 整个蒸发,三个改动全消失</text>
+
+  <!-- punchline -->
+  <rect x="110" y="430" width="980" height="92" rx="10" fill="#0e1a12" stroke="#2a7a44" stroke-width="1.8"/>
+  <text x="600" y="458" text-anchor="middle" font-size="13" fill="#9bffb5" font-weight="bold">光盘语义的机制现场:下层 = 烧死的 session(永不变),upper = 还没合盖的最新 session</text>
+  <text x="600" y="482" text-anchor="middle" font-size="11" fill="#7fd99f">改 = 抄到新 session 盖住旧的;删 = 新 session 的目录表不再指它(whiteout)</text>
+  <text x="600" y="506" text-anchor="middle" font-size="10.5" fill="#a0d2b0">正因下层永不变:N 个容器才敢共享同一摞层、sha256 才永久有效 —— C2★ 与 C3 的共同地基</text>
+
+  <text x="600" y="560" text-anchor="middle" font-size="10.5" fill="#9a8868">细节坑预告(留给后面拿源码抠):copy_up 是"整文件"复制 —— 改 1GB 文件的 1 个字节也要先抄 1GB;</text>
+  <text x="600" y="580" text-anchor="middle" font-size="10.5" fill="#9a8868">所以数据库这类高频写大文件的负载,必须挂 volume 绕过 overlay(回看 What §4.4 的口诀)</text>
+</svg>

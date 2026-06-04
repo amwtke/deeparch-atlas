@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="pj" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#40c060"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="660" fill="#0a0c10"/>
+
+  <text x="600" y="36" text-anchor="middle" font-size="24" fill="#e8eef5" font-weight="bold">支线一:一个网络包的旅程(容器 A → 容器 B)</text>
+  <text x="600" y="60" text-anchor="middle" font-size="12.5" fill="#7a8694">curl http://172.17.0.3 —— 八跳全程二层直通:不出宿主、不过 NAT、外面世界毫不知情</text>
+
+  <!-- container A -->
+  <rect x="60" y="100" width="420" height="190" rx="12" fill="none" stroke="#c08040" stroke-width="2" stroke-dasharray="8,5"/>
+  <text x="270" y="92" text-anchor="middle" font-size="11" fill="#ffaa55">容器 A 的 net namespace</text>
+  <rect x="85" y="120" width="170" height="44" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="170" y="139" text-anchor="middle" font-size="10.5" fill="#bfe0ff">① curl 发起连接</text>
+  <text x="170" y="156" text-anchor="middle" font-size="9" fill="#88c0ff">目标 172.17.0.3:80</text>
+  <rect x="85" y="180" width="170" height="44" rx="6" fill="#142838" stroke="#4080c0" stroke-width="1.4"/>
+  <text x="170" y="199" text-anchor="middle" font-size="10" fill="#88c0ff">② 查 A 自己的路由表</text>
+  <text x="170" y="216" text-anchor="middle" font-size="8.5" fill="#7fa8cc">172.17.0.0/16 dev eth0 → 同网段直发</text>
+  <rect x="290" y="150" width="160" height="44" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="370" y="169" text-anchor="middle" font-size="10.5" fill="#bfe0ff">③ 从 eth0 发出</text>
+  <text x="370" y="186" text-anchor="middle" font-size="8.5" fill="#7fa8cc">eth0 = veth 在墙内的一头</text>
+  <line x1="255" y1="202" x2="288" y2="180" stroke="#40c060" stroke-width="1.8" marker-end="url(#pj)"/>
+  <line x1="170" y1="164" x2="170" y2="178" stroke="#40c060" stroke-width="1.6" marker-end="url(#pj)"/>
+
+  <!-- container B -->
+  <rect x="720" y="100" width="420" height="190" rx="12" fill="none" stroke="#c08040" stroke-width="2" stroke-dasharray="8,5"/>
+  <text x="930" y="92" text-anchor="middle" font-size="11" fill="#ffaa55">容器 B 的 net namespace</text>
+  <rect x="750" y="150" width="160" height="44" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="830" y="169" text-anchor="middle" font-size="10.5" fill="#bfe0ff">⑦ B.eth0 收包</text>
+  <text x="830" y="186" text-anchor="middle" font-size="8.5" fill="#7fa8cc">veth 在 B 墙内的一头</text>
+  <rect x="945" y="120" width="170" height="44" rx="6" fill="#142838" stroke="#4080c0" stroke-width="1.4"/>
+  <text x="1030" y="139" text-anchor="middle" font-size="10" fill="#88c0ff">⑧ B 的协议栈 → nginx</text>
+  <text x="1030" y="156" text-anchor="middle" font-size="8.5" fill="#7fa8cc">B 自己的 iptables/路由先过一遍</text>
+  <line x1="910" y1="172" x2="943" y2="150" stroke="#40c060" stroke-width="1.8" marker-end="url(#pj)"/>
+
+  <!-- veth host ends -->
+  <rect x="300" y="340" width="150" height="42" rx="6" fill="#173b2a" stroke="#40c060" stroke-width="1.6"/>
+  <text x="375" y="358" text-anchor="middle" font-size="10.5" fill="#88ffbb">④ veth-a(宿主端)</text>
+  <text x="375" y="375" text-anchor="middle" font-size="8.5" fill="#7fd99f">管子另一头,冒出墙外</text>
+  <line x1="370" y1="194" x2="375" y2="338" stroke="#40c060" stroke-width="2.2" marker-end="url(#pj)"/>
+
+  <rect x="750" y="340" width="150" height="42" rx="6" fill="#173b2a" stroke="#40c060" stroke-width="1.6"/>
+  <text x="825" y="358" text-anchor="middle" font-size="10.5" fill="#88ffbb">⑥ veth-b(宿主端)</text>
+  <text x="825" y="375" text-anchor="middle" font-size="8.5" fill="#7fd99f">钻回 B 的墙内</text>
+  <line x1="825" y1="338" x2="828" y2="196" stroke="#40c060" stroke-width="2.2" marker-end="url(#pj)"/>
+
+  <!-- bridge -->
+  <rect x="420" y="430" width="360" height="80" rx="9" fill="#1e5f3a" stroke="#40c060" stroke-width="2.4"/>
+  <text x="600" y="456" text-anchor="middle" font-size="13" fill="#88ff88" font-weight="bold">⑤ docker0 网桥(二层交换)</text>
+  <text x="600" y="478" text-anchor="middle" font-size="9.5" fill="#7fd99f">查 FDB 表:目的 MAC(B 的 eth0)→ 在 veth-b 那个口</text>
+  <text x="600" y="496" text-anchor="middle" font-size="9.5" fill="#7fd99f">像交换机一样把帧从 veth-a 口转到 veth-b 口</text>
+  <line x1="450" y1="382" x2="530" y2="428" stroke="#40c060" stroke-width="2.2" marker-end="url(#pj)"/>
+  <line x1="690" y1="428" x2="760" y2="384" stroke="#40c060" stroke-width="2.2" marker-end="url(#pj)"/>
+
+  <!-- ARP note -->
+  <rect x="60" y="430" width="300" height="80" rx="8" fill="#11161d" stroke="#2a3340" stroke-width="1.2"/>
+  <text x="210" y="452" text-anchor="middle" font-size="10" fill="#9fb4c8" font-weight="bold">第一次通信前还有一小步:ARP</text>
+  <text x="210" y="472" text-anchor="middle" font-size="9" fill="#7a8694">A 广播"172.17.0.3 是谁?"(经网桥泛洪)</text>
+  <text x="210" y="489" text-anchor="middle" font-size="9" fill="#7a8694">B 答"是我,MAC 是 xx" → A 缓存,以后直发</text>
+
+  <rect x="840" y="430" width="300" height="80" rx="8" fill="#11161d" stroke="#2a3340" stroke-width="1.2"/>
+  <text x="990" y="452" text-anchor="middle" font-size="10" fill="#9fb4c8" font-weight="bold">这条路上没有 NAT</text>
+  <text x="990" y="472" text-anchor="middle" font-size="9" fill="#7a8694">同网桥容器互访 = 纯二层转发</text>
+  <text x="990" y="489" text-anchor="middle" font-size="9" fill="#7a8694">iptables 的 NAT 表根本不参与</text>
+
+  <!-- three-direction contrast -->
+  <rect x="60" y="540" width="1080" height="86" rx="9" fill="#0d1117" stroke="#c08040" stroke-width="1.5"/>
+  <text x="80" y="564" font-size="11" fill="#ffc48a" font-weight="bold">三种流向对照(同一套洞,三种走法):</text>
+  <text x="100" y="586" font-size="10" fill="#88ffbb">容器 ↔ 容器:veth → docker0 二层直转 → veth(本图,不出宿主,无 NAT)</text>
+  <text x="100" y="604" font-size="10" fill="#c89868">容器 → 外网:veth → docker0 → 路由 → iptables MASQUERADE 改源 IP → 宿主 eth0 出门</text>
+  <text x="100" y="622" font-size="10" fill="#c88fd0">外网 → 容器:宿主 eth0 进门 → iptables DNAT(-p 80:80 写的那条)改目的 IP → docker0 → veth → 容器</text>
+
+  <text x="600" y="650" text-anchor="middle" font-size="10.5" fill="#6a7684">隔离(各自 netns 的路由/协议栈)与互通(veth+网桥)同框 —— 这就是"墙上凿洞"的机制级现场</text>
+</svg>

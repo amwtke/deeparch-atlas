@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="om2" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#c04040"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="640" fill="#0a0c10"/>
+
+  <text x="600" y="36" text-anchor="middle" font-size="24" fill="#e8eef5" font-weight="bold">支线三:一次内存超限的死刑全过程</text>
+  <text x="600" y="60" text-anchor="middle" font-size="12.5" fill="#7a8694">docker run -m 512m 之后,nginx 里有个内存泄漏 —— 从记账到行刑,内核一步步怎么走</text>
+
+  <!-- ===== left: gauge ===== -->
+  <rect x="90" y="120" width="120" height="380" rx="8" fill="#11161d" stroke="#4a5568" stroke-width="1.6"/>
+  <text x="150" y="108" text-anchor="middle" font-size="11" fill="#9fb4c8">memory.current(实时记账)</text>
+  <!-- red line at top -->
+  <line x1="90" y1="150" x2="210" y2="150" stroke="#ff5555" stroke-width="2.5" stroke-dasharray="7,4"/>
+  <text x="150" y="142" text-anchor="middle" font-size="10" fill="#ff8888" font-weight="bold">memory.max = 512M</text>
+  <!-- water levels -->
+  <rect x="92" y="430" width="116" height="68" fill="#1e3a5f"/>
+  <rect x="92" y="330" width="116" height="168" fill="#1e3a5f" opacity="0.55"/>
+  <rect x="92" y="220" width="116" height="278" fill="#1e3a5f" opacity="0.3"/>
+  <rect x="92" y="156" width="116" height="342" fill="#5f1e1e" opacity="0.35"/>
+  <text x="150" y="470" text-anchor="middle" font-size="9.5" fill="#bfe0ff">100M(正常)</text>
+  <text x="150" y="370" text-anchor="middle" font-size="9.5" fill="#bfe0ff">300M(泄漏中…)</text>
+  <text x="150" y="250" text-anchor="middle" font-size="9.5" fill="#ffd9a8">490M(逼近红线)</text>
+  <text x="150" y="172" text-anchor="middle" font-size="9.5" fill="#ff9b9b">512M(触顶!)</text>
+  <text x="150" y="528" text-anchor="middle" font-size="9" fill="#7a8694">每次分配页,内核都</text>
+  <text x="150" y="544" text-anchor="middle" font-size="9" fill="#7a8694">charge 到本 cgroup 账上</text>
+
+  <!-- ===== right: steps ===== -->
+  <rect x="280" y="120" width="860" height="56" rx="8" fill="#11161d" stroke="#2a3340" stroke-width="1.2"/>
+  <circle cx="315" cy="148" r="13" fill="#241808" stroke="#c08040" stroke-width="1.6"/><text x="315" y="153" text-anchor="middle" font-size="11" fill="#ffaa55">1</text>
+  <text x="345" y="143" font-size="10.5" fill="#cdd6e0">出生即上户口:runc 写 memory.max=536870912,nginx 的 PID 进 cgroup.procs</text>
+  <text x="345" y="162" font-size="9" fill="#7a8694">从此 nginx(和它 fork 的所有后代)的每一页内存,都记在这个户头上 —— 跑不掉</text>
+
+  <rect x="280" y="186" width="860" height="56" rx="8" fill="#11161d" stroke="#2a3340" stroke-width="1.2"/>
+  <circle cx="315" cy="214" r="13" fill="#241808" stroke="#c08040" stroke-width="1.6"/><text x="315" y="219" text-anchor="middle" font-size="11" fill="#ffaa55">2</text>
+  <text x="345" y="209" font-size="10.5" fill="#cdd6e0">泄漏进行时:malloc → 缺页 → 内核分配物理页 → memory.current += 4KB</text>
+  <text x="345" y="228" font-size="9" fill="#7a8694">注意:nginx 自己毫无感觉 —— 它 free -m 还看着宿主的 64G 呢(视图与用量是两回事,What §4.5)</text>
+
+  <rect x="280" y="252" width="860" height="56" rx="8" fill="#1a1206" stroke="#c08040" stroke-width="1.5"/>
+  <circle cx="315" cy="280" r="13" fill="#3a2410" stroke="#ffaa55" stroke-width="1.8"/><text x="315" y="285" text-anchor="middle" font-size="11" fill="#ffaa55">3</text>
+  <text x="345" y="275" font-size="10.5" fill="#ffd9a8">触顶前的挣扎:current 逼近 max → 内核先在本 cgroup 内回收(挤 page cache、可回收页)</text>
+  <text x="345" y="294" font-size="9" fill="#c89868">回收够了就续命(表现为容器变慢、IO 变多);回收不动 → 进入下一步</text>
+
+  <rect x="280" y="318" width="860" height="62" rx="8" fill="#2a1212" stroke="#c04040" stroke-width="2"/>
+  <circle cx="315" cy="349" r="13" fill="#5f1e1e" stroke="#ff5555" stroke-width="2"/><text x="315" y="354" text-anchor="middle" font-size="11" fill="#ff8888">4</text>
+  <text x="345" y="341" font-size="10.5" fill="#ff9b9b" font-weight="bold">行刑:cgroup OOM killer 启动 —— 只在本 cgroup 户口内选人</text>
+  <text x="345" y="360" font-size="9.5" fill="#d2a0a0">按 oom_score 挑"最该死的"(通常就是吃最多的那个)→ 直接 SIGKILL(信号 9,不可捕获不可商量)</text>
+  <text x="345" y="375" font-size="9" fill="#9a7878">邻居容器、宿主进程:毫发无损 —— 这就是墙存在的意义(C1)</text>
+
+  <rect x="280" y="390" width="860" height="56" rx="8" fill="#11161d" stroke="#2a3340" stroke-width="1.2"/>
+  <circle cx="315" cy="418" r="13" fill="#241808" stroke="#c08040" stroke-width="1.6"/><text x="315" y="423" text-anchor="middle" font-size="11" fill="#ffaa55">5</text>
+  <text x="345" y="413" font-size="10.5" fill="#cdd6e0">记录在案:memory.events 里 oom_kill 计数 +1 —— 机器可读的"死亡证明"</text>
+  <text x="345" y="432" font-size="9" fill="#7a8694">排查"容器莫名重启"先看这里:cat /sys/fs/cgroup/&lt;路径&gt;/memory.events</text>
+
+  <rect x="280" y="456" width="860" height="62" rx="8" fill="#0e1a26" stroke="#4080c0" stroke-width="1.6"/>
+  <circle cx="315" cy="487" r="13" fill="#142838" stroke="#4080c0" stroke-width="1.8"/><text x="315" y="492" text-anchor="middle" font-size="11" fill="#88c0ff">6</text>
+  <text x="345" y="479" font-size="10.5" fill="#bfe0ff" font-weight="bold">善后:PID 1 死 → 容器终结 → shim 收尸上报 → docker ps 显示 Exited (137)</text>
+  <text x="345" y="498" font-size="9.5" fill="#7fa8cc">137 = 128 + 9(被信号 9 杀)—— 以后见到 137,你就知道:它是被自己的煤气表掐死的</text>
+  <text x="345" y="513" font-size="9" fill="#5f7488">若设了 --restart 策略,接下来就是"反复 OOM 反复重启"的经典循环 —— 老 JVM 在容器里的惨案现场</text>
+
+  <!-- punchline -->
+  <rect x="110" y="544" width="980" height="56" rx="10" fill="#11161d" stroke="#c08040" stroke-width="1.8"/>
+  <text x="600" y="568" text-anchor="middle" font-size="12.5" fill="#ffc48a" font-weight="bold">全程没有一行 Docker 的代码参与行刑 —— 表是内核的,刑也是内核行的;Docker 只是当初写表的人(C1)。</text>
+  <text x="600" y="589" text-anchor="middle" font-size="10.5" fill="#c8a878">看见 64G(namespace 没遮 /proc)却死在 512M(cgroup 铁面记账)—— 视图与用量,两道墙,至此闭环。</text>
+
+  <text x="600" y="624" text-anchor="middle" font-size="10" fill="#6a7684">蓝 = 正常记账 · 橙 = 挣扎(回收) · 红 = 行刑(OOM kill) · 左侧水位 = memory.current 一路上涨撞上红线</text>
+</svg>

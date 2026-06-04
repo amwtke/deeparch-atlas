@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="lg" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#40c060"/>
+    </marker>
+    <marker id="lp" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#c088ff"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="700" fill="#0a0c10"/>
+
+  <text x="600" y="36" text-anchor="middle" font-size="24" fill="#e8eef5" font-weight="bold">叠行李术全链:怎么造 → 怎么验 → 怎么叠</text>
+  <text x="600" y="60" text-anchor="middle" font-size="12.5" fill="#7a8694">Dockerfile 是源码,build 是编译,层是产物;digest 是身份;运行 = 联合挂载(不解压)</text>
+
+  <!-- ===== Band 1: build ===== -->
+  <text x="80" y="98" font-size="13.5" fill="#88ff88" font-weight="bold">① 造(build 侧):一条指令 = 一层</text>
+  <rect x="60" y="112" width="300" height="120" rx="8" fill="#0d1117" stroke="#3a5168" stroke-width="1.5"/>
+  <text x="75" y="134" font-size="11" fill="#9fd9a0" font-weight="bold">Dockerfile(环境的源代码)</text>
+  <text x="75" y="158" font-size="10.5" fill="#9fd9a0">FROM debian:12</text>
+  <text x="75" y="180" font-size="10.5" fill="#9fd9a0">RUN apt install -y nginx</text>
+  <text x="75" y="202" font-size="10.5" fill="#9fd9a0">COPY ./site /usr/share/nginx</text>
+  <text x="75" y="222" font-size="9" fill="#5f7488">进 git · 可 diff · 可 review · 可回滚</text>
+
+  <line x1="360" y1="172" x2="430" y2="172" stroke="#40c060" stroke-width="2" marker-end="url(#lg)"/>
+  <text x="395" y="160" text-anchor="middle" font-size="9.5" fill="#7fd99f">build(编译)</text>
+
+  <rect x="435" y="106" width="330" height="40" rx="6" fill="#142f1f" stroke="#40c060" stroke-width="1.6"/>
+  <text x="455" y="131" font-size="10.5" fill="#88ffbb">L1 · debian rootfs</text>
+  <rect x="640" y="112" width="118" height="26" rx="4" fill="#0d1117" stroke="#3a5168"/>
+  <text x="699" y="129" text-anchor="middle" font-size="8.5" fill="#9fd9a0">sha256:a1b2…</text>
+  <rect x="435" y="152" width="330" height="40" rx="6" fill="#163524" stroke="#40c060" stroke-width="1.6"/>
+  <text x="455" y="177" font-size="10.5" fill="#88ffbb">L2 · apt 装的 nginx</text>
+  <rect x="640" y="158" width="118" height="26" rx="4" fill="#0d1117" stroke="#3a5168"/>
+  <text x="699" y="175" text-anchor="middle" font-size="8.5" fill="#9fd9a0">sha256:c3d4…</text>
+  <rect x="435" y="198" width="330" height="40" rx="6" fill="#173b2a" stroke="#40c060" stroke-width="1.6"/>
+  <text x="455" y="223" font-size="10.5" fill="#88ffbb">L3 · 你的站点文件</text>
+  <rect x="640" y="204" width="118" height="26" rx="4" fill="#0d1117" stroke="#3a5168"/>
+  <text x="699" y="221" text-anchor="middle" font-size="8.5" fill="#9fd9a0">sha256:e5f6…</text>
+
+  <rect x="800" y="112" width="340" height="120" rx="8" fill="#11161d" stroke="#c08040" stroke-width="1.5"/>
+  <text x="970" y="136" text-anchor="middle" font-size="11" fill="#ffc48a" font-weight="bold">层缓存 = 增量编译</text>
+  <text x="970" y="158" text-anchor="middle" font-size="9.5" fill="#c89868">只改了站点文件?L1 L2 直接复用缓存,</text>
+  <text x="970" y="176" text-anchor="middle" font-size="9.5" fill="#c89868">只重建 L3 —— build 秒级完成</text>
+  <text x="970" y="200" text-anchor="middle" font-size="9.5" fill="#9a8868">⚠ 改了第 2 行?它和它以下全部重建</text>
+  <text x="970" y="218" text-anchor="middle" font-size="9.5" fill="#9a8868">(所以 Dockerfile 指令顺序是门手艺)</text>
+
+  <!-- ===== Band 2: distribute + verify ===== -->
+  <text x="80" y="290" font-size="13.5" fill="#c088ff" font-weight="bold">② 验(分发侧):digest 是工件的身份证</text>
+  <rect x="60" y="306" width="320" height="110" rx="8" fill="#1f1133" stroke="#8040c0" stroke-width="1.8"/>
+  <text x="220" y="330" text-anchor="middle" font-size="11" fill="#c088ff" font-weight="bold">Registry(仓库)</text>
+  <text x="220" y="352" text-anchor="middle" font-size="9.5" fill="#a888d0">manifest:这个镜像 = [a1b2, c3d4, e5f6]</text>
+  <text x="220" y="370" text-anchor="middle" font-size="9.5" fill="#a888d0">(一张带哈希的层清单)</text>
+  <text x="220" y="394" text-anchor="middle" font-size="9" fill="#7a6090">镜像名:tag 只是指针,digest 才是身份</text>
+
+  <line x1="380" y1="360" x2="450" y2="360" stroke="#c088ff" stroke-width="2" marker-end="url(#lp)"/>
+  <text x="415" y="348" text-anchor="middle" font-size="9.5" fill="#a888d0">pull</text>
+
+  <rect x="455" y="306" width="420" height="110" rx="8" fill="#11161d" stroke="#8040c0" stroke-width="1.6"/>
+  <text x="665" y="330" text-anchor="middle" font-size="11" fill="#c088ff" font-weight="bold">dockerd:逐层下载 + 逐层校验</text>
+  <text x="665" y="354" text-anchor="middle" font-size="9.5" fill="#a888d0">每下载一层 → 现场算 sha256 → 对不上 manifest?直接拒收</text>
+  <text x="665" y="376" text-anchor="middle" font-size="10" fill="#ffaa55" font-weight="bold">"要么分毫不差,要么干脆失败" —— 不存在第三种状态</text>
+  <text x="665" y="398" text-anchor="middle" font-size="9.5" fill="#88ffbb">你 2009 年人肉对 md5 + 反编译的活,机器在这一步全包了(C3)</text>
+
+  <rect x="900" y="306" width="240" height="110" rx="8" fill="#0e1a12" stroke="#2a7a44" stroke-width="1.5"/>
+  <text x="1020" y="330" text-anchor="middle" font-size="10.5" fill="#9bffb5" font-weight="bold">为什么哈希敢当身份?</text>
+  <text x="1020" y="354" text-anchor="middle" font-size="9.5" fill="#7fd99f">因为层"不准改"(自律不可变)</text>
+  <text x="1020" y="372" text-anchor="middle" font-size="9.5" fill="#7fd99f">可变的东西哈希会"烂"</text>
+  <text x="1020" y="396" text-anchor="middle" font-size="9" fill="#5f8a6f">不可变 = C2 共享与 C3 验真的共同地基</text>
+
+  <!-- ===== Band 3: run ===== -->
+  <text x="80" y="470" font-size="13.5" fill="#88c0ff" font-weight="bold">③ 叠(run 侧):不解压,联合挂载</text>
+  <rect x="60" y="486" width="380" height="150" rx="8" fill="#0d1117" stroke="#40c060" stroke-width="1.5"/>
+  <text x="250" y="508" text-anchor="middle" font-size="10.5" fill="#88ffbb" font-weight="bold">本地只读层(N 个容器共用这一份)</text>
+  <rect x="90" y="520" width="320" height="26" rx="4" fill="#173b2a" stroke="#40c060" stroke-width="1.2"/>
+  <text x="250" y="537" text-anchor="middle" font-size="9.5" fill="#88ffbb">L3 你的站点</text>
+  <rect x="90" y="550" width="320" height="26" rx="4" fill="#163524" stroke="#40c060" stroke-width="1.2"/>
+  <text x="250" y="567" text-anchor="middle" font-size="9.5" fill="#88ffbb">L2 nginx</text>
+  <rect x="90" y="580" width="320" height="26" rx="4" fill="#142f1f" stroke="#40c060" stroke-width="1.2"/>
+  <text x="250" y="597" text-anchor="middle" font-size="9.5" fill="#88ffbb">L1 debian</text>
+  <text x="250" y="624" text-anchor="middle" font-size="9" fill="#5f8a6f">烧死的"光盘 session":只读,删除=遮挡,不可篡改</text>
+
+  <rect x="480" y="486" width="220" height="60" rx="8" fill="#16263a" stroke="#4080c0" stroke-width="1.8"/>
+  <text x="590" y="510" text-anchor="middle" font-size="10.5" fill="#bfe0ff" font-weight="bold">+ 空白 upper 目录</text>
+  <text x="590" y="530" text-anchor="middle" font-size="9" fill="#88c0ff">(每个容器自己的一份,可写)</text>
+
+  <line x1="440" y1="560" x2="730" y2="560" stroke="#40c060" stroke-width="2" marker-end="url(#lg)"/>
+  <line x1="590" y1="546" x2="660" y2="556" stroke="#4080c0" stroke-width="1.6" stroke-dasharray="4,3"/>
+  <text x="585" y="578" text-anchor="middle" font-size="9.5" fill="#7fd99f">mount -t overlay(毫秒,零拷贝)</text>
+
+  <rect x="735" y="486" width="405" height="150" rx="8" fill="#142838" stroke="#4080c0" stroke-width="2"/>
+  <text x="937" y="512" text-anchor="middle" font-size="11.5" fill="#88c0ff" font-weight="bold">merged = 容器的 /</text>
+  <text x="937" y="536" text-anchor="middle" font-size="9.5" fill="#7fa8cc">读:从上往下找(upper 先于 L3 先于 L2…)</text>
+  <text x="937" y="556" text-anchor="middle" font-size="9.5" fill="#7fa8cc">写:只落 upper(改下层文件先 copy_up)</text>
+  <text x="937" y="576" text-anchor="middle" font-size="9.5" fill="#7fa8cc">删:upper 放 whiteout 遮住下层(不擦除)</text>
+  <text x="937" y="602" text-anchor="middle" font-size="10" fill="#ffaa55" font-weight="bold">"启动 = 解压"是误解:不解压,挂上就用 → 秒启的真相</text>
+  <text x="937" y="622" text-anchor="middle" font-size="9" fill="#5f7488">100 个容器 = 100 个空 upper + 同一摞只读层</text>
+
+  <text x="600" y="672" text-anchor="middle" font-size="11.5" fill="#ffc48a" font-weight="bold">一条指令一层(造)→ 一层一哈希(验)→ 一摞一挂载(叠):C2★ 与 C3 在"不可变"这根柱子上会师</text>
+</svg>

@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="hoO" markerWidth="11" markerHeight="11" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#c08040"/>
+    </marker>
+    <marker id="hoG" markerWidth="11" markerHeight="11" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#40c060"/>
+    </marker>
+    <marker id="hoP" markerWidth="11" markerHeight="11" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#c088ff"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="600" fill="#0a0c10"/>
+
+  <text x="600" y="38" text-anchor="middle" font-size="25" fill="#e8eef5" font-weight="bold">三件事怎么协作,产出一个跑着的容器</text>
+  <text x="600" y="63" text-anchor="middle" font-size="13" fill="#7a8694">流水线指挥(C3),行李铺地(C2★),墙圈住人(C1)—— 时序:先备行李 → 再砌墙 → 后住人</text>
+
+  <!-- ===== 中央:运行中的容器 ===== -->
+  <rect x="440" y="240" width="320" height="200" rx="12" fill="#0e1a26" stroke="#c08040" stroke-width="2.6" stroke-dasharray="9,5"/>
+  <text x="600" y="268" text-anchor="middle" font-size="12" fill="#ffaa55">namespace 六窗(看不见外面)</text>
+  <rect x="478" y="282" width="244" height="54" rx="8" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="600" y="305" text-anchor="middle" font-size="13.5" fill="#bfe0ff" font-weight="bold">nginx · 容器内 PID 1</text>
+  <text x="600" y="324" text-anchor="middle" font-size="10" fill="#88c0ff">(宿主眼里只是 PID 12345)</text>
+  <rect x="452" y="348" width="14" height="80" rx="3" fill="#3a2410" stroke="#c08040" stroke-width="1.6"/>
+  <text x="459" y="444" text-anchor="middle" font-size="9" fill="#ffaa55">cgroups 表</text>
+  <rect x="478" y="392" width="244" height="36" rx="6" fill="#173b2a" stroke="#40c060" stroke-width="1.8"/>
+  <text x="600" y="415" text-anchor="middle" font-size="10.5" fill="#88ffbb">/ = overlayfs merged(行李铺成的地板)</text>
+
+  <!-- ===== 左上:砌墙术 ===== -->
+  <rect x="60" y="110" width="300" height="130" rx="10" fill="#241808" stroke="#c08040" stroke-width="2.2"/>
+  <text x="210" y="138" text-anchor="middle" font-size="14" fill="#ffaa55" font-weight="bold">① 砌墙术 ← C1</text>
+  <text x="210" y="162" text-anchor="middle" font-size="10.5" fill="#c89868">namespace 六把刀:clone(CLONE_NEW*)</text>
+  <text x="210" y="182" text-anchor="middle" font-size="10.5" fill="#c89868">cgroups 三块表:写 /sys/fs/cgroup/...</text>
+  <text x="210" y="206" text-anchor="middle" font-size="10" fill="#9a8868">在 syscall 接口上撒谎:</text>
+  <text x="210" y="222" text-anchor="middle" font-size="10" fill="#9a8868">改"看见什么" + 限"用多少"</text>
+  <line x1="360" y1="200" x2="450" y2="262" stroke="#c08040" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#hoO)"/>
+
+  <!-- ===== 左下:叠行李术 ===== -->
+  <rect x="60" y="380" width="300" height="150" rx="10" fill="#13251a" stroke="#40c060" stroke-width="2.2"/>
+  <text x="210" y="408" text-anchor="middle" font-size="14" fill="#88ff88" font-weight="bold">② 叠行李术 ← C2 ★</text>
+  <text x="210" y="432" text-anchor="middle" font-size="10.5" fill="#7fd99f">Dockerfile(源码)→ build(编译)</text>
+  <text x="210" y="452" text-anchor="middle" font-size="10.5" fill="#7fd99f">→ 镜像层(产物,只读)→ pull</text>
+  <text x="210" y="472" text-anchor="middle" font-size="10.5" fill="#7fd99f">→ overlay 联合挂载 → 容器的 /</text>
+  <text x="210" y="498" text-anchor="middle" font-size="10" fill="#5f8a6f">层不可变 → 可共享 + 可哈希作身份</text>
+  <text x="210" y="514" text-anchor="middle" font-size="10" fill="#5f8a6f">(光盘语义:只追加,删除=遮挡)</text>
+  <line x1="360" y1="440" x2="476" y2="414" stroke="#40c060" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#hoG)"/>
+
+  <!-- ===== 右:流水线 + 验真 ===== -->
+  <rect x="840" y="110" width="300" height="420" rx="10" fill="#1f1133" stroke="#8040c0" stroke-width="2.2"/>
+  <text x="990" y="138" text-anchor="middle" font-size="14" fill="#c088ff" font-weight="bold">③ 流水线 + 验真术 ← C3</text>
+  <rect x="870" y="156" width="240" height="34" rx="5" fill="#2a1648" stroke="#8040c0" stroke-width="1.5"/>
+  <text x="990" y="178" text-anchor="middle" font-size="11" fill="#c088ff">docker CLI(把命令翻成 API)</text>
+  <rect x="870" y="200" width="240" height="34" rx="5" fill="#2a1648" stroke="#8040c0" stroke-width="1.5"/>
+  <text x="990" y="222" text-anchor="middle" font-size="11" fill="#c088ff">dockerd(pull + 逐层验 sha256)</text>
+  <rect x="870" y="244" width="240" height="34" rx="5" fill="#2a1648" stroke="#8040c0" stroke-width="1.5"/>
+  <text x="990" y="266" text-anchor="middle" font-size="11" fill="#c088ff">containerd(备行李 snapshot)</text>
+  <rect x="870" y="288" width="240" height="34" rx="5" fill="#2a1648" stroke="#8040c0" stroke-width="1.5"/>
+  <text x="990" y="310" text-anchor="middle" font-size="11" fill="#c088ff">shim(常驻监护)</text>
+  <rect x="870" y="332" width="240" height="46" rx="5" fill="#3a1e5f" stroke="#8040c0" stroke-width="2"/>
+  <text x="990" y="352" text-anchor="middle" font-size="11" fill="#c088ff" font-weight="bold">runc:砌墙三连招后 exec</text>
+  <text x="990" y="370" text-anchor="middle" font-size="9" fill="#a070d0">clone 新窗 → 写表 → 换根 → 住人</text>
+  <line x1="990" y1="190" x2="990" y2="198" stroke="#8040c0" stroke-width="1.6" marker-end="url(#hoP)"/>
+  <line x1="990" y1="234" x2="990" y2="242" stroke="#8040c0" stroke-width="1.6" marker-end="url(#hoP)"/>
+  <line x1="990" y1="278" x2="990" y2="286" stroke="#8040c0" stroke-width="1.6" marker-end="url(#hoP)"/>
+  <line x1="990" y1="322" x2="990" y2="330" stroke="#8040c0" stroke-width="1.6" marker-end="url(#hoP)"/>
+  <text x="990" y="404" text-anchor="middle" font-size="10" fill="#a888d0">每一步 = API 调用,不是人肉步骤</text>
+  <text x="990" y="422" text-anchor="middle" font-size="10" fill="#a888d0">每一层 = sha256 验真,不是人对 md5</text>
+  <text x="990" y="446" text-anchor="middle" font-size="10.5" fill="#ffaa55">runc 用完即退;shim 留守</text>
+  <text x="990" y="466" text-anchor="middle" font-size="10" fill="#9a8868">(重启 dockerd 容器不死)</text>
+  <text x="990" y="500" text-anchor="middle" font-size="10" fill="#88ffbb">弹性伸缩是这棵树上的果</text>
+  <text x="990" y="516" text-anchor="middle" font-size="10" fill="#88ffbb">(K8s 拿这些 API 编排出来)</text>
+  <line x1="838" y1="356" x2="764" y2="346" stroke="#c088ff" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#hoP)"/>
+
+  <!-- ===== 底:共享内核 ===== -->
+  <rect x="200" y="552" width="800" height="40" rx="7" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="600" y="577" text-anchor="middle" font-size="12.5" fill="#88ff88" font-weight="bold">同一个宿主内核:六窗、三表、overlay、veth 全是它的能力 —— 国标插座,谎言撒在 syscall 接口上</text>
+  <line x1="600" y1="550" x2="600" y2="442" stroke="#40c060" stroke-width="1.6" stroke-dasharray="4,4"/>
+</svg>
