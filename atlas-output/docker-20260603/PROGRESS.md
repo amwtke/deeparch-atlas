@@ -5,8 +5,8 @@
 - **短名**: docker
 - **工作目录**: atlas-output/docker-20260603/
 - **创建时间**: 2026-06-03T06:46:35Z
-- **上次更新**: 2026-06-03T09:54:34Z
-- **当前阶段**: What 已封存完成；下次启动进入 Why（进入前按"推进 reconfirm"纪律确认用户已读 01-what.md 全文 / 愿意推进）
+- **上次更新**: 2026-06-04T01:37:48Z
+- **当前阶段**: Why（开场对齐前 —— 用户正在通读 01-what.md 全文；读完后开始 Why 渐进式对齐。期间用户任何反馈按 user-pacing patch 01-what.md）
 
 ## 灵魂问题(Discovery 收集)
 > "容器到底是什么?它和虚拟机的根本区别在哪?当一个容器真正跑起来的那一刻,Linux 内核里到底发生了什么 —— namespace、cgroups、镜像分层各自扮演什么角色?"
@@ -40,6 +40,7 @@
 - 第 4 次新视角:用户自创"集装箱=车间(工人+机器=应用+依赖),水电煤气接口标准化→房间可搬到别的大楼"=独立推导出可移植性/OCI 论点 → 肯定+精确化:集装箱真正创新=接口标准化(=OCI 存在理由);关键边界=可移植有前提(需兼容内核 ABI),Linux 间随便搬但 Win/Mac 需 Docker Desktop 偷塞 Linux VM;回扣灵魂问题(共用内核→既轻又绑定内核家族,是硬币两面) → 已 patch:新增 §3.1「第二个类比:集装箱→可移植」+ 第 8 张图 01-shipping-container-portability.svg
 - 第 5 次需求:用户要"按这种类比生成图,尽量有生活也有技术细节" → 做了「生活↔技术 对照图册」(左生活/右真实技术参数),用户追加"要"后补满 6 张:①01-life-tech-overview(大楼↔主机)②01-life-tech-namespace(单向玻璃房↔6类ns)③01-life-tech-cgroups(三块表↔cpu.max/memory.max/io.max+OOM)④01-life-tech-overlayfs(透明胶片↔lowerdir/upperdir/CoW/whiteout)⑤01-life-tech-network(管道井+市政↔veth/bridge/iptables MASQUERADE)⑥01-life-tech-pipeline(物业接力↔dockerd/containerd/runc/shim) → 已 patch:§3.2「生活↔技术 对照图册」含全 6 张。What 阶段 pics 累计 14 张图。
 - 第 6 次产物迭代:揭晓 512MB/64GB 探针(答案=64GB,因 /proc/meminfo 未 namespace 化;两道墙独立;JVM/Node OOM 事故;治法 /sys/fs/cgroup/memory.max + UseContainerSupport + LXCFS;水位计 vs 水表类比)→ 已 patch:新增 §4.5「墙是漏的:512MB 容器自报 64GB」,作为通往 Why 的桥(墙有缝/有代价/有取舍)
+- 第 7 次新视角(2026-06-04,通读草稿期间):用户提出"VM 搬车间要重建整个厂房 vs Docker 只搬车间、标准接口一插就跑"的生活化对比 → 精确化:藏着「部署/搬运单位」概念(VM 单位=厂房/整套 OS,容器单位=车间/app+依赖),快的根源="厂房不在行李里,在目的地等你"(=不带内核)→ 已 patch:§2 表格后新增「搬家故事」callout;补齐 01-what.md 修订记录表(7 行)
 
 ### Why 阶段
 - (无)
