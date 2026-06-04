@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="pc" markerWidth="11" markerHeight="11" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#c08040"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="700" fill="#0a0c10"/>
+
+  <text x="600" y="36" text-anchor="middle" font-size="24" fill="#e8eef5" font-weight="bold">尸检:五幕痛史 → 三条主压力(七桩事实一桩不丢)</text>
+  <text x="600" y="60" text-anchor="middle" font-size="12.5" fill="#7a8694">左边是症状(痛),右边是病根(压力)。幕一二三恰好喂出 C1 的三连锁,一幕一环;三条压力 = 隔离 / 打包 / 运维 三大支柱</text>
+
+  <text x="250" y="92" text-anchor="middle" font-size="14" fill="#ff8888" font-weight="bold">症状(五幕 + 暗线)</text>
+  <text x="930" y="92" text-anchor="middle" font-size="14" fill="#ffaa55" font-weight="bold">病根(约束清单 C1~C3,已冻结)</text>
+
+  <!-- ===== left: acts ===== -->
+  <rect x="80" y="110" width="340" height="64" rx="8" fill="#1a0e0e" stroke="#c04040" stroke-width="1.6"/>
+  <text x="250" y="136" text-anchor="middle" font-size="12.5" fill="#ff8888" font-weight="bold">幕一 · 裸机合租</text>
+  <text x="250" y="156" text-anchor="middle" font-size="10" fill="#d2a0a0">依赖打架 + 内存践踏 + 端口冲突</text>
+
+  <rect x="80" y="200" width="340" height="64" rx="8" fill="#1a0e0e" stroke="#c04040" stroke-width="1.6"/>
+  <text x="250" y="226" text-anchor="middle" font-size="12.5" fill="#ff8888" font-weight="bold">幕二 · 一机一应用</text>
+  <text x="250" y="246" text-anchor="middle" font-size="10" fill="#d2a0a0">利用率 8%,电费采购单爆炸</text>
+
+  <rect x="80" y="290" width="340" height="64" rx="8" fill="#1a0e0e" stroke="#c04040" stroke-width="1.6"/>
+  <text x="250" y="316" text-anchor="middle" font-size="12.5" fill="#ff8888" font-weight="bold">幕三 · VM 救场太重</text>
+  <text x="250" y="336" text-anchor="middle" font-size="10" fill="#d2a0a0">跑个 web 从装 OS 开始;GB·分钟·内核税</text>
+
+  <rect x="80" y="380" width="340" height="64" rx="8" fill="#1a0e0e" stroke="#c04040" stroke-width="1.6"/>
+  <text x="250" y="406" text-anchor="middle" font-size="12.5" fill="#ff8888" font-weight="bold">幕四 · 在我机器上能跑</text>
+  <text x="250" y="426" text-anchor="middle" font-size="10" fill="#d2a0a0">配 3 天还不对;雪花服务器各不相同</text>
+
+  <rect x="80" y="470" width="340" height="64" rx="8" fill="#241010" stroke="#ff6655" stroke-width="2.4"/>
+  <text x="250" y="496" text-anchor="middle" font-size="12.5" fill="#ff8888" font-weight="bold">幕五 · 凌晨人肉对账(亲历)</text>
+  <text x="250" y="516" text-anchor="middle" font-size="10" fill="#ffaa99">md5 手验 · 反编译验功能 · 回滚靠人</text>
+
+  <rect x="80" y="560" width="340" height="64" rx="8" fill="#142838" stroke="#4080c0" stroke-width="1.8"/>
+  <text x="250" y="586" text-anchor="middle" font-size="12.5" fill="#88c0ff" font-weight="bold">暗线 · 规模浪潮</text>
+  <text x="250" y="606" text-anchor="middle" font-size="10" fill="#7fa8cc">10 台 → 几千台;监控/升级/审计全卡死</text>
+
+  <!-- ===== right: 3 constraints ===== -->
+  <rect x="700" y="110" width="440" height="190" rx="10" fill="#241808" stroke="#c08040" stroke-width="2.2"/>
+  <text x="920" y="138" text-anchor="middle" font-size="13.5" fill="#ffaa55" font-weight="bold">C1 · 榨干硬件(隔离支柱)</text>
+  <text x="920" y="158" text-anchor="middle" font-size="10" fill="#c89868">主张:让 CPU / 内存更多用于用户计算</text>
+  <text x="920" y="182" text-anchor="middle" font-size="10.5" fill="#ffc48a">三连锁(一幕一环):</text>
+  <text x="920" y="202" text-anchor="middle" font-size="10" fill="#ffc48a">① 闲置是浪费 → 必须共享(幕二·经济账)</text>
+  <text x="920" y="220" text-anchor="middle" font-size="10" fill="#ffc48a">② 共享默认互害 → 必须隔离(幕一·Unix 语义)</text>
+  <text x="920" y="238" text-anchor="middle" font-size="10" fill="#ffc48a">③ 隔离太贵也是浪费 → 隔离必须便宜(幕三·OS 重)</text>
+  <text x="920" y="262" text-anchor="middle" font-size="9.5" fill="#88ffbb">逼出:合租 + namespace/cgroups 墙 + 共享内核不带厂房</text>
+  <text x="920" y="282" text-anchor="middle" font-size="9" fill="#9a8868">③咬回① → 闭环:这是一股压力,不是三条拼凑</text>
+
+  <rect x="700" y="330" width="440" height="120" rx="10" fill="#2a1c08" stroke="#ffcc66" stroke-width="2.8"/>
+  <text x="920" y="358" text-anchor="middle" font-size="13.5" fill="#ffcc66" font-weight="bold">C2 ★ 环境必须跟应用走(打包支柱·核心)</text>
+  <text x="920" y="380" text-anchor="middle" font-size="10" fill="#c89868">子事实:环境长在机器上(幕四 + 幕一的依赖打架)</text>
+  <text x="920" y="402" text-anchor="middle" font-size="10.5" fill="#ffc48a">口诀:环境是机器属性 → 必须打包跟应用走</text>
+  <text x="920" y="424" text-anchor="middle" font-size="9.5" fill="#88ffbb">逼出:镜像(不可变行李)+ overlayfs(分层)</text>
+  <text x="920" y="442" text-anchor="middle" font-size="9" fill="#9a8868">墙早已存在(LXC/Zones),这条才是 Docker 真正的发明</text>
+
+  <rect x="700" y="480" width="440" height="140" rx="10" fill="#241808" stroke="#c08040" stroke-width="2.2"/>
+  <text x="920" y="508" text-anchor="middle" font-size="13.5" fill="#ffaa55" font-weight="bold">C3 · 发布去人化 + 机器可验真(运维支柱)</text>
+  <text x="920" y="530" text-anchor="middle" font-size="10" fill="#c89868">子事实:人力不可扩展(幕五+暗线)+ 字节无身份(幕五)</text>
+  <text x="920" y="552" text-anchor="middle" font-size="10.5" fill="#ffc48a">口诀:人不能扩容 + 文件名 ≠ 内容</text>
+  <text x="920" y="572" text-anchor="middle" font-size="10.5" fill="#ffc48a">→ 机器接管 + 哈希验真</text>
+  <text x="920" y="596" text-anchor="middle" font-size="9.5" fill="#88ffbb">逼出:API 化流水线 + sha256 内容寻址</text>
+
+  <!-- ===== arrows ===== -->
+  <line x1="420" y1="142" x2="698" y2="218" stroke="#c08040" stroke-width="1.8" marker-end="url(#pc)"/>
+  <line x1="420" y1="232" x2="698" y2="200" stroke="#c08040" stroke-width="1.8" marker-end="url(#pc)"/>
+  <line x1="420" y1="322" x2="698" y2="236" stroke="#c08040" stroke-width="1.8" marker-end="url(#pc)"/>
+  <line x1="420" y1="152" x2="698" y2="376" stroke="#7a5a2a" stroke-width="1.2" stroke-dasharray="4,4" marker-end="url(#pc)"/>
+  <line x1="420" y1="412" x2="698" y2="390" stroke="#ffcc66" stroke-width="2" marker-end="url(#pc)"/>
+  <line x1="420" y1="502" x2="698" y2="540" stroke="#c08040" stroke-width="1.8" marker-end="url(#pc)"/>
+  <line x1="420" y1="592" x2="698" y2="560" stroke="#4080c0" stroke-width="1.8" stroke-dasharray="5,4" marker-end="url(#pc)"/>
+
+  <text x="585" y="664" text-anchor="middle" font-size="10.5" fill="#6a7684">实线 = 主病根 · 虚线 = 次要喂养(幕一的依赖打架同时喂 C2;暗线把 C3 从"烦"放大成"死刑")</text>
+  <text x="585" y="684" text-anchor="middle" font-size="10.5" fill="#9a8868">收编史:7 条 → 4 条 → 3 条,两刀都是用户下的;C2 描金 = 钦点核心(心脏),C1/C3 = 骨架</text>
+</svg>

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="620" fill="#0a0c10"/>
+
+  <text x="600" y="38" text-anchor="middle" font-size="24" fill="#e8eef5" font-weight="bold">核心 insight:VM 骗操作系统,容器骗进程</text>
+  <text x="600" y="63" text-anchor="middle" font-size="13" fill="#7a8694">两者都是"撒谎术",差别只在对谁撒谎、在哪一层撒谎 —— 骗局下移一层,成本掉三个数量级</text>
+
+  <line x1="600" y1="84" x2="600" y2="490" stroke="#2a3340" stroke-width="1.5" stroke-dasharray="4,5"/>
+  <text x="310" y="108" text-anchor="middle" font-size="16" fill="#ff8888" font-weight="bold">虚拟机:在硬件接口撒谎</text>
+  <text x="890" y="108" text-anchor="middle" font-size="16" fill="#88c0ff" font-weight="bold">容器:在 syscall 接口撒谎</text>
+
+  <!-- ===== VM side ===== -->
+  <rect x="110" y="128" width="400" height="44" rx="7" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="310" y="155" text-anchor="middle" font-size="12.5" fill="#88c0ff">进程(nginx)—— 浑然不觉</text>
+
+  <rect x="110" y="184" width="400" height="62" rx="7" fill="#2a1212" stroke="#c04040" stroke-width="2.4"/>
+  <text x="310" y="208" text-anchor="middle" font-size="13" fill="#ff8888" font-weight="bold">Guest OS —— 被骗者 👁</text>
+  <text x="310" y="230" text-anchor="middle" font-size="10.5" fill="#d2a0a0">信了"这是一台真机器",尽职跑一整套真 OS</text>
+
+  <rect x="110" y="258" width="400" height="62" rx="7" fill="#3a2410" stroke="#ffaa55" stroke-width="2.6" stroke-dasharray="9,5"/>
+  <text x="310" y="282" text-anchor="middle" font-size="13" fill="#ffaa55" font-weight="bold">Hypervisor —— 撒谎层 🎭</text>
+  <text x="310" y="304" text-anchor="middle" font-size="10.5" fill="#c89868">伪造一台完整机器:假 CPU · 假内存 · 假网卡 · 假磁盘</text>
+
+  <rect x="110" y="332" width="400" height="44" rx="7" fill="#161a20" stroke="#4a5568" stroke-width="1.5"/>
+  <text x="310" y="359" text-anchor="middle" font-size="12" fill="#aab6c4">物理硬件</text>
+
+  <rect x="110" y="398" width="400" height="74" rx="9" fill="#1a0e0e" stroke="#7a2a2a" stroke-width="1.5"/>
+  <text x="310" y="424" text-anchor="middle" font-size="12.5" fill="#ff9b9b" font-weight="bold">骗局代价:为圆谎陪进一整套 OS</text>
+  <text x="310" y="447" text-anchor="middle" font-size="11" fill="#d2a0a0">GB 级镜像 · 分钟级启动 · 常驻内存税</text>
+  <text x="310" y="464" text-anchor="middle" font-size="9.5" fill="#9a7878">假机器必须像真机器一样"完整",谎言成本 = 一台机器</text>
+
+  <!-- ===== Container side ===== -->
+  <rect x="690" y="128" width="400" height="44" rx="7" fill="#142838" stroke="#4080c0" stroke-width="2.6"/>
+  <text x="890" y="155" text-anchor="middle" font-size="12.5" fill="#bfe0ff" font-weight="bold">进程(nginx)—— 被骗者 👁</text>
+
+  <rect x="690" y="184" width="400" height="48" rx="7" fill="#3a2410" stroke="#ffaa55" stroke-width="2.6" stroke-dasharray="9,5"/>
+  <text x="890" y="204" text-anchor="middle" font-size="13" fill="#ffaa55" font-weight="bold">namespace + cgroups —— 撒谎层 🎭(薄)</text>
+  <text x="890" y="223" text-anchor="middle" font-size="10" fill="#c89868">只改"答案":假 PID 1 · 假主机名 · 假独占的 / 和网卡</text>
+
+  <rect x="690" y="244" width="400" height="62" rx="7" fill="#1e5f3a" stroke="#40c060" stroke-width="2.2"/>
+  <text x="890" y="268" text-anchor="middle" font-size="13" fill="#88ff88" font-weight="bold">真内核(共享,不撒谎地干活)</text>
+  <text x="890" y="290" text-anchor="middle" font-size="10.5" fill="#7fd99f">调度 / 内存 / 文件系统 / 网络,全是真家伙,只有一份</text>
+
+  <rect x="690" y="332" width="400" height="44" rx="7" fill="#161a20" stroke="#4a5568" stroke-width="1.5"/>
+  <text x="890" y="359" text-anchor="middle" font-size="12" fill="#aab6c4">物理硬件</text>
+
+  <rect x="690" y="398" width="400" height="74" rx="9" fill="#0e1a12" stroke="#2a7a44" stroke-width="1.5"/>
+  <text x="890" y="424" text-anchor="middle" font-size="12.5" fill="#9bffb5" font-weight="bold">骗局代价:几张记账表</text>
+  <text x="890" y="447" text-anchor="middle" font-size="11" fill="#a0d2b0">MB 级镜像 · 毫秒级启动 · 近零常驻税</text>
+  <text x="890" y="464" text-anchor="middle" font-size="9.5" fill="#6f9a7f">进程本来就只透过 syscall 看世界,改掉答案就够了</text>
+
+  <!-- ===== punchline ===== -->
+  <rect x="110" y="500" width="980" height="92" rx="10" fill="#11161d" stroke="#c08040" stroke-width="2"/>
+  <text x="600" y="530" text-anchor="middle" font-size="14.5" fill="#ffc48a" font-weight="bold">被骗者越低级,骗局越贵:骗 OS,要造一整台假机器;骗进程,只要改它看到的答案。</text>
+  <text x="600" y="556" text-anchor="middle" font-size="12" fill="#c8a878">容器的"轻"不是压缩出来的,是换了一个更便宜的被骗者。</text>
+  <text x="600" y="578" text-anchor="middle" font-size="10.5" fill="#9a8868">(它同时解释了"弱隔离":谎言只盖住 syscall 的答案,盖不住内核本身 —— 回看 What §4.5 那条缝)</text>
+</svg>
