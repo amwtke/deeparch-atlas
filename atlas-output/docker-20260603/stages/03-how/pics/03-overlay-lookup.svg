@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="ol" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#88c0ff"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="660" fill="#0a0c10"/>
+
+  <text x="600" y="36" text-anchor="middle" font-size="24" fill="#e8eef5" font-weight="bold">overlay 查找:没有索引表,只有"按层探测,先见即得"</text>
+  <text x="600" y="60" text-anchor="middle" font-size="12.5" fill="#7a8694">三个查找案例并排走一遍:普通命中 / whiteout 遮挡 / 目录合并 —— 注意 overlayfs 自己不存一个字节</text>
+
+  <!-- ===== lane 1: normal hit ===== -->
+  <text x="220" y="100" text-anchor="middle" font-size="13" fill="#88c0ff" font-weight="bold">案例① 读 nginx.conf(命中)</text>
+  <rect x="80" y="116" width="280" height="40" rx="6" fill="#0d1117" stroke="#3a5168" stroke-width="1.3"/>
+  <text x="220" y="141" text-anchor="middle" font-size="10" fill="#9fd9a0">open /etc/nginx/nginx.conf</text>
+
+  <rect x="80" y="172" width="280" height="44" rx="6" fill="#16263a" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="220" y="192" text-anchor="middle" font-size="10.5" fill="#bfe0ff">1. 探 upper/etc/nginx/ → 没有</text>
+  <text x="220" y="208" text-anchor="middle" font-size="8.5" fill="#7fa8cc">(本容器没改过它)</text>
+  <rect x="80" y="226" width="280" height="38" rx="6" fill="#173b2a" stroke="#40c060" stroke-width="1.4"/>
+  <text x="220" y="250" text-anchor="middle" font-size="10.5" fill="#88ffbb">2. 探 L3/etc/nginx/ → 没有</text>
+  <rect x="80" y="274" width="280" height="48" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="2.2"/>
+  <text x="220" y="295" text-anchor="middle" font-size="10.5" fill="#88ff88" font-weight="bold">3. 探 L2/etc/nginx/ → 命中!停</text>
+  <text x="220" y="313" text-anchor="middle" font-size="8.5" fill="#7fd99f">返回 L2 里那个真实文件(ext4 上的)</text>
+  <line x1="220" y1="156" x2="220" y2="170" stroke="#88c0ff" stroke-width="1.6" marker-end="url(#ol)"/>
+  <line x1="220" y1="216" x2="220" y2="224" stroke="#88c0ff" stroke-width="1.6" marker-end="url(#ol)"/>
+  <line x1="220" y1="264" x2="220" y2="272" stroke="#88c0ff" stroke-width="1.6" marker-end="url(#ol)"/>
+  <rect x="80" y="334" width="280" height="50" rx="6" fill="#11161d" stroke="#2a3340" stroke-width="1.2"/>
+  <text x="220" y="354" text-anchor="middle" font-size="9" fill="#9fb4c8">之后:解析结果进 dcache(纳秒级);</text>
+  <text x="220" y="372" text-anchor="middle" font-size="9" fill="#9fb4c8">读写直达真实文件,不再逐层探</text>
+
+  <!-- ===== lane 2: whiteout ===== -->
+  <text x="600" y="100" text-anchor="middle" font-size="13" fill="#ff8888" font-weight="bold">案例② 读 default.html(被遮)</text>
+  <rect x="460" y="116" width="280" height="40" rx="6" fill="#0d1117" stroke="#3a5168" stroke-width="1.3"/>
+  <text x="600" y="141" text-anchor="middle" font-size="10" fill="#9fd9a0">open /usr/share/nginx/default.html</text>
+
+  <rect x="460" y="172" width="280" height="56" rx="6" fill="#2a1212" stroke="#c04040" stroke-width="2"/>
+  <text x="600" y="194" text-anchor="middle" font-size="10.5" fill="#ff9b9b" font-weight="bold">1. 探 upper → 发现 .wh.default.html</text>
+  <text x="600" y="213" text-anchor="middle" font-size="9" fill="#d2a0a0">(whiteout:字符设备 0:0,同名墓碑)</text>
+  <rect x="460" y="240" width="280" height="44" rx="6" fill="#1a0e0e" stroke="#7a2a2a" stroke-width="1.4"/>
+  <text x="600" y="260" text-anchor="middle" font-size="10.5" fill="#ff8888" font-weight="bold">立即停:ENOENT(不存在)</text>
+  <text x="600" y="277" text-anchor="middle" font-size="8.5" fill="#9a7878">下层 L2 里它明明还躺着 —— 但当它没有</text>
+  <line x1="600" y1="156" x2="600" y2="170" stroke="#88c0ff" stroke-width="1.6" marker-end="url(#ol)"/>
+  <line x1="600" y1="228" x2="600" y2="238" stroke="#88c0ff" stroke-width="1.6" marker-end="url(#ol)"/>
+  <rect x="460" y="296" width="280" height="88" rx="6" fill="#11161d" stroke="#2a3340" stroke-width="1.2"/>
+  <text x="600" y="318" text-anchor="middle" font-size="9.5" fill="#9fb4c8" font-weight="bold">目录版遮挡:opaque 标记</text>
+  <text x="600" y="338" text-anchor="middle" font-size="8.5" fill="#7a8694">upper 某目录带 trusted.overlay.opaque=y</text>
+  <text x="600" y="355" text-anchor="middle" font-size="8.5" fill="#7a8694">→ 这个目录"不再向下合并",</text>
+  <text x="600" y="372" text-anchor="middle" font-size="8.5" fill="#7a8694">下层同名目录整个被挡住</text>
+
+  <!-- ===== lane 3: dir merge ===== -->
+  <text x="980" y="100" text-anchor="middle" font-size="13" fill="#88ffbb" font-weight="bold">案例③ ls /etc(目录是例外:合并)</text>
+  <rect x="840" y="116" width="280" height="40" rx="6" fill="#0d1117" stroke="#3a5168" stroke-width="1.3"/>
+  <text x="980" y="141" text-anchor="middle" font-size="10" fill="#9fd9a0">ls /etc</text>
+
+  <rect x="840" y="172" width="280" height="36" rx="5" fill="#16263a" stroke="#4080c0" stroke-width="1.4"/>
+  <text x="980" y="195" text-anchor="middle" font-size="9.5" fill="#bfe0ff">upper/etc:{nginx/(改过的)}</text>
+  <rect x="840" y="214" width="280" height="36" rx="5" fill="#173b2a" stroke="#40c060" stroke-width="1.3"/>
+  <text x="980" y="237" text-anchor="middle" font-size="9.5" fill="#88ffbb">L3/etc:{myapp.conf}</text>
+  <rect x="840" y="256" width="280" height="36" rx="5" fill="#163524" stroke="#40c060" stroke-width="1.3"/>
+  <text x="980" y="279" text-anchor="middle" font-size="9.5" fill="#88ffbb">L2/etc:{nginx/, passwd…}</text>
+  <rect x="840" y="298" width="280" height="36" rx="5" fill="#142f1f" stroke="#40c060" stroke-width="1.3"/>
+  <text x="980" y="321" text-anchor="middle" font-size="9.5" fill="#88ffbb">L1/etc:{passwd, hosts…}</text>
+  <rect x="840" y="346" width="280" height="38" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="980" y="370" text-anchor="middle" font-size="9.5" fill="#88ff88" font-weight="bold">结果 = 各层并集,去重,减 whiteout</text>
+
+  <!-- ===== bottom: storage truth ===== -->
+  <rect x="80" y="412" width="1040" height="120" rx="10" fill="#0e1a12" stroke="#2a7a44" stroke-width="1.8"/>
+  <text x="600" y="438" text-anchor="middle" font-size="13.5" fill="#9bffb5" font-weight="bold">存储真相:overlayfs 自己不存一个字节</text>
+  <text x="600" y="462" text-anchor="middle" font-size="10.5" fill="#7fd99f">每一层 = 宿主真实文件系统(ext4/xfs)上一棵普通目录树:/var/lib/docker/overlay2/&lt;id&gt;/diff/ —— ls 进去全是普通文件</text>
+  <text x="600" y="484" text-anchor="middle" font-size="10.5" fill="#7fd99f">路径表示 = 同一相对路径在各层根下的"同位投影":merged 的 /etc/a 对应 upper/etc/a、L3/etc/a、L2/etc/a …(每层只是部分树)</text>
+  <text x="600" y="506" text-anchor="middle" font-size="10.5" fill="#7fd99f">索引 = 没有专门索引:就用底层 fs 的目录结构按层序探测,首查后由内核 dcache 缓存兜底</text>
+  <text x="600" y="524" text-anchor="middle" font-size="9.5" fill="#5f8a6f">两个形态分清:传输形态 = tar 包(sha256 digest 算的是它);落盘形态 = 解开的普通目录树</text>
+
+  <rect x="170" y="552" width="860" height="48" rx="9" fill="#11161d" stroke="#c08040" stroke-width="1.6"/>
+  <text x="600" y="573" text-anchor="middle" font-size="12.5" fill="#ffc48a" font-weight="bold">overlayfs 是"查找时合成视图"的薄壳:存储交给底层 fs,索引交给目录 + dcache,</text>
+  <text x="600" y="592" text-anchor="middle" font-size="12.5" fill="#ffc48a" font-weight="bold">自己只回答一个问题 —— "这个路径,哪一层说了算?"</text>
+
+  <text x="600" y="634" text-anchor="middle" font-size="10" fill="#6a7684">探测顺序恒为 upper → L3 → L2 → L1(自上而下);普通文件先见即得,whiteout 即停,目录合并</text>
+</svg>

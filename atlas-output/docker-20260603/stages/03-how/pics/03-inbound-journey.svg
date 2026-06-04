@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="ib" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#40c060"/>
+    </marker>
+    <marker id="ibr" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#88c0ff"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="760" fill="#0a0c10"/>
+
+  <text x="600" y="34" text-anchor="middle" font-size="23" fill="#e8eef5" font-weight="bold">进门全程:外部客户端 → 孤岛上的 Tomcat(含回程)</text>
+  <text x="600" y="58" text-anchor="middle" font-size="12" fill="#7a8694">docker run -p 8080:8080 tomcat · 左侧绿实线 = 去程 ①~⑧ · 右侧蓝虚线 = 回程 R①~R④ · 右栏 = conntrack 账本(主角)</text>
+
+  <!-- client -->
+  <rect x="380" y="78" width="440" height="48" rx="8" fill="#161a20" stroke="#aab6c4" stroke-width="1.6"/>
+  <text x="600" y="98" text-anchor="middle" font-size="11.5" fill="#cdd6e0" font-weight="bold">客户端 192.168.1.100</text>
+  <text x="600" y="116" text-anchor="middle" font-size="9.5" fill="#8a96a4">连 192.168.1.10:8080 —— 它只知道宿主,不知道任何容器</text>
+
+  <!-- host eth0 -->
+  <rect x="380" y="152" width="440" height="44" rx="8" fill="#173b2a" stroke="#40c060" stroke-width="1.8"/>
+  <text x="600" y="171" text-anchor="middle" font-size="11" fill="#88ffbb" font-weight="bold">宿主 eth0 收包</text>
+  <text x="600" y="188" text-anchor="middle" font-size="9" fill="#7fd99f">dst = 192.168.1.10:8080,src = 192.168.1.100:54321</text>
+  <line x1="560" y1="126" x2="560" y2="150" stroke="#40c060" stroke-width="2" marker-end="url(#ib)"/>
+  <text x="540" y="142" text-anchor="end" font-size="10" fill="#88ffbb">①</text>
+
+  <!-- PREROUTING DNAT -->
+  <rect x="380" y="222" width="440" height="66" rx="8" fill="#241808" stroke="#c08040" stroke-width="2.2"/>
+  <text x="600" y="244" text-anchor="middle" font-size="11" fill="#ffaa55" font-weight="bold">PREROUTING(nat 表 · DOCKER 链):DNAT 引渡</text>
+  <text x="600" y="263" text-anchor="middle" font-size="9.5" fill="#ffd9a8">--dport 8080 → 目的地改写:192.168.1.10:8080 ⟶ 172.17.0.2:8080</text>
+  <text x="600" y="280" text-anchor="middle" font-size="8.5" fill="#c89868">(这条规则就是 -p 8080:8080 写下的;只改"目的",不动"来源")</text>
+  <line x1="560" y1="196" x2="560" y2="220" stroke="#40c060" stroke-width="2" marker-end="url(#ib)"/>
+  <text x="540" y="212" text-anchor="end" font-size="10" fill="#88ffbb">②</text>
+
+  <!-- routing + forward -->
+  <rect x="380" y="314" width="440" height="60" rx="8" fill="#173b2a" stroke="#40c060" stroke-width="1.6"/>
+  <text x="600" y="336" text-anchor="middle" font-size="10.5" fill="#88ffbb" font-weight="bold">宿主路由决策:dst 已不是我 → 转发</text>
+  <text x="600" y="354" text-anchor="middle" font-size="9" fill="#7fd99f">查宿主路由表:172.17.0.0/16 dev docker0(前提 ip_forward=1,Docker 设的)</text>
+  <text x="600" y="368" text-anchor="middle" font-size="8.5" fill="#5f8a6f">过 filter 表 FORWARD 链:Docker 的放行规则点头</text>
+  <line x1="560" y1="288" x2="560" y2="312" stroke="#40c060" stroke-width="2" marker-end="url(#ib)"/>
+  <text x="540" y="304" text-anchor="end" font-size="10" fill="#88ffbb">③④</text>
+
+  <!-- bridge + veth -->
+  <rect x="380" y="400" width="440" height="50" rx="8" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="600" y="420" text-anchor="middle" font-size="10.5" fill="#88ff88" font-weight="bold">docker0 网桥 → 查 FDB → veth-tomcat(宿主端)</text>
+  <text x="600" y="438" text-anchor="middle" font-size="9" fill="#7fd99f">二层转发进管子,钻墙</text>
+  <line x1="560" y1="374" x2="560" y2="398" stroke="#40c060" stroke-width="2" marker-end="url(#ib)"/>
+  <text x="540" y="390" text-anchor="end" font-size="10" fill="#88ffbb">⑤</text>
+
+  <!-- container stack -->
+  <rect x="368" y="476" width="464" height="118" rx="12" fill="none" stroke="#c08040" stroke-width="2" stroke-dasharray="8,5"/>
+  <text x="600" y="470" text-anchor="middle" font-size="9.5" fill="#ffaa55">容器的 net namespace(从这里起,用的全是岛上自己的那套)</text>
+  <rect x="392" y="488" width="416" height="44" rx="7" fill="#142838" stroke="#4080c0" stroke-width="1.6"/>
+  <text x="600" y="506" text-anchor="middle" font-size="10.5" fill="#88c0ff" font-weight="bold">容器 eth0 收包 → 岛上自己的路由:dst=172.17.0.2 是我 → 本机投递</text>
+  <text x="600" y="524" text-anchor="middle" font-size="8.5" fill="#7fa8cc">再过岛上自己的 iptables(默认空表放行)→ socket 查找::8080 有人听</text>
+  <rect x="392" y="540" width="416" height="44" rx="7" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="600" y="558" text-anchor="middle" font-size="11" fill="#bfe0ff" font-weight="bold">Tomcat(LISTEN 0.0.0.0:8080)收到 SYN,开始握手</text>
+  <text x="600" y="576" text-anchor="middle" font-size="8.5" fill="#88c0ff">它看到的 src = 192.168.1.100(真实客户端!DNAT 没动来源)</text>
+  <line x1="560" y1="450" x2="560" y2="486" stroke="#40c060" stroke-width="2" marker-end="url(#ib)"/>
+  <text x="540" y="470" text-anchor="end" font-size="10" fill="#88ffbb">⑥</text>
+  <text x="540" y="538" text-anchor="end" font-size="10" fill="#88ffbb">⑦⑧</text>
+
+  <!-- conntrack ledger -->
+  <rect x="868" y="222" width="292" height="180" rx="9" fill="#1a1206" stroke="#ffaa55" stroke-width="2"/>
+  <text x="1014" y="246" text-anchor="middle" font-size="11.5" fill="#ffaa55" font-weight="bold">conntrack 账本(宿主 ns)</text>
+  <text x="1014" y="270" text-anchor="middle" font-size="9" fill="#ffd9a8">第 ② 步同时记下一笔交易:</text>
+  <rect x="886" y="282" width="256" height="58" rx="5" fill="#0d1117" stroke="#5f3a1e"/>
+  <text x="1014" y="300" text-anchor="middle" font-size="8.5" fill="#ffd9a8">原始:1.100:54321 → 1.10:8080</text>
+  <text x="1014" y="316" text-anchor="middle" font-size="8.5" fill="#ffd9a8">改写:1.100:54321 → 172.17.0.2:8080</text>
+  <text x="1014" y="332" text-anchor="middle" font-size="8.5" fill="#9a8868">(状态:NEW → ESTABLISHED)</text>
+  <text x="1014" y="360" text-anchor="middle" font-size="9" fill="#c89868">此后这条连接的每个包</text>
+  <text x="1014" y="376" text-anchor="middle" font-size="9" fill="#c89868">不再查规则,直接照账本改写</text>
+  <text x="1014" y="392" text-anchor="middle" font-size="8.5" fill="#9a8868">"第一个包走规则,后续包走账本"</text>
+
+  <!-- return path -->
+  <line x1="700" y1="540" x2="700" y2="448" stroke="#88c0ff" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#ibr)"/>
+  <line x1="700" y1="398" x2="700" y2="290" stroke="#88c0ff" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#ibr)"/>
+  <line x1="700" y1="220" x2="700" y2="128" stroke="#88c0ff" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#ibr)"/>
+  <text x="718" y="500" font-size="9.5" fill="#88c0ff">R① Tomcat 回包:dst=1.100</text>
+  <text x="718" y="516" font-size="8.5" fill="#7fa8cc">岛上路由:default via 172.17.0.1</text>
+  <text x="718" y="350" font-size="9.5" fill="#88c0ff">R②③ 回到宿主:conntrack 对上账本</text>
+  <text x="718" y="366" font-size="8.5" fill="#7fa8cc">自动反向还原:src 172.17.0.2:8080</text>
+  <text x="718" y="380" font-size="8.5" fill="#7fa8cc">⟶ 192.168.1.10:8080(不需要任何规则)</text>
+  <text x="718" y="170" font-size="9.5" fill="#88c0ff">R④ 出 eth0 → 客户端</text>
+  <text x="718" y="186" font-size="8.5" fill="#7fa8cc">它看到回包来自 1.10:8080,容器全程隐身</text>
+
+  <!-- bottom punchline -->
+  <rect x="110" y="624" width="980" height="62" rx="10" fill="#11161d" stroke="#c08040" stroke-width="1.8"/>
+  <text x="600" y="650" text-anchor="middle" font-size="13" fill="#ffc48a" font-weight="bold">进门 = DNAT 引渡(只改目的地)+ conntrack 记账;回程不靠规则,靠账本自动反向还原。</text>
+  <text x="600" y="673" text-anchor="middle" font-size="11" fill="#c8a878">两端都被蒙在鼓里:客户端以为在跟宿主说话,Tomcat 以为客户端直连了自己 —— 化妆术全在宿主的 netfilter 里。</text>
+
+  <text x="600" y="718" text-anchor="middle" font-size="10" fill="#6a7684">docker ps 的 PORTS 列(0.0.0.0:8080-&gt;8080/tcp)就是这些 DNAT 规则的台账 —— 一条 -p,一条引渡令</text>
+</svg>

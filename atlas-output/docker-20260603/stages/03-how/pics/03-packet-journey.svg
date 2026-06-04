@@ -6,15 +6,15 @@
   </defs>
   <rect width="1200" height="660" fill="#0a0c10"/>
 
-  <text x="600" y="36" text-anchor="middle" font-size="24" fill="#e8eef5" font-weight="bold">支线一:一个网络包的旅程(容器 A → 容器 B)</text>
-  <text x="600" y="60" text-anchor="middle" font-size="12.5" fill="#7a8694">curl http://172.17.0.3 —— 八跳全程二层直通:不出宿主、不过 NAT、外面世界毫不知情</text>
+  <text x="600" y="36" text-anchor="middle" font-size="24" fill="#e8eef5" font-weight="bold">洞二现场:一个包的旅程(Spring Boot → Elasticsearch)</text>
+  <text x="600" y="60" text-anchor="middle" font-size="12.5" fill="#7a8694">springboot 调 es 的 9200 —— 八跳全程二层直通:不出宿主、不过 NAT、不上三层路由,真正赶路的是 MAC</text>
 
   <!-- container A -->
   <rect x="60" y="100" width="420" height="190" rx="12" fill="none" stroke="#c08040" stroke-width="2" stroke-dasharray="8,5"/>
-  <text x="270" y="92" text-anchor="middle" font-size="11" fill="#ffaa55">容器 A 的 net namespace</text>
+  <text x="270" y="92" text-anchor="middle" font-size="11" fill="#ffaa55">容器 A(Spring Boot,172.17.0.2)的 net namespace</text>
   <rect x="85" y="120" width="170" height="44" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.6"/>
-  <text x="170" y="139" text-anchor="middle" font-size="10.5" fill="#bfe0ff">① curl 发起连接</text>
-  <text x="170" y="156" text-anchor="middle" font-size="9" fill="#88c0ff">目标 172.17.0.3:80</text>
+  <text x="170" y="139" text-anchor="middle" font-size="10.5" fill="#bfe0ff">① Spring Boot 发起调用</text>
+  <text x="170" y="156" text-anchor="middle" font-size="9" fill="#88c0ff">目标 172.17.0.3:9200(L7/L4)</text>
   <rect x="85" y="180" width="170" height="44" rx="6" fill="#142838" stroke="#4080c0" stroke-width="1.4"/>
   <text x="170" y="199" text-anchor="middle" font-size="10" fill="#88c0ff">② 查 A 自己的路由表</text>
   <text x="170" y="216" text-anchor="middle" font-size="8.5" fill="#7fa8cc">172.17.0.0/16 dev eth0 → 同网段直发</text>
@@ -26,12 +26,12 @@
 
   <!-- container B -->
   <rect x="720" y="100" width="420" height="190" rx="12" fill="none" stroke="#c08040" stroke-width="2" stroke-dasharray="8,5"/>
-  <text x="930" y="92" text-anchor="middle" font-size="11" fill="#ffaa55">容器 B 的 net namespace</text>
+  <text x="930" y="92" text-anchor="middle" font-size="11" fill="#ffaa55">容器 B(Elasticsearch,172.17.0.3)的 net namespace</text>
   <rect x="750" y="150" width="160" height="44" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.6"/>
   <text x="830" y="169" text-anchor="middle" font-size="10.5" fill="#bfe0ff">⑦ B.eth0 收包</text>
   <text x="830" y="186" text-anchor="middle" font-size="8.5" fill="#7fa8cc">veth 在 B 墙内的一头</text>
   <rect x="945" y="120" width="170" height="44" rx="6" fill="#142838" stroke="#4080c0" stroke-width="1.4"/>
-  <text x="1030" y="139" text-anchor="middle" font-size="10" fill="#88c0ff">⑧ B 的协议栈 → nginx</text>
+  <text x="1030" y="139" text-anchor="middle" font-size="10" fill="#88c0ff">⑧ L3 收包→L4 :9200→ES</text>
   <text x="1030" y="156" text-anchor="middle" font-size="8.5" fill="#7fa8cc">B 自己的 iptables/路由先过一遍</text>
   <line x1="910" y1="172" x2="943" y2="150" stroke="#40c060" stroke-width="1.8" marker-end="url(#pj)"/>
 

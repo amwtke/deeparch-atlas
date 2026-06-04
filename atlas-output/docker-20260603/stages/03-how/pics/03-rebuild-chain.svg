@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="rb" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#c08040"/>
+    </marker>
+    <marker id="rbg" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#88c0ff"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="700" fill="#0a0c10"/>
+
+  <text x="600" y="36" text-anchor="middle" font-size="24" fill="#e8eef5" font-weight="bold">"修改 L1"之后:不是改,是整列重铸一条新链</text>
+  <text x="600" y="60" text-anchor="middle" font-size="12.5" fill="#7a8694">场景:debian 基础层爆了安全漏洞要换底 —— 层不准改,于是发生的是右边这一整套</text>
+
+  <!-- ===== LEFT: old chain ===== -->
+  <rect x="70" y="92" width="380" height="64" rx="9" fill="#1f1133" stroke="#8040c0" stroke-width="1.8"/>
+  <text x="260" y="118" text-anchor="middle" font-size="12.5" fill="#c088ff" font-weight="bold">旧镜像 myapp:1.0</text>
+  <text x="260" y="140" text-anchor="middle" font-size="9.5" fill="#a888d0">manifest = [ a1b2…, c3d4…, e5f6… ](层清单)</text>
+
+  <rect x="100" y="180" width="320" height="62" rx="7" fill="#173b2a" stroke="#40c060" stroke-width="1.8"/>
+  <text x="260" y="204" text-anchor="middle" font-size="11" fill="#88ffbb" font-weight="bold">L3:COPY 站点文件</text>
+  <rect x="170" y="214" width="180" height="20" rx="3" fill="#0d1117" stroke="#3a5168"/>
+  <text x="260" y="228" text-anchor="middle" font-size="8.5" fill="#9fd9a0">sha256:e5f6…</text>
+
+  <rect x="100" y="252" width="320" height="62" rx="7" fill="#163524" stroke="#40c060" stroke-width="1.8"/>
+  <text x="260" y="276" text-anchor="middle" font-size="11" fill="#88ffbb" font-weight="bold">L2:RUN apt install nginx</text>
+  <rect x="170" y="286" width="180" height="20" rx="3" fill="#0d1117" stroke="#3a5168"/>
+  <text x="260" y="300" text-anchor="middle" font-size="8.5" fill="#9fd9a0">sha256:c3d4…</text>
+
+  <rect x="100" y="324" width="320" height="62" rx="7" fill="#142f1f" stroke="#40c060" stroke-width="1.8"/>
+  <text x="260" y="348" text-anchor="middle" font-size="11" fill="#88ffbb" font-weight="bold">L1:FROM debian(有漏洞)</text>
+  <rect x="170" y="358" width="180" height="20" rx="3" fill="#0d1117" stroke="#3a5168"/>
+  <text x="260" y="372" text-anchor="middle" font-size="8.5" fill="#9fd9a0">sha256:a1b2…</text>
+
+  <!-- old chain stays alive -->
+  <rect x="70" y="412" width="380" height="92" rx="9" fill="#11161d" stroke="#2a3340" stroke-width="1.3"/>
+  <text x="260" y="436" text-anchor="middle" font-size="11" fill="#9fb4c8" font-weight="bold">旧链不销毁,原样躺在盘上</text>
+  <text x="260" y="458" text-anchor="middle" font-size="9.5" fill="#7a8694">正在跑的旧容器、还没升级的旧镜像</text>
+  <text x="260" y="476" text-anchor="middle" font-size="9.5" fill="#7a8694">仍然引用这三块 —— 谁也不许动它们</text>
+  <text x="260" y="494" text-anchor="middle" font-size="9" fill="#5f7488">(没人引用之后,垃圾回收才能收走)</text>
+
+  <!-- ===== CENTER: trigger ===== -->
+  <rect x="478" y="232" width="244" height="120" rx="10" fill="#2a1212" stroke="#c04040" stroke-width="2"/>
+  <text x="600" y="260" text-anchor="middle" font-size="12" fill="#ff9b9b" font-weight="bold">想"修改" L1?</text>
+  <text x="600" y="284" text-anchor="middle" font-size="10" fill="#d2a0a0">层不准改 ——</text>
+  <text x="600" y="304" text-anchor="middle" font-size="11.5" fill="#ffc48a" font-weight="bold">不存在修改,</text>
+  <text x="600" y="324" text-anchor="middle" font-size="11.5" fill="#ffc48a" font-weight="bold">只存在重铸 + 连坐</text>
+  <line x1="452" y1="292" x2="476" y2="292" stroke="#c04040" stroke-width="1.8" stroke-dasharray="5,3"/>
+  <line x1="724" y1="292" x2="748" y2="292" stroke="#c08040" stroke-width="2.2" marker-end="url(#rb)"/>
+
+  <!-- ===== RIGHT: new chain ===== -->
+  <rect x="750" y="92" width="380" height="64" rx="9" fill="#1f1133" stroke="#8040c0" stroke-width="2.4"/>
+  <text x="940" y="118" text-anchor="middle" font-size="12.5" fill="#c088ff" font-weight="bold">新镜像 myapp:1.1</text>
+  <text x="940" y="140" text-anchor="middle" font-size="9.5" fill="#a888d0">manifest = [ f7a8…, b9c0…, d1e2… ](全新清单)</text>
+
+  <rect x="780" y="180" width="320" height="62" rx="7" fill="#173b2a" stroke="#c08040" stroke-width="2" stroke-dasharray="7,4"/>
+  <text x="940" y="200" text-anchor="middle" font-size="11" fill="#88ffbb" font-weight="bold">L3′:COPY 站点文件</text>
+  <text x="940" y="215" text-anchor="middle" font-size="8.5" fill="#ffaa55">指令一字未改 —— 但父层变了 → 连坐重建</text>
+  <rect x="850" y="220" width="180" height="18" rx="3" fill="#0d1117" stroke="#5f3a1e"/>
+  <text x="940" y="233" text-anchor="middle" font-size="8.5" fill="#ffd9a8">sha256:d1e2…(新身份)</text>
+
+  <rect x="780" y="252" width="320" height="62" rx="7" fill="#163524" stroke="#c08040" stroke-width="2" stroke-dasharray="7,4"/>
+  <text x="940" y="272" text-anchor="middle" font-size="11" fill="#88ffbb" font-weight="bold">L2′:RUN apt install nginx</text>
+  <text x="940" y="287" text-anchor="middle" font-size="8.5" fill="#ffaa55">指令一字未改 —— 连坐重建(在新地基上重跑)</text>
+  <rect x="850" y="292" width="180" height="18" rx="3" fill="#0d1117" stroke="#5f3a1e"/>
+  <text x="940" y="305" text-anchor="middle" font-size="8.5" fill="#ffd9a8">sha256:b9c0…(新身份)</text>
+
+  <rect x="780" y="324" width="320" height="62" rx="7" fill="#3a2410" stroke="#ffaa55" stroke-width="2.6"/>
+  <text x="940" y="344" text-anchor="middle" font-size="11" fill="#ffd9a8" font-weight="bold">L1′:FROM debian(打了补丁)</text>
+  <text x="940" y="359" text-anchor="middle" font-size="8.5" fill="#ffaa55">真正变了内容的只有它 —— 但它不是"L1 改的"</text>
+  <rect x="850" y="364" width="180" height="18" rx="3" fill="#0d1117" stroke="#5f3a1e"/>
+  <text x="940" y="377" text-anchor="middle" font-size="8.5" fill="#ffd9a8">sha256:f7a8…(全新方块)</text>
+
+  <!-- correspondence dashed lines -->
+  <line x1="420" y1="211" x2="778" y2="211" stroke="#5f4a2a" stroke-width="1.2" stroke-dasharray="4,5"/>
+  <line x1="420" y1="283" x2="778" y2="283" stroke="#5f4a2a" stroke-width="1.2" stroke-dasharray="4,5"/>
+  <line x1="420" y1="355" x2="778" y2="355" stroke="#5f4a2a" stroke-width="1.2" stroke-dasharray="4,5"/>
+
+  <!-- new chain notes -->
+  <rect x="750" y="412" width="380" height="92" rx="9" fill="#0e1a12" stroke="#2a7a44" stroke-width="1.4"/>
+  <text x="940" y="436" text-anchor="middle" font-size="10.5" fill="#9bffb5" font-weight="bold">重建顺序:自底向上 L1′ → L2′ → L3′</text>
+  <text x="940" y="458" text-anchor="middle" font-size="9.5" fill="#7fd99f">每层都"在父层的新状态之上"重新执行指令</text>
+  <text x="940" y="476" text-anchor="middle" font-size="9.5" fill="#7fd99f">三个 sha 全变 → manifest 全新 → 镜像身份全新</text>
+  <text x="940" y="494" text-anchor="middle" font-size="9" fill="#5f8a6f">部署 = 把集群从旧 digest 指向新 digest(可秒回滚)</text>
+
+  <!-- bottom punchline -->
+  <rect x="110" y="540" width="980" height="64" rx="10" fill="#11161d" stroke="#c08040" stroke-width="1.8"/>
+  <text x="600" y="566" text-anchor="middle" font-size="13" fill="#ffc48a" font-weight="bold">镜像只是"一张指向不可变方块的清单" —— 所谓"改镜像",就是铸几块新方块 + 写一张新清单。</text>
+  <text x="600" y="589" text-anchor="middle" font-size="11" fill="#c8a878">旧链一块不动(还有人引用),新旧两条链并存 —— "层从不被修改,只被替换"的全景照。</text>
+
+  <text x="600" y="632" text-anchor="middle" font-size="10" fill="#6a7684">这就是 §3.1 缓存连坐链的存储侧:Dockerfile 视角"改第 1 行,以下全部重建" = 存储视角"换 L1,整列重铸"</text>
+  <text x="600" y="652" text-anchor="middle" font-size="10" fill="#6a7684">彩蛋:若某层重建产物恰好逐字节相同,sha 相同 → 物理上仍是同一块(内容寻址自动去重);实践中 apt 时间戳等微差通常使其不同</text>
+  <text x="600" y="680" text-anchor="middle" font-size="10" fill="#9a8868">橙实线框 = 内容真正变了的新方块 · 橙虚线框 = 指令没变但被连坐重铸的新方块 · 左侧绿框 = 冻结的旧链</text>
+</svg>

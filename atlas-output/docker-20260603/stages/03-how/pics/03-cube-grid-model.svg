@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="cg" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#88c0ff"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="700" fill="#0a0c10"/>
+
+  <text x="600" y="36" text-anchor="middle" font-size="24" fill="#e8eef5" font-weight="bold">方块模型(读者原创 · 修正定稿):列 = 文件路径,行 = 层</text>
+  <text x="600" y="60" text-anchor="middle" font-size="12.5" fill="#7a8694">一条规则统一全部查找:从最上行往下探,这一列碰到的第一个方块说了算 —— 绿/橙方块给文件,红方块说"没有"</text>
+
+  <!-- column headers -->
+  <text x="330" y="106" text-anchor="middle" font-size="11.5" fill="#cdd6e0" font-weight="bold">/app/app.py</text>
+  <text x="330" y="122" text-anchor="middle" font-size="9" fill="#7a8694">(容器里新写的)</text>
+  <text x="550" y="106" text-anchor="middle" font-size="11.5" fill="#cdd6e0" font-weight="bold">/etc/nginx.conf</text>
+  <text x="550" y="122" text-anchor="middle" font-size="9" fill="#7a8694">(容器里改过的)</text>
+  <text x="770" y="106" text-anchor="middle" font-size="11.5" fill="#cdd6e0" font-weight="bold">/usr/…/default.html</text>
+  <text x="770" y="122" text-anchor="middle" font-size="9" fill="#7a8694">(容器里删掉的)</text>
+  <text x="990" y="106" text-anchor="middle" font-size="11.5" fill="#cdd6e0" font-weight="bold">/bin/ls</text>
+  <text x="990" y="122" text-anchor="middle" font-size="9" fill="#7a8694">(从没人碰过的老文件)</text>
+
+  <!-- row labels -->
+  <text x="135" y="172" text-anchor="end" font-size="11.5" fill="#bfe0ff" font-weight="bold">upper(可写)</text>
+  <text x="135" y="262" text-anchor="end" font-size="11.5" fill="#88ffbb">L3(只读)</text>
+  <text x="135" y="352" text-anchor="end" font-size="11.5" fill="#88ffbb">L2(只读)</text>
+  <text x="135" y="442" text-anchor="end" font-size="11.5" fill="#88ffbb">L1(只读)</text>
+
+  <!-- row separators -->
+  <line x1="160" y1="200" x2="1120" y2="200" stroke="#1c2430" stroke-width="1"/>
+  <line x1="160" y1="290" x2="1120" y2="290" stroke="#1c2430" stroke-width="1"/>
+  <line x1="160" y1="380" x2="1120" y2="380" stroke="#1c2430" stroke-width="1"/>
+
+  <!-- ===== column 1: app.py (new in upper) ===== -->
+  <rect x="278" y="142" width="104" height="50" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="330" y="164" text-anchor="middle" font-size="9.5" fill="#88ff88" font-weight="bold">新增 · 全量</text>
+  <text x="330" y="180" text-anchor="middle" font-size="8.5" fill="#7fd99f">这一列唯一的方块</text>
+  <rect x="278" y="232" width="104" height="50" rx="6" fill="none" stroke="#2a3340" stroke-width="1" stroke-dasharray="4,4"/>
+  <rect x="278" y="322" width="104" height="50" rx="6" fill="none" stroke="#2a3340" stroke-width="1" stroke-dasharray="4,4"/>
+  <rect x="278" y="412" width="104" height="50" rx="6" fill="none" stroke="#2a3340" stroke-width="1" stroke-dasharray="4,4"/>
+  <line x1="330" y1="84" x2="330" y2="138" stroke="#88c0ff" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#cg)"/>
+  <text x="330" y="510" text-anchor="middle" font-size="9.5" fill="#88ff88" font-weight="bold">第 1 探即停</text>
+  <text x="330" y="527" text-anchor="middle" font-size="8.5" fill="#7fd99f">返回 upper 的真文件</text>
+
+  <!-- ===== column 2: nginx.conf (modified, old below) ===== -->
+  <rect x="498" y="142" width="104" height="50" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+  <text x="550" y="164" text-anchor="middle" font-size="9.5" fill="#ffaa55" font-weight="bold">修改 · 完整新版</text>
+  <text x="550" y="180" text-anchor="middle" font-size="8.5" fill="#c89868">copy_up 来的全量</text>
+  <rect x="498" y="232" width="104" height="50" rx="6" fill="none" stroke="#2a3340" stroke-width="1" stroke-dasharray="4,4"/>
+  <rect x="498" y="322" width="104" height="50" rx="6" fill="#142f1f" stroke="#40c060" stroke-width="1.4" opacity="0.55"/>
+  <text x="550" y="344" text-anchor="middle" font-size="9.5" fill="#6fa97f" opacity="0.8">旧版 · 完整</text>
+  <text x="550" y="360" text-anchor="middle" font-size="8.5" fill="#5f8a6f" opacity="0.8">被压着,一字未动</text>
+  <rect x="498" y="412" width="104" height="50" rx="6" fill="none" stroke="#2a3340" stroke-width="1" stroke-dasharray="4,4"/>
+  <line x1="550" y1="84" x2="550" y2="138" stroke="#88c0ff" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#cg)"/>
+  <text x="550" y="510" text-anchor="middle" font-size="9.5" fill="#ffaa55" font-weight="bold">第 1 探即停</text>
+  <text x="550" y="527" text-anchor="middle" font-size="8.5" fill="#c89868">返回新版;旧版被遮不被删</text>
+
+  <!-- ===== column 3: default.html (whiteout) ===== -->
+  <rect x="718" y="142" width="104" height="50" rx="6" fill="#5f1e1e" stroke="#c04040" stroke-width="2.4"/>
+  <text x="770" y="164" text-anchor="middle" font-size="9.5" fill="#ff8888" font-weight="bold">红方块 · 墓碑</text>
+  <text x="770" y="180" text-anchor="middle" font-size="8.5" fill="#d2a0a0">whiteout(否定命中)</text>
+  <rect x="718" y="232" width="104" height="50" rx="6" fill="none" stroke="#2a3340" stroke-width="1" stroke-dasharray="4,4"/>
+  <rect x="718" y="322" width="104" height="50" rx="6" fill="#142f1f" stroke="#40c060" stroke-width="1.4" opacity="0.55"/>
+  <text x="770" y="344" text-anchor="middle" font-size="9.5" fill="#6fa97f" opacity="0.8">旧文件还在</text>
+  <text x="770" y="360" text-anchor="middle" font-size="8.5" fill="#5f8a6f" opacity="0.8">但永远探不到了</text>
+  <rect x="718" y="412" width="104" height="50" rx="6" fill="none" stroke="#2a3340" stroke-width="1" stroke-dasharray="4,4"/>
+  <line x1="770" y1="84" x2="770" y2="138" stroke="#88c0ff" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#cg)"/>
+  <text x="770" y="510" text-anchor="middle" font-size="9.5" fill="#ff8888" font-weight="bold">第 1 探即停(否定)</text>
+  <text x="770" y="527" text-anchor="middle" font-size="8.5" fill="#d2a0a0">ENOENT —— 红方块也是"命中"</text>
+
+  <!-- ===== column 4: /bin/ls (untouched, deep) ===== -->
+  <rect x="938" y="142" width="104" height="50" rx="6" fill="none" stroke="#2a3340" stroke-width="1" stroke-dasharray="4,4"/>
+  <rect x="938" y="232" width="104" height="50" rx="6" fill="none" stroke="#2a3340" stroke-width="1" stroke-dasharray="4,4"/>
+  <rect x="938" y="322" width="104" height="50" rx="6" fill="none" stroke="#2a3340" stroke-width="1" stroke-dasharray="4,4"/>
+  <rect x="938" y="412" width="104" height="50" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="990" y="434" text-anchor="middle" font-size="9.5" fill="#88ff88" font-weight="bold">原始 · 全量</text>
+  <text x="990" y="450" text-anchor="middle" font-size="8.5" fill="#7fd99f">基础镜像带来的</text>
+  <line x1="990" y1="84" x2="990" y2="408" stroke="#88c0ff" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#cg)"/>
+  <text x="990" y="510" text-anchor="middle" font-size="9.5" fill="#88ff88" font-weight="bold">第 4 探才停</text>
+  <text x="990" y="527" text-anchor="middle" font-size="8.5" fill="#7fd99f">首查后进 dcache,下次纳秒</text>
+
+  <!-- unified rule -->
+  <rect x="100" y="556" width="1000" height="66" rx="10" fill="#11161d" stroke="#c08040" stroke-width="1.8"/>
+  <text x="600" y="582" text-anchor="middle" font-size="13.5" fill="#ffc48a" font-weight="bold">一条规则统一四列:从上往下,这一列碰到的第一个方块说了算 —— 不管它是绿(给文件)还是红(说没有)。</text>
+  <text x="600" y="604" text-anchor="middle" font-size="11" fill="#c8a878">"新增 / 修改 / 老文件"不是三种查找,只是"第一个方块在第几行"的差别;首查结果全部进 dentry cache。</text>
+
+  <text x="600" y="648" text-anchor="middle" font-size="10" fill="#6a7684">虚线空格 = 该层没碰过此文件(部分树:层只记录自己碰过的,这是层"便宜"的原因) · 半透明方块 = 物理还在但永远探不到</text>
+  <text x="600" y="668" text-anchor="middle" font-size="10" fill="#6a7684">唯一例外:目录不走"先见即得",走"逐层合并"(ls /etc = 各层并集 − 红方块)</text>
+</svg>

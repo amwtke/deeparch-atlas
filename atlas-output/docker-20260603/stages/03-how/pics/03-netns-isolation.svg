@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="ni" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#40c060"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="680" fill="#0a0c10"/>
+
+  <text x="600" y="36" text-anchor="middle" font-size="24" fill="#e8eef5" font-weight="bold">net namespace 的完整家当:一座孤岛,后天凿洞</text>
+  <text x="600" y="60" text-anchor="middle" font-size="12.5" fill="#7a8694">不是"几条规则隔离了",是整个网络协议栈从头到脚各来一套 —— 断开是默认,连通是例外</text>
+
+  <!-- newborn island note -->
+  <rect x="380" y="80" width="440" height="56" rx="9" fill="#1a0e0e" stroke="#c04040" stroke-width="1.8"/>
+  <text x="600" y="103" text-anchor="middle" font-size="11.5" fill="#ff9b9b" font-weight="bold">新生的 net namespace = 一座真正的孤岛</text>
+  <text x="600" y="124" text-anchor="middle" font-size="10" fill="#d2a0a0">里面只有一个还没上电的 lo —— 没有网卡、没有路由、没有任何对外通路</text>
+
+  <!-- ===== LEFT: container netns inventory ===== -->
+  <rect x="60" y="160" width="460" height="400" rx="12" fill="none" stroke="#c08040" stroke-width="2.2" stroke-dasharray="8,5"/>
+  <text x="290" y="186" text-anchor="middle" font-size="13.5" fill="#ffaa55" font-weight="bold">容器的 net ns:自己的全套(八件家当)</text>
+
+  <rect x="85" y="202" width="195" height="56" rx="6" fill="#142838" stroke="#4080c0" stroke-width="1.4"/>
+  <text x="182" y="224" text-anchor="middle" font-size="10.5" fill="#88c0ff" font-weight="bold">① 设备清单</text>
+  <text x="182" y="244" text-anchor="middle" font-size="8.5" fill="#7fa8cc">eth0(veth 内头)· 自己的 lo</text>
+
+  <rect x="300" y="202" width="195" height="56" rx="6" fill="#142838" stroke="#4080c0" stroke-width="1.4"/>
+  <text x="397" y="224" text-anchor="middle" font-size="10.5" fill="#88c0ff" font-weight="bold">② IP 地址</text>
+  <text x="397" y="244" text-anchor="middle" font-size="8.5" fill="#7fa8cc">172.17.0.2/16(挂在 eth0 上)</text>
+
+  <rect x="85" y="268" width="195" height="56" rx="6" fill="#142838" stroke="#4080c0" stroke-width="1.4"/>
+  <text x="182" y="290" text-anchor="middle" font-size="10.5" fill="#88c0ff" font-weight="bold">③ 路由表(整套)</text>
+  <text x="182" y="310" text-anchor="middle" font-size="8.5" fill="#7fa8cc">default via 172.17.0.1 dev eth0</text>
+
+  <rect x="300" y="268" width="195" height="56" rx="6" fill="#142838" stroke="#4080c0" stroke-width="1.4"/>
+  <text x="397" y="288" text-anchor="middle" font-size="10.5" fill="#88c0ff" font-weight="bold">④ iptables / nftables</text>
+  <text x="397" y="304" text-anchor="middle" font-size="8.5" fill="#7fa8cc">全部表链(filter/nat/mangle…)</text>
+  <text x="397" y="318" text-anchor="middle" font-size="8.5" fill="#7fa8cc">+ 自己的 conntrack 连接跟踪表</text>
+
+  <rect x="85" y="334" width="195" height="56" rx="6" fill="#142838" stroke="#4080c0" stroke-width="1.4"/>
+  <text x="182" y="356" text-anchor="middle" font-size="10.5" fill="#88c0ff" font-weight="bold">⑤ 端口绑定空间</text>
+  <text x="182" y="376" text-anchor="middle" font-size="8.5" fill="#7fa8cc">容器的 :8080 ≠ 宿主的 :8080</text>
+
+  <rect x="300" y="334" width="195" height="56" rx="6" fill="#142838" stroke="#4080c0" stroke-width="1.4"/>
+  <text x="397" y="356" text-anchor="middle" font-size="10.5" fill="#88c0ff" font-weight="bold">⑥ ARP / 邻居表</text>
+  <text x="397" y="376" text-anchor="middle" font-size="8.5" fill="#7fa8cc">"172.17.0.3 的 MAC 是谁"自己记</text>
+
+  <rect x="85" y="400" width="195" height="56" rx="6" fill="#142838" stroke="#4080c0" stroke-width="1.4"/>
+  <text x="182" y="422" text-anchor="middle" font-size="10.5" fill="#88c0ff" font-weight="bold">⑦ 自己的 127.0.0.1</text>
+  <text x="182" y="442" text-anchor="middle" font-size="8.5" fill="#7fa8cc">容器内 localhost 只通自己</text>
+
+  <rect x="300" y="400" width="195" height="56" rx="6" fill="#142838" stroke="#4080c0" stroke-width="1.4"/>
+  <text x="397" y="422" text-anchor="middle" font-size="10.5" fill="#88c0ff" font-weight="bold">⑧ 网络 sysctl 参数</text>
+  <text x="397" y="442" text-anchor="middle" font-size="8.5" fill="#7fa8cc">net.* 一族(转发/tcp 调优…)</text>
+
+  <text x="290" y="486" text-anchor="middle" font-size="10" fill="#c89868">连 socket 列表都是自己的(容器里 ss 看不见宿主的连接)</text>
+  <rect x="85" y="502" width="410" height="44" rx="7" fill="#241808" stroke="#c08040" stroke-width="1.5"/>
+  <text x="290" y="520" text-anchor="middle" font-size="10" fill="#ffaa55" font-weight="bold">Tomcat 跑在这里:LISTEN 0.0.0.0:8080</text>
+  <text x="290" y="537" text-anchor="middle" font-size="8.5" fill="#c89868">—— 但这个 0.0.0.0 只覆盖"岛内",外面没人能直接摸到它</text>
+
+  <!-- ===== RIGHT: host netns ===== -->
+  <rect x="680" y="160" width="460" height="210" rx="12" fill="none" stroke="#40c060" stroke-width="2" stroke-dasharray="8,5"/>
+  <text x="910" y="186" text-anchor="middle" font-size="13.5" fill="#88ff88" font-weight="bold">宿主的 net ns:同样八件,完全独立的另一套</text>
+  <text x="910" y="214" text-anchor="middle" font-size="10" fill="#7fd99f">真网卡 eth0(192.168.1.10)· 自己的路由表</text>
+  <text x="910" y="236" text-anchor="middle" font-size="10" fill="#7fd99f">自己的 iptables(Docker 在这里写 DNAT/MASQUERADE)</text>
+  <text x="910" y="258" text-anchor="middle" font-size="10" fill="#7fd99f">自己的 conntrack(进出容器的"交易账本"记在这)</text>
+  <text x="910" y="280" text-anchor="middle" font-size="10" fill="#7fd99f">docker0 网桥(172.17.0.1)+ 各容器 veth 的宿主端</text>
+  <text x="910" y="310" text-anchor="middle" font-size="9.5" fill="#5f8a6f">两套栈互不可见:宿主改路由,容器无感;容器改 iptables,宿主无感</text>
+  <text x="910" y="332" text-anchor="middle" font-size="9.5" fill="#5f8a6f">唯一的交点 = 那根 veth 管子的两头</text>
+
+  <!-- ===== bridge: the three-piece kit ===== -->
+  <rect x="680" y="396" width="460" height="164" rx="10" fill="#0e1a12" stroke="#2a7a44" stroke-width="1.8"/>
+  <text x="910" y="422" text-anchor="middle" font-size="12.5" fill="#9bffb5" font-weight="bold">凿洞三件套(把孤岛接回大陆)</text>
+  <text x="910" y="448" text-anchor="middle" font-size="10.5" fill="#7fd99f">① veth pair = 一根网线:一头插岛上(eth0),一头插大陆</text>
+  <text x="910" y="472" text-anchor="middle" font-size="10.5" fill="#7fd99f">② bridge(docker0)= 交换机:把各岛的网线插在一起</text>
+  <text x="910" y="496" text-anchor="middle" font-size="10.5" fill="#7fd99f">③ netfilter(DNAT/SNAT + conntrack)= 海关化妆台:</text>
+  <text x="910" y="516" text-anchor="middle" font-size="10" fill="#7fd99f">进门改目的地、出门改发件人,账本配对、回程还原</text>
+  <text x="910" y="542" text-anchor="middle" font-size="9.5" fill="#5f8a6f">三件全是"后天追加"的 —— 隔离是出厂设置,连通是手动布线</text>
+
+  <line x1="520" y1="430" x2="678" y2="450" stroke="#40c060" stroke-width="2.2" stroke-dasharray="6,4" marker-end="url(#ni)"/>
+
+  <!-- bottom punchline -->
+  <rect x="110" y="588" width="980" height="56" rx="10" fill="#11161d" stroke="#c08040" stroke-width="1.8"/>
+  <text x="600" y="612" text-anchor="middle" font-size="13" fill="#ffc48a" font-weight="bold">"几乎断开"不是缺陷,是出厂设置:岛是默认,桥是例外 —— 每一条连通都必须显式凿出来、且有账可查。</text>
+  <text x="600" y="634" text-anchor="middle" font-size="10.5" fill="#c8a878">所以 Tomcat 的问题变成:包怎么"被引渡"进岛(图②),岛上的包怎么"持护照"出去(图③)。</text>
+</svg>

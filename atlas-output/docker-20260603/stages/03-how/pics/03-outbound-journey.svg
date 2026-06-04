@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="ob" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#40c060"/>
+    </marker>
+    <marker id="obr" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#88c0ff"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="700" fill="#0a0c10"/>
+
+  <text x="600" y="34" text-anchor="middle" font-size="23" fill="#e8eef5" font-weight="bold">出门全程:孤岛上的 Tomcat 主动访问外部 API(含回程)</text>
+  <text x="600" y="58" text-anchor="middle" font-size="12" fill="#7a8694">Tomcat 调用 api.example.com:443 · 绿实线 = 去程 ①~⑥ · 蓝虚线 = 回程 R①~R③ · 关键:出门为什么必须"化妆"</text>
+
+  <!-- container: tomcat initiates -->
+  <rect x="368" y="78" width="464" height="106" rx="12" fill="none" stroke="#c08040" stroke-width="2" stroke-dasharray="8,5"/>
+  <text x="600" y="72" text-anchor="middle" font-size="9.5" fill="#ffaa55">容器的 net namespace</text>
+  <rect x="392" y="90" width="416" height="42" rx="7" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="600" y="108" text-anchor="middle" font-size="11" fill="#bfe0ff" font-weight="bold">Tomcat 发起连接:connect 93.184.216.34:443</text>
+  <text x="600" y="125" text-anchor="middle" font-size="8.5" fill="#88c0ff">出发时包是"素颜":src = 172.17.0.2:39000(它的真身)</text>
+  <rect x="392" y="138" width="416" height="38" rx="7" fill="#142838" stroke="#4080c0" stroke-width="1.4"/>
+  <text x="600" y="154" text-anchor="middle" font-size="10" fill="#88c0ff">岛上自己的路由表:目的地不在 172.17/16 → default via 172.17.0.1 dev eth0</text>
+  <text x="600" y="169" text-anchor="middle" font-size="8.5" fill="#7fa8cc">从 eth0 出岛,钻 veth 管</text>
+
+  <!-- bridge & host routing -->
+  <rect x="380" y="208" width="440" height="48" rx="8" fill="#1e5f3a" stroke="#40c060" stroke-width="1.8"/>
+  <text x="600" y="228" text-anchor="middle" font-size="10.5" fill="#88ff88" font-weight="bold">veth(宿主端)→ docker0 网桥 → 上交宿主协议栈</text>
+  <text x="600" y="246" text-anchor="middle" font-size="8.5" fill="#7fd99f">dst 是网关 MAC(172.17.0.1 就是 docker0 自己)→ 进三层</text>
+  <line x1="560" y1="184" x2="560" y2="206" stroke="#40c060" stroke-width="2" marker-end="url(#ob)"/>
+  <text x="540" y="200" text-anchor="end" font-size="10" fill="#88ffbb">①②</text>
+
+  <rect x="380" y="282" width="440" height="50" rx="8" fill="#173b2a" stroke="#40c060" stroke-width="1.6"/>
+  <text x="600" y="302" text-anchor="middle" font-size="10.5" fill="#88ffbb" font-weight="bold">宿主路由决策:外网地址 → 出宿主 eth0</text>
+  <text x="600" y="320" text-anchor="middle" font-size="8.5" fill="#7fd99f">过 FORWARD 链:Docker 放行"从 docker0 来的出站流量"</text>
+  <line x1="560" y1="256" x2="560" y2="280" stroke="#40c060" stroke-width="2" marker-end="url(#ob)"/>
+  <text x="540" y="272" text-anchor="end" font-size="10" fill="#88ffbb">③④</text>
+
+  <!-- MASQUERADE -->
+  <rect x="380" y="358" width="440" height="66" rx="8" fill="#241808" stroke="#c08040" stroke-width="2.2"/>
+  <text x="600" y="380" text-anchor="middle" font-size="11" fill="#ffaa55" font-weight="bold">POSTROUTING(nat 表):MASQUERADE 化妆</text>
+  <text x="600" y="399" text-anchor="middle" font-size="9.5" fill="#ffd9a8">-s 172.17.0.0/16 ! -o docker0 → 来源改写:172.17.0.2:39000 ⟶ 192.168.1.10:39001</text>
+  <text x="600" y="416" text-anchor="middle" font-size="8.5" fill="#c89868">同时 conntrack 记下这笔交易(回程全靠它)</text>
+  <line x1="560" y1="332" x2="560" y2="356" stroke="#40c060" stroke-width="2" marker-end="url(#ob)"/>
+  <text x="540" y="348" text-anchor="end" font-size="10" fill="#88ffbb">⑤</text>
+
+  <!-- out -->
+  <rect x="380" y="450" width="440" height="44" rx="8" fill="#173b2a" stroke="#40c060" stroke-width="1.8"/>
+  <text x="600" y="469" text-anchor="middle" font-size="10.5" fill="#88ffbb" font-weight="bold">宿主 eth0 出门,奔向外网</text>
+  <text x="600" y="486" text-anchor="middle" font-size="8.5" fill="#7fd99f">包上写着:src = 192.168.1.10:39001(已是宿主的脸)</text>
+  <line x1="560" y1="424" x2="560" y2="448" stroke="#40c060" stroke-width="2" marker-end="url(#ob)"/>
+  <text x="540" y="440" text-anchor="end" font-size="10" fill="#88ffbb">⑥</text>
+
+  <!-- API -->
+  <rect x="380" y="520" width="440" height="48" rx="8" fill="#161a20" stroke="#aab6c4" stroke-width="1.6"/>
+  <text x="600" y="540" text-anchor="middle" font-size="11" fill="#cdd6e0" font-weight="bold">外部 API(93.184.216.34:443)</text>
+  <text x="600" y="558" text-anchor="middle" font-size="9" fill="#8a96a4">它看到的来访者 = 192.168.1.10 —— 容器全程隐身</text>
+  <line x1="560" y1="494" x2="560" y2="518" stroke="#40c060" stroke-width="2" marker-end="url(#ob)"/>
+
+  <!-- why masquerade box -->
+  <rect x="868" y="282" width="292" height="170" rx="9" fill="#1a0e0e" stroke="#c04040" stroke-width="1.8"/>
+  <text x="1014" y="306" text-anchor="middle" font-size="11.5" fill="#ff9b9b" font-weight="bold">为什么出门必须化妆?</text>
+  <text x="1014" y="330" text-anchor="middle" font-size="9.5" fill="#d2a0a0">若不改源,包带着 172.17.0.2 出门 ——</text>
+  <text x="1014" y="350" text-anchor="middle" font-size="9.5" fill="#d2a0a0">这是私网地址,公网世界里</text>
+  <text x="1014" y="368" text-anchor="middle" font-size="9.5" fill="#d2a0a0">没有任何路由器知道怎么"回信给它"</text>
+  <text x="1014" y="392" text-anchor="middle" font-size="10" fill="#ff9b9b" font-weight="bold">去程也许能到,回程必然迷路</text>
+  <text x="1014" y="416" text-anchor="middle" font-size="9" fill="#9a7878">所以 SNAT 的本质不是隐藏,</text>
+  <text x="1014" y="432" text-anchor="middle" font-size="9" fill="#9a7878">是给回程一个"找得到的收件地址"</text>
+
+  <!-- return path -->
+  <line x1="700" y1="518" x2="700" y2="426" stroke="#88c0ff" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#obr)"/>
+  <line x1="700" y1="356" x2="700" y2="258" stroke="#88c0ff" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#obr)"/>
+  <line x1="700" y1="206" x2="700" y2="186" stroke="#88c0ff" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#obr)"/>
+  <text x="718" y="480" font-size="9.5" fill="#88c0ff">R① 回包到宿主 eth0:dst=1.10:39001</text>
+  <text x="718" y="496" font-size="8.5" fill="#7fa8cc">conntrack 对上账本</text>
+  <text x="718" y="310" font-size="9.5" fill="#88c0ff">R② 自动反向还原:</text>
+  <text x="718" y="326" font-size="8.5" fill="#7fa8cc">dst 192.168.1.10:39001 ⟶ 172.17.0.2:39000</text>
+  <text x="718" y="342" font-size="8.5" fill="#7fa8cc">路由 → docker0 → veth 钻管</text>
+  <text x="718" y="200" font-size="9.5" fill="#88c0ff">R③ 回到岛上 → Tomcat 收到响应</text>
+
+  <!-- bottom punchline -->
+  <rect x="110" y="596" width="980" height="62" rx="10" fill="#11161d" stroke="#c08040" stroke-width="1.8"/>
+  <text x="600" y="622" text-anchor="middle" font-size="13" fill="#ffc48a" font-weight="bold">出门 = MASQUERADE 化妆(只改来源,为了回程找得到家)+ conntrack 记账;回程照账本自动还原。</text>
+  <text x="600" y="645" text-anchor="middle" font-size="11" fill="#c8a878">与进门合成一条对称律:进门改目的(DNAT),出门改源(SNAT)—— 改写永远只为一件事:让包找得到回家的路。</text>
+
+  <text x="600" y="684" text-anchor="middle" font-size="10" fill="#6a7684">容器互访(支线一)不化妆:172.17/16 同网段,二层直达,天生找得到回路 —— 这就是它不过 NAT 的原因</text>
+</svg>
