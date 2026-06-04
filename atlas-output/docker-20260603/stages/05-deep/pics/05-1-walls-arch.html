@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>clone() 怎么造六面墙 · 架构全景图</title>
+<style>
+  :root{
+    --bg:#0a0c10; --ink:#e8eef5; --dim:#7a8694;
+    --ns-bg:#1f1408; --ns-bd:#c08040; --ns-tx:#ffaa55;
+    --usr-bg:#1a1030; --usr-bd:#8040c0; --usr-tx:#c088ff;
+    --box-bg:#0e1a26; --box-bd:#4080c0; --box-tx:#88c0ff;
+    --ok-bg:#0e1d14; --ok-bd:#40c060; --ok-tx:#88ff88;
+    --bad:#c04040; --gold:#ffcc66;
+    --mono:'JetBrains Mono','Consolas',monospace;
+    --sans:'Noto Sans SC',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:var(--mono);margin:0;padding:28px 20px 40px}
+  h1{font-size:20px;text-align:center;margin:0 0 4px;font-weight:700}
+  .sub{text-align:center;color:var(--dim);font-size:12.5px;margin-bottom:22px}
+  .flow{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:0}
+  .arrow{color:var(--ns-bd);font-size:20px;line-height:1.1;margin:6px 0}
+  .arrow.b{color:var(--box-bd)} .arrow.g{color:var(--ok-bd)} .arrow.u{color:var(--usr-bd)}
+  .box{border-radius:10px;padding:12px 16px;text-align:center;width:100%}
+  .lbl{font-size:13px;font-weight:700;margin-bottom:4px}
+  .note{font-size:11px;color:var(--dim);line-height:1.5}
+  code{font-family:var(--mono);font-size:11.5px}
+  .user{background:var(--usr-bg);border:1.6px solid var(--usr-bd)} .user .lbl{color:var(--usr-tx)}
+  .ns{background:var(--ns-bg);border:1.6px solid var(--ns-bd)} .ns .lbl{color:var(--ns-tx)}
+  .syscall{background:#11161d;border:1.4px solid #4a5568} .syscall .lbl{color:#cdd6e0}
+  .nsproxy{background:var(--box-bg);border:1.8px solid var(--box-bd)} .nsproxy .lbl{color:var(--box-tx)}
+  .task{background:var(--ok-bg);border:2px solid var(--ok-bd)} .task .lbl{color:var(--ok-tx)}
+  .split{display:flex;gap:18px;width:100%}
+  .split>div{flex:1}
+  .wins{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;width:100%}
+  .win{background:var(--ns-bg);border:1.4px solid var(--ns-bd);border-radius:8px;padding:9px 6px;text-align:center}
+  .win.star{border:2.4px solid var(--gold)} .win.star .wt{color:var(--gold)}
+  .win.extra{opacity:.72;border-color:#7a5a2a}
+  .wt{font-size:11.5px;font-weight:700;color:var(--ns-tx)}
+  .wd{font-size:9.5px;color:var(--dim);margin-top:3px;line-height:1.35}
+  .codeblk{background:#0d1117;border:1px solid #2a3340;border-radius:6px;padding:9px 12px;
+           text-align:left;color:#9fd9a0;font-size:11px;line-height:1.6;margin-top:8px;white-space:pre;overflow-x:auto}
+  .rollback{color:var(--bad);font-size:11px;text-align:center;margin-top:10px}
+  .takeaway{max-width:920px;margin:26px auto 0;background:#11161d;border:1.6px solid var(--ns-bd);
+            border-radius:10px;padding:16px 20px;text-align:center}
+  .takeaway b{color:#ffc48a;font-size:14px} .takeaway p{color:#c8a878;font-size:12px;margin:8px 0 0}
+  .legend{max-width:920px;margin:14px auto 0;color:#6a7684;font-size:10.5px;text-align:center;line-height:1.7}
+  .pidnote{background:#2a1c08;border:1.6px solid var(--gold);border-radius:8px;padding:10px 14px;margin-top:10px}
+  .pidnote .lbl{color:var(--gold)}
+</style>
+</head>
+<body>
+  <h1>clone() 一次系统调用,怎么在内核里造出"六面墙"</h1>
+  <div class="sub">主线:sys_clone → copy_process() →【先建 user 窗(权限上下文)】+【copy_namespaces 派生其余五扇】→ 挂上 task</div>
+
+  <div class="flow">
+    <div class="box syscall">
+      <div class="lbl">用户态:clone(CLONE_NEWPID|NEWNET|NEWNS|NEWUTS|NEWIPC|NEWUSER, …) / unshare(…)</div>
+      <div class="note">runc 真正调它的地方 = nsexec.c 的 clone_parent()</div>
+    </div>
+    <div class="arrow">▼</div>
+
+    <div class="box ns">
+      <div class="lbl">kernel/fork.c &nbsp;copy_process()</div>
+      <div class="note">复制一个新 task,其中两步专管"墙",顺序关键:copy_creds(左)+ copy_namespaces(右)</div>
+    </div>
+    <div class="arrow">▼</div>
+
+    <div class="split">
+      <div>
+        <div class="box user">
+          <div class="lbl">① user 窗 · 特殊,必须最先建</div>
+          <div class="note">copy_creds() → 若 CLONE_NEWUSER → create_user_ns()</div>
+          <div class="codeblk">ns->level = parent->level + 1;   // 可嵌套
+ns->owner = current uid;
+// uid_map/gid_map 初始为空待写
+// → 容器 root ↔ 宿主普通用户</div>
+          <div class="note" style="margin-top:8px">为什么先建?它是其余窗 ns_capable(CAP_SYS_ADMIN) 权限检查的"上下文"</div>
+        </div>
+      </div>
+      <div>
+        <div class="box ns">
+          <div class="lbl">copy_namespaces() · kernel/nsproxy.c</div>
+          <div class="codeblk">if (!(flags &amp; (CLONE_NS_ALL &amp; ~CLONE_NEWUSER)))
+    get_nsproxy(old_ns); return 0; // 快路径:不要新窗→复用
+else if (!ns_capable(user_ns, CAP_SYS_ADMIN))
+    return -EPERM;                 // 没权限不准开窗</div>
+          <div class="note" style="margin-top:8px">CLONE_NEWUSER 被 <code>&amp; ~</code> 抠掉 → user 窗不归这里管(铁证)</div>
+        </div>
+      </div>
+    </div>
+    <div class="arrow">▼</div>
+
+    <div class="box" style="background:transparent;border:1.4px dashed #5f4a2a;padding:8px">
+      <div class="lbl" style="color:var(--ns-tx)">create_new_namespaces():顺序派生,每个产出一扇窗</div>
+    </div>
+    <div class="arrow" style="margin-top:8px">▼</div>
+
+    <div class="wins">
+      <div class="win"><div class="wt">copy_mnt_ns</div><div class="wd">mnt 窗<br>文件系统视图</div></div>
+      <div class="win"><div class="wt">copy_utsname</div><div class="wd">uts 窗<br>主机名/域名</div></div>
+      <div class="win"><div class="wt">copy_ipcs</div><div class="wd">ipc 窗<br>信号量/共享内存</div></div>
+      <div class="win star"><div class="wt">copy_pid_ns ★</div><div class="wd">pid 窗<br>PID 1 幻觉源头</div></div>
+      <div class="win extra"><div class="wt">copy_cgroup_ns</div><div class="wd">cgroup 窗<br>(内核额外)</div></div>
+      <div class="win"><div class="wt">copy_net_ns</div><div class="wd">net 窗<br>洞二 veth 凿这扇</div></div>
+    </div>
+    <div class="rollback">回滚链:out_time → out_net → out_cgroup → out_pid → out_ipc → out_uts → out_ns ——任一步失败,前面全部 put 掉(all-or-nothing)</div>
+
+    <div class="pidnote box">
+      <div class="lbl">pid 窗细看 · create_pid_namespace()(PID 1 幻觉的真身)</div>
+      <div class="codeblk">unsigned int level = parent_pid_ns->level + 1;   // 嵌套层级
+if (level > MAX_PID_NS_LEVEL) goto out;          // 深度上限
+idr_init(&amp;ns->idr);                              // 每窗自带发号器,从 1 发
+ns->parent = get_pid_ns(parent_pid_ns);          // 指回父,形成树</div>
+      <div class="note" style="margin-top:8px;color:#c89868">同一进程在 struct pid 的 numbers[] 里"每层一个号":容器里 1,宿主上 12345 —— 一个 idr_init,两个世界</div>
+    </div>
+    <div class="arrow b">▼</div>
+
+    <div class="box nsproxy">
+      <div class="lbl">产物:struct nsproxy(装六个指针的容器)</div>
+      <div class="codeblk">nsproxy { mnt_ns, uts_ns, ipc_ns,
+          pid_ns_for_children, cgroup_ns, net_ns }
+// user_ns 不在这里 —— 它挂在 task 的 cred 上(所以"特殊")</div>
+    </div>
+    <div class="arrow g">▼</div>
+
+    <div class="box task">
+      <div class="lbl">tsk->nsproxy = new_ns; &nbsp;→ 这个 task(及其后代)从此"住进"这组窗</div>
+      <div class="note">墙的全部物理实体 = task_struct 上这几个指针 + cred 里的 user_ns。没有别的。</div>
+    </div>
+  </div>
+
+  <div class="takeaway">
+    <b>一句话:clone "造墙" = 让新 task 的指针指向一组"独立视图对象"。改几个指针 = 一面墙。</b>
+    <p>这就是"骗进程比骗 OS 便宜三个数量级"的源码级证据 —— VM 要虚拟一整台机器,容器只要给 task 换几个指针。</p>
+  </div>
+  <div class="legend">
+    橙 = namespace 派生 · 紫 = user 窗(特殊) · 蓝 = nsproxy 产物 · 绿 = 挂到 task · 金 = pid 窗(PID 1)· 红 = 失败回滚链<br>
+    源码:kernel/nsproxy.c · kernel/pid_namespace.c · kernel/user_namespace.c(torvalds/linux 主线,逻辑稳定)
+  </div>
+</body>
+</html>

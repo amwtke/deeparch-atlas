@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>cgroup 三个表 · 架构全景图</title>
+<style>
+  body{background:#0a0c10;color:#e8eef5;font-family:'JetBrains Mono','Consolas',monospace;margin:0;padding:26px 18px 36px}
+  h1{font-size:19px;text-align:center;margin:0 0 4px} .sub{text-align:center;color:#7a8694;font-size:12px;margin-bottom:20px}
+  .wrap{max-width:1060px;margin:0 auto}
+  .files{background:#11161d;border:1px solid #4a5568;border-radius:10px;padding:14px;text-align:center;margin-bottom:6px}
+  .files .t{color:#cdd6e0;font-weight:700;margin-bottom:8px}
+  .files code{color:#9fd9a0;font-size:11.5px}
+  .arrow{text-align:center;color:#c08040;font-size:20px;margin:4px 0}
+  .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px}
+  .col{border-radius:10px;padding:12px;text-align:center}
+  .cpu{background:#16263a;border:1.8px solid #4080c0} .cpu .h{color:#88c0ff}
+  .mem{background:#1f0e0e;border:1.8px solid #c04040} .mem .h{color:#ff8888}
+  .io{background:#0e1d14;border:1.8px solid #40c060} .io .h{color:#88ff88}
+  .h{font-weight:700;font-size:14px;margin-bottom:6px}
+  .file{font-size:11px;color:#cdd6e0;background:#0d1117;border:1px solid #2a3340;border-radius:6px;padding:5px;margin:6px 0}
+  .ctrl{font-size:11px;color:#9fb4c8;margin:6px 0}
+  .code{font-size:10px;color:#9fd9a0;background:#0d1117;border:1px solid #2a3340;border-radius:6px;padding:6px;text-align:left;white-space:pre;line-height:1.5;margin:6px 0}
+  .verdict{font-weight:700;font-size:12px;border-radius:6px;padding:6px;margin-top:6px}
+  .v-slow{background:#241808;color:#ffaa55;border:1px solid #c08040}
+  .v-kill{background:#2a1212;color:#ff8888;border:1px solid #c04040}
+  .take{background:#11161d;border:1.6px solid #c08040;border-radius:10px;padding:14px;text-align:center;margin-top:20px;color:#ffc48a;font-weight:700;font-size:13px}
+  .leg{color:#6a7684;font-size:10.5px;text-align:center;margin-top:12px;line-height:1.6}
+</style>
+</head>
+<body>
+  <h1>cgroup 怎么实现 cpu / memory / io 三张表</h1>
+  <div class="sub">接口即文件:写一个目录里的文件 = 设表盘;上户口 = 写 cgroup.procs;记账即配额:每次消费都 charge</div>
+  <div class="wrap">
+    <div class="files">
+      <div class="t">/sys/fs/cgroup/demo/ &nbsp;(一个目录 = 一个户头)</div>
+      <code>echo "50000 100000" &gt; cpu.max &nbsp;&nbsp; echo 100M &gt; memory.max &nbsp;&nbsp; echo "8:0 wbps=10485760" &gt; io.max</code><br>
+      <code style="color:#ffaa55">echo $$ &gt; cgroup.procs &nbsp;←&nbsp; 把进程(及其后代)上户口,从此每笔消费都记这个账</code>
+    </div>
+    <div class="arrow">▼ &nbsp; 内核为每个 controller 在这个 cgroup 上挂一个 css(cgroup_subsys_state) &nbsp; ▼</div>
+    <div class="cols">
+      <div class="col cpu">
+        <div class="h">cpu 表(电表)</div>
+        <div class="file">cpu.max = "50000 100000"<br>每 100ms 给 50ms = 半颗</div>
+        <div class="ctrl">CFS bandwidth · kernel/sched/fair.c</div>
+        <div class="code">每次 tick:__account_cfs_rq_runtime()
+  runtime_remaining -= 已运行;
+  if (runtime_remaining &lt;= 0)
+    throttle_cfs_rq();  // 踢出队列</div>
+        <div class="verdict v-slow">超额 → 限速(throttle)<br>本周期不再跑,下周期续</div>
+      </div>
+      <div class="col mem">
+        <div class="h">memory 表(煤气表)</div>
+        <div class="file">memory.max = 100M<br>硬上限</div>
+        <div class="ctrl">memcg · mm/memcontrol.c</div>
+        <div class="code">每分配页:try_charge_memcg()
+  page_counter_try_charge(memory,…)
+  失败→try_to_free_mem_cgroup_pages
+  仍失败→mem_cgroup_oom()</div>
+        <div class="verdict v-kill">超额 → OOM kill(处决)<br>SIGKILL · Exited 137</div>
+      </div>
+      <div class="col io">
+        <div class="h">io 表(水表)</div>
+        <div class="file">io.max = "8:0 wbps=10485760"<br>设备 8:0 写 10MB/s</div>
+        <div class="ctrl">blk-throttle · block/blk-throttle.c</div>
+        <div class="code">每个 bio:__blk_throtl_bio()
+  tg_within_bps/iops_limit()?
+  否→tg_dispatch_time() 算等待
+  →bio 进队列,定时器到点再发</div>
+        <div class="verdict v-slow">超额 → 限速(排队)<br>IO 被推迟,不丢不杀</div>
+      </div>
+    </div>
+    <div class="take">三张表都靠"记账":CPU 记时间片、内存记页、IO 记字节。区别在超额脾气 —— CPU/IO 降速,内存处决(超了无法"慢慢用")。</div>
+    <div class="leg">蓝=cpu(CFS) · 红=memory(memcg,会杀) · 绿=io(blk-throttle) · 源码:kernel/sched/fair.c · mm/memcontrol.c · block/blk-throttle.c(torvalds 主线)</div>
+  </div>
+</body>
+</html>

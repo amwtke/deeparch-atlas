@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>两个洞 · 架构全景图</title>
+<style>
+  body{background:#0a0c10;color:#e8eef5;font-family:'JetBrains Mono','Consolas',monospace;margin:0;padding:26px 18px 36px}
+  h1{font-size:19px;text-align:center;margin:0 0 4px} .sub{text-align:center;color:#7a8694;font-size:12px;margin-bottom:20px}
+  .wrap{max-width:1060px;margin:0 auto}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .hole{border-radius:10px;padding:14px}
+  .net{background:#0e1d14;border:1.8px solid #40c060}
+  .mnt{background:#16263a;border:1.8px solid #4080c0}
+  .ht{font-weight:700;font-size:14px;text-align:center;margin-bottom:10px}
+  .net .ht{color:#88ff88} .mnt .ht{color:#88c0ff}
+  .ns{border:1.4px dashed #c08040;border-radius:8px;padding:8px;margin:6px 0;text-align:center;font-size:11px;color:#ffaa55}
+  .dev{background:#13251a;border:1px solid #40c060;border-radius:6px;padding:5px;margin:4px auto;font-size:10.5px;color:#88ffbb;display:inline-block}
+  .peer{text-align:center;color:#40c060;font-size:11px;margin:6px 0}
+  .code{font-size:10px;color:#9fd9a0;background:#0d1117;border:1px solid #2a3340;border-radius:6px;padding:6px;text-align:left;white-space:pre;line-height:1.5;margin:8px 0}
+  .tree{background:#0d1117;border:1px solid #2a3340;border-radius:6px;padding:8px;font-size:10.5px;color:#9fb4c8;text-align:left;line-height:1.7;margin:6px 0}
+  .well{color:#88c0ff;font-weight:700}
+  .take{background:#11161d;border:1.6px solid #c08040;border-radius:10px;padding:14px;text-align:center;margin-top:20px;color:#ffc48a;font-weight:700;font-size:13px}
+  .leg{color:#6a7684;font-size:10.5px;text-align:center;margin-top:12px;line-height:1.6}
+</style>
+</head>
+<body>
+  <h1>两个洞:veth 凿 net 墙 · volume 凿 mnt 墙</h1>
+  <div class="sub">墙是默认,洞是例外。每个洞都凿在某一扇 namespace 墙上,是"受控连通"</div>
+  <div class="wrap">
+    <div class="two">
+      <div class="hole net">
+        <div class="ht">洞一 · veth(凿 net 墙)</div>
+        <div class="ns">容器 netns_A<div class="dev">eth0 = veth 一头</div></div>
+        <div class="peer">▲ priv-&gt;peer ▼ &nbsp;(一对一互指,RCU)</div>
+        <div class="ns" style="border-color:#40c060;color:#88ff88">宿主 netns<div class="dev">veth 另一头 → 插 docker0</div></div>
+        <div class="code">// 配对:veth_newlink()
+rcu_assign_pointer(priv->peer, peer);
+rcu_assign_pointer(peer_priv->peer, dev);
+
+// 传输:veth_xmit()
+rcv = rcu_dereference(priv->peer);
+veth_forward_skb(rcv, skb, …); // 直接喂对端</div>
+        <div style="text-align:center;color:#7fd99f;font-size:11px">无物理介质,把 skb 从一头递到另一头(零拷贝)</div>
+      </div>
+      <div class="hole mnt">
+        <div class="ht">洞二 · volume(凿 mnt 墙)</div>
+        <div class="ns" style="border-color:#4080c0;color:#88c0ff">容器 mnt 窗(挂载树)</div>
+        <div class="tree">/  &nbsp;←─ overlay merged(易失,走 copy_up)
+├─ /usr ...
+├─ /etc ...
+└─ <span class="well">/data</span> &nbsp;←─ <span class="well">bind mount 竖井</span>
+        │ &nbsp;直通宿主,绕过 overlay
+        ▼
+   宿主 /var/lib/docker/volumes/db/_data(持久)</div>
+        <div class="code">// mount --bind /host /data
+do_mount → path_mount
+  └─ do_loopback()
+       └─ clone_mnt()   // 新 mount,指向同一 dentry
+       └─ graft 进容器挂载树的 /data 点</div>
+        <div style="text-align:center;color:#7fa8cc;font-size:11px">挂载树里加一个直通宿主的入口,读写不进 overlay</div>
+      </div>
+    </div>
+    <div class="take">veth = 在 net 墙上接一根"穿墙网线"(peer 指针);volume = 在 mnt 墙上凿一口"直通宿主的竖井"(bind mount)。隔离默认,连通显式。</div>
+    <div class="leg">绿=net 洞(veth) · 蓝=mnt 洞(volume) · 源码:drivers/net/veth.c(veth_newlink/veth_xmit)· fs/namespace.c(do_loopback/clone_mnt)</div>
+  </div>
+</body>
+</html>

@@ -5,8 +5,8 @@
 - **短名**: docker
 - **工作目录**: atlas-output/docker-20260603/
 - **创建时间**: 2026-06-03T06:46:35Z
-- **上次更新**: 2026-06-04T09:49:11Z
-- **当前阶段**: Deep（开场对齐中 —— Origin 已确认通读并封存推送,分水岭用户选「继续深钻」。已抛出第一个方向性问题：全景(5~8 机制,~900 行) vs 聚焦(2~3 机制钉死,~500-600 行)。注意:Deep 必备可运行 demo(src/05-demo.*,用户 mac 环境 → demo 按 Linux 主机/容器内运行设计);反事实小试是灵魂;严控 900 行)
+- **上次更新**: 2026-06-04T16:39:38Z
+- **当前阶段**: Deep 已完成并封存(用户验收"好的可以了")。下次启动 → Deep 之后的分岔:Comparison(询问是否横向对比 podman / gVisor / Kata / systemd-nspawn / VM)或直接 Synthesis 收束 → 再 final-export。用户主动暂停"明天继续"。〔Deep 最终定稿=deeparch-md 方法的 6墙/3表/2洞 三篇拼接,详见审计〕
 
 ## 灵魂问题(Discovery 收集)
 > "容器到底是什么?它和虚拟机的根本区别在哪?当一个容器真正跑起来的那一刻,Linux 内核里到底发生了什么 —— namespace、cgroups、镜像分层各自扮演什么角色?"
@@ -20,7 +20,7 @@
 - [x] 3. How
 - [x] 4. Origin
 - [x] 5. 分水岭决定（用户选「继续深钻」→ Deep）
-- [ ] 6. Deep
+- [x] 6. Deep
 - [ ] 7. Comparison（可选）
 - [ ] 8. Synthesis
 - [ ] 9. 导出格式询问
@@ -73,7 +73,13 @@
 - 第 1 次探针交锋:"四样行李哪样击中你"用户答"镜像是 docker 最伟大的发明"→ 三重验证闭环(直觉 2013/推导 C2★/史证 v0.1=LXC 包装纸)+ 公案判词(镜像=价值,docker run=传播系数)+ 历史终审(引擎死/命令垄断没/Dockerfile 有对手,唯镜像成 OCI 标准)→ 已 patch:尾声+「证词的最后一页」。Origin 内容讨论趋于收敛,下一步呈现🌉分水岭。
 
 ### Deep 阶段
-- (无)
+- 开场对齐(2026-06-04):用户选 B 聚焦档 + 机制甲(runc 出生三连招)乙(overlay copy-up)丁(网络 veth+NAT)+ demo 环境①自包含特权容器。反事实默认 6 候选(用户未否决)。初稿生成:05-deep.md(三层剖析×3 + 反事实6×3 + 出生时间线 + 95%闭环)+ 4 SVG + 3 demo。要点:甲钉死"为什么 C 抢跑 Go"(单线程内核规矩+demo 实证 EINVAL+/proc/self/exe+CVE-2019-5736)；乙钉死"copy_up=整文件→改1B抄1GB"(demo du 实测+whiteout c0:0)；丁钉死"对称律"(自带假互联网主机,tcpdump 抓 SNAT隐身/DNAT透明)。源码一律标注"结构骨架,不假装逐字原文"。
+- 用户反馈"这篇不太行" → 诊断 B(源码骨架不够实);用户确认:用 deeparch-md skill 方法(/Users/xiaojin/workshop/deeparch-video/skills/deeparch-md.md,只读不改该项目)把甲乙丁源码讲透,不需可跑 demo,供生成视频 → web 拉取真源码(runc nsenter.go 构造器 + nsexec.c 状态机 + 内核 copy_up.c 的 do_splice_direct 整文件循环 + veth.c 的 veth_xmit)→ 按 deeparch-md 套路推倒重写 05-deep.md(生活类比/ASCII全景/三层剖析逐行真源码/时间线/API附录/Q&A/@video标记/@facetime占位)。约定不运行 facetime_search.py(在 deeparch-video 项目内),人物 photo 留空待用户自行补。
+- 用户三拒(甲乙丁/deeparch-md 版都"不行"),给定新线索:废弃甲乙丁,改「6墙/3表/2洞」三点,每点深入 Linux 内核源码 + SVG,不限篇幅逻辑为先。已清空旧 pics/src。为降风险先做第一点验格式:【第一点 clone→6墙】整块完成 = web 拉 torvalds/linux 主线真源码逐行(kernel/nsproxy.c 的 create_new_namespaces 五扇窗串调 + copy_namespaces 的 CLONE_NS_ALL&~CLONE_NEWUSER 快路径与 CAP_SYS_ADMIN 检查 + kernel/pid_namespace.c 的 create_pid_namespace 讲 PID 1 幻觉=level+idr + unshare_nsproxy_namespaces 讲 pid_ns_for_children 只对子进程生效)+ user 窗为何特殊(在 copy_creds 不在 nsproxy)+ all-or-nothing goto 回滚 + SVG 05-clone-6walls.svg。第二点(三个表:cgroup css/memcontrol try_charge/CFS throttle/blk-throttle)、第三点(两个洞:veth_xmit/veth_newlink + fs/namespace.c bind mount)占位待补,等用户确认第一点格式即按同规格连写。
+- 用户第四次反馈"不够完美,太简单了" → 明确新规格:按 deeparch-md skill 的完整方法(概览/生活类比/架构全景图/三层剖析/端到端时间线/API附录/Q&A/延伸阅读+@video标记)分别套到 6墙/3表/2洞,生成 3 个文档再拼成 05-deep;唯一改动=架构全景图从 ASCII 改 HTML。已清旧。第一篇 05-1-walls.md 按此完整规格做出(比上版深得多:加了概览/给新员工配独立视图的生活类比/HTML 架构图[内嵌+独立 pics/05-1-walls-arch.html]/三层剖析[操作层 3syscall + 函数逻辑层 4 函数真源码逐行:create_new_namespaces 派生链+回滚、copy_namespaces 的 CLONE_NEWUSER 抠除铁证、create_pid_namespace 的 level+idr 造 PID 1、unshare 的 pid_ns_for_children + alloc_pid numbers[] 双号、底层原理 trade-off]/端到端时间线/API+源码附录/6 条 Q&A/延伸阅读)。等用户验第一篇格式,过则同规格连写 05-2-tables.md(3表)+ 05-3-holes.md(2洞),再 cat 成 05-deep.md。
+- 用户第五次反馈(对第一篇)：前面总结好，后面要更细致，改"总分"结构：①总=先写 mini-docker C 代码演示 6 墙效果+贴控制台输出作铁证(C 代码直接贴 md)；②分=对着用户态代码，6 扇窗各一小节，每节从用户态 syscall 深入到内核实现关键代码。已照做：写 src/05-mini-docker.c(80 行 clone 六 flag + uid_map 同步，Linux 专属，Mac linter 报错是环境误报不改)；05-1-walls.md 重构为 总(C+控制台输出+宿主vs容器铁证表)+ 分(6 小节 uts/pid/ipc/mnt/net/user，每节【用户态】+【内核实现】贴真源码逐行：uts copy_utsname memcpy / pid create_pid_namespace level+idr / ipc create_ipc_ns 四个 init_ns 空表 / mnt copy_mnt_ns→copy_tree 复制挂载树[fs/namespace.c 太大用准确调用链非伪造] / net copy_net_ns→setup_net 遍历 pernet_list 最贵 / user create_user_ns level+owner+kuid_has_mapping 挂 cred)+ 底层原理"先继承再分叉"+时间线+API表+6 QA。5 扇窗 web 拉到 torvalds 主线真源码,mnt 因文件大用调用链。等用户验此细致度，过则同规格写 3表/2洞。
+- 用户第六次反馈(对第一篇)：基本可以了(=格式锁定)+增强 net 窗：列出容器隔离了哪些网络表(iptables/路由策略/arp 表等)说明作用。已 patch 05-1-walls.md 墙五:加 11 行表(net_device/IP/FIB路由/RPDB路由策略/ARP邻居/iptables nat/conntrack/端口/socket/TC/sysctl net.*)+作用+隔离效果,接 setup_net 的 pernet_list,勾向洞二。**格式确认通过,开始连写第二、三篇。** 第二篇(3个表)拉 cgroup 三 controller 真源码中:mm/memcontrol.c try_charge_memcg(内存) / kernel/sched/fair.c CFS throttle(CPU) / block/blk-throttle.c(IO)。
+- **Deep 三篇全部完成并拼接**(2026-06-05):05-1-walls.md(6墙)+ 05-2-tables.md(3表)+ 05-3-holes.md(2洞),每篇总分结构+真源码+HTML 架构图。05-2:总=cgroup v2 掐进程(OOM 137 铁证)，分 memory(try_charge_memcg 逐字真源码:page_counter_try_charge→try_to_free_mem_cgroup_pages→mem_cgroup_oom)/cpu(CFS __account_cfs_rq_runtime→throttle_cfs_rq 真函数名调用链)/io(__blk_throtl_bio→tg_within_bps/iops_limit→tg_dispatch_time 真函数名);底层原理"流量vs存量"解释为何内存杀别的限速。05-3:总=veth pair 跨 netns ping + bind mount 持久 demo，分 veth(veth_newlink 双 rcu_assign_pointer peer 逐字 + veth_xmit)/volume(do_loopback→clone_mnt→attach_recursive_mnt 真函数名);"洞≠拆墙"辨析。拼接:05-deep-header.md(灵魂问题+三部分导览+C1~C3速查+约束对应)+ cat 三篇 → 05-deep.md(996 行)。3 张独立 HTML 图(pics/05-{1,2,3}-*-arch.html)转义修复后 xmllint OK。mini-docker.c(Linux 专属)。等用户验收整篇 Deep。
 
 ### Comparison 阶段
 - (无)
