@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="ig" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#ffcc66"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="660" fill="#0a0c10"/>
+
+  <text x="600" y="36" text-anchor="middle" font-size="24" fill="#e8eef5" font-weight="bold">引爆方程式:为什么是 2013,为什么不是 LXC</text>
+  <text x="600" y="60" text-anchor="middle" font-size="12.5" fill="#7a8694">墙(现成)+ 行李(新发明)+ 干透的柴堆(时代)+ 一根火柴(五分钟)= 引爆 —— 历史为"C2★ 是核心"作证</text>
+
+  <!-- ===== left: LXC ===== -->
+  <rect x="50" y="92" width="340" height="250" rx="10" fill="#1a0e0e" stroke="#c04040" stroke-width="2"/>
+  <text x="220" y="120" text-anchor="middle" font-size="14" fill="#ff8888" font-weight="bold">LXC(2008):墙,全齐了</text>
+  <text x="220" y="144" text-anchor="middle" font-size="10.5" fill="#d2a0a0">namespace + cgroups 首次打包可用</text>
+  <text x="220" y="162" text-anchor="middle" font-size="10.5" fill="#d2a0a0">C1 的化解,2008 年就躺在那(✓)</text>
+  <rect x="72" y="180" width="296" height="118" rx="7" fill="#11161d" stroke="#7a2a2a" stroke-width="1.3"/>
+  <text x="220" y="202" text-anchor="middle" font-size="11" fill="#ff9b9b" font-weight="bold">可它还缺四样:</text>
+  <text x="88" y="224" font-size="10" fill="#d2a0a0">✗ 行李 —— 进去还得手工装环境(幕四重演)</text>
+  <text x="88" y="244" font-size="10" fill="#d2a0a0">✗ 身份 —— 没有 digest,没法验真</text>
+  <text x="88" y="264" font-size="10" fill="#d2a0a0">✗ 分发 —— 没有 registry,没法 push/pull</text>
+  <text x="88" y="284" font-size="10" fill="#d2a0a0">✗ 体验 —— 配置繁琐,像"轻量 VM"不像工具</text>
+  <text x="220" y="324" text-anchor="middle" font-size="10" fill="#9a7878">用的人把它当"更便宜的虚拟机" —— 宠物,不是货柜</text>
+
+  <!-- ===== center: Docker adds ===== -->
+  <rect x="430" y="92" width="340" height="250" rx="10" fill="#2a1c08" stroke="#ffcc66" stroke-width="2.6"/>
+  <text x="600" y="120" text-anchor="middle" font-size="14" fill="#ffcc66" font-weight="bold">Docker(2013):只发明了行李</text>
+  <text x="600" y="144" text-anchor="middle" font-size="10.5" fill="#ffd9a8">v0.1 的"墙"就是 LXC 的包装纸 ——</text>
+  <text x="600" y="162" text-anchor="middle" font-size="10.5" fill="#ffd9a8">差异化全在它补上的四样:</text>
+  <rect x="452" y="180" width="296" height="118" rx="7" fill="#11161d" stroke="#7a5a2a" stroke-width="1.3"/>
+  <text x="468" y="204" font-size="10" fill="#88ffbb">✓ 镜像分层 —— 环境装进行李(C2★)</text>
+  <text x="468" y="224" font-size="10" fill="#88ffbb">✓ Dockerfile —— 环境的源代码(C2★/C3)</text>
+  <text x="468" y="244" font-size="10" fill="#88ffbb">✓ registry —— push / pull,行李能流通(C3)</text>
+  <text x="468" y="264" font-size="10" fill="#88ffbb">✓ docker run —— 一条命令,十秒上手(引爆系数)</text>
+  <text x="468" y="284" font-size="9.5" fill="#9fd9a0">(后来 + digest 内容寻址,验真闭环)</text>
+  <text x="600" y="324" text-anchor="middle" font-size="10" fill="#c8a878">墙是借的,行李是新的 —— 引爆点不是隔离,是打包</text>
+
+  <!-- ===== right: fuel ===== -->
+  <rect x="810" y="92" width="340" height="250" rx="10" fill="#142838" stroke="#4080c0" stroke-width="2"/>
+  <text x="980" y="120" text-anchor="middle" font-size="14" fill="#88c0ff" font-weight="bold">时代燃料:柴堆已经干透</text>
+  <text x="826" y="150" font-size="10" fill="#7fa8cc">· AWS(2006)—— 云让"机器"变成可编程资源</text>
+  <text x="826" y="172" font-size="10" fill="#7fa8cc">· 千台集群时代 —— 人肉运维判死刑(你的暗线)</text>
+  <text x="826" y="194" font-size="10" fill="#7fa8cc">· 微服务浪潮 —— 部署单元数量 ×10 再 ×10</text>
+  <text x="826" y="216" font-size="10" fill="#7fa8cc">· user ns 完工(2013.2,内核 3.8)—— 第六扇窗</text>
+  <text x="826" y="238" font-size="10" fill="#7fa8cc">· GitHub 开源文化 —— 疯传与协作的高速公路</text>
+  <rect x="826" y="258" width="308" height="68" rx="7" fill="#0e1a12" stroke="#2a7a44" stroke-width="1.3"/>
+  <text x="980" y="280" text-anchor="middle" font-size="10" fill="#9bffb5" font-weight="bold">同样的种子,2008 年落在湿柴上(LXC),</text>
+  <text x="980" y="300" text-anchor="middle" font-size="10" fill="#9bffb5" font-weight="bold">2013 年落在干柴上(Docker)。</text>
+  <text x="980" y="318" text-anchor="middle" font-size="9" fill="#5f8a6f">时机不是运气,是约束成熟度(C2★/C3 之痛到顶)</text>
+
+  <!-- equation -->
+  <line x1="220" y1="342" x2="220" y2="390" stroke="#ffcc66" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#ig)"/>
+  <line x1="600" y1="342" x2="600" y2="390" stroke="#ffcc66" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#ig)"/>
+  <line x1="980" y1="342" x2="980" y2="390" stroke="#ffcc66" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#ig)"/>
+
+  <rect x="120" y="396" width="960" height="64" rx="10" fill="#2a1c08" stroke="#ffcc66" stroke-width="2.4"/>
+  <text x="600" y="424" text-anchor="middle" font-size="14.5" fill="#ffcc66" font-weight="bold">墙(现成,C1)+ 行李(新发明,C2★+C3)+ 干柴(时代)+ 火柴(PyCon 五分钟)= 2013 引爆</text>
+  <text x="600" y="446" text-anchor="middle" font-size="10.5" fill="#c8a878">台下数百人 + 视频疯传 + HN 嘲讽 vaporware → 两周冲刺开源 —— 剩下的就是历史</text>
+
+  <!-- Hykes quotes strip -->
+  <rect x="120" y="480" width="960" height="116" rx="10" fill="#11161d" stroke="#8040c0" stroke-width="1.6"/>
+  <text x="600" y="506" text-anchor="middle" font-size="11.5" fill="#c088ff" font-weight="bold">创作者原话(Solomon Hykes,YC 专访,2016)</text>
+  <text x="600" y="530" text-anchor="middle" font-size="10.5" fill="#a888d0">"dotCloud 绝不算失败,但它成功得不够快……像温水煮蛙,每个月都有进展,但你忍不住想:能不能更好?"</text>
+  <text x="600" y="552" text-anchor="middle" font-size="10.5" fill="#a888d0">"2012 年底我对自己说:蛙已经煮熟了。我重复一遍,蛙煮熟了。"</text>
+  <text x="600" y="574" text-anchor="middle" font-size="10.5" fill="#a888d0">"Docker 大概是我们解决这个问题的第六次尝试。前五次失败的真正原因是:我们没有 all in,想两头都要。"</text>
+
+  <text x="600" y="630" text-anchor="middle" font-size="10" fill="#6a7684">出处:Y Combinator,「Why Docker's Pivot Worked」(2016);PyCon 2013 lightning talk 原始视频(pyvideo.org)—— 全部引用见文末列表</text>
+</svg>

@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="tl" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#8a96a4"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="700" fill="#0a0c10"/>
+
+  <text x="600" y="36" text-anchor="middle" font-size="24" fill="#e8eef5" font-weight="bold">技术接力 1979 → 2022:每一棒解决了什么,还缺什么</text>
+  <text x="600" y="60" text-anchor="middle" font-size="12.5" fill="#7a8694">三段:前传(零件入库)→ 主线(引爆与拆解)→ 尾声(退位与永生)。缺的那块,就是下一棒的出生证</text>
+
+  <!-- ===== Band 1: 前传 ===== -->
+  <rect x="40" y="84" width="1120" height="170" rx="10" fill="#0d1117" stroke="#2a3340" stroke-width="1.2"/>
+  <text x="60" y="108" font-size="13" fill="#88ffbb" font-weight="bold">前传 1979–2013.2 · 零件入库:墙慢慢砌齐,但始终没有行李</text>
+
+  <rect x="60" y="122" width="120" height="56" rx="7" fill="#142f1f" stroke="#40c060" stroke-width="1.5"/>
+  <text x="120" y="142" text-anchor="middle" font-size="10.5" fill="#88ffbb" font-weight="bold">1979 chroot</text>
+  <text x="120" y="158" text-anchor="middle" font-size="8.5" fill="#7fd99f">第一扇窗:换根</text>
+  <text x="120" y="171" text-anchor="middle" font-size="8" fill="#5f8a6f">缺:其余全裸</text>
+
+  <rect x="196" y="122" width="120" height="56" rx="7" fill="#142f1f" stroke="#40c060" stroke-width="1.5"/>
+  <text x="256" y="142" text-anchor="middle" font-size="10.5" fill="#88ffbb" font-weight="bold">2000 jail</text>
+  <text x="256" y="158" text-anchor="middle" font-size="8.5" fill="#7fd99f">FreeBSD 整套隔离</text>
+  <text x="256" y="171" text-anchor="middle" font-size="8" fill="#5f8a6f">缺:不在 Linux</text>
+
+  <rect x="332" y="122" width="120" height="56" rx="7" fill="#142f1f" stroke="#40c060" stroke-width="1.5"/>
+  <text x="392" y="142" text-anchor="middle" font-size="10.5" fill="#88ffbb" font-weight="bold">2004 Zones</text>
+  <text x="392" y="158" text-anchor="middle" font-size="8.5" fill="#7fd99f">Solaris 商用级</text>
+  <text x="392" y="171" text-anchor="middle" font-size="8" fill="#5f8a6f">缺:绑死 Solaris</text>
+
+  <rect x="468" y="122" width="130" height="56" rx="7" fill="#241808" stroke="#c08040" stroke-width="1.5"/>
+  <text x="533" y="142" text-anchor="middle" font-size="10.5" fill="#ffaa55" font-weight="bold">2002 mnt ns</text>
+  <text x="533" y="158" text-anchor="middle" font-size="8.5" fill="#c89868">Linux 第一扇窗(2.4.19)</text>
+  <text x="533" y="171" text-anchor="middle" font-size="8" fill="#9a8868">此后十年逐扇补齐</text>
+
+  <rect x="614" y="122" width="130" height="56" rx="7" fill="#241808" stroke="#c08040" stroke-width="1.5"/>
+  <text x="679" y="142" text-anchor="middle" font-size="10.5" fill="#ffaa55" font-weight="bold">2006–08 cgroups</text>
+  <text x="679" y="158" text-anchor="middle" font-size="8.5" fill="#c89868">Google 捐表(2.6.24)</text>
+  <text x="679" y="171" text-anchor="middle" font-size="8" fill="#9a8868">同版本 pid ns 落地</text>
+
+  <rect x="760" y="122" width="130" height="56" rx="7" fill="#1a0e0e" stroke="#c04040" stroke-width="1.8"/>
+  <text x="825" y="142" text-anchor="middle" font-size="10.5" fill="#ff8888" font-weight="bold">2008 LXC</text>
+  <text x="825" y="158" text-anchor="middle" font-size="8.5" fill="#d2a0a0">墙首次打包可用</text>
+  <text x="825" y="171" text-anchor="middle" font-size="8" fill="#9a7878">缺:行李!没人引爆</text>
+
+  <rect x="906" y="122" width="234" height="56" rx="7" fill="#241808" stroke="#c08040" stroke-width="1.5"/>
+  <text x="1023" y="142" text-anchor="middle" font-size="10.5" fill="#ffaa55" font-weight="bold">2013.2 user ns 完工(内核 3.8)</text>
+  <text x="1023" y="158" text-anchor="middle" font-size="8.5" fill="#c89868">第六扇窗到位 —— 距引爆只剩一个月</text>
+  <text x="1023" y="171" text-anchor="middle" font-size="8" fill="#9a8868">墙,至此全齐</text>
+
+  <text x="600" y="208" text-anchor="middle" font-size="11" fill="#ffc48a" font-weight="bold">三十四年,墙的零件全部入库(C1 的化解现成躺着)—— 可"容器"始终是少数人的玩具:没有行李、没有身份、没有一条命令的体验</text>
+  <text x="600" y="230" text-anchor="middle" font-size="9.5" fill="#9a8868">同期暗线:AWS(2006)开云时代 · web 集群从十台涨到千台(你的 2009 在这里)· 微服务浪潮酝酿 —— 柴堆越来越干</text>
+
+  <!-- ===== Band 2: 主线 ===== -->
+  <rect x="40" y="262" width="1120" height="190" rx="10" fill="#0d1117" stroke="#c08040" stroke-width="1.5"/>
+  <text x="60" y="286" font-size="13" fill="#ffaa55" font-weight="bold">主线 2010–2017 · 引爆与拆解:行李补齐 → 世界点燃 → 核心被迫交公</text>
+
+  <rect x="60" y="300" width="160" height="62" rx="7" fill="#1a0e0e" stroke="#c04040" stroke-width="1.5"/>
+  <text x="140" y="320" text-anchor="middle" font-size="10.5" fill="#ff8888" font-weight="bold">2010–12 dotCloud 困局</text>
+  <text x="140" y="336" text-anchor="middle" font-size="8.5" fill="#d2a0a0">"温水煮蛙…蛙煮熟了"</text>
+  <text x="140" y="351" text-anchor="middle" font-size="8" fill="#9a7878">第六次尝试前的五连败</text>
+
+  <rect x="236" y="300" width="170" height="62" rx="7" fill="#2a1c08" stroke="#ffcc66" stroke-width="2.4"/>
+  <text x="321" y="318" text-anchor="middle" font-size="10.5" fill="#ffcc66" font-weight="bold">2013.3 PyCon 五分钟</text>
+  <text x="321" y="334" text-anchor="middle" font-size="8.5" fill="#ffd9a8">本想讲给 30 人的小房间</text>
+  <text x="321" y="348" text-anchor="middle" font-size="8.5" fill="#ffd9a8">结果是主会场数百人 + 疯传</text>
+
+  <rect x="422" y="300" width="160" height="62" rx="7" fill="#13251a" stroke="#40c060" stroke-width="1.8"/>
+  <text x="502" y="318" text-anchor="middle" font-size="10.5" fill="#88ff88" font-weight="bold">2013.3 开源</text>
+  <text x="502" y="334" text-anchor="middle" font-size="8.5" fill="#7fd99f">被讽 vaporware →</text>
+  <text x="502" y="348" text-anchor="middle" font-size="8.5" fill="#7fd99f">两周冲刺把它推出门</text>
+
+  <rect x="598" y="300" width="160" height="62" rx="7" fill="#1f1133" stroke="#8040c0" stroke-width="1.5"/>
+  <text x="678" y="318" text-anchor="middle" font-size="10.5" fill="#c088ff" font-weight="bold">2014.3 v0.9</text>
+  <text x="678" y="334" text-anchor="middle" font-size="8.5" fill="#a888d0">libcontainer 替掉 LXC</text>
+  <text x="678" y="348" text-anchor="middle" font-size="8.5" fill="#a888d0">砌墙的手艺收归自家</text>
+
+  <rect x="774" y="300" width="170" height="62" rx="7" fill="#1f1133" stroke="#8040c0" stroke-width="1.8"/>
+  <text x="859" y="318" text-anchor="middle" font-size="10.5" fill="#c088ff" font-weight="bold">2015.6 runC → OCI</text>
+  <text x="859" y="334" text-anchor="middle" font-size="8.5" fill="#a888d0">DockerCon 上亲手捐出</text>
+  <text x="859" y="348" text-anchor="middle" font-size="8.5" fill="#a888d0">施工图成了行业标准</text>
+
+  <rect x="960" y="300" width="180" height="62" rx="7" fill="#1f1133" stroke="#8040c0" stroke-width="1.8"/>
+  <text x="1050" y="318" text-anchor="middle" font-size="10.5" fill="#c088ff" font-weight="bold">2016.12–17.3 containerd</text>
+  <text x="1050" y="334" text-anchor="middle" font-size="8.5" fill="#a888d0">核心运行时剥离 → 捐 CNCF</text>
+  <text x="1050" y="348" text-anchor="middle" font-size="8.5" fill="#a888d0">引擎也交公了</text>
+
+  <line x1="220" y1="331" x2="234" y2="331" stroke="#8a96a4" stroke-width="1.4" marker-end="url(#tl)"/>
+  <line x1="406" y1="331" x2="420" y2="331" stroke="#8a96a4" stroke-width="1.4" marker-end="url(#tl)"/>
+  <line x1="582" y1="331" x2="596" y2="331" stroke="#8a96a4" stroke-width="1.4" marker-end="url(#tl)"/>
+  <line x1="758" y1="331" x2="772" y2="331" stroke="#8a96a4" stroke-width="1.4" marker-end="url(#tl)"/>
+  <line x1="944" y1="331" x2="958" y2="331" stroke="#8a96a4" stroke-width="1.4" marker-end="url(#tl)"/>
+
+  <text x="600" y="392" text-anchor="middle" font-size="11" fill="#ffc48a" font-weight="bold">Docker 真正的新发明只有一样:行李(镜像分层 + Dockerfile + registry + digest)—— 墙是现成的(v0.1 就是 LXC 的包装纸)</text>
+  <text x="600" y="412" text-anchor="middle" font-size="9.5" fill="#c8a878">引爆 = 墙(现成,C1)+ 行李(新发明,C2★+C3)+ 干透的柴堆(云/规模/微服务)+ 一根火柴(五分钟演讲)</text>
+  <text x="600" y="432" text-anchor="middle" font-size="9.5" fill="#9a8868">同年大洋彼岸:一位 2009 年凌晨人肉对账过的工程师在网上看到它,"惊呆了" —— 共享内核 + 打包依赖,一眼读出 C1 与 C2★</text>
+
+  <!-- ===== Band 3: 尾声 ===== -->
+  <rect x="40" y="460" width="1120" height="160" rx="10" fill="#0d1117" stroke="#2a3340" stroke-width="1.2"/>
+  <text x="60" y="484" font-size="13" fill="#88c0ff" font-weight="bold">尾声 2014–2022 · 退位与永生:编排战争失利,标准统治世界</text>
+
+  <rect x="60" y="498" width="200" height="62" rx="7" fill="#142838" stroke="#4080c0" stroke-width="1.5"/>
+  <text x="160" y="518" text-anchor="middle" font-size="10.5" fill="#88c0ff" font-weight="bold">2014–17 编排战争</text>
+  <text x="160" y="534" text-anchor="middle" font-size="8.5" fill="#7fa8cc">K8s(2014)vs Swarm</text>
+  <text x="160" y="548" text-anchor="middle" font-size="8.5" fill="#7fa8cc">2017.10 Docker 拥抱 K8s(认负)</text>
+
+  <rect x="276" y="498" width="180" height="62" rx="7" fill="#1a0e0e" stroke="#c04040" stroke-width="1.5"/>
+  <text x="366" y="518" text-anchor="middle" font-size="10.5" fill="#ff8888" font-weight="bold">2018.3 Hykes 离场</text>
+  <text x="366" y="534" text-anchor="middle" font-size="8.5" fill="#d2a0a0">告别信《Au revoir》</text>
+  <text x="366" y="548" text-anchor="middle" font-size="8.5" fill="#9a7878">创始人退出日常运营</text>
+
+  <rect x="472" y="498" width="200" height="62" rx="7" fill="#142838" stroke="#4080c0" stroke-width="1.5"/>
+  <text x="572" y="518" text-anchor="middle" font-size="10.5" fill="#88c0ff" font-weight="bold">2020.12 dockershim 宣判</text>
+  <text x="572" y="534" text-anchor="middle" font-size="8.5" fill="#7fa8cc">K8s 官博《Don't Panic》:</text>
+  <text x="572" y="548" text-anchor="middle" font-size="8.5" fill="#7fa8cc">弃用 Docker 运行时,改用 CRI</text>
+
+  <rect x="688" y="498" width="180" height="62" rx="7" fill="#1a0e0e" stroke="#c04040" stroke-width="1.8"/>
+  <text x="778" y="518" text-anchor="middle" font-size="10.5" fill="#ff8888" font-weight="bold">2022.5 执行(K8s 1.24)</text>
+  <text x="778" y="534" text-anchor="middle" font-size="8.5" fill="#d2a0a0">dockershim 正式移除</text>
+  <text x="778" y="548" text-anchor="middle" font-size="8.5" fill="#9a7878">引擎退出 K8s 节点</text>
+
+  <rect x="884" y="498" width="256" height="62" rx="7" fill="#13251a" stroke="#40c060" stroke-width="2.2"/>
+  <text x="1012" y="518" text-anchor="middle" font-size="10.5" fill="#88ff88" font-weight="bold">但标准永生</text>
+  <text x="1012" y="534" text-anchor="middle" font-size="8.5" fill="#7fd99f">每个 K8s 节点仍跑 containerd+runc</text>
+  <text x="1012" y="548" text-anchor="middle" font-size="8.5" fill="#7fd99f">每个镜像仍是 OCI 格式(它定义的)</text>
+
+  <line x1="260" y1="529" x2="274" y2="529" stroke="#8a96a4" stroke-width="1.4" marker-end="url(#tl)"/>
+  <line x1="456" y1="529" x2="470" y2="529" stroke="#8a96a4" stroke-width="1.4" marker-end="url(#tl)"/>
+  <line x1="672" y1="529" x2="686" y2="529" stroke="#8a96a4" stroke-width="1.4" marker-end="url(#tl)"/>
+  <line x1="868" y1="529" x2="882" y2="529" stroke="#8a96a4" stroke-width="1.4" marker-end="url(#tl)"/>
+
+  <text x="600" y="592" text-anchor="middle" font-size="11.5" fill="#ffc48a" font-weight="bold">公司输了,标准赢了 —— docker build 出的每一个镜像、每个节点里的 runc,都是它留给世界的骨骼</text>
+
+  <text x="600" y="640" text-anchor="middle" font-size="10" fill="#6a7684">绿 = 零件/遗产 · 橙 = 内核里程碑 · 红 = 困局/败退 · 金 = 引爆点 · 紫 = 拆解(交公)· 蓝 = 大势</text>
+  <text x="600" y="660" text-anchor="middle" font-size="10" fill="#6a7684">资料:节点事实=综述级(Wikipedia/LWN);四大转折(PyCon/runC/containerd/dockershim)=一手出处,见文末引用列表</text>
+</svg>

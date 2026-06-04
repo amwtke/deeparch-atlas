@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" font-family="JetBrains Mono, Consolas, monospace">
+  <defs>
+    <marker id="dm" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#8a96a4"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="700" fill="#0a0c10"/>
+
+  <text x="600" y="36" text-anchor="middle" font-size="24" fill="#e8eef5" font-weight="bold">拆解编年史:一个单体,九刀,两种刀法</text>
+  <text x="600" y="60" text-anchor="middle" font-size="12.5" fill="#7a8694">紫框 = 自己下的刀(以退为进,交公保标准);红框 = 别人下的刀(接口绕开,先行者被替换)</text>
+
+  <!-- spine -->
+  <line x1="95" y1="92" x2="95" y2="640" stroke="#2a3340" stroke-width="2"/>
+
+  <!-- events -->
+  <circle cx="95" cy="116" r="6" fill="#8040c0"/>
+  <rect x="120" y="94" width="620" height="46" rx="7" fill="#1f1133" stroke="#8040c0" stroke-width="1.6"/>
+  <text x="134" y="113" font-size="10.5" fill="#c088ff" font-weight="bold">2014.3 · v0.9:libcontainer 替掉 LXC(自己的刀)</text>
+  <text x="134" y="131" font-size="9" fill="#a888d0">甩开外部依赖,砌墙手艺收归自家 —— 拆解的第一刀,先把零件做成自己的</text>
+
+  <circle cx="95" cy="178" r="6" fill="#c04040"/>
+  <rect x="120" y="156" width="620" height="46" rx="7" fill="#1a0e0e" stroke="#c04040" stroke-width="1.6"/>
+  <text x="134" y="175" font-size="10.5" fill="#ff8888" font-weight="bold">2014.12 · CoreOS 叛乱:rkt 问世(别人的刀)</text>
+  <text x="134" y="193" font-size="9" fill="#d2a0a0">"Docker 背离了简单积木的初心" —— 巨头们不安:核心标准凭什么握在一家创业公司手里?</text>
+
+  <circle cx="95" cy="240" r="6" fill="#8040c0"/>
+  <rect x="120" y="218" width="620" height="46" rx="7" fill="#1f1133" stroke="#8040c0" stroke-width="2.2"/>
+  <text x="134" y="237" font-size="10.5" fill="#c088ff" font-weight="bold">2015.6 · DockerCon:runC + 规范捐给 OCI(自己的刀,被逼的)</text>
+  <text x="134" y="255" font-size="9" fill="#a888d0">镜像格式 + 运行时规范交给 Linux 基金会 —— "施工图"成行业标准,叛乱平息,但城门钥匙交了</text>
+
+  <circle cx="95" cy="302" r="6" fill="#c04040"/>
+  <rect x="120" y="280" width="620" height="46" rx="7" fill="#1a0e0e" stroke="#c04040" stroke-width="1.6"/>
+  <text x="134" y="299" font-size="10.5" fill="#ff8888" font-weight="bold">2016 · K8s 定义 CRI 接口(别人的刀)</text>
+  <text x="134" y="317" font-size="9" fill="#d2a0a0">"运行时,谁实现这个接口我用谁" —— Docker 从"唯一选项"降级为"选项之一"</text>
+
+  <circle cx="95" cy="364" r="6" fill="#8040c0"/>
+  <rect x="120" y="342" width="620" height="46" rx="7" fill="#1f1133" stroke="#8040c0" stroke-width="2.2"/>
+  <text x="134" y="361" font-size="10.5" fill="#c088ff" font-weight="bold">2016.12 → 2017.3 · containerd 剥离,捐 CNCF(自己的刀)</text>
+  <text x="134" y="379" font-size="9" fill="#a888d0">引擎核心也交公(KubeCon Berlin 全票接收)—— 自此 Docker 公司 ≠ 容器运行时</text>
+
+  <circle cx="95" cy="426" r="6" fill="#c04040"/>
+  <rect x="120" y="404" width="620" height="46" rx="7" fill="#1a0e0e" stroke="#c04040" stroke-width="1.6"/>
+  <text x="134" y="423" font-size="10.5" fill="#ff8888" font-weight="bold">2017.10 · DockerCon EU:宣布原生支持 K8s(认负)</text>
+  <text x="134" y="441" font-size="9" fill="#d2a0a0">Swarm vs Kubernetes 的编排战争落幕 —— 把对手请进自家产品,体面投降</text>
+
+  <circle cx="95" cy="488" r="6" fill="#c04040"/>
+  <rect x="120" y="466" width="620" height="46" rx="7" fill="#1a0e0e" stroke="#c04040" stroke-width="1.6"/>
+  <text x="134" y="485" font-size="10.5" fill="#ff8888" font-weight="bold">2018.3 · Hykes《Au revoir》离场</text>
+  <text x="134" y="503" font-size="9" fill="#d2a0a0">创始人退出日常运营;次年 Docker 企业业务出售 —— 公司的故事basically讲完了</text>
+
+  <circle cx="95" cy="550" r="6" fill="#c04040"/>
+  <rect x="120" y="528" width="620" height="46" rx="7" fill="#1a0e0e" stroke="#c04040" stroke-width="1.6"/>
+  <text x="134" y="547" font-size="10.5" fill="#ff8888" font-weight="bold">2020.12 · K8s《Don't Panic》:dockershim 宣判</text>
+  <text x="134" y="565" font-size="9" fill="#d2a0a0">"弃用 Docker 运行时,改用 CRI 运行时;你的镜像照常能跑,别慌" —— 判决书写得很温柔</text>
+
+  <circle cx="95" cy="612" r="6" fill="#c04040"/>
+  <rect x="120" y="590" width="620" height="46" rx="7" fill="#1a0e0e" stroke="#c04040" stroke-width="2"/>
+  <text x="134" y="609" font-size="10.5" fill="#ff8888" font-weight="bold">2022.5 · K8s 1.24:执行</text>
+  <text x="134" y="627" font-size="9" fill="#d2a0a0">dockershim 移除;节点上从此 kubelet → containerd → runc —— 引擎退出,零件长存</text>
+
+  <!-- right panel: the C3 logic -->
+  <rect x="780" y="94" width="380" height="250" rx="10" fill="#241808" stroke="#c08040" stroke-width="2"/>
+  <text x="970" y="122" text-anchor="middle" font-size="13" fill="#ffaa55" font-weight="bold">九刀背后是同一条定律</text>
+  <text x="970" y="150" text-anchor="middle" font-size="10.5" fill="#ffd9a8">C3 的逻辑推到底就是:</text>
+  <text x="970" y="174" text-anchor="middle" font-size="11" fill="#ffc48a" font-weight="bold">接口标准化 → 实现可替换</text>
+  <text x="970" y="194" text-anchor="middle" font-size="11" fill="#ffc48a" font-weight="bold">→ 先行者自己也可被替换</text>
+  <text x="970" y="226" text-anchor="middle" font-size="10" fill="#c89868">Docker 为了让"机器接管发布",把一切</text>
+  <text x="970" y="244" text-anchor="middle" font-size="10" fill="#c89868">做成了标准件(OCI 镜像/运行时/CRI)——</text>
+  <text x="970" y="262" text-anchor="middle" font-size="10" fill="#c89868">标准件的宿命就是:谁造的不重要。</text>
+  <text x="970" y="290" text-anchor="middle" font-size="10" fill="#9a8868">它亲手锻造了那把</text>
+  <text x="970" y="308" text-anchor="middle" font-size="10" fill="#9a8868">最终替换掉自己的刀 ——</text>
+  <text x="970" y="326" text-anchor="middle" font-size="10" fill="#9a8868">而这恰恰是它对世界最大的贡献。</text>
+
+  <rect x="780" y="368" width="380" height="160" rx="10" fill="#13251a" stroke="#40c060" stroke-width="2.2"/>
+  <text x="970" y="396" text-anchor="middle" font-size="13" fill="#88ff88" font-weight="bold">公司输了,标准赢了</text>
+  <text x="970" y="424" text-anchor="middle" font-size="10" fill="#7fd99f">· 每个 K8s 节点仍在跑 containerd + runc</text>
+  <text x="970" y="446" text-anchor="middle" font-size="10" fill="#7fd99f">· 你 docker build 的每个镜像都是 OCI 格式</text>
+  <text x="970" y="468" text-anchor="middle" font-size="10" fill="#7fd99f">· Dockerfile 仍是环境的通用源代码</text>
+  <text x="970" y="490" text-anchor="middle" font-size="10" fill="#7fd99f">· "墙+行李+验真"成为文明级基础设施</text>
+  <text x="970" y="514" text-anchor="middle" font-size="9.5" fill="#5f8a6f">2022 移除的是引擎,不是它定义的世界</text>
+
+  <rect x="780" y="552" width="380" height="84" rx="10" fill="#11161d" stroke="#8040c0" stroke-width="1.6"/>
+  <text x="970" y="578" text-anchor="middle" font-size="10.5" fill="#c088ff" font-weight="bold">两种刀法,一个教训:</text>
+  <text x="970" y="600" text-anchor="middle" font-size="9.5" fill="#a888d0">自己的刀(紫):交公换生态信任,以退为进;</text>
+  <text x="970" y="620" text-anchor="middle" font-size="9.5" fill="#a888d0">别人的刀(红):接口一旦立住,绕开你只需一个 shim 的废除</text>
+
+  <text x="600" y="676" text-anchor="middle" font-size="10" fill="#6a7684">一手出处:Docker 官博 runC 公告(2015)/ CNCF containerd 公告(2017)/ K8s 官博 Don't Panic(2020)与 1.24 移除公告(2022)/ Docker 官博 Au revoir(2018)—— 见文末引用列表</text>
+</svg>
