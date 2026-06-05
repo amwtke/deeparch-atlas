@@ -5,8 +5,8 @@
 - **短名**: docker
 - **工作目录**: atlas-output/docker-20260603/
 - **创建时间**: 2026-06-03T06:46:35Z
-- **上次更新**: 2026-06-04T16:39:38Z
-- **当前阶段**: Deep 已完成并封存(用户验收"好的可以了")。下次启动 → Deep 之后的分岔:Comparison(询问是否横向对比 podman / gVisor / Kata / systemd-nspawn / VM)或直接 Synthesis 收束 → 再 final-export。用户主动暂停"明天继续"。〔Deep 最终定稿=deeparch-md 方法的 6墙/3表/2洞 三篇拼接,详见审计〕
+- **上次更新**: 2026-06-05T14:40:11Z
+- **当前阶段**: Comparison 已完成并封存(用户 reconfirm"过完了")。当前 → Synthesis(开场对齐待开始:五元组方法论沉淀),之后 final-export(导出格式询问 + 融合)。
 
 ## 灵魂问题(Discovery 收集)
 > "容器到底是什么?它和虚拟机的根本区别在哪?当一个容器真正跑起来的那一刻,Linux 内核里到底发生了什么 —— namespace、cgroups、镜像分层各自扮演什么角色?"
@@ -21,7 +21,7 @@
 - [x] 4. Origin
 - [x] 5. 分水岭决定（用户选「继续深钻」→ Deep）
 - [x] 6. Deep
-- [ ] 7. Comparison（可选）
+- [x] 7. Comparison（可选）
 - [ ] 8. Synthesis
 - [ ] 9. 导出格式询问
 - [ ] 10. 融合输出
@@ -82,13 +82,20 @@
 - **Deep 三篇全部完成并拼接**(2026-06-05):05-1-walls.md(6墙)+ 05-2-tables.md(3表)+ 05-3-holes.md(2洞),每篇总分结构+真源码+HTML 架构图。05-2:总=cgroup v2 掐进程(OOM 137 铁证)，分 memory(try_charge_memcg 逐字真源码:page_counter_try_charge→try_to_free_mem_cgroup_pages→mem_cgroup_oom)/cpu(CFS __account_cfs_rq_runtime→throttle_cfs_rq 真函数名调用链)/io(__blk_throtl_bio→tg_within_bps/iops_limit→tg_dispatch_time 真函数名);底层原理"流量vs存量"解释为何内存杀别的限速。05-3:总=veth pair 跨 netns ping + bind mount 持久 demo，分 veth(veth_newlink 双 rcu_assign_pointer peer 逐字 + veth_xmit)/volume(do_loopback→clone_mnt→attach_recursive_mnt 真函数名);"洞≠拆墙"辨析。拼接:05-deep-header.md(灵魂问题+三部分导览+C1~C3速查+约束对应)+ cat 三篇 → 05-deep.md(996 行)。3 张独立 HTML 图(pics/05-{1,2,3}-*-arch.html)转义修复后 xmllint OK。mini-docker.c(Linux 专属)。等用户验收整篇 Deep。
 
 ### Comparison 阶段
-- (无)
+- 开场对齐(2026-06-05):恢复会话后渐进式 4 问收敛 —— ①岔路口选「比一比」②对比域选「圈内比」③用户点名 LXC + podman ④隔离轴补位选 Kata(弃 gVisor)。三面镜子恰好一镜一约束:LXC→C2★(容器的单位)/ podman→C3(控制面)/ Kata→C1③(隔离的墙)。reconfirm 无追加。初稿 06-comparison.md(约束速查 + §0 三镜 + §1 2×2 设计空间图 + §2 出生证明[初衷/擅长/不擅长/谁在用] + §3~§5 三组对照[五元组表] + §6 回扣 + §7 呼应 98% 闭环)+ pics/06-overview.svg(墙轴×行李轴四象限,docker 与传统 VM 成对角,podman 同格第三维,gVisor 骑线)。判词主线:墙是公共件 / 指挥部是偶然 / 便宜会过期 → 不变量 = C2★ 镜像 + C3 流水线。跨站回扣:LXCFS 接 What §4.5 / 统一律反面接 How §3.6.3 / conmon·crun 接 How §5 + Deep nsexec / rootless 接 Deep 墙六 / 国标插座搬进房间接 Why C1③。
+- 第 1 次需求(2026-06-05):用户验收初稿方向("感觉可以")+ 追加"KVM 跟 docker 的区别与联系" → 定位为类目纠错而非第四面镜子(KVM 不答题,它供货):新增 §5.6 —— KVM = 内核第二套隔离原语(物理墙发动机,/dev/kvm,2.6.20 与 cgroups 2.6.24 前后脚进主线,Qumranet/红帽);金句"VM 在宿主上就是一个 QEMU 进程,vCPU=线程";容器进程 vs 客机进程四行对照(执行模式/看到的内核/边界/成本);层层对位表(KVM↔ns+cgroups / QEMU↔runc / qcow2·AMI↔OCI 镜像 / libvirt↔dockerd)→ 行李行揭示"墙的生意≠行李的生意";三条联系(同根两头下注 / 互为嵌套[云 k8s 节点=KVM 墙内砌逻辑墙;Kata=容器流水线里藏物理墙] / KVM=Kata 降价战军火商)。§1 读图清单 5→6 件事 + SVG 加 KVM 地基注。→ 已 patch 文件:§5.6 + §1 + 修订记录。探针升级:旧问「为何 2026 默认仍是 runc」折入新问「双层墙之下,Kata 的刚需买家是谁」,挂起待答。
+- 第 1 次新视角(2026-06-05):用户贡献递进双问 ——「在一个 Linux 内核里能否再启动一个新版本内核」应作为 KVM 的引出问题(KVM = CPU hypervisor 能力的封装,让用户态进程启动全新内核);更深一问「macOS 没有 Linux 内核怎么跑 docker」(macOS 有 KVM 类似物,先启动 Linux 内核再在其上跑 docker)→ 双双验证成立 + 三处精确化:①KVM 封装的不只 Intel(VT-x/AMD-V/ARM 扩展统一进 /dev/kvm);②namespace 原理上接不了"换内核"(换视图不换地基;uts 窗只换 nodename 不换 release)—— 容器之轻的代价 = 厂房钉死(接 Why 国标插座单向性 + What 搬家故事);③macOS 对等物 = Hypervisor.framework,Docker Desktop 栈 = hvf→HyperKit/Virtualization.framework→LinuxKit 迷你内核→dockerd→容器,Windows = WSL2 方言版;嵌套孪生对偶(云上嵌套买隔离 / Mac 嵌套买兼容)→ 金句「逻辑墙运应用,物理墙运内核」;Apple 2025 Containerization = 每容器一台 microVM(Kata 形状)彩蛋 → 已 patch 文件:§5.6 重构为 §5.6.1~§5.6.3 双问递进 + 修订记录两行。新探针:Mac 上 volume 挂载为何出了名的慢(考"物理墙边界税"迁移),挂起待答。
+- 第 2 次需求(2026-06-05):用户要求把探针「Mac volume 为何慢」直接写进文档,并宣布"加完就完毕" → 新增 §5.6.4 问题三(最贴身):Linux 基线 = 洞一是同一内核里的 VFS 记账(回扣 How §3.7 竖井 + Deep 洞二 do_loopback→clone_mnt→attach_recursive_mnt),免费;Mac = 源码在 XNU/APFS、容器在隐藏 VM 的 Linux 内核,每次文件操作过境物理墙(guest VFS→virtiofs/gRPC-FUSE→virtio 队列→macOS 文件服务→APFS);单次 µs vs 本地 dcache ns(贵三个数量级)× node_modules stat 风暴 = 出名的慢;三代撬棍(osxfs→gRPC-FUSE→virtiofs)抹不平"两内核不共享 page cache/dcache + fsevents↔inotify 翻译税";民间疗法反推原理(named volume 回单内核 / mutagen 不过境 / devcontainer 源码进 VM 侧)= 治法只有"别让热路径穿物理墙";对偶收口「洞凿在逻辑墙上是门,凿在物理墙上是海关」= §5.3 Kata IO 边界税同款 → 已 patch:§5.6.4 + 修订记录。用户宣布本篇完毕 → 已抛推进 reconfirm(全文是否看过),待确认后封存。
+- 第 2 次产物迭代(2026-06-05):用户指示「KVM 与 docker」单独成章 → §5.6 升格为 ## §6(新增独立章引言:不算第四面镜子[不答 docker 的考卷]但纠缠最深;子节 §5.6.1~4 → ### §6.1~§6.4);原 §6 约束回扣 → §7、§7 呼应灵魂问题 → §8;§1 读图清单"详见 §5.6"→"详见 §6";修订记录补行。终稿结构:速查 + §0 三镜 + §1 概览 + §2 出生证明 + §3~§5 三镜对照 + §6 KVM 三问 + §7 回扣 + §8 呼应(98%)。推进 reconfirm 仍挂起待答。
 
 ### Synthesis 阶段
 - (无)
 
 ## 选定的对比对象（Comparison Hook 后填入）
-- (无)
+- LXC（维度:容器的单位 —— 整套系统 vs 单个应用;拷问 C2★）
+- podman（维度:控制面 —— 常驻守护进程 vs fork-exec;拷问 C3）
+- Kata Containers（维度:隔离的墙 —— 共享内核 vs 每实例独立内核;拷问 C1③）
+- （对齐过程:用户主动点名 LXC + podman;隔离轴在 gVisor/Kata 二选一中选了 Kata）
 
 ## 选定的导出格式（导出阶段填入）
 - (待定)

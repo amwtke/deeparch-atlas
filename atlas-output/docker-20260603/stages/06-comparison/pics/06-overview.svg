@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 670" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="670" fill="#0a0c10"/>
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#8040c0"/>
+    </marker>
+  </defs>
+
+  <!-- 标题 -->
+  <text x="600" y="40" text-anchor="middle" font-size="18" font-weight="bold" fill="#e8eaf0">docker 在设计空间里的位置 —— 两条轴 · 四个象限 · 三面镜子</text>
+
+  <!-- 象限区域 -->
+  <rect x="140" y="70" width="920" height="470" fill="none" stroke="#1b2330" stroke-width="1"/>
+  <line x1="600" y1="70" x2="600" y2="540" stroke="#2a3142" stroke-width="1.5"/>
+  <line x1="140" y1="305" x2="1060" y2="305" stroke="#2a3142" stroke-width="1.5"/>
+
+  <!-- gVisor 骑线注 -->
+  <text x="600" y="62" text-anchor="middle" font-size="10.5" fill="#6b7385">gVisor 骑在这条竖线上:用户态假内核(半独立)</text>
+
+  <!-- Y 轴标签(旋转) -->
+  <text transform="rotate(-90 56 200)" x="56" y="200" text-anchor="middle" font-size="12" fill="#8b95a7">行李:镜像随行(C2★)</text>
+  <text transform="rotate(-90 56 430)" x="56" y="430" text-anchor="middle" font-size="12" fill="#8b95a7">行李:环境长在机器上</text>
+
+  <!-- X 轴标签 -->
+  <text x="370" y="562" text-anchor="middle" font-size="13" fill="#8b95a7">墙:共享宿主内核(逻辑墙)</text>
+  <text x="830" y="562" text-anchor="middle" font-size="13" fill="#8b95a7">墙:每实例独立内核(物理墙)</text>
+  <text x="600" y="586" text-anchor="middle" font-size="12" fill="#6b7385">横轴 = 隔离的墙(C1③:隔离的价格谁付) · 纵轴 = 环境怎么走(C2★)</text>
+
+  <!-- 左上象限:docker -->
+  <rect x="200" y="100" width="280" height="120" rx="8" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="340" y="130" text-anchor="middle" font-size="20" font-weight="bold" fill="#88c0ff">docker</text>
+  <text x="340" y="153" text-anchor="middle" font-size="12" fill="#c8d4e8">逻辑墙 × 镜像随行</text>
+  <text x="340" y="174" text-anchor="middle" font-size="11" fill="#8fb8e0">6墙 + 3表 + 2洞 · OCI 镜像</text>
+  <text x="340" y="194" text-anchor="middle" font-size="11" fill="#8fb8e0">dockerd 中央守护(四级流水线)</text>
+
+  <!-- 左上象限:podman(同格,虚线) -->
+  <rect x="200" y="232" width="280" height="58" rx="8" fill="#3a1e5f" stroke="#8040c0" stroke-width="2" stroke-dasharray="6,4"/>
+  <text x="340" y="256" text-anchor="middle" font-size="13" font-weight="bold" fill="#c088ff">podman —— 镜子二(拷问 C3)</text>
+  <text x="340" y="276" text-anchor="middle" font-size="11" fill="#b8a0d8">同一格!动的是第三维:控制面 fork-exec</text>
+
+  <!-- 右上象限:Kata -->
+  <rect x="680" y="100" width="300" height="120" rx="8" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="830" y="128" text-anchor="middle" font-size="16" font-weight="bold" fill="#88ff88">Kata Containers</text>
+  <text x="830" y="148" text-anchor="middle" font-size="11" fill="#a0e8b8">镜子三(拷问 C1③)</text>
+  <text x="830" y="169" text-anchor="middle" font-size="11" fill="#a0e8b8">OCI 皮 + microVM 芯:每 pod 独立 guest 内核</text>
+  <text x="830" y="189" text-anchor="middle" font-size="11" fill="#a0e8b8">VM 的墙 + docker 的行李</text>
+  <text x="830" y="208" text-anchor="middle" font-size="10" fill="#70b888">(同思想:AWS Firecracker → Lambda / Fargate)</text>
+
+  <!-- 左下象限:LXC -->
+  <rect x="200" y="370" width="280" height="120" rx="8" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+  <text x="340" y="400" text-anchor="middle" font-size="15" font-weight="bold" fill="#ffaa55">LXC —— 镜子一(拷问 C2★)</text>
+  <text x="340" y="424" text-anchor="middle" font-size="11" fill="#e8c8a0">同样的 6 堵墙(namespace + cgroups)</text>
+  <text x="340" y="444" text-anchor="middle" font-size="11" fill="#e8c8a0">rootfs = 长寿命可变目录(宠物)</text>
+  <text x="340" y="464" text-anchor="middle" font-size="11" fill="#e8c8a0">容器当轻量 VM:PID 1 = init 整套系统</text>
+
+  <!-- 右下象限:传统 VM -->
+  <rect x="680" y="370" width="300" height="120" rx="8" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="830" y="400" text-anchor="middle" font-size="15" font-weight="bold" fill="#ff8888">传统 VM(2008 年价目表)</text>
+  <text x="830" y="424" text-anchor="middle" font-size="11" fill="#e8a8a8">独立内核 + 完整客机 OS + 设备模拟</text>
+  <text x="830" y="444" text-anchor="middle" font-size="11" fill="#e8a8a8">GB 镜像 · 分钟启动 · 内存税</text>
+  <text x="830" y="464" text-anchor="middle" font-size="11" fill="#e8a8a8">AMI = 整机快照,不是应用级制品</text>
+
+  <!-- KVM 地基注(右半边) -->
+  <text x="830" y="296" text-anchor="middle" font-size="10.5" fill="#6b7385">右半边的墙体供应商:KVM —— 内核内置 hypervisor(/dev/kvm)</text>
+
+  <!-- 对角线:docker ↔ 传统 VM -->
+  <line x1="480" y1="222" x2="676" y2="368" stroke="#8040c0" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arr)"/>
+  <rect x="330" y="282" width="232" height="38" fill="#0a0c10" opacity="0.88"/>
+  <text x="558" y="296" text-anchor="end" font-size="11.5" fill="#c088ff">灵魂问题的对角线:</text>
+  <text x="558" y="313" text-anchor="end" font-size="11.5" fill="#c088ff">差两条轴 —— 一维语言永远吵不清</text>
+
+  <!-- 三镜判词 -->
+  <text x="600" y="614" text-anchor="middle" font-size="13" fill="#e8eaf0">三镜判词:墙是公共件(LXC) · 指挥部是偶然(podman) · 便宜会过期(Kata) —— 砸不碎的只有 C2★ 镜像 + C3 流水线</text>
+
+  <!-- 图例 -->
+  <rect x="170" y="636" width="12" height="12" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="188" y="646" font-size="11" fill="#8b95a7">主角 docker</text>
+  <rect x="320" y="636" width="12" height="12" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="338" y="646" font-size="11" fill="#8b95a7">镜子一 LXC(单位)</text>
+  <rect x="530" y="636" width="12" height="12" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="548" y="646" font-size="11" fill="#8b95a7">镜子二 podman(控制面)</text>
+  <rect x="770" y="636" width="12" height="12" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="788" y="646" font-size="11" fill="#8b95a7">镜子三 Kata(隔离)</text>
+  <rect x="980" y="636" width="12" height="12" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="998" y="646" font-size="11" fill="#8b95a7">旧价目表(传统 VM)</text>
+</svg>
