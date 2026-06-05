@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="620" fill="#0a0c10"/>
+  <defs>
+    <marker id="arrg" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#8b95a7"/>
+    </marker>
+    <marker id="arrgreen" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#40c060"/>
+    </marker>
+  </defs>
+
+  <text x="600" y="36" text-anchor="middle" font-size="17" font-weight="bold" fill="#e8eaf0">docker 全旅程一张图 —— 三约束 → 三支柱 → 三面镜子</text>
+
+  <!-- 列标题 -->
+  <text x="185" y="66" text-anchor="middle" font-size="12" fill="#8b95a7">约束(为什么)</text>
+  <text x="575" y="66" text-anchor="middle" font-size="12" fill="#8b95a7">架构(是什么)</text>
+  <text x="990" y="66" text-anchor="middle" font-size="12" fill="#8b95a7">对照验证(凭什么断言)</text>
+
+  <!-- 约束列(红 = 压力) -->
+  <rect x="50" y="80" width="270" height="86" rx="8" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="185" y="106" text-anchor="middle" font-size="14" font-weight="bold" fill="#ff8888">C1 榨干硬件</text>
+  <text x="185" y="128" text-anchor="middle" font-size="10.5" fill="#e8a8a8">闲置浪费→共享;共享互害→隔离;</text>
+  <text x="185" y="146" text-anchor="middle" font-size="10.5" fill="#e8a8a8">隔离太贵也是浪费→隔离必须便宜</text>
+
+  <rect x="50" y="196" width="270" height="86" rx="8" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="185" y="222" text-anchor="middle" font-size="14" font-weight="bold" fill="#ff8888">C2 ★ 环境随行(心脏)</text>
+  <text x="185" y="244" text-anchor="middle" font-size="10.5" fill="#e8a8a8">环境长在机器上(FHS/动态链接)</text>
+  <text x="185" y="262" text-anchor="middle" font-size="10.5" fill="#e8a8a8">→ 必须打包跟应用走</text>
+
+  <rect x="50" y="312" width="270" height="86" rx="8" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="185" y="338" text-anchor="middle" font-size="14" font-weight="bold" fill="#ff8888">C3 去人化 + 验真</text>
+  <text x="185" y="360" text-anchor="middle" font-size="10.5" fill="#e8a8a8">人不能扩容(规模浪潮)</text>
+  <text x="185" y="378" text-anchor="middle" font-size="10.5" fill="#e8a8a8">文件名≠内容 → 机器接管+哈希</text>
+
+  <!-- 支柱列 -->
+  <rect x="430" y="80" width="290" height="86" rx="8" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="575" y="106" text-anchor="middle" font-size="14" font-weight="bold" fill="#88c0ff">隔离支柱:6墙 + 3表(+ 2洞)</text>
+  <text x="575" y="128" text-anchor="middle" font-size="10.5" fill="#8fb8e0">namespace 视图 · cgroup 用量</text>
+  <text x="575" y="146" text-anchor="middle" font-size="10.5" fill="#8fb8e0">veth / volume = 留出的通路</text>
+
+  <rect x="430" y="196" width="290" height="86" rx="8" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="575" y="222" text-anchor="middle" font-size="14" font-weight="bold" fill="#88ff88">打包支柱:镜像 + overlayfs</text>
+  <text x="575" y="244" text-anchor="middle" font-size="10.5" fill="#a0e8b8">分层 · 内容寻址 · 不可变</text>
+  <text x="575" y="262" text-anchor="middle" font-size="10.5" fill="#a0e8b8">★ docker 唯一的原创发明</text>
+
+  <rect x="430" y="312" width="290" height="86" rx="8" fill="#3a1e5f" stroke="#8040c0" stroke-width="2"/>
+  <text x="575" y="338" text-anchor="middle" font-size="14" font-weight="bold" fill="#c088ff">运维支柱:Dockerfile + registry</text>
+  <text x="575" y="360" text-anchor="middle" font-size="10.5" fill="#b8a0d8">环境 = 源码(可重放可审计)</text>
+  <text x="575" y="378" text-anchor="middle" font-size="10.5" fill="#b8a0d8">sha256:字节有了身份</text>
+
+  <!-- 逼出箭头 -->
+  <line x1="320" y1="123" x2="424" y2="123" stroke="#8b95a7" stroke-width="1.5" marker-end="url(#arrg)"/>
+  <line x1="320" y1="239" x2="424" y2="239" stroke="#8b95a7" stroke-width="1.5" marker-end="url(#arrg)"/>
+  <line x1="320" y1="355" x2="424" y2="355" stroke="#8b95a7" stroke-width="1.5" marker-end="url(#arrg)"/>
+  <!-- C1③ 加成 → 打包 -->
+  <line x1="320" y1="152" x2="424" y2="222" stroke="#40c060" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrgreen)"/>
+  <text x="372" y="176" text-anchor="middle" font-size="10" fill="#88ff88">③便宜 ⇒ AMI 坍缩成镜像</text>
+
+  <!-- 中→右 -->
+  <line x1="724" y1="239" x2="822" y2="239" stroke="#8b95a7" stroke-width="1.5" marker-end="url(#arrg)"/>
+  <text x="773" y="228" text-anchor="middle" font-size="10" fill="#8b95a7">三面镜子,各拆一根</text>
+
+  <!-- 镜子列(橙 = 对照) -->
+  <rect x="830" y="80" width="320" height="64" rx="8" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+  <text x="990" y="104" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#ffaa55">镜子一 LXC —— 拆掉镜像 → 另一物种</text>
+  <text x="990" y="126" text-anchor="middle" font-size="10.5" fill="#e8c8a0">判词:墙是公共件(拆的是打包支柱)</text>
+
+  <rect x="830" y="156" width="320" height="64" rx="8" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+  <text x="990" y="180" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#ffaa55">镜子二 podman —— 拆掉指挥部 → 照转</text>
+  <text x="990" y="202" text-anchor="middle" font-size="10.5" fill="#e8c8a0">判词:指挥部是偶然(拆的是运维支柱)</text>
+
+  <rect x="830" y="232" width="320" height="64" rx="8" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+  <text x="990" y="256" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#ffaa55">镜子三 Kata —— 换掉墙 → 照跑</text>
+  <text x="990" y="278" text-anchor="middle" font-size="10.5" fill="#e8c8a0">判词:便宜会过期(换的是隔离支柱)</text>
+
+  <rect x="830" y="308" width="320" height="56" rx="8" fill="#5f3a1e" stroke="#c08040" stroke-width="2" stroke-dasharray="6,4"/>
+  <text x="990" y="330" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#ffaa55">地基 KVM —— 物理墙的发动机</text>
+  <text x="990" y="350" text-anchor="middle" font-size="10.5" fill="#e8c8a0">逻辑墙运应用,物理墙运内核</text>
+
+  <!-- 判词 -->
+  <text x="600" y="438" text-anchor="middle" font-size="13" fill="#e8eaf0">判词:墙是公共件 · 指挥部是偶然 · 便宜会过期 —— 砸不碎的只有 C2★ 镜像 + C3 流水线</text>
+
+  <!-- 五步环 -->
+  <text x="600" y="468" text-anchor="middle" font-size="11" fill="#8b95a7">方法论五步环(§6)—— 本图即按此五步绘成</text>
+  <rect x="60" y="482" width="190" height="50" rx="8" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+  <text x="155" y="512" text-anchor="middle" font-size="13" font-weight="bold" fill="#c088ff">1 识约束</text>
+  <rect x="282" y="482" width="190" height="50" rx="8" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+  <text x="377" y="512" text-anchor="middle" font-size="13" font-weight="bold" fill="#c088ff">2 列候选</text>
+  <rect x="504" y="482" width="190" height="50" rx="8" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+  <text x="599" y="512" text-anchor="middle" font-size="13" font-weight="bold" fill="#c088ff">3 算代价</text>
+  <rect x="726" y="482" width="190" height="50" rx="8" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+  <text x="821" y="512" text-anchor="middle" font-size="13" font-weight="bold" fill="#c088ff">4 看现实</text>
+  <rect x="948" y="482" width="190" height="50" rx="8" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+  <text x="1043" y="512" text-anchor="middle" font-size="13" font-weight="bold" fill="#c088ff">5 证局部最优</text>
+  <line x1="250" y1="507" x2="280" y2="507" stroke="#8b95a7" stroke-width="1.5" marker-end="url(#arrg)"/>
+  <line x1="472" y1="507" x2="502" y2="507" stroke="#8b95a7" stroke-width="1.5" marker-end="url(#arrg)"/>
+  <line x1="694" y1="507" x2="724" y2="507" stroke="#8b95a7" stroke-width="1.5" marker-end="url(#arrg)"/>
+  <line x1="916" y1="507" x2="946" y2="507" stroke="#8b95a7" stroke-width="1.5" marker-end="url(#arrg)"/>
+
+  <text x="600" y="560" text-anchor="middle" font-size="11" fill="#8b95a7">下一站练手:K8s —— K1 容器会死 / K2 容器要互相找到 / K3 舰队规模超过人(上一层的解,是下一层的题)</text>
+
+  <!-- 图例 -->
+  <rect x="120" y="586" width="12" height="12" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="138" y="596" font-size="11" fill="#8b95a7">约束(压力)</text>
+  <rect x="320" y="586" width="12" height="12" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="338" y="596" font-size="11" fill="#8b95a7">机制(公共件)</text>
+  <rect x="530" y="586" width="12" height="12" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="548" y="596" font-size="11" fill="#8b95a7">原创发明(镜像)</text>
+  <rect x="760" y="586" width="12" height="12" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="778" y="596" font-size="11" fill="#8b95a7">对照(镜子)</text>
+  <rect x="950" y="586" width="12" height="12" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="968" y="596" font-size="11" fill="#8b95a7">流水线 / 方法</text>
+</svg>
