@@ -1,0 +1,25 @@
+Docker 大电影 — 3 条不可再分约束 C1~C3：
+[C1] 榨干硬件 — 闲置是浪费→必须共享→共享互害→必须隔离→隔离太贵也是浪费→隔离必须便宜
+[C2] 环境随行（核心）— 环境长在机器上，必须打包跟应用走；逼出镜像 + overlayfs
+[C3] 去人化+验真 — 人不能扩容 + 文件名≠内容；逼出 API 流水线 + sha256 哈希身份
+
+──────────────────
+
+你每天都在敲 docker run，但回车落下的那一刻，Linux 内核里到底发生了什么？这部 7 集大电影把 Docker 从一句话定义一路拆到内核源码，从 1979 年的第一个零件讲到它被亲手拆解的结局。
+
+7 集结构：
+第 1 集 What — 容器是一个有围墙的进程（砌墙凿洞心法 + 四区全景 + 14 张生活对照图）
+第 2 集 Why — 五幕痛史与三条硬约束（2009 年凌晨两点的人肉 md5 对账亲历）
+第 3 集 How — 六墙三表两洞怎么协作（缓存连坐 / OOM 行刑 / 一个包的完整旅程 / 30 行手搓容器）
+第 4 集 Origin — 为什么偏偏是 2013（dotCloud 温水煮蛙 / PyCon 五分钟 / 九刀拆解编年史）
+第 5 集 Deep — 钻进内核源码逐行验证（80 行 C 造六面墙 / try_charge 行刑链 / veth 两行互指）
+第 6 集 Comparison — 三面镜子照出必然与偶然（LXC / podman / Kata + KVM 对质 + Mac 上为什么慢）
+第 7 集 Synthesis — 五步方法论带走（13 行五元组决策表 + 当场拆 K8s 演示）
+
+致敬 7 位关键人物：Solomon Hykes（Docker 创始人）、Al Viro（第一扇 namespace 窗）、Paul Menage / Rohit Seth（cgroups）、Daniel Lezcano（LXC）、Dan Walsh（podman）、Avi Kivity（KVM）。
+
+35 张架构图全部讲透，内核源码全部来自 Linux 主线真实代码。
+
+适合人群：用过 Docker 想搞懂底层的后端/运维工程师；准备容器相关面试的同学；对 Linux 内核机制感兴趣的进阶开发者；想学一套"约束→结构→对照"系统分析方法论的架构师。
+
+#Docker #容器 #Linux内核 #namespace #cgroups #overlayfs #深度长文 #硬核解析

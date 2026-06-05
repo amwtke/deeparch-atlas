@@ -1,0 +1,520 @@
+# 第 5 集 Deep 篇 — 钻进内核源码逐行验证
+
+## 1 Deep 阶段开场过场
+
+[visual: spotlight]
+现在我们钻进 Deep 阶段
+真实源码到底长什么样？
+
+[narration]
+现在进入第五集，Deep 阶段，全片最硬的一集，体例也不同：三个部分——六面墙、三个表、两个洞，每部分先总后分。总，先用一段能跑的程序把效果演出来，控制台输出做铁证；分，从用户态系统调用一路钻到 Linux 主线内核真实源码，逐行讲。读完这一集，容器跑起来那一刻内核里发生了什么，就不再是比喻，而是函数名。
+
+---
+
+## 2 本集地图
+
+[visual: layers title=本集地图 — 三组机制三段钻法]
+第一部分 六面墙: clone 怎么造出六扇窗
+第二部分 三个表: cgroup 怎么记账与行刑
+第三部分 两个洞: 虚拟网线与挂载嫁接的真身
+方法: 先铁证 (能跑的实验) 再源码 (逐行读)
+心法: 造墙 = 给新进程的指针换指向
+
+[narration]
+本集地图。第一部分六面墙：clone 系统调用怎么把六扇窗一次性建出来，答案出奇地朴素——造墙，等于给新进程的指针换指向。第二部分三个表：处理器、内存、磁盘三张计量表怎么记账，超额时为什么脾气截然不同。第三部分两个洞：虚拟网线和挂载嫁接在内核里的真身，各自只有几行核心。每一部分都先跑一个谁都能复现的小实验拿到铁证，再钻进源码，把铁证背后的函数逐个点名。
+
+---
+
+## 3 总：80 行造六面墙（子进程）
+
+[visual: code lang=c title=mini 容器 — 子进程: 出生即在墙内]
+// 子进程: 它一出生就身处六面墙之内
+static int container(void *arg) {
+    char ch;
+    read(sync_pipe[0], &ch, 1);   // 等父进程配好映射
+
+    sethostname("mini-container", 14);        // uts 窗
+    mount(NULL, "/", NULL, MS_REC|MS_PRIVATE, NULL);
+    mount("proc", "/proc", "proc", 0, NULL);  // ps 只看本窗
+
+    printf("[pid 窗] getpid() = %d  <- 我以为我是 1 号\n",
+           getpid());
+    printf("[user窗] getuid() = %d  <- 容器内的 root\n",
+           getuid());
+    execlp("/bin/sh", "/bin/sh", (char *)NULL);
+    return 1;
+}
+===HIGHLIGHT===
+lines=3-4
+先阻塞: 等父进程把映射写好
+否则在新 user 窗里还不是合法 root
+===HIGHLIGHT===
+lines=6-8
+uts 窗改门牌 + mnt 窗重挂 proc
+都只影响墙内, 宿主纹丝不动
+===HIGHLIGHT===
+lines=10-13
+两句台词: 我是 1 号 / 我是 root
+两个都是幻觉, 也都是真的
+
+[narration]
+不借 Docker、不借 runc，八十行 C 程序亲手造一个迷你容器。先看子进程这一半——它一出生就身处六面墙之内。开头先在管道上阻塞，等父进程把用户映射配好，否则它在新窗里还不是合法的 root。然后三个动作：改主机名，只影响本窗；重挂 proc，让 ps 在新窗里只看见自己；打印两句台词——我的进程号是一，我是 root。这两句都是幻觉，也都是真的：说是幻觉，因为宿主上它是另一个号码、另一个普通用户；说是真的，因为在它自己的世界里，这就是事实。
+
+---
+
+## 4 总：80 行造六面墙（父进程）
+
+[visual: code lang=c title=mini 容器 — 父进程: 一次 clone 六墙齐开]
+int main(void) {
+    // 一次 clone, 六个新窗标志 —— 六面墙一次开齐
+    int flags = CLONE_NEWUSER | CLONE_NEWPID | CLONE_NEWNET |
+                CLONE_NEWNS  | CLONE_NEWUTS | CLONE_NEWIPC
+                | SIGCHLD;
+    pid_t pid = clone(container, stack + STACK_SIZE,
+                      flags, NULL);
+    printf("[宿主] 容器进程的 PID = %d\n", pid);  // 8422
+
+    // 配 user 窗映射: 容器内 uid 0 <-> 宿主当前 uid
+    write_file("/proc/<pid>/setgroups", "deny");
+    write_file("/proc/<pid>/uid_map", "0 1000 1");
+    write_file("/proc/<pid>/gid_map", "0 1000 1");
+
+    write(sync_pipe[1], "x", 1);   // 放行子进程
+    waitpid(pid, NULL, 0);
+}
+===HIGHLIGHT===
+lines=2-7
+核心就这一句 clone
+六个标志按位或, 六面墙一次开齐
+===HIGHLIGHT===
+lines=10-13
+无 root 容器的关键三行
+容器内 uid 0 映射到宿主 uid 1000
+只能由有权限的父进程来写
+===HIGHLIGHT===
+lines=15-16
+写完映射才放行子进程
+管道就是为这一刻准备的
+
+[narration]
+父进程这一半更短，核心就一句 clone：六个标志按位或在一起，六面墙一次开齐。然后是无 root 容器的关键三行：往 proc 下那个孩子的映射文件里写，零映射到一千——容器里的 root，等于宿主上的一千号普通用户。注意这个设计：映射只能由有权限的父进程写，堵死了自己给自己提权的漏洞。写完才通过管道放行子进程。这个程序普通用户就能跑，不用 sudo——因为带了 user 窗标志：先建发牌权，进程在新窗里就是 root，于是有权建其余五扇。这就是无 root 容器的全部原理。
+
+---
+
+## 5 控制台铁证
+
+[visual: code lang=text title=控制台输出 — 六面墙的现场铁证]
+============= 宿主视图 (墙外) =============
+[宿主] getpid() = 8421, hostname = dev-box, uid = 1000
+[宿主] 容器进程在宿主上的 PID = 8422
+
+============= 容器内视图 (墙内) =============
+[pid 窗 ] getpid()           = 1     <- 我以为我是 1 号
+[uts 窗 ] hostname           = mini-container
+[user窗 ] getuid()/geteuid() = 0/0   <- 容器内的 root
+[net 窗 ] 网卡: 只有 lo
+[pid 窗 ] /proc 里的进程数   = 2
+/ # ipcs -m        # 共享内存段: 一个都看不到
+===HIGHLIGHT===
+lines=1-3
+宿主眼里: 它是 8422 号普通进程
+身份是 1000 号普通用户, 不是 root
+===HIGHLIGHT===
+lines=5-11
+同一个进程, 墙内的世界:
+1 号进程 / 自己的门牌 / root 身份
+干净的网络孤岛 / 只有 2 个进程
+
+[narration]
+编译运行，控制台输出就是六面墙的现场铁证。墙外，宿主视图：这个容器进程的号码是 8422，身份是一千号普通用户。墙内，同一个进程：进程号一，主机名是自己起的，身份是 root，网卡只有一个回环，proc 里只有两个进程，共享内存段一个都看不到。一张表读完：pid 窗，同一进程两个号码；uts 窗，两个门牌；user 窗，墙内业主墙外租客；net 窗，干净孤岛；ipc 窗，空表。六行输出，六面墙。接下来对着这段程序，把每扇窗从用户态那一行，钻到内核里建它的那个函数。
+
+---
+
+## 6 墙一 uts 窗：标准样板
+
+[visual: code lang=c title=copy_utsname — 所有 copy 函数的标准样板]
+struct uts_namespace *copy_utsname(u64 flags,
+    struct user_namespace *user_ns,
+    struct uts_namespace *old_ns)
+{
+    struct uts_namespace *new_ns;
+    get_uts_ns(old_ns);
+    if (!(flags & CLONE_NEWUTS))   /* 没要这扇窗 */
+        return old_ns;             /* 返回旧窗(共享) */
+    new_ns = clone_uts_ns(user_ns, old_ns);
+    put_uts_ns(old_ns);
+    return new_ns;
+}
+/* clone_uts_ns 的核心只有一行: */
+memcpy(&ns->name, &old_ns->name, sizeof(ns->name));
+===HIGHLIGHT===
+lines=7-8
+标准样板: 没传标志就共享旧窗
+传了才造新窗
+===HIGHLIGHT===
+lines=13-14
+新窗不是空的, 是父窗的副本
+先继承, 再分叉
+
+[narration]
+从最简单的样板开始，uts 窗，内核文件 utsname.c。这个函数是六个拷贝函数的标准样板：没传新窗标志，直接返回旧窗——共享；传了，才克隆一个新窗。克隆的核心就一行内存拷贝：把父窗的名字拷一份。划重点：新窗一出生不是空的，而是父窗的一份副本——所以容器初始主机名继承宿主，之后再改，在副本上改，与父分叉。先继承、再分叉，这个模式后面每扇窗都会变奏出现。
+
+---
+
+## 7 墙二 pid 窗：1 号幻觉的真身
+
+[visual: code lang=c title=create_pid_namespace — 每窗一个发号器]
+static struct pid_namespace *create_pid_namespace(
+    struct user_namespace *user_ns,
+    struct pid_namespace *parent_pid_ns)
+{
+    struct pid_namespace *ns;
+    unsigned int level = parent_pid_ns->level + 1;
+    if (level > MAX_PID_NS_LEVEL)    /* 嵌套上限 */
+        goto out;
+    ns = kmem_cache_zalloc(pid_ns_cachep, GFP_KERNEL);
+    idr_init(&ns->idr);        /* 每窗自带发号器 */
+    ns->level = level;
+    ns->parent = get_pid_ns(parent_pid_ns);
+    return ns;
+}
+===HIGHLIGHT===
+lines=6-8
+层级 = 父 + 1, 嵌套有上限
+宿主根窗是 0 层, 容器是 1 层
+===HIGHLIGHT===
+lines=10-12
+发号器初始化 + 指回父成树
+每个窗从 1 开始发号 — 1 号幻觉的真身
+
+[narration]
+pid 窗，幻觉的真身，内核文件 pid_namespace.c。两个读点。第一，层级等于父加一，并且指回父，让 pid 窗成为一棵树：宿主根窗零层，容器一层。第二，关键的一行：发号器初始化——给每个窗一个独立发号器，从一开始发。而内核的进程号结构体里有个数组，创建进程时从当前窗一路向上，给每一层各分一个号——所以同一进程在容器窗是一号，在根窗是 8422。这就是单向玻璃的源码真身：容器里 ps 查本窗发号器，只看见本窗有号的进程；宿主 ps 查根窗发号器，容器进程在根窗也有号，所以看得见。一个发号器，两个世界。
+
+---
+
+## 8 墙三与墙四：建空表 vs 拷全树
+
+[visual: text]
+墙三 ipc 窗: 不继承, 建空表
+  四套进程间通信子系统全部初始化成空
+  原因: 这类通信按 key 共享, 继承会撞 key 互踩
+墙四 mnt 窗: copy_tree 复制整棵挂载树
+  新窗一出生就有一份和宿主一样的挂载视图
+  之后随便挂随便换根, 父窗的树纹丝不动
+策略由语义决定: 会互踩的建空, 不会的继承
+
+[narration]
+墙三和墙四放一起讲，因为它们正好是两种造窗策略的代表。ipc 窗：不继承，建空表——四套进程间通信子系统全部初始化成空的。为什么？因为这类通信的语义是按 key 共享，如果继承父窗的对象，两个容器用同一个 key 就会互相踩，所以一出生就是干净的四张空表——这解释了铁证里那行空空如也的输出。mnt 窗相反：复制整棵挂载树——新窗一出生就有一份和宿主一样的挂载视图，之后容器在这份副本上随便挂、随便换根，父窗的树纹丝不动。这就是容器换根不影响宿主的根。每扇窗按自己的语义，选拷父还是建空：会撞 key 互踩的必须建空，不会的可以继承。
+
+---
+
+## 9 墙五 net 窗：最贵的一扇
+
+[visual: code lang=c title=copy_net_ns 与 setup_net — 整套网络栈复刻]
+struct net *copy_net_ns(u64 flags,
+    struct user_namespace *user_ns, struct net *old_net)
+{
+    if (!(flags & CLONE_NEWNET))
+        return get_net(old_net); /* host 网络模式走这 */
+    net = net_alloc();
+    rv = setup_net(net);         /* 真正建一整套网络栈 */
+    return net;
+}
+
+static __net_init int setup_net(struct net *net)
+{
+    const struct pernet_operations *ops;
+    list_for_each_entry(ops, &pernet_list, list) {
+        error = ops_init(ops, net); /* 逐个子系统初始化 */
+        if (error < 0)
+            goto out_undo;
+    }
+}
+===HIGHLIGHT===
+lines=4-5
+不带新网络标志 = 共享宿主网络栈
+host 网络模式在源码层就这一个分支
+===HIGHLIGHT===
+lines=14-18
+遍历 pernet_list: 所有注册过的网络子系统
+路由表 邻居表 连接跟踪 回环设备 全部各建一份
+六扇里最慢的一扇
+
+[narration]
+net 窗，六扇里最贵的一扇。先看共享分支：不带新网络标志，直接返回宿主的网络栈——host 网络模式在源码层就这一个分支，一扇墙被显式不砌。再看新建分支：遍历一张全局链表——所有注册过的网络子系统，逐个在新窗里初始化一套。独立的路由表、邻居表、连接跟踪表、回环设备、各种网络参数，全都得新建一份。别的窗拷一个结构就完事，这扇窗要把整条网络栈从二层到四层复刻一遍——所以它最慢，容器启动里网络初始化相对重，根源就在这。铁证里那个孤零零的回环设备，就是每个新窗的标配。
+
+---
+
+## 10 墙六 user 窗：发牌权
+
+[visual: code lang=c title=create_user_ns — 必须最先建的权限根]
+int create_user_ns(struct cred *new)
+{
+    struct user_namespace *ns,
+        *parent_ns = new->user_ns;
+    kuid_t owner = new->euid;
+    if (parent_ns->level > 32)      /* 嵌套上限 */
+        goto fail;
+    if (!kuid_has_mapping(parent_ns, owner) ||
+        !kgid_has_mapping(parent_ns, group))
+        goto fail_dec;              /* 父窗里必须有映射 */
+    ns = kmem_cache_zalloc(user_ns_cachep, GFP_KERNEL);
+    ns->parent = parent_ns;
+    ns->level = parent_ns->level + 1;
+    ns->owner = owner;              /* 记住谁创建了我 */
+    /* 映射表此刻为空, 等父进程往 /proc 写 */
+    set_cred_user_ns(new, ns);      /* 挂到 cred 上 */
+    return 0;
+}
+===HIGHLIGHT===
+lines=8-10
+创建者的用户号必须在父窗有映射
+权力有来源, 一环扣一环
+===HIGHLIGHT===
+lines=15-16
+挂在进程凭证上, 不在窗代理结构里
+它是其余五扇窗权限检查的上下文
+
+[narration]
+最后一扇，user 窗，发牌权，整套墙的权限根。三个设计点。第一，它挂在进程凭证上，不在窗代理结构里——所以它在更早的拷贝凭证路径建，作为后面所有窗权限检查的上下文，这就是它必须最先建的原因。第二，创建时你的用户号必须在父窗有映射，新窗记住创建者——权力有来源，一环扣一环。第三，映射表一开始是空的，必须由有权限的父进程往 proc 下写——就是迷你容器里那三行。三个设计点合起来，才让无 root 造容器既可能又安全：容器里要 root 干活，但容器 root 必须不等于宿主 root。
+
+---
+
+## 11 六面墙出生序列
+
+[visual: timeline title=一次 clone 的微秒级流水]
+T=0 [用户态] clone 带六个新窗标志
+T=10us [user窗] 发牌权先建, 挂到进程凭证
+T=25us [mnt窗] 整棵挂载树复制
+T=30us [uts窗] 一行拷贝父主机名
+T=35us [ipc窗] 四张空表
+T=45us [pid窗] 发号器就绪
+T=70us [net窗] 整套网络栈 (最慢)
+T=90us [收尾] 指针指向新窗组, 住进六面墙
+T=100us [发号] 每层各分一号, 容器内 1 号诞生
+
+[narration]
+把六扇窗串成一条出生流水。时刻零，用户态一声 clone，带六个标志。十微秒级，发牌权先建，挂到凭证上。然后其余五扇依次：挂载树整棵复制，主机名一行拷贝，四张空表，进程发号器就绪，最后是最重的网络栈。九十微秒上下，新进程的指针指向这组新窗——任务住进六面墙。一百微秒级，发号器给每层各分一个号，容器内的一号进程诞生。注意整条流水有个兜底设计：任何一扇失败，前面建好的全部回滚——要么六扇全开，要么一扇不开。微秒级、近零内存税——这就是骗进程比骗系统便宜三个数量级的源码级证据。
+
+---
+
+## 12 第二部分总：亲手掐死一个进程
+
+[visual: code lang=bash title=cgroup v2 实验 — 137 的诞生现场]
+CG=/sys/fs/cgroup/demo
+mkdir -p "$CG"
+echo "50000 100000" > "$CG/cpu.max"    # 半颗 CPU
+echo 100M           > "$CG/memory.max" # 100MB 硬顶
+
+echo "=== 申请 200MB (> 100MB 上限) ==="
+(
+  echo $BASHPID > "$CG/cgroup.procs"   # 上户口
+  python3 -c 'a = bytearray(200*1024*1024)'
+)
+echo "退出码 = $?"
+grep oom_kill "$CG/memory.events"
+
+# 输出:
+# 退出码 = 137   (= 128 + 9, 被 SIGKILL)
+# oom_kill 1     (死亡证明)
+===HIGHLIGHT===
+lines=1-4
+建户头 = mkdir, 设表盘 = 写文件
+100MB 硬顶 + 半颗 CPU
+===HIGHLIGHT===
+lines=7-10
+子 shell 上户口后申请 200MB
+撞上 memory.max
+===HIGHLIGHT===
+lines=14-16
+137 = 128 + 9 = 被九号信号杀
+死亡证明: oom_kill 计数加一
+
+[narration]
+第二部分，三个表。先拿铁证：亲手用 cgroup 第二版掐死一个进程。建户头、设表盘：一百兆内存硬顶，半颗 CPU。子 shell 上户口，然后申请两百兆内存——撞上限额。输出两行：退出码 137，128 加 9，被九号信号杀掉；死亡证明里计数加一。第一集见过的 Exited 137，这就是它的诞生现场。电表和水表不会有这么戏剧的输出——跑处理器死循环，它稳定占百分之五十；写大文件，速度被压到限定带宽。同样是超额，为什么内存被杀、其他被限速？钻进源码找答案。
+
+---
+
+## 13 memory 表：记一页 charge 一页
+
+[visual: code lang=c title=try_charge_memcg — 内存表的三步脾气]
+retry:
+    if (consume_stock(memcg, nr_pages))
+        return 0;          /* 每 CPU 本地缓存, 快路径 */
+
+    if (page_counter_try_charge(&memcg->memory,
+                                batch, &counter))
+        goto done_restock; /* ① 原子记账, 没超就成功 */
+
+    nr_reclaimed = try_to_free_mem_cgroup_pages(
+        mem_over_limit, nr_pages, gfp_mask, ...);
+                           /* ② 超了 -> 本户头内回收 */
+    if (mem_cgroup_margin(mem_over_limit) >= nr_pages)
+        goto retry;        /*    回收够了 -> 续命 */
+
+    if (mem_cgroup_oom(mem_over_limit, gfp_mask,
+               get_order(nr_pages * PAGE_SIZE))) {
+        passed_oom = true; /* ③ 回收无果 -> 行刑 */
+        goto retry;
+    }
+===HIGHLIGHT===
+lines=5-7
+记账那一笔: 原子地往计数器上加
+不超过 memory.max 就成功
+===HIGHLIGHT===
+lines=9-13
+超了不立刻杀: 先在本户头内回收
+表现为容器变慢, 磁盘读写升高
+===HIGHLIGHT===
+lines=15-19
+回收也救不了 -> 只在本户头内选人处决
+邻居毫发无损 — 这就是墙的意义
+
+[narration]
+内存表的核心函数在 memcontrol.c，三步脾气。第一步，记账：原子地把要分配的页数加到计数器上，不超过上限就成功——这就是记一页 charge 一页。第二步，超了不立刻杀：先在本户头范围内回收，挤页面缓存、挤可回收页，回收够了就续命重试——这阶段表现为容器变慢、磁盘读写升高。第三步，回收也救不了：触发行刑——注意只在本户头内挑选，邻居容器、宿主进程毫发无损，这正是墙存在的意义。挑中之后发不可捕获的九号信号，死亡证明计数加一。三步走完，137 的完整链路就闭环了。
+
+---
+
+## 14 cpu 表：踢出运行队列
+
+[visual: code lang=text title=CFS 带宽控制 — 电表的调用链]
+写 cpu.max -> tg_set_cfs_bandwidth():
+  设 quota=50ms / period=100ms
+  启动定时器每周期补额
+
+进程运行中, 每次时钟 tick:
+  __account_cfs_rq_runtime(cfs_rq, delta)
+    runtime_remaining -= delta     # 跑多少扣多少
+    扣到 <= 0 -> 向全局池再领一批
+    领不到 (本周期额度用光):
+      throttle_cfs_rq(cfs_rq)
+        把这个组的任务整组移出运行队列
+        这一周期不再被调度
+
+period 定时器到点:
+  distribute_cfs_runtime() 补满额度
+  任务重新入队
+===HIGHLIGHT===
+lines=6-8
+记账: 跑多少扣多少
+余额扣完先找全局池续
+===HIGHLIGHT===
+lines=10-12
+限速的真身: 不是杀进程
+是整组踢出运行队列, 这一周期不让跑
+===HIGHLIGHT===
+lines=14-16
+下个周期补满额度再放回来
+平均下来正好 50%
+
+[narration]
+电表，CFS 带宽控制，在调度器核心文件里。写入 cpu.max 的两个数就是配额和周期：每一百毫秒给五十毫秒。运行中每次时钟滴答记账：跑多少扣多少，余额扣完向全局池再领，领不到——本周期配额用光——执行限速：把这个组的任务整组踢出运行队列，这一周期不再被调度。注意不是杀进程，只是暂停。下个周期定时器把额度补满，任务重新入队。所以处理器超额表现为被周期性地暂停，平均下来正好百分之五十。水表同理：每个磁盘请求先问本时间窗的累计字节数还在配额内吗，在就放行，超了算一个等待时间挂进队列，定时器到点再发——不丢、不杀，细水长流。
+
+---
+
+## 15 一个套路，三种脾气
+
+[visual: spotlight]
+CPU 和磁盘是流量, 可以限速
+内存是存量, 只能处决
+
+[narration]
+三张表共用一个套路：每次消费先过账，看超没超——处理器记时间片，内存记页，磁盘记字节。但超额的脾气截然不同，根子在资源性质：处理器时间和磁盘带宽是速率，是流量——超了可以这段不给、排队推迟，不损失正确性；内存是占用量，是存量——你申请的页已经占着物理内存了，内核没法让你占得慢一点，超了只能回收别人，或者杀掉你。这就是煤气表和电表的本质区别，也是为什么生产环境里内存限额要留足余量：电表跳闸还能恢复，煤气表掐断，就是 137。
+
+---
+
+## 16 洞一 veth：两行互指
+
+[visual: code lang=c title=veth — 全部魔法就两行互指]
+static int veth_newlink(struct net_device *dev, ...)
+{
+    /* 创建并注册两个网络设备: dev 和 peer */
+    err = register_netdevice(peer);
+    err = register_netdevice(dev);
+
+    /* tie the devices together */
+    priv = netdev_priv(dev);
+    rcu_assign_pointer(priv->peer, peer);
+    priv = netdev_priv(peer);
+    rcu_assign_pointer(priv->peer, dev);
+    return 0;
+}
+
+static netdev_tx_t veth_xmit(struct sk_buff *skb,
+                             struct net_device *dev)
+{
+    rcv = rcu_dereference(priv->peer); /* 拿到另一头 */
+    veth_forward_skb(rcv, skb, rq, use_napi);
+                     /* 直接喂给对端的接收路径 */
+}
+===HIGHLIGHT===
+lines=7-11
+全部魔法: 两个设备各存一个对端指针
+一对一互指 — "一根网线两头"的真身
+===HIGHLIGHT===
+lines=18-20
+发包 = 找到另一头, 把数据结构直接递过去
+没有物理介质, 没有序列化上线
+所以 ping 只要 0.038 毫秒
+
+[narration]
+第三部分，两个洞。洞一，veth，驱动文件不到千行，全部魔法就两行：创建一对网络设备，然后互相指——你的对端是我，我的对端是你。这就是一根网线两头在内核里的真身：不是真有根线，是两个设备互相记住了对方。发包函数同样朴素：从一头发包，解引用拿到另一头，把数据包直接塞进对端设备的接收队列。没有物理介质、没有序列化上线，就是把一个数据结构从一头递到另一头——所以实测从隔离视图里 ping 宿主，只要零点零三八毫秒。凿穿 net 墙，等于给隔离的网络视图，塞一个对端在墙外的设备。
+
+---
+
+## 17 洞二 volume：嫁接挂载树
+
+[visual: code lang=text title=bind mount — clone_mnt 嫁接调用链]
+mount --bind /srv/hostdata /mnt
+  -> do_mount -> path_mount
+     检测到 MS_BIND
+     -> do_loopback(path, old_name, recurse)
+       -> clone_mnt(old_mnt, old_dentry, flag)
+          # 造一个新的挂载点对象
+          # 但指向同一棵目录树
+          # = 同一份宿主文件, 多一个入口
+       -> attach_recursive_mnt(mnt, parent, mp)
+          # 嫁接到容器挂载树的目标挂载点
+
+实验铁证:
+  墙内写 /mnt/note.txt
+  退出后, 宿主文件还在, 内容还在
+===HIGHLIGHT===
+lines=5-8
+clone_mnt 不复制数据
+只造一个新挂载点对象, 指向同一棵树
+===HIGHLIGHT===
+lines=9-10
+嫁接进容器那棵复制出来的挂载树
+访问它 = 绕过叠层直达宿主文件系统
+===HIGHLIGHT===
+lines=12-14
+数据独立于容器存活
+这就是数据卷持久化的本质
+
+[narration]
+洞二，volume，本质是 bind mount，调用链在挂载核心文件里。关键函数 clone_mnt：它不复制数据，只造一个新的挂载点对象，指向同一棵底层目录树——同一份宿主文件，在挂载树里多了一个访问入口。然后嫁接函数把这个新挂载点，接进容器那棵挂载树——就是第一部分里整棵复制出来的那棵。于是容器的根由叠层提供，易失；但数据目录这个挂载点直通宿主真实目录——绕过叠层，没有写时复制的税，容器删了数据还在。跟拷贝的区别一句话：拷贝是两份独立数据；这里是同一份数据多一个名字，改任何一边，另一边立刻可见。
+
+---
+
+## 18 洞不等于拆墙
+
+[visual: spotlight]
+洞保留墙, 再开受控通道
+拆墙是放弃隔离
+
+[narration]
+两个洞凿在不同的墙上，机制同源：在隔离的默认之上，开一个指向外部的受控入口——网线的入口是对端设备，竖井的入口是宿主目录。最后把一个关键辨析钉死：洞，不等于拆墙。洞保留墙、只开受控口：容器仍在独立网络视图里，只是有根网线；仍在独立挂载树里，只是某个点直通宿主。而 host 网络模式、host 进程模式是整扇拆墙——直接不开那扇窗，共享宿主，放弃隔离。以后看任何容器配置，先问一句：这是凿洞，还是拆墙？
+
+---
+
+## 19 收尾预告
+
+[visual: spotlight]
+墙=指针, 表=记账, 洞=受控入口
+但这是唯一的答案吗？
+
+[narration]
+第五集收工，三句话带走。墙等于指针：六扇窗的物理实体是进程结构体上的几个指针，造墙就是换指向，微秒级近零税。表等于记账：三张表都在消费路径上实时过账，流量限速，存量处决。洞等于受控入口：互指的设备，嫁接的挂载点。容器跑起来那一刻内核里发生了什么——你现在可以用函数名回答了。但一份答卷读得再熟，也分不清哪些笔画是约束逼的必然、哪些是历史顺手的偶然。分辨的唯一办法，是看别人怎么答同一道题。下一集，三位偏不这么写的答题人登场。本集就到这里，下集见。
+
+---
