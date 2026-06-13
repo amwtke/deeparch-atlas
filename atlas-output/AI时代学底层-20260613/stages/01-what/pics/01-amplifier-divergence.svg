@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="640" fill="#0a0c10"/>
+
+  <text x="600" y="42" fill="#e6edf3" font-size="25" text-anchor="middle" font-weight="bold">同一束 AI，产出随「判断力」发散 —— 放大器，不是均衡器</text>
+  <text x="600" y="70" fill="#8b949e" font-size="14" text-anchor="middle">横轴 ＝ 使用者判断力　·　纵轴 ＝ 净产出效率（扣掉返工 / 事故后的真实值）</text>
+
+  <!-- faint zones -->
+  <rect x="122" y="402" width="385" height="136" fill="#c04040" opacity="0.07"/>
+  <rect x="720" y="102" width="368" height="210" fill="#40c060" opacity="0.06"/>
+
+  <!-- axes -->
+  <line x1="120" y1="100" x2="120" y2="540" stroke="#30363d" stroke-width="2"/>
+  <line x1="120" y1="540" x2="1090" y2="540" stroke="#30363d" stroke-width="2"/>
+
+  <!-- zero line -->
+  <line x1="120" y1="400" x2="1090" y2="400" stroke="#c08040" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <text x="1098" y="404" fill="#ffaa55" font-size="13">净产出 = 0</text>
+
+  <!-- y axis label -->
+  <text x="66" y="320" fill="#8b949e" font-size="13" text-anchor="middle" transform="rotate(-90 66 320)">净产出　↑ 正　／　↓ 负</text>
+
+  <!-- x axis labels -->
+  <text x="210" y="566" fill="#ff8888" font-size="14" text-anchor="middle">初级 · 判断力低</text>
+  <text x="600" y="566" fill="#8b949e" font-size="14" text-anchor="middle">中级</text>
+  <text x="980" y="566" fill="#88ff88" font-size="14" text-anchor="middle">架构师 · 判断力高</text>
+
+  <!-- AI input beam -->
+  <text x="40" y="392" fill="#88c0ff" font-size="13">同一束</text>
+  <text x="40" y="410" fill="#88c0ff" font-size="13">AI 输入 →</text>
+
+  <!-- equalizer: popular fantasy, dashed flat -->
+  <polyline points="150,250 600,238 1050,228" fill="none" stroke="#8040c0" stroke-width="2.5" stroke-dasharray="8,5"/>
+  <text x="300" y="222" fill="#c088ff" font-size="14">流行叙事的幻想：人人被 AI 拉到同一条线（均衡 / 替代）</text>
+
+  <!-- amplifier: reality, solid diverging -->
+  <polyline points="180,476 380,455 600,360 820,250 1010,150" fill="none" stroke="#40c060" stroke-width="3.5"/>
+  <text x="500" y="128" fill="#88ff88" font-size="14">现实 = 放大器：产出 = 判断力 × 增益</text>
+  <text x="1015" y="132" fill="#88ff88" font-size="13" text-anchor="end">架构师：×4–10 ↑↑</text>
+
+  <!-- data dots -->
+  <circle cx="200" cy="470" r="7" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="216" y="494" fill="#ff8888" font-size="13">初级：用了 AI 反而 ↓（翻负 · 抵触）</text>
+
+  <circle cx="600" cy="360" r="7" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="616" y="382" fill="#88c0ff" font-size="13">中级：略升</text>
+
+  <circle cx="1010" cy="150" r="8" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+
+  <!-- the gap = the phenomenon -->
+  <text x="700" y="320" fill="#8b949e" font-size="13" text-anchor="middle">两条线张开的夹角</text>
+  <text x="700" y="338" fill="#8b949e" font-size="13" text-anchor="middle">＝「AI 不平等对待程序员」</text>
+
+  <!-- legend -->
+  <rect x="792" y="430" width="296" height="104" fill="#11161c" stroke="#30363d" stroke-width="1" rx="6"/>
+  <line x1="806" y1="450" x2="840" y2="450" stroke="#40c060" stroke-width="3.5"/>
+  <text x="848" y="455" fill="#c9d1d9" font-size="12">现实 ＝ 放大器（× 增益，发散）</text>
+  <line x1="806" y1="472" x2="840" y2="472" stroke="#8040c0" stroke-width="2.5" stroke-dasharray="8,5"/>
+  <text x="848" y="477" fill="#c9d1d9" font-size="12">流行叙事 ＝ 均衡器 / 替代器（错觉）</text>
+  <line x1="806" y1="494" x2="840" y2="494" stroke="#c08040" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <text x="848" y="499" fill="#c9d1d9" font-size="12">净产出 = 0 基线</text>
+  <circle cx="823" cy="516" r="6" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="848" y="520" fill="#c9d1d9" font-size="12">判断力低 → 被放大成负</text>
+</svg>
