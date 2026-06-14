@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="600" fill="#0a0c10"/>
+
+  <text x="600" y="40" fill="#e6edf3" font-size="23" text-anchor="middle" font-weight="bold">四把锁：AI 只能待在「生成」那一格，且必须有人兜底</text>
+  <text x="600" y="68" fill="#8b949e" font-size="14" text-anchor="middle">AI 那一格有三个毛病（C1 / C2 / C3）；C4 是必须有人把守的那道墙</text>
+
+  <!-- role tags -->
+  <text x="115" y="256" fill="#88ff88" font-size="13" text-anchor="middle">人</text>
+  <text x="325" y="256" fill="#88ff88" font-size="13" text-anchor="middle">人</text>
+  <text x="560" y="256" fill="#88c0ff" font-size="13" text-anchor="middle">AI</text>
+  <text x="795" y="256" fill="#88ff88" font-size="13" text-anchor="middle">人</text>
+  <text x="1005" y="256" fill="#88ff88" font-size="13" text-anchor="middle">人</text>
+
+  <!-- pipeline boxes -->
+  <rect x="40"  y="265" width="150" height="70" rx="8" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="115" y="307" fill="#88ff88" font-size="18" text-anchor="middle">意图</text>
+  <rect x="250" y="265" width="150" height="70" rx="8" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="325" y="303" fill="#88ff88" font-size="18" text-anchor="middle">规约</text>
+  <text x="325" y="322" fill="#5fa87a" font-size="12" text-anchor="middle">spec</text>
+  <rect x="460" y="265" width="200" height="70" rx="8" fill="#1e3a5f" stroke="#4080c0" stroke-width="2.5"/>
+  <text x="560" y="307" fill="#88c0ff" font-size="18" text-anchor="middle" font-weight="bold">生成（AI）</text>
+  <rect x="720" y="265" width="150" height="70" rx="8" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="795" y="307" fill="#88ff88" font-size="18" text-anchor="middle">验证</text>
+  <rect x="930" y="265" width="150" height="70" rx="8" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="1005" y="307" fill="#88ff88" font-size="18" text-anchor="middle">修正</text>
+
+  <!-- arrows -->
+  <text x="220" y="312" fill="#8b949e" font-size="24" text-anchor="middle">→</text>
+  <text x="430" y="312" fill="#8b949e" font-size="24" text-anchor="middle">→</text>
+  <text x="690" y="312" fill="#8b949e" font-size="24" text-anchor="middle">→</text>
+  <text x="900" y="312" fill="#8b949e" font-size="24" text-anchor="middle">→</text>
+
+  <!-- connectors -->
+  <line x1="540" y1="184" x2="548" y2="265" stroke="#444c56" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="550" y1="232" x2="560" y2="265" stroke="#444c56" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="560" y1="395" x2="560" y2="335" stroke="#444c56" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="795" y1="335" x2="795" y2="470" stroke="#c04040" stroke-width="1.5" stroke-dasharray="5,3"/>
+
+  <!-- lock badges -->
+  <rect x="445" y="152" width="200" height="32" rx="6" fill="#5f1e1e" stroke="#c04040" stroke-width="1.5"/>
+  <text x="545" y="173" fill="#ff8888" font-size="13" text-anchor="middle">C1 生成了 ≠ 就是对的</text>
+
+  <rect x="430" y="200" width="245" height="32" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+  <text x="552" y="221" fill="#ffaa55" font-size="13" text-anchor="middle">C3 自信讨好 · 盲信会放大</text>
+
+  <rect x="350" y="393" width="420" height="32" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+  <text x="560" y="414" fill="#ffaa55" font-size="13" text-anchor="middle">C2 上下文有限 · 项目越复杂越看不见全局</text>
+
+  <!-- C4 wide wall -->
+  <rect x="40" y="470" width="1040" height="40" rx="8" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="560" y="495" fill="#ff8888" font-size="15" text-anchor="middle">C4 必须有人验证、有人兜底 —— 这一步绕不过去（责任只能人担）</text>
+
+  <!-- legend -->
+  <rect x="828" y="532" width="18" height="18" rx="3" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="854" y="546" fill="#c9d1d9" font-size="12">纯硬约束（不随模型变强消失）</text>
+  <rect x="828" y="556" width="18" height="18" rx="3" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="854" y="570" fill="#c9d1d9" font-size="12">硬核 + 软边（一部分会缓解，内核仍在）</text>
+</svg>
