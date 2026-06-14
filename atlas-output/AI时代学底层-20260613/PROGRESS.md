@@ -7,7 +7,7 @@
 - **工作目录**: atlas-output/AI时代学底层-20260613/
 - **创建时间**: 2026-06-13
 - **上次更新**: 2026-06-14
-- **当前阶段**: Origin
+- **当前阶段**: Synthesis（分水岭选收束，跳过 Deep / Comparison）
 
 ## 灵魂问题（Discovery 收集）
 > "同样一套顶级 AI 工具，为什么初级程序员用了还是一堆问题、架构师/高级程序员用了效率飞起？这个『AI 不平等对待程序员』现象的底层原理是什么——是因为更懂底层从而更能驾驭 AI？还是更会写提示词、能提前规避坑？还是能一眼识别 AI 的幻觉、不让事情滚到失控？"
@@ -19,8 +19,8 @@
 - [x] 1. What
 - [x] 2. Why（含约束清单建立）
 - [x] 3. How
-- [ ] 4. Origin
-- [ ] 5. 分水岭决定
+- [x] 4. Origin
+- [x] 5. 分水岭决定（收束 → Synthesis，跳过 Deep / Comparison）
 - [ ] 6. Deep
 - [ ] 7. Comparison（可选）
 - [ ] 8. Synthesis
@@ -70,7 +70,8 @@
 - 用户反馈概览图命名：紫块＝底层认知(技术+需求)；①→理解需求底层逻辑；②→架构师思维；并问 steer 词义。→ Claude 释 steer＝掌舵/导向(AI 出力、你掌舵)，改图 03-overview.svg + 同步 §1/§3.2。
 
 ### Origin 阶段
-- (无)
+- 用户重定向：跳过历史追溯（判断 AI 史无前例），改为联网查"权威佐证 + 实证"，证明结论非空穴来风；明确"不只挑附和的"。
+- Claude 实查（WebSearch + WebFetch，全部带 URL）写成「现实对照」04-origin.md：5 佐证（Willison "LLMs amplify existing expertise" + "cannot outsource testing" + "over-confident"；Science 收益只对资深；Osmani 70% 问题 + "deceptively convincing" + "review is the new bottleneck"；fundamentals 合唱）+ 1 诚实反证（METR：资深主场 −19%、认知差 +20% 误判，用 C2/C6 化解为"倍率视场景可正可负"，并与用户 4–10× 调和）。→ 待分水岭：用户选 Deep / 收束→Synthesis / 续聊。
 
 ### Deep 阶段
 - (无)
