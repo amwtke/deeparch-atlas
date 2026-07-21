@@ -1,6 +1,6 @@
 ---
 name: atlas-final-export
-description: atlas 套件的最终导出子 skill。在 Synthesis 完成后,询问用户导出格式(MD / MD+视频脚本提示 / MD+HTML),然后融合 stages/*.md 成综合长文,可选生成暗色科技风 HTML,最后用 present_files 输出。仅由 atlas 入口 SKILL.md 调度时使用,不应被独立调用。
+description: atlas 套件的最终导出子 skill。在 Synthesis 完成后询问导出格式，融合各 stage 文档为综合 Markdown，可选补充视频脚本提示或生成暗色科技风 HTML，最后按宿主能力呈现文件。仅由 atlas 入口 SKILL.md 调度时使用,不应被独立调用。
 ---
 
 # atlas / final-export
@@ -15,19 +15,19 @@ description: atlas 套件的最终导出子 skill。在 Synthesis 完成后,询�
 
 ### 第一步:询问导出格式
 
-用 `ask_user_input_v0`(单选):
+当前宿主有结构化单选能力时使用它;否则在对话中列出以下三个选项并等待用户文本回复:
 
 ```
 所有阶段已完成。你想怎么导出最终产物?
 
 [仅综合 MD]
-[综合 MD + 视频脚本提示(后续可用 /deeparch-video-script)]
+[综合 MD + 视频脚本提示(后续可调用 deeparch-video-script skill,若已安装)]
 [综合 MD + 暗色科技风 HTML]
 ```
 
 记录用户选择到 PROGRESS.md(调用 progress-tracker)。
 
-### 第二步:融合 stages/*.md → 综合 MD
+### 第二步:融合各 stage 文档 → 综合 MD
 
 读取 `stages/` 目录下所有存在的 stage.md 文件,按编号顺序融合成 `<短名>-atlas.md`。
 
@@ -170,9 +170,9 @@ skip_constraint { next }
 ## 延伸阅读
 
 如果你想继续探索:
-- `/atlas <相邻主题 1>`:<理由>
-- `/atlas <相邻主题 2>`:<理由>
-- `/atlas <相邻主题 3>`:<理由>
+- `<Atlas 调用> <相邻主题 1>`:<理由>
+- `<Atlas 调用> <相邻主题 2>`:<理由>
+- `<Atlas 调用> <相邻主题 3>`:<理由>
 
 (从 Comparison / Synthesis 阶段的内容里提取相邻主题)
 
@@ -184,6 +184,8 @@ skip_constraint { next }
 3. <开放问题 3>
 ```
 
+生成时把 `<Atlas 调用>` 替换成当前宿主的实际形式:Codex 用 `$atlas`,Claude Code 用 `/atlas`;如果文档面向双平台,就并列写出两种调用。
+
 #### 2.4 保存到 `<短名>-atlas.md`
 
 ### 第三步:根据用户选择,生成附加产物
@@ -194,11 +196,12 @@ skip_constraint { next }
 
 #### 选择"综合 MD + 视频脚本提示"
 
-不生成视频脚本本身(那是 /deeparch-video-script 的职责),但在最终输出时**明确提示**:
+不生成视频脚本本身(那是 deeparch-video-script skill 的职责),但在最终输出时**明确提示双平台调用方式**:
 
 ```
-综合 MD 已生成。要把它转成视频脚本,接下来用:
-/deeparch-video-script <主题>
+综合 MD 已生成。要把它转成视频脚本,若已安装对应 skill,接下来用:
+- Codex:`$deeparch-video-script <主题>`
+- Claude Code:`/deeparch-video-script <主题>`
 
 它会基于本文生成 .vmd 格式的视频脚本,可直接输入 deeparch-video pipeline 生成 MP4。
 ```
@@ -227,26 +230,32 @@ skip_constraint { next }
 - [x] 10. 融合输出
 ```
 
-### 第五步:用 present_files 输出
+### 第五步:用宿主原生能力呈现文件
 
 输出顺序(主输出在前):
 
 设 `WORKDIR = atlas-output/<短名>-<yyyymmdd>/`(从 PROGRESS.md 元数据「工作目录」字段读出)。
 
-```python
-present_files([
-    f"{WORKDIR}<短名>-atlas.md",          # 主输出
-    f"{WORKDIR}<短名>-atlas.html",        # (若选了 HTML)
-    f"{WORKDIR}stages/01-what/01-what.md",
-    f"{WORKDIR}stages/02-why/02-why.md",
-    # ... 其他 stages
-    f"{WORKDIR}PROGRESS.md",
-])
+```text
+1. <WORKDIR>/<短名>-atlas.md            # 主输出
+2. <WORKDIR>/<短名>-atlas.html          # 若选了 HTML
+3. <WORKDIR>/stages/01-what/01-what.md
+4. <WORKDIR>/stages/02-why/02-why.md
+5. ... 其他实际存在的 stages
+6. <WORKDIR>/PROGRESS.md
 ```
 
-### 第六步:终末封存 + push 到远程(产物封存协议的收尾)
+- Codex:在最终答复中把真实绝对路径写成可点击的 Markdown 文件链接。
+- Claude Code:优先使用当前环境可用的文件呈现能力;不可用时同样给出 Markdown 路径。
+- 只列实际存在的文件,不要虚构跳过阶段的路径。
 
-整个 pipeline 走完,**最后 commit 一次** + push 到远程仓库(见入口 SKILL.md 的「产物封存协议」):
+### 第六步:按授权状态做终末封存 / 发布
+
+遵守入口 SKILL.md 的「可选产物封存协议」:
+
+- 未获自动快照授权 → 跳过所有 git 操作
+- 已获本地快照授权 → 最后 commit 一次,且只暂存当前主题目录
+- 另获本次远程发布授权 → push 当前分支到其已配置 upstream;没有 upstream 时先报告,不要擅自选 `origin main`
 
 ```bash
 cd <repo root>
@@ -257,12 +266,11 @@ git commit -m "atlas(<短名>): pipeline complete — final export
 覆盖阶段:<列出走过的阶段>
 灵魂问题:已闭环回答 / 未完整回答(说明)"
 
-git push origin main
+git push
 ```
 
 - push 失败(网络 / 权限 / 冲突)时,在对话中告知用户具体错误信息 + 给出排查建议,**不要 force-push**
-- 如果远程分支不是 `main`,使用当前 git 配置的默认远程分支
-- push 成功后,在第七步的对话摘要里**简短提一句**"产物已 push 到远程"(这是 pipeline 真正的"完工"信号,值得提)
+- push 成功后,在第七步的对话摘要里简短说明发布位置
 
 ### 第七步:在对话中给最终摘要
 
@@ -275,16 +283,16 @@ git push origin main
 
 附加产物:
 - (若选 HTML)<短名>-atlas.html
-- stages/*.md(可单独读)
+- stages/*/*.md(可单独读)
 - PROGRESS.md(审计痕迹)
 
-(产物已封存并 push 到远程:<remote URL>)
+(仅在实际执行后显示:产物已本地封存 / 已发布到 <remote URL>)
 
 下一步建议:
 [根据用户的导出选择给出建议]
-- (若选 MD+视频)用 /deeparch-video-script <主题> 转视频脚本
+- (若选 MD+视频)Codex 用 `$deeparch-video-script <主题>`,Claude Code 用 `/deeparch-video-script <主题>`
 - (若选 MD+HTML)HTML 已生成,可直接打开
-- 通用建议:用 /atlas <相邻主题> 继续探索
+- 通用建议:Codex 用 `$atlas <相邻主题>`,Claude Code 用 `/atlas <相邻主题>` 继续探索
 ```
 
 ---
@@ -294,7 +302,7 @@ git push origin main
 - **融合不是拼接**——必须加导读地图、过渡段、延伸阅读
 - **过渡段是 atlas 的核心特色**——风格切换作为阅读节奏,不要省略
 - **HTML 生成失败时**——优雅降级,告知用户"HTML 生成失败,但 MD 已完成",不影响主输出
-- **present_files 主输出在前**——用户最先看到综合 MD,而不是 stages 文件
+- **文件呈现主输出在前**——用户最先看到综合 MD,而不是 stages 文件
 
 ---
 
@@ -304,7 +312,7 @@ git push origin main
 2. **省略过渡段** —— 失去风格切换作为阅读节奏的核心特色
 3. **HTML 生成失败时整体失败** —— 应该优雅降级
 4. **不调用 progress-tracker 标记完成** —— PROGRESS.md 状态不一致
-5. **present_files 顺序错乱** —— 用户应先看到主输出
+5. **文件呈现顺序错乱或硬编码宿主工具** —— 用户应先看到主输出,并使用当前宿主实际具备的能力
 6. **融合后不重写各 stage 内部相对路径** —— 各 stage 内部的 `pics/...` / `src/...` 是相对各 stage 目录的;融合到顶层 atlas.md 后这些相对路径全部失效,图渲染不出来,代码引用断。**融合时必须自动重写为 `stages/0X-stage-name/pics/...` / `stages/0X-stage-name/src/...`**(修订记录里的历史描述保留原样,那是过去事件不影响阅读)。详见上文「2.0 路径重写」
 7. **融合时简单 cat 各 stage 而不删 section** —— 各 stage 顶部的「约束清单速查」(各 stage 文档自包含纪律所要求)+ 末尾的「修订记录」(stage 内部审计)在综合长文里**变成 5 次约束重复 + 7 次修订记录冗余**,严重伤害阅读体验。**融合时必须用 awk 删除两类 section**;atlas.md 顶部统一列一次约束速查;修订记录在各 stage 子目录的 .md 里保留。详见上文「2.-1 各 stage 内部 section 删除」
 8. **HTML 生成时把图片(`<figure>`)内嵌在 `<p>` 里** —— `<figure>` 是 block element,**HTML 标准禁止嵌套在 `<p>` 内**;浏览器看到 `<p><figure>...</figure></p>` 会**自动闭合 `<p>`**,但 SVG 内容跨多行 + 自动闭合的边界让 SVG 解析在某些标签处提前终止,后续 SVG `<text>` 内容被当成 HTML body 文本节点输出(用户视觉上是图只渲染半张,后面 SVG 文字"漏"成段落)。**修复**:markdown→HTML 转换器需要把"整行只是 `![alt](src)`"识别为 block-level 元素,直接生成 `<figure>...</figure>`(不包 `<p>`);同时 `is_block_start` 函数要把 image-only 行加入 block start 判断让段落不会跨过它。这是最容易踩的 markdown→HTML 转换坑之一

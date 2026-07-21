@@ -1,150 +1,162 @@
-# /atlas v3 — 苏格拉底式技术教学 skill 套件
+# Atlas v3 — Claude Code / Codex 深度技术探索套件
 
-**陪你一个阶段一个阶段把一个技术从头到尾搞透。**
+Atlas 用苏格拉底式对话陪用户把一个复杂技术主题从“它是什么”一路推到“为什么这样设计”，并把每轮形成的理解持续写成可恢复、可修订、可导出的技术文档。
 
-v3 把 atlas 重构成 **Superpowers 风格的 skill 套件**——轻量入口 + 11 个专精子 skill。
-入口只做调度,子 skill 按需加载,渐进式上下文管理。
+它不是一次性长文生成器。用户决定什么时候推进；追问、新视角和不懂反馈会继续 patch 当前文档，直到用户确认这一块已经足够稳定。
 
-## v0 → v1 → v2 → v3 演化
+## 双平台支持
 
-| 维度 | v0 | v1 | v2 | **v3** |
-|------|-----|-----|-----|--------|
-| 主题范围 | 技术 + 文学 | 专精技术 | 专精技术 | 专精技术 |
-| 工作流形态 | OUTLINE → 写 | Discovery 三问 → 写 | 七阶段 monolithic | **七阶段 + skill 套件** |
-| 文件结构 | 单文件 | 单文件 | 单文件(584 行) | **入口 162 行 + 11 个子 skill** |
-| 上下文加载 | 全量加载 | 全量加载 | 全量加载(584 行) | **渐进加载(只加载相关阶段)** |
-| Discovery | (无) | 3 题 | 1 题 | 1 题 |
-| 中断恢复 | ❌ | ❌ | ✅ | ✅ |
-| 风格 | Spec-driven 生成 | Spec-driven 生成 | 苏格拉底教学(monolithic) | **苏格拉底教学(套件化)** |
-| 维护性 | 改任何一处都要改主文件 | 同左 | 同左 | **每个阶段独立维护** |
+| 宿主 | 项目级发现入口 | 显式调用 |
+|------|----------------|----------|
+| Codex | `.agents/skills/atlas/` | `$atlas malloc` |
+| Claude Code | `.claude/skills/atlas/` | `/atlas malloc` |
 
-## 套件结构
+Claude Code 入口直接链接到根 `SKILL.md` 和 `skills/`。Codex 入口是一个很薄的真实 `SKILL.md`，只注册 `$atlas` 并转发到根指令；这样不会把 11 个内部资源误暴露成顶层 Codex skills。两边的工作流逻辑仍只有根目录这一份。自然语言请求也可以触发，例如“用第一性原理带我搞懂 io_uring”。
 
-```
-atlas/
-├── SKILL.md                          ← 入口,162 行,只做调度
-├── README.md                         ← 本文件
-└── skills/
-    ├── discovery/SKILL.md            ← Discovery 一问(87 行)
-    ├── progress-tracker/SKILL.md     ← 状态机管理 + 中断恢复(146 行)
-    ├── three-options/SKILL.md        ← 三选项交互模式,纯函数(107 行)
-    ├── stage-what/SKILL.md           ← What 阶段(145 行)
-    ├── stage-why/SKILL.md            ← Why 阶段 + 约束清单(120 行)
-    ├── stage-how/SKILL.md            ← How 阶段(109 行)
-    ├── stage-origin/SKILL.md         ← Origin 阶段(含 web search,169 行)
-    ├── stage-deep/SKILL.md           ← Deep 阶段 + 反事实小试(144 行)
-    ├── stage-comparison/SKILL.md     ← Comparison Hook + 候选生成(163 行)
-    ├── stage-synthesis/SKILL.md      ← 五元组方法论(189 行)
-    └── final-export/SKILL.md         ← 融合 + MD/HTML 导出(210 行)
+## 目录结构
+
+```text
+deeparch-atlas/
+├── SKILL.md                         # 共享入口：触发、路由、通用纪律
+├── skills/                          # 11 个按需加载的内部子 skill
+├── agents/openai.yaml               # Codex UI 元数据
+├── .agents/skills/atlas/            # Codex 项目级薄适配入口
+├── .claude/skills/atlas/            # Claude Code 项目级适配入口（symlink）
+├── AGENTS.md                        # Codex 维护说明
+├── CLAUDE.md                        # Claude Code 维护说明
+├── scripts/validate_skills.py       # 双平台结构校验
+└── atlas-output/                    # 技术探索运行产物
 ```
 
-**总计**:1751 行(11 个子 skill + 1 个入口),但 Claude 在任意时刻**只需加载** 入口 + 当前阶段子 skill + three-options + progress-tracker(约 500~600 行),远低于 v2 monolithic 的 584 行全量加载。
+## 11 个子 skill 分别做什么
 
-## 设计决定回顾
+| 子 skill | 作用 | 关键产物 / 决策 |
+|----------|------|-----------------|
+| `discovery` | 只问一个“最想搞清楚的问题”，把模糊主题收敛成灵魂问题 | 初始化探索目标 |
+| `progress-tracker` | 管理状态机、约束编号、追问审计和中断恢复 | `PROGRESS.md` |
+| `three-options` | 用户节奏 gatekeeper；区分追问、换视角、没懂、附和和明确推进 | 当前文档持续 patch |
+| `stage-what` | 建立一句话定义、跨领域类比、全景图、术语与技术栈位置 | `01-what.md` |
+| `stage-why` | 从“没有它会怎样”推出不可再分约束 | `02-why.md` + 稳定的 `C1~Cn` |
+| `stage-how` | 从约束推出核心组件和端到端工作骨架，不深入源码 | `03-how.md` + 概览图 |
+| `stage-origin` | 用一手资料还原技术的历史问题、死路、取舍与遗憾 | `04-origin.md` + 来源链接 |
+| `stage-deep` | 做操作层、函数逻辑层、底层原理层剖析，并加入可运行 demo 和反事实小试 | `05-deep.md` + `src/` |
+| `stage-comparison` | 让用户选择对比对象，把主题放回完整设计空间 | 可选 `06-comparison.md` |
+| `stage-synthesis` | 把约束、决策、代价、反事实和现实对照收束成可迁移方法论 | `07-synthesis.md` |
+| `final-export` | 融合各阶段，修正资源路径，生成综合 MD，可选 HTML / 视频脚本提示 | `<短名>-atlas.md` / `.html` |
 
-| 决定 | 选择 | 理由 |
-|------|------|------|
-| 子 skill 命名 | **不加 atlas- 前缀** | atlas 单独项目,不会污染其他 skill 体系 |
-| 子 skill 独立性 | **强耦合,只服务 pipeline** | atlas 灵魂是七阶段,独立调用没意义,简化设计 |
-| three-options 路由 | **纯函数,不知道下一步** | 路由由调用方决定,three-options 职责单一 |
+这些子 skill 是 Atlas 内部资源，不作为 11 个独立顶层技能安装。入口只在需要时读取“当前阶段 + `progress-tracker` + `three-options`”，避免一次把全部说明塞进上下文。
 
-## 安装
+## 工作流
+
+```text
+Discovery
+   ↓
+What → Why → How → Origin
+                       ↓
+                 深度分水岭
+                  ↙       ↘
+            Synthesis     Deep → Comparison（可跳过）
+                  ↘       ↙
+                    Export
+```
+
+每块内容写完后不会自动前进：
+
+1. 助手用一个反问检查理解。
+2. 用户追问、提出新视角或指出没懂的地方。
+3. 助手回答并局部更新当前文档与 `PROGRESS.md`。
+4. 只有用户明确要求推进，并再次确认已读当前草稿，才进入下一块。
+
+## 使用
+
+在本仓库中启动 Codex 或 Claude Code 时，项目级适配入口已经存在，无需额外安装。
+
+Codex：
+
+```text
+$atlas malloc
+$atlas io_uring
+继续 atlas B+树
+```
+
+Claude Code：
+
+```text
+/atlas malloc
+/atlas io_uring
+继续 atlas B+树
+```
+
+如果技能列表没有立即刷新，重启对应客户端或新开一个会话。
+
+### 在其他仓库或用户级安装
+
+推荐让两边都指向同一个 Atlas 源目录，但 Codex 要链接到专用适配目录：
 
 ```bash
-cp -r atlas/ ~/.claude/skills/
-# 或
-cp -r atlas/ <project>/.claude/skills/
+ATLAS_SRC=/absolute/path/to/deeparch-atlas
+mkdir -p ~/.agents/skills ~/.claude/skills
+ln -s "$ATLAS_SRC/.agents/skills/atlas" ~/.agents/skills/atlas
+ln -s "$ATLAS_SRC" ~/.claude/skills/atlas
 ```
 
-## 用法
+也可以只安装其中一个宿主的链接。Codex 不要直接链接仓库根目录，否则递归发现会把 `skills/*` 当成独立技能。不要分别复制两份工作流后独立修改。
 
-```
-/atlas malloc       # 启动 Discovery → 进入 What 阶段
-/atlas io_uring
-/atlas B+树
+## 运行产物
 
-# 中断后恢复
-/atlas malloc       # 自动检测 PROGRESS.md,询问"上次走到 X 阶段,继续吗?"
-继续 atlas malloc   # 同上,自然语言也认
-```
-
-## 工作流可视化
-
-```
-[Discovery]   一问:你最想搞清楚的具体问题?
-   ↓
-[1. What]     它是什么 → stages/01-what.md
-   ↓ three-options
-[2. Why]      为什么需要 + 建立约束清单 → stages/02-why.md
-   ↓ three-options
-[3. How]      大致怎么工作 → stages/03-how.md
-   ↓ three-options
-[4. Origin]   它怎么来的(web search) → stages/04-origin.md
-   ↓ 🌉 分水岭三选项: 满足导出 / 继续 Deep / 追问
-[5. Deep]     源码与设计 + 反事实小试 → stages/05-deep.md
-   ↓ three-options
-[6. Comparison] Hook(用户选 1~3 个对比对象) → stages/06-comparison.md
-   ↓ three-options
-[7. Synthesis] 五元组方法论 → stages/07-synthesis.md
-   ↓
-[Export]      询问 MD / MD+视频 / MD+HTML
-              融合 stages/*.md → <短名>-atlas.md
-              (可选)生成 HTML
+```text
+atlas-output/<短名>-<yyyymmdd>/
+├── PROGRESS.md
+├── stages/
+│   ├── 01-what/
+│   │   ├── 01-what.md
+│   │   └── pics/
+│   ├── 02-why/02-why.md
+│   ├── 03-how/
+│   │   ├── 03-how.md
+│   │   └── pics/03-overview.svg
+│   ├── 04-origin/04-origin.md
+│   ├── 05-deep/
+│   │   ├── 05-deep.md
+│   │   └── src/
+│   ├── 06-comparison/06-comparison.md
+│   └── 07-synthesis/07-synthesis.md
+├── <短名>-atlas.md
+└── <短名>-atlas.html               # 可选
 ```
 
-## 与 Superpowers 的设计对应
+每个阶段目录自包含 Markdown、图片和代码；综合文档导出时会重写这些相对路径。
 
-| Superpowers | /atlas v3 |
-|-------------|-----------|
-| 入口 SKILL.md 只做调度 | ✅ 入口 162 行,只路由 |
-| skills/ 子目录多个专精 skill | ✅ skills/ 子目录 11 个 |
-| 渐进式上下文加载 | ✅ 按需加载子 skill |
-| 中断恢复(plan 文件) | ✅ PROGRESS.md 状态机 |
-| 子 skill 职责单一 | ✅ 每个 80~210 行 |
-| TDD 不让 AI 一把梭 | ✅ 每阶段三选项让用户主导 |
-| 工程方法论(TDD) | 思考方法论(第一性原理 + 反事实) |
+## 关键设计约束
 
-## 关键创新:two-tier 加载架构
+- 第一次引入任何概念时都从“因为某约束 → 要解决某问题 → 所以引入该概念”推出。
+- Why 建立的 `C1~Cn` 是后续 How / Origin / Deep / Comparison / Synthesis 的共同脊梁。
+- 复杂关系优先画带暗色背景的 SVG，放在当前 stage 的 `pics/` 内。
+- Origin 必须联网查一手资料，不能只凭模型记忆编写历史故事。
+- 结构化选择控件是可选增强；宿主没有对应能力时，退回简短文本选项。
+- 文件呈现使用宿主原生能力；Codex 返回可点击路径，Claude Code 使用其可用的文件呈现能力或路径。
+- Git 快照与远程 push 默认关闭，只有用户在当前对话明确授权时才执行；永不夹带无关改动，永不 force-push。
 
-Claude 在任意时刻只需加载:
+## 开发与校验
 
-1. **常驻**:入口 SKILL.md(162 行)
-2. **共享**:progress-tracker(146 行)+ three-options(107 行)
-3. **当前阶段**:对应的 stage-X 子 skill(80~210 行)
+修改入口、子 skill 或任一适配目录后运行：
 
-总计 ~500~600 行,**远低于 v2 monolithic 的 584 行全量**。这意味着:
+```bash
+python3 scripts/validate_skills.py
+git diff --check
+git status --short
+```
 
-- 上下文压力小 → Claude 处理质量高
-- 阶段切换时,前一阶段子 skill 可以从上下文移除 → 始终保持小上下文
-- 改一个阶段不影响其他阶段
-- 可以独立测试每个子 skill
+校验会检查：
 
-## 文件
+- 根 skill 与 11 个内部 skill 的 frontmatter；
+- 内部 skill 的“不得独立触发”边界；
+- Claude Code 符号链接和 Codex 薄适配入口是否仍指向同一共享工作流；
+- Codex `agents/openai.yaml` 是否存在；
+- 是否重新引入了已废弃的宿主专用工具名或旧 `figures/` 路径。
 
-- `SKILL.md` — v3 入口(162 行)
-- `skills/` — 11 个子 skill(共 1589 行,但按需加载)
-- `SKILL.v2-monolithic.md` — v2 备份(单文件版,584 行)
-- `SKILL.v1.md` — v1 备份(Discovery 三问 + 篇级 checkpoint)
-- `SKILL.v0.md` — v0 备份(无 Discovery,带文学模式)
-- `README.md` — 本文件
+## 适用与不适用
 
-## 适用场景
+适合内核、JVM、数据库、编译器、分布式系统、中间件等需要理解设计约束与取舍的技术主题。
 
-- ✅ 完全不懂某技术,想从头搞透
-- ✅ 已经懂但想搞清楚某个具体问题(灵魂问题驱动)
-- ✅ 想做 B 站长视频素材
-- ✅ 中途打断,几天后想继续(PROGRESS.md 自动恢复)
-- ✅ 想精确控制 atlas 的某个阶段(改单个子 skill 即可)
-
-## 不适用
-
-- ❌ 文学/历史/艺术主题(用 /bookguide 或 /deeparch-literature)
-- ❌ 单纯查个语法/API(用直接对话或 /primer)
-- ❌ 想要"AI 替我一把梭写完"(那是 v0/v1 的形态)
-
-## 后续可能的演化
-
-- **v3.1**:为每个子 skill 编写 eval 测试集(skill-creator 风格)
-- **v3.2**:跨阶段追问——用户在 Deep 阶段想回头改 Why 的约束清单
-- **v3.3**:多用户协同——团队成员可以接力跑 atlas(基于 PROGRESS.md)
-- **v4**:多主题对照——`/atlas malloc vs jemalloc` 同时教两个相关技术
+不适合文学、历史、艺术主题，也不适合只查一个语法、参数或 API 的短问题。

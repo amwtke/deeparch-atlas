@@ -4,15 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-`atlas` v3 is a **Claude skill suite** (Markdown only — no code, no build system, no tests). It implements a Socratic-style technical-teaching workflow: a thin dispatcher SKILL plus 11 specialized sub-skills, loaded progressively.
+`atlas` v3 is a **Claude Code + Codex skill suite** (Markdown workflow plus a small validation script; no application build). It implements a Socratic-style technical-teaching workflow: one shared dispatcher/invariants SKILL plus 11 specialized sub-skills, loaded progressively. Claude Code and Codex must keep using the same source files.
 
-Trigger: `/atlas <topic>` (e.g. `/atlas malloc`, `/atlas io_uring`). Topic must be **technical** — kernel / JVM / database / distributed systems / middleware. Literary or historical topics belong to `/bookguide` or `/deeparch-literature`.
+Claude Code trigger: `/atlas <topic>` (e.g. `/atlas malloc`, `/atlas io_uring`). Codex uses `$atlas <topic>`. Topic must be **technical** — kernel / JVM / database / distributed systems / middleware. Literary or historical topics belong to a more suitable skill or direct conversation.
 
 ## Repo layout
 
 ```
-SKILL.md                                       ← entry dispatcher (~162 lines), ALWAYS in context
-README.md                                      ← v0→v3 evolution rationale
+SKILL.md                                       ← shared dispatcher + invariants, ALWAYS in context
+README.md                                      ← dual-host usage and sub-skill map
+agents/openai.yaml                             ← Codex UI metadata
+.agents/skills/atlas/                          ← thin Codex delegating adapter
+.claude/skills/atlas/                          ← Claude Code adapter symlinks
 skills/
   ├── discovery/SKILL.md                       (one-question discovery)
   ├── progress-tracker/SKILL.md                (state machine + interrupt-recovery)
@@ -21,7 +24,7 @@ skills/
   └── final-export/SKILL.md                    (fuse stages + MD/HTML export)
 ```
 
-Install via `cp -r atlas/ ~/.claude/skills/` (or into a project's `.claude/skills/`).
+For user-level use, symlink this repository to `~/.claude/skills/atlas`. The checked-in `.claude/skills/atlas/` adapter already works when Claude Code is launched in this repository. Preserve the parallel `.agents/skills/atlas/` delegating adapter when editing, and do not add a `skills/` link below it—the link would expose internal pipeline resources as top-level Codex skills.
 
 ## How the pipeline works (read before editing any sub-skill)
 
@@ -29,12 +32,12 @@ Install via `cp -r atlas/ ~/.claude/skills/` (or into a project's `.claude/skill
 Discovery → What → Why → How → Origin → 🌉watershed → Deep → Comparison → Synthesis → Export
 ```
 
-After every stage, the user picks one of three options (`懂了 / 追问 / 换角度`) before advancing. Each stage writes its output to `stages/0X-stage.md` immediately so the run is interrupt-resumable.
+After every stage, the user-pacing gatekeeper keeps the conversation on the current topic until the user explicitly advances. Each stage writes its output under `stages/0X-name/0X-name.md` so the run is interrupt-resumable.
 
 ### Three load-time invariants
 
-1. **Entry `SKILL.md` only routes** — never put teaching logic in it.
-2. **Sub-skills load on demand**, not at startup. At any moment Claude holds: entry + current stage + `three-options` + `progress-tracker` (~500–600 lines total).
+1. **Entry `SKILL.md` owns routing and cross-stage invariants** — never put stage-specific teaching logic in it.
+2. **Sub-skills load on demand**, not at startup. At any moment Claude holds the entry + current stage + `three-options` + `progress-tracker`, rather than all 11 sub-skills.
 3. **Sub-skills are tightly coupled to the pipeline** by design. They assume `PROGRESS.md` exists, the soul-question is recorded, and the constraint list is queryable. Do **not** redesign them as standalone — that's `/primer` or `/deeparch-md`'s job.
 
 ### Question-driven, not stage-driven (UX contract)
@@ -93,15 +96,16 @@ In the markdown stage file: `![<short caption>](pics/<stage-id>-<topic>.svg)` + 
 
 Full spec in entry `SKILL.md` 「图示偏好」 + anti-pattern #13.
 
-### Artifact snapshot protocol (git)
+### Optional artifact snapshot protocol (git)
 
-Every stage advancement is also a **commit point**. The user's confirmed-stable artifact gets sealed to git in the background:
+Stage advancement can be a **commit point**, but git mutation is opt-in:
 
-- When `three-options` receives an explicit advancement signal: `git add atlas-output/<short>-<yyyymmdd>/` + commit with message `atlas(<short>): finish <stage> stage` (+ optional one-line summary of what crystallized this round). This happens **before** loading the next stage skill.
-- When `final-export` finishes generating the fused MD/HTML: one final commit + `git push origin main` to the configured remote.
-- Git operations are **silent** — no chat output unless they fail. The user feels smooth stage transitions; the snapshots happen behind the scenes.
+- Only when the user explicitly authorizes automatic local snapshots in the current conversation, `three-options` may run `git add atlas-output/<short>-<yyyymmdd>/` and commit before loading the next stage.
+- `final-export` may make the final local commit only under the same authorization. Remote push requires separate, explicit publication authorization for the current run.
+- Never stage unrelated skill/source changes, never assume `origin main`, and never force-push.
+- Intermediate local commits are silent unless they fail. Final publication success or failure is included in the closing summary.
 - `atlas-output/` is **not** in `.gitignore` — these are the artifacts being snapshotted. Only `.DS_Store` is ignored.
-- Full spec in entry `SKILL.md` 「产物封存协议」 + `skills/three-options/SKILL.md` 「放行前封存」 + `skills/final-export/SKILL.md` 「终末封存 + push」.
+- Full spec in entry `SKILL.md` 「可选产物封存协议」 + `skills/three-options/SKILL.md` 的授权判断 + `skills/final-export/SKILL.md` 的终末封存 / 发布判断.
 
 ### Single source of truth: `PROGRESS.md`
 
@@ -214,13 +218,13 @@ Path conventions:
 - Resume detection globs `atlas-output/<short>-*` (any date). If multiple matches exist, take the latest.
 - Inside the markdown content (titles, transitions, related-topic suggestions), keep the **original** topic name — only filesystem-visible names get the slug.
 
-This is **runtime user data**, not source. Don't commit a topic run back into the repo (and don't put `atlas-output/` under version control if/when this becomes a git repo).
+This is **runtime user data**, not skill source. It may be versioned only when the user explicitly enables the optional snapshot protocol; otherwise leave it as ordinary working-tree output.
 
 ## Conventions when editing sub-skills
 
 - **Sub-skills don't call each other directly** — all routing flows back through entry `SKILL.md`'s dispatch table. Cross-calls are an anti-pattern.
 - **Each sub-skill's `description:` frontmatter must say "仅由 atlas 入口调度时使用,不应被独立调用"** to prevent accidental triggering as a top-level skill.
-- **Keep sub-skills small** (target ~80–210 lines). The whole point of v3 is progressive context loading; bloating one file undoes that.
+- **Keep sub-skills focused** and split large, reusable detail into references when practical. The whole point of v3 is progressive context loading; bloating one file undoes that.
 - **Don't ask about export format in Discovery** — the user only knows what they want after they've gone through the stages. Discovery asks exactly one question (the soul question) — the v1 three-question form is dead.
 - **Constraint references**: `stage-{how,origin,deep,comparison,synthesis}` must reference constraints by ID (e.g. "this addresses C3 + C5"). Adding a stage without constraint cross-refs is the documented "things go fuzzy" failure mode.
 

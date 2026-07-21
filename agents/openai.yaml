@@ -1,0 +1,4 @@
+interface:
+  display_name: "Atlas"
+  short_description: "用第一性原理渐进探索复杂技术并生成可恢复的深度文档"
+  default_prompt: "使用 $atlas 带我从第一性原理深入理解一个技术主题，并生成可恢复的探索文档。"
