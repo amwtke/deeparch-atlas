@@ -19,6 +19,7 @@ Claude Code 入口直接链接到根 `SKILL.md` 和 `skills/`。Codex 入口是�
 deeparch-atlas/
 ├── SKILL.md                         # 共享入口：触发、路由、通用纪律
 ├── skills/                          # 11 个按需加载的内部子 skill
+│   └── references/house-style.md    # 风格基线:写作品味 + 各话题推荐默认
 ├── agents/openai.yaml               # Codex UI 元数据
 ├── .agents/skills/atlas/            # Codex 项目级薄适配入口
 ├── .claude/skills/atlas/            # Claude Code 项目级适配入口（symlink）

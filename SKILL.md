@@ -523,6 +523,15 @@ atlas(glibc的malloc函数): finish What stage
 
 使用当前宿主可用的文件读取能力,完整读取 `skills/<sub-skill>/SKILL.md`,再把内容作为当前阶段指令执行。
 
+### 风格基线(house style)
+
+`skills/references/house-style.md` 是共享参考资料(不是子 skill,没有 SKILL.md)。**每个 stage 开场对齐前读一遍**:
+
+- 「写作品味」十二条 → 写草稿与每次 patch 后自检
+- 「各话题推荐默认」 → 渐进对齐时作为第一个推荐选项,仍须用户逐问确认
+
+它只提供默认值,不覆盖本文件任何纪律;用户在当前对话里的明确选择永远优先。
+
 **注意**:子 skill 之间**强耦合,只服务于 atlas pipeline**——它们假设 PROGRESS.md 存在、灵魂问题已记录、约束清单可查。子 skill 不设计为独立调用(那是 /primer / /deeparch-md 的职责)。
 
 ---

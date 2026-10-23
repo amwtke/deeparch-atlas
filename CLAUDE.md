@@ -21,7 +21,8 @@ skills/
   ├── progress-tracker/SKILL.md                (state machine + interrupt-recovery)
   ├── three-options/SKILL.md                   (pure-function user-pacing widget)
   ├── stage-{what,why,how,origin,deep,comparison,synthesis}/SKILL.md
-  └── final-export/SKILL.md                    (fuse stages + MD/HTML export)
+  ├── final-export/SKILL.md                    (fuse stages + MD/HTML export)
+  └── references/house-style.md                (shared writing taste + per-stage recommended defaults; not a skill, read before each stage's alignment)
 ```
 
 For user-level use, symlink this repository to `~/.claude/skills/atlas`. The checked-in `.claude/skills/atlas/` adapter already works when Claude Code is launched in this repository. Preserve the parallel `.agents/skills/atlas/` delegating adapter when editing, and do not add a `skills/` link below it—the link would expose internal pipeline resources as top-level Codex skills.
