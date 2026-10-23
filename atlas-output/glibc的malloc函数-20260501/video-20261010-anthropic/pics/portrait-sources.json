@@ -1,0 +1,48 @@
+[
+  {
+    "person": "Donald Knuth",
+    "local": "pics/donald-knuth.jpg",
+    "source": "https://cs.stanford.edu/~knuth/graphics.html",
+    "image": "https://cs.stanford.edu/~knuth/don-hires.jpg",
+    "verified": true
+  },
+  {
+    "person": "DJ Delorie",
+    "local": "pics/dj-delorie.jpg",
+    "source": "https://www.delorie.com/users/dj/",
+    "image": "https://www.delorie.com/users/dj/dj.jpg",
+    "verified": true
+  },
+  {
+    "person": "Sanjay Ghemawat",
+    "local": "pics/sanjay-ghemawat.jpg",
+    "source": "https://www.mrjoemontana.com/google-executive-portraits",
+    "verified": true
+  },
+  {
+    "person": "Daan Leijen",
+    "local": "pics/daan-leijen.jpg",
+    "source": "https://www.microsoft.com/en-us/research/people/daan/",
+    "image": "https://www.microsoft.com/en-us/research/wp-content/uploads/2017/05/avatar_user__1496178862-180x180.jpg",
+    "verified": true
+  },
+  {
+    "person": "Jason Evans",
+    "local": "pics/jason-evans.jpg",
+    "source": "https://jasone.github.io/",
+    "image": "https://avatars.githubusercontent.com/u/245970?v=4",
+    "verified": true
+  },
+  {
+    "person": "Doug Lea",
+    "local": null,
+    "reason": "No reliable portrait found; preserve person and contributions in VMD.",
+    "render_fallback": "Existing renderer uses a text introduction when portrait search fails."
+  },
+  {
+    "person": "Wolfram Gloger",
+    "local": null,
+    "reason": "No reliable portrait found; preserve person and contributions in VMD.",
+    "render_fallback": "Existing renderer uses a text introduction when portrait search fails."
+  }
+]

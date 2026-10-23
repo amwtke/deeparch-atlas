@@ -1,0 +1,170 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 10.8
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Origin 阶段开场",
+  "start": 10.8,
+  "end": 18.5
+ },
+ {
+  "idx": 3,
+  "type": "text",
+  "title": "\"同一接口背后的三次压力\"",
+  "start": 18.5,
+  "end": 50.07
+ },
+ {
+  "idx": 4,
+  "type": "timeline",
+  "title": "\"从复用到分片再到缓存\"",
+  "start": 50.07,
+  "end": 69.0
+ },
+ {
+  "idx": 5,
+  "type": "text",
+  "title": "\"Doug Lea\"",
+  "start": 69.0,
+  "end": 88.13
+ },
+ {
+  "idx": 6,
+  "type": "text",
+  "title": "\"专用分配为何没有包办一切\"",
+  "start": 88.13,
+  "end": 121.87
+ },
+ {
+  "idx": 7,
+  "type": "ascii",
+  "title": "\"边界标记与索引是两种工作\"",
+  "start": 121.87,
+  "end": 142.17
+ },
+ {
+  "idx": 8,
+  "type": "text",
+  "title": "\"末端余量为何要留到最后\"",
+  "start": 142.17,
+  "end": 176.3
+ },
+ {
+  "idx": 9,
+  "type": "layers",
+  "title": "\"并发压力落在哪里\"",
+  "start": 176.3,
+  "end": 196.9
+ },
+ {
+  "idx": 10,
+  "type": "analogy",
+  "title": "\"共享货架与手边盒\"",
+  "start": 196.9,
+  "end": 219.23
+ },
+ {
+  "idx": 11,
+  "type": "ascii",
+  "title": "\"分桶加锁为何不是简单拆分\"",
+  "start": 219.23,
+  "end": 240.73
+ },
+ {
+  "idx": 12,
+  "type": "text",
+  "title": "\"Wolfram Gloger\"",
+  "start": 240.73,
+  "end": 261.7
+ },
+ {
+  "idx": 13,
+  "type": "ascii",
+  "title": "\"数据分片与锁边界一起分开\"",
+  "start": 261.7,
+  "end": 284.83
+ },
+ {
+  "idx": 14,
+  "type": "text",
+  "title": "\"跨线程归还如何保持身份\"",
+  "start": 284.83,
+  "end": 319.57
+ },
+ {
+  "idx": 15,
+  "type": "html_slide",
+  "title": "\"分配器演进时间线\"",
+  "start": 319.57,
+  "end": 340.9
+ },
+ {
+  "idx": 16,
+  "type": "spotlight",
+  "title": "15 更多池也不是免费午餐",
+  "start": 340.9,
+  "end": 347.9
+ },
+ {
+  "idx": 17,
+  "type": "text",
+  "title": "\"arena 数量是预算选择\"",
+  "start": 347.9,
+  "end": 385.8
+ },
+ {
+  "idx": 18,
+  "type": "facetime",
+  "title": "\"DJ Delorie\"",
+  "start": 385.8,
+  "end": 404.43
+ },
+ {
+  "idx": 19,
+  "type": "statemap",
+  "title": "\"小块的复用周期\"",
+  "start": 404.43,
+  "end": 429.67
+ },
+ {
+  "idx": 20,
+  "type": "text",
+  "title": "\"速度收益转成了空间保留\"",
+  "start": 429.67,
+  "end": 466.83
+ },
+ {
+  "idx": 21,
+  "type": "text",
+  "title": "\"安全检查必须跟着路径移动\"",
+  "start": 466.83,
+  "end": 504.4
+ },
+ {
+  "idx": 22,
+  "type": "text",
+  "title": "\"新负载会改写缓存单位\"",
+  "start": 504.4,
+  "end": 542.0
+ },
+ {
+  "idx": 23,
+  "type": "html_slide",
+  "title": "\"从历史读懂成本转移\"",
+  "start": 542.0,
+  "end": 562.93
+ },
+ {
+  "idx": 24,
+  "type": "spotlight",
+  "title": "23 下集预告",
+  "start": 562.93,
+  "end": 574.47
+ }
+]

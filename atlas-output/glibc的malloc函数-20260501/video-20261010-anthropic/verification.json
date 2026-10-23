@@ -1,0 +1,147 @@
+{
+  "status": "complete",
+  "upload": true,
+  "source_sha256": "433111ef821a2f4307fff77b6202bad026e42a950864f57b57975e9b4ef184e6",
+  "source_unchanged": true,
+  "total_minutes": 77.05,
+  "episodes": [
+    {
+      "file": "glibc-malloc-ep0-toc.mp4",
+      "duration_seconds": 208.633333,
+      "bytes": 13730665,
+      "render_exit_code": 0,
+      "full_decode": "PASS",
+      "audio": "aac",
+      "video": "h264",
+      "resolution": [
+        1920,
+        1080
+      ],
+      "scene_duration": "PASS",
+      "renderer_checks": "PASS",
+      "vmd_sha256": "30f9cf40e1b026ec89a08b2349cc95859e2bbea3bccbae166022e60476fcfc26"
+    },
+    {
+      "file": "glibc-malloc-ep1-what.mp4",
+      "duration_seconds": 423.2,
+      "bytes": 24821225,
+      "render_exit_code": 0,
+      "full_decode": "PASS",
+      "audio": "aac",
+      "video": "h264",
+      "resolution": [
+        1920,
+        1080
+      ],
+      "scene_duration": "PASS",
+      "renderer_checks": "PASS",
+      "vmd_sha256": "08246655a1831965b2d18aa1f3d22030cb79543f86ac329e39c780663b3e0b37"
+    },
+    {
+      "file": "glibc-malloc-ep2-why.mp4",
+      "duration_seconds": 507.866667,
+      "bytes": 30463868,
+      "render_exit_code": 0,
+      "full_decode": "PASS",
+      "audio": "aac",
+      "video": "h264",
+      "resolution": [
+        1920,
+        1080
+      ],
+      "scene_duration": "PASS",
+      "renderer_checks": "PASS",
+      "vmd_sha256": "fa43d9a7b9126697b0da05540e32c293ebe4d981b14af0a05dc7ef406106f27b"
+    },
+    {
+      "file": "glibc-malloc-ep3-how.mp4",
+      "duration_seconds": 820.5,
+      "bytes": 49111599,
+      "render_exit_code": 0,
+      "full_decode": "PASS",
+      "audio": "aac",
+      "video": "h264",
+      "resolution": [
+        1920,
+        1080
+      ],
+      "scene_duration": "PASS",
+      "renderer_checks": "PASS",
+      "vmd_sha256": "2a17073487448c88ec8cb1d1451528a1c030cb7a8cef031413e4adad36dbfad2"
+    },
+    {
+      "file": "glibc-malloc-ep4-origin.mp4",
+      "duration_seconds": 574.466667,
+      "bytes": 33077834,
+      "render_exit_code": 0,
+      "full_decode": "PASS",
+      "audio": "aac",
+      "video": "h264",
+      "resolution": [
+        1920,
+        1080
+      ],
+      "scene_duration": "PASS",
+      "renderer_checks": "PASS",
+      "vmd_sha256": "0f2c919a01a679be61b3bfc0cfcb792cc9605e1eb7864173b72c9a7306bf3026"
+    },
+    {
+      "file": "glibc-malloc-ep5-deep.mp4",
+      "duration_seconds": 615.366667,
+      "bytes": 36820222,
+      "render_exit_code": 0,
+      "full_decode": "PASS",
+      "audio": "aac",
+      "video": "h264",
+      "resolution": [
+        1920,
+        1080
+      ],
+      "scene_duration": "PASS",
+      "renderer_checks": "PASS",
+      "vmd_sha256": "c11e55777d6600512dca42871061e66f35d0cd94012769fa3aec45e919bc60b6"
+    },
+    {
+      "file": "glibc-malloc-ep6-comparison.mp4",
+      "duration_seconds": 700.3,
+      "bytes": 42972991,
+      "render_exit_code": 0,
+      "full_decode": "PASS",
+      "audio": "aac",
+      "video": "h264",
+      "resolution": [
+        1920,
+        1080
+      ],
+      "scene_duration": "PASS",
+      "renderer_checks": "PASS",
+      "vmd_sha256": "92e3c25031edc044b181e24a375327e533441196f04f0087d468f039daac878f"
+    },
+    {
+      "file": "glibc-malloc-ep7-synthesis.mp4",
+      "duration_seconds": 772.866667,
+      "bytes": 45444081,
+      "render_exit_code": 0,
+      "full_decode": "PASS",
+      "audio": "aac",
+      "video": "h264",
+      "resolution": [
+        1920,
+        1080
+      ],
+      "scene_duration": "PASS",
+      "renderer_checks": "PASS",
+      "vmd_sha256": "c83f880d91098979820caa41f9cfa3b0c414e7ef86ea1db0c3bb712116d96a7f"
+    }
+  ],
+  "visual_review": "PASS",
+  "publication": {
+    "platform": "bilibili",
+    "bvid": "BV1PSpY6tEBd",
+    "url": "https://www.bilibili.com/video/BV1PSpY6tEBd",
+    "status": "submitted",
+    "remote_state_desc": "审核中",
+    "part_count": 8,
+    "remote_verified": true
+  }
+}

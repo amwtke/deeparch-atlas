@@ -1,0 +1,177 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 12.4
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Deep 阶段开场",
+  "start": 12.4,
+  "end": 19.83
+ },
+ {
+  "idx": 3,
+  "type": "text",
+  "title": "\"大小相同也能有不同路径\"",
+  "start": 19.83,
+  "end": 57.8
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "\"本集固定 glibc 2.34\"",
+  "start": 57.8,
+  "end": 79.87
+ },
+ {
+  "idx": 5,
+  "type": "ascii",
+  "title": "\"入口到系统的完整分叉\"",
+  "start": 79.87,
+  "end": 101.57
+ },
+ {
+  "idx": 6,
+  "type": "text",
+  "title": "\"从零件工作台预测真实路径\"",
+  "start": 101.57,
+  "end": 139.57
+ },
+ {
+  "idx": 7,
+  "type": "code",
+  "title": "\"尺寸正规化：24 字节变成 32\" source=\"https://raw.githubusercontent.com",
+  "start": 139.57,
+  "end": 161.8
+ },
+ {
+  "idx": 8,
+  "type": "code",
+  "title": "\"入口先验证缓存，再考虑 arena\" source=\"https://raw.githubusercontent.co",
+  "start": 161.8,
+  "end": 184.23
+ },
+ {
+  "idx": 9,
+  "type": "code",
+  "title": "\"tcache_get 真身：更新本地链表\" source=\"https://raw.githubusercontent",
+  "start": 184.23,
+  "end": 207.4
+ },
+ {
+  "idx": 10,
+  "type": "code",
+  "title": "\"tcache_put 真身：归还到释放线程\" source=\"https://raw.githubuserconten",
+  "start": 207.4,
+  "end": 229.83
+ },
+ {
+  "idx": 11,
+  "type": "text",
+  "title": "\"关闭缓存检验因果\"",
+  "start": 229.83,
+  "end": 268.4
+ },
+ {
+  "idx": 12,
+  "type": "html_slide",
+  "title": "\"三种条件路径并列\"",
+  "start": 268.4,
+  "end": 290.2
+ },
+ {
+  "idx": 13,
+  "type": "timeline",
+  "title": "\"先复用，缺货才扩展\"",
+  "start": 290.2,
+  "end": 314.23
+ },
+ {
+  "idx": 14,
+  "type": "code",
+  "title": "\"arena_get 真身：线程偏好不等于免锁\" source=\"https://raw.githubuserconte",
+  "start": 314.23,
+  "end": 336.4
+ },
+ {
+  "idx": 15,
+  "type": "code",
+  "title": "\"top 真身：库存够就不调用系统\" source=\"https://raw.githubusercontent.com",
+  "start": 336.4,
+  "end": 360.1
+ },
+ {
+  "idx": 16,
+  "type": "statemap",
+  "title": "\"归还不一定撤销映射\"",
+  "start": 360.1,
+  "end": 384.17
+ },
+ {
+  "idx": 17,
+  "type": "text",
+  "title": "\"容器里该按哪层排查\"",
+  "start": 384.17,
+  "end": 424.27
+ },
+ {
+  "idx": 18,
+  "type": "spotlight",
+  "title": "17 大块分叉报幕",
+  "start": 424.27,
+  "end": 430.43
+ },
+ {
+  "idx": 19,
+  "type": "code",
+  "title": "\"sysmalloc 真身：条件成立才尝试映射\" source=\"https://raw.githubuserconte",
+  "start": 430.43,
+  "end": 454.57
+ },
+ {
+  "idx": 20,
+  "type": "code",
+  "title": "\"独立映射释放：入口分流与阈值历史\" source=\"https://raw.githubusercontent.com",
+  "start": 454.57,
+  "end": 478.4
+ },
+ {
+  "idx": 21,
+  "type": "text",
+  "title": "\"映射、页驻留和阈值要分开\"",
+  "start": 478.4,
+  "end": 515.77
+ },
+ {
+  "idx": 22,
+  "type": "code",
+  "title": "\"Linux 上运行演示\" evidence=practice practice_id=malloc-path-comm",
+  "start": 515.77,
+  "end": 539.47
+ },
+ {
+  "idx": 23,
+  "type": "text",
+  "title": "\"调试器回答谁走了哪条路\"",
+  "start": 539.47,
+  "end": 579.57
+ },
+ {
+  "idx": 24,
+  "type": "html_slide",
+  "title": "\"根据条件解释实际路径\"",
+  "start": 579.57,
+  "end": 603.47
+ },
+ {
+  "idx": 25,
+  "type": "spotlight",
+  "title": "24 下集预告",
+  "start": 603.47,
+  "end": 615.37
+ }
+]

@@ -1,0 +1,661 @@
+# 第 3 集 How 阶段 — malloc 申请24字节，谁替你跑完全程？
+
+[intro-line] 今天深入malloc，沿着一笔24字节分配，拆开缓存、分配池和内核映射的接力。
+
+## 1 How阶段开场
+
+[visual: spotlight]
+现在我们来拆解 How 阶段
+malloc 内部到底怎么工作？
+
+[narration]
+二十四字节的申请，为什么经常不进内核？现在拆解How阶段。
+
+---
+
+## 2 24字节的两次人生
+
+[visual: title]
+申请 24 字节
+谁替你跑了全程？
+
+[narration]
+同样是申请二十四字节，第一次可能建缓存、找池子，第二次却只取一个指针。释放后地址还在，账本却换了主人。到底是谁复用这块内存？这一集沿着同一个指针，把分配和归还都走完。
+
+---
+
+## 3 同一个地址三种问题
+
+[visual: layers title="先分清存储、查找与并发"]
+字节在哪里：chunk 与 heap
+怎样找到空闲：bin 索引
+谁协调共享：arena
+谁避开共享：线程本地 tcache
+
+[narration]
+问题不在于背出四个名词，而在于分清四种责任。内存块要带着尺寸，空闲块要能快速找到，共享池要协调并发，常用块还要绕开共享锁。少一层都会把成本推给另一层。我们先预测这些角色，再用三张图和真实源码核对，最后回到二十四字节这笔交易。
+
+---
+
+## 4 前置背景：两级内存分配
+
+[visual: text title="用户态切块，内核管理映射"]
+内核分配映射与页面
+malloc 管理字节块
+free 结束应用所有权
+
+[sidebar]
+请求字节 -> malloc
+映射页面 -> 内核
+可复用块 -> 分配器
+
+[example]
+比如一万个短命节点反复申请和释放，只要已有库存足够，很多操作可以完全在用户态完成；观察不到新映射，不等于程序没有分配对象。
+
+[narration]
+程序要二十四字节，内核却不按每个小对象开一间房。内核给进程建立虚拟映射，真正的物理页面还可能等到访问才分配。malloc在这些映射内部切出字节块，记录谁能用。若每次切块都重新系统调用，固定成本就会压过小对象本身。必须先有一层用户态库存。
+
+---
+
+## 5 手边盒与仓库的共同不变量
+
+[visual: analogy title="借用SLAB零件仓库理解本地缓存"]
+工人先取手边盒
+盒子空了才访问仓库
+零件实体仍在原存储中
+此处只类比本地缓存结构
+
+[story: slab-warehouse]
+
+[sidebar]
+本地盒 -> tcache
+共享库存 -> arena
+零件位置 -> chunk
+
+[narration]
+先借用一个熟悉的零件仓库。工人手边的小盒子对应本地缓存，共享货架对应下层池，订单对应分配请求。共同规则是：同一件零件只能交给一个使用者，盒子记录可用位置，不复制零件。画面借的是内核零件仓库；malloc的缓存按线程独占，尺寸也可变，不能把两者当成同一套实现。
+
+---
+
+## 6 先预测四个角色如何接力
+
+[visual: ascii title="malloc/free 主架构路径"]
+应用 malloc(size)                 应用 free(p)
+       |                              |
+       v                              v
+线程 tcache <----可缓存指针--------- chunk header
+       | miss                         | 满或不适用
+       v                              v
+arena: 锁 + fastbins + 普通 bins + top
+       | 现有库存不足                 | 满足回收条件
+       v                              v
+内核映射: brk / mmap             trim / munmap
+
+[sidebar]
+本地命中 -> 快返回
+共享池 -> 搜索与切分
+映射不足 -> 内核
+
+[narration]
+带着仓库直觉，我们可以先预测两条路线。申请先问本地缓存，落空才进共享池；归还先恢复块的身份，可缓存时留在本地，不适用才回池。共享池还有一块末端余量，用完才申请新映射。这里每个箭头都有条件，尤其不是所有释放都进共享锁，也不是每次申请都会走到内核。
+
+---
+
+## 7 四件事骨架鸟瞰
+
+[visual: html_slide image="pics/03-overview.png" title="四件事骨架鸟瞰"]
+
+
+[step: auto]
+scroll auto
+
+[narration]
+先从上方看：每个线程有自己的缓存，多个线程又可以挂在同一个分配池上，这是两个不同维度。向下看，池的控制字段管理锁和末端余量，索引指向空闲块，字节块则分布在实际映射里。图中分层表示职责与指针索引，没有复制实际字节。下面所有细节都只是在展开这张地图。
+
+---
+
+## 8 chunk真身：字段不是额外对象
+
+[visual: code_explain lang=c title="chunk真身：字段不是额外对象（glibc2.34）"]
+struct malloc_chunk {
+
+  INTERNAL_SIZE_T      mchunk_prev_size;  /* Size of previous chunk (if free).  */
+  INTERNAL_SIZE_T      mchunk_size;       /* Size in bytes, including overhead. */
+
+  struct malloc_chunk* fd;         /* double links -- used only if free. */
+  struct malloc_chunk* bk;
+
+  /* Only used for large blocks: pointer to next larger size.  */
+  struct malloc_chunk* fd_nextsize; /* double links -- used only if free. */
+  struct malloc_chunk* bk_nextsize;
+};
+===HIGHLIGHT===
+lines=1-4
+前块尺寸只在前块空闲时有效
+本块尺寸包含内部开销
+低位保留状态标志
+释放时可恢复块边界
+===HIGHLIGHT===
+lines=6-12
+fd/bk：普通空闲链表
+大块另用大小索引指针
+空闲状态复用用户区
+在用时这些字段不能乱读
+
+[narration]
+既然释放接口只有指针，我们预计块边界附近必须留下可定位的尺寸信息。源码确认了前块尺寸和本块尺寸两个字段，但后面的链表指针只在空闲时有意义，它们复用用户区域。不能把整个结构体长度都算成每次分配固定开销。关键是不同状态对同一片字节有不同解释。
+
+---
+
+## 9 24字节为何常占32字节
+
+[visual: ascii title="LP64、16B对齐、无内存标记的普通chunk"]
+chunk 起点 +0    prev_size（前块空闲时有效）
+           +8    size | flags
+用户 p     +16   用户前16字节
+下一 chunk +32   下一块 prev_size / 可借8字节
+           +40   下一块 size | flags
+
+本块内部尺寸32B；申请24B可利用末尾共享字
+边界标签语义成立时才允许借用
+
+[sidebar]
+用户指针 -> 起点后16B
+内部尺寸 -> 32B
+下一块前尺寸 -> 条件借用
+
+[narration]
+二十四加十六，为什么没有变成四十八？在典型六十四位、十六字节对齐且没有内存标记的普通堆块里，本块在用时，下一块的前块尺寸字暂时不需要生效，这八字节可以借给应用。因此本块内部尺寸常是三十二字节。这个技巧依赖边界标签的状态；独立映射或启用内存标记时不能照搬。
+
+---
+
+## 10 request2size验证24到32
+
+[visual: code_explain lang=c title="request2size验证24到32（glibc2.34）"]
+#define request2size(req)                                         \
+  (((req) + SIZE_SZ + MALLOC_ALIGN_MASK < MINSIZE)  ?             \
+   MINSIZE :                                                      \
+   ((req) + SIZE_SZ + MALLOC_ALIGN_MASK) & ~MALLOC_ALIGN_MASK)
+===HIGHLIGHT===
+lines=1-2
+req：用户请求字节数
+SIZE_SZ：LP64下8B
+最小块保证空闲组织可用
+先比较再选择分支
+===HIGHLIGHT===
+lines=3-4
+MALLOC_ALIGN_MASK典型15
+24+8+15=47
+47向16B对齐得32
+内存标记另有前置调整
+
+[narration]
+现在去验证这个预测。宏增加的是一个尺寸字，再向上对齐，同时保证最小块能容纳空闲链表指针。把二十四代入，八字节尺寸字加十五字节对齐掩码，向下清掉低位，结果是三十二。入口还要检查溢出和内存标记，所以这个宏是一条计算规则，不是绕过合法性检查的通行证。
+
+---
+
+## 11 物理位置与索引归属
+
+[visual: html_slide image="pics/03-physical-vs-logical.png" title="物理位置与索引归属"]
+
+
+[step: auto]
+scroll auto
+
+[narration]
+上方沿地址顺序排着在用块和空闲块，这回答它们在哪里。下方按用途和尺寸挂出空闲索引，回答该怎样找到它们。B和D从应用归还后，地址并不会因为进了不同队列而搬家。在用的I不在这些空闲队列里。只要发生切分或合并，两幅视图就必须同步更新，不能只改链表不改边界。
+
+---
+
+## 12 索引变化并不等于搬动字节
+
+[visual: text title="一次归还，同时维护两套关系"]
+物理邻居按地址确定
+逻辑队列按用途确定
+合并必须同步边界与索引
+
+[sidebar]
+地址邻居 -> 物理视图
+桶链关系 -> 逻辑视图
+合并拆分 -> 同步更新
+
+[example]
+例如B旁边的C也被释放，并且两块已进入可合并状态，就可以组合成更大块。但若B还留在快速缓存里，C释放时不一定立即把它合起来。
+
+[narration]
+同一个块刚释放，可以先待在待分类队列，后来才被放入对应尺寸桶。变化的是查找入口，块的地址没有动。真正合并两个邻居时，尺寸边界才变化，还必须先撤掉旧索引，再挂好新索引。这个责任和数据库的数据、索引相似：加速访问不能创造第二份事实，更不能让两边各说各话。
+
+---
+
+## 13 四类bin按不同成本分工
+
+[visual: layers title="先按行为，再按尺寸"]
+fastbin：单链，延迟合并
+unsorted：双链，延迟分类
+smallbin：固定步长，等尺寸
+largebin：尺寸区间，有序查找
+
+[narration]
+一个大小索引还不够，因为释放后多久会复用，以及愿意为合并付多少成本，也会改变策略。所以先按行为分四类，再在需要的类别内部按尺寸分桶。快速小块减少立即维护，待分类队列延迟归位，固定小块直接定位，大块则用有限桶数换更精细的查找。这四类职责不同，不是四个依次必经的关卡。
+
+---
+
+## 14 fastbin：省的是立即合并
+
+[visual: text title="把小块维护成本移出热路径"]
+固定尺寸桶 + 单链LIFO
+释放通常不立即合并
+之后集中整理
+
+[sidebar]
+单链栈 -> 少改指针
+立即复用 -> 少做整理
+合并延迟 -> 碎片暂存
+
+[example]
+例如线程缓存已经满了，再归还一个三十二字节的块，可能进入快速桶。下一次匹配的小申请能拿走它，但更大的申请不能把这些零钱直接当成一块整钱。
+
+[narration]
+如果小块很快又要被同尺寸申请取走，刚释放就拆索引、改邻居、合并，再马上切开，维护动作可能白做。因此快速桶只把指针压到单链栈顶，保留暂不合并状态。多线程归还还需要原子操作，它并非线程独占。收益来自省掉立即整理，代价是更多小碎片等到后续合并时才恢复可用。
+
+---
+
+## 15 smallbin：等尺寸直接定位
+
+[visual: text title="双链表支持从中间撤下邻居"]
+每桶块尺寸相等
+LP64典型16B步长
+双链关系支持unlink
+
+[sidebar]
+等尺寸 -> 直接定位
+双向链接 -> 中间撤下
+尺寸范围 -> 依架构而变
+
+[example]
+比如需要一个内部尺寸八十字节的块，匹配桶里已有库存时可直接摘取。它属于固定尺寸索引，不意味着释放那一刻就直接进入这个桶。
+
+[narration]
+当请求落在小块范围，固定步长让尺寸直接对应桶号，桶内不必逐块比较大小。为什么要多一个反向指针？普通空闲块随时可能被物理邻居合并，必须从逻辑队列中间撤下来；双链表能在已有块指针时高效完成这件事。在本集版本与常见六十四位条件下，小块范围是内部尺寸小于一千零二十四字节。
+
+---
+
+## 16 largebin：桶数不能跟尺寸一起长
+
+[visual: text title="有限尺寸区间内再按大小组织"]
+尺寸范围越来越宽
+桶内按尺寸组织
+寻找够用且更接近的块
+
+[sidebar]
+宽尺寸区间 -> 限制桶数
+大小关系 -> 减少浪费
+搜索切分 -> 额外成本
+
+[example]
+例如申请需要一千六百字节，已有两千字节空闲块就可能被选中；剩余足够形成最小块时再切分，余量太小则随本块一起交付。
+
+[narration]
+如果所有大请求也每十六字节建一个桶，几兆字节就会需要大量桶头，空闲索引本身先膨胀。所以大块用分段尺寸范围组织，桶内再维护大小顺序和辅助链接，寻找够用而接近的块。范围并非简单的二次幂区间。它省的是索引规模，代价是查找、维护和必要切分更复杂，不保证每次都是常数工作量。
+
+---
+
+## 17 unsorted：先给新库存一次机会
+
+[visual: text title="双链待分类队列，而非另一种尺寸"]
+普通释放先处理可合并邻居
+结果常进入unsorted
+申请处理时复用或分类
+
+[sidebar]
+新释放块 -> 暂不分类
+可合并邻居 -> 先处理
+后续申请 -> 复用或归桶
+
+[example]
+例如刚归还的大块被放进待分类队列，后来的请求处理这条队列时，可能直接利用特殊余块分支，也可能把它归入大块桶后再参与查找。
+
+[narration]
+再看最容易混淆的一类。普通释放完成适用的相邻合并后，结果常先进待分类双链队列，先给后来的申请一次复用机会；没匹配上的块，再进入正式尺寸桶。这里延迟的是分类，不是所有合并。它也不是单链栈，不能把快速桶的后进先出解释搬过来，更不能断言每次申请都先查它。
+
+---
+
+## 18 arena字段为何分成两个数组
+
+[visual: code_explain lang=c title="arena字段为何分成两个数组（glibc2.34）"]
+struct malloc_state
+{
+  /* Serialize access.  */
+  __libc_lock_define (, mutex);
+
+  /* Flags (formerly in max_fast).  */
+  int flags;
+
+  /* Set if the fastbin chunks contain recently inserted free blocks.  */
+  /* Note this is a bool but not all targets support atomics on booleans.  */
+  int have_fastchunks;
+
+  /* Fastbins */
+  mfastbinptr fastbinsY[NFASTBINS];
+
+  /* Base of the topmost chunk -- not otherwise kept in a bin */
+  mchunkptr top;
+
+  /* The remainder from the most recent split of a small request */
+  mchunkptr last_remainder;
+
+  /* Normal bins packed as described above */
+  mchunkptr bins[NBINS * 2 - 2];
+===HIGHLIGHT===
+lines=1-11
+arena：共享库存控制状态
+内部锁不是pthread_mutex_t
+flags与have_fastchunks分职责
+勿凭简化图推硬编码偏移
+===HIGHLIGHT===
+lines=13-19
+fastbinsY：每桶一个头指针
+只需要单向链关系
+top：未切分末端余量
+last_remainder：最近余块
+===HIGHLIGHT===
+lines=21-23
+bins：普通双链表指针槽
+bin_at构造虚拟哨兵
+每个逻辑桶使用指针对
+实际C槽下标不同于桶号
+
+[narration]
+带着两种链表的区别翻源码：快速桶是一个头指针数组，普通桶则把双向哨兵需要的指针对打包。把它们硬塞进统一格式，要么每个快速桶白留一格反向指针，要么让同一数组前后采用不同解释。独立字段让表示和操作接口保持清楚；这才是看见两个数组时首先应检查的设计原因。
+
+---
+
+## 19 必要理由和派生收益分开
+
+[visual: text title="类型选择先于缓存布局推测"]
+不同表示 -> 分离字段
+紧凑布局 -> 热字段更集中
+缓存收益需测量验证
+
+[sidebar]
+单链与双链 -> 表示差异
+拆字段 -> 接口清晰
+缓存命中 -> 附带收益
+
+[example]
+评审两个字段能否合并时，先问它们是否具有相同操作和生命周期，再测访问局部性。不要先看到一个缓存优势，就把它写成唯一设计原因。
+
+[narration]
+字段独立后，快速桶头能紧凑排列，热点访问更可能复用缓存行，这是附带收益。不过只要把统一数组的热部分放在合适位置，也能获得局部性，所以局部性不能反过来证明必须拆成两个数组。实际缓存行共享还受编译布局、对齐、架构和访问分布影响，不能从一张示意图推出固定加速百分比。
+
+---
+
+## 20 线程缓存与共享池的详细关系
+
+[visual: html_slide image="pics/03-arena-hierarchy.png" title="线程缓存与共享池的详细关系"]
+
+
+[step: auto]
+scroll auto
+
+[narration]
+这张细图先看上部：线程独占自己的缓存，不是独占整座池。池各有索引与余量，一座池也可关联多个堆段。常见六十四位默认池数上限按核数乘八估算，这是经验折中，也可配置：池少会竞争，池多会保留更多库存。缓存块仍来自原池，甚至可来自多个池；跨线程归还不改变原归属，线程退出再清理本地缓存。
+
+---
+
+## 21 tcache命中先于arena获取
+
+[visual: code_explain lang=c title="tcache命中先于arena获取（glibc2.34）"]
+  size_t tbytes;
+  if (!checked_request2size (bytes, &tbytes))
+    {
+      __set_errno (ENOMEM);
+      return NULL;
+    }
+  size_t tc_idx = csize2tidx (tbytes);
+
+  MAYBE_INIT_TCACHE ();
+
+  DIAG_PUSH_NEEDS_COMMENT;
+  if (tc_idx < mp_.tcache_bins
+      && tcache
+      && tcache->counts[tc_idx] > 0)
+    {
+      victim = tcache_get (tc_idx);
+      return tag_new_usable (victim);
+    }
+  DIAG_POP_NEEDS_COMMENT;
+===HIGHLIGHT===
+lines=1-7
+先检查尺寸是否合法
+溢出则ENOMEM并返回NULL
+内部尺寸映射缓存桶号
+32B通常映射桶0
+===HIGHLIGHT===
+lines=9-14
+缓存未初始化时先初始化
+需桶号有效且缓存存在
+该桶计数大于零
+首次初始化不是免费
+===HIGHLIGHT===
+lines=15-19
+从当前线程缓存取指针
+返回用户可用地址
+稳定命中绕过arena_get
+不代表每次申请都命中
+
+[narration]
+现在验证我们对热路径的预测。入口先规范尺寸，得到线程缓存桶号；初始化需要时会付出额外成本，但缓存已经存在且桶非空，就直接取出并返回。共享池的获取出现在后面，因此稳定命中时无需获取池锁。命中率取决于负载，不能把某次测量写成所有程序都有的保证。
+
+---
+
+## 22 malloc24在缓存落空后如何继续
+
+[visual: timeline title="条件路径，不是固定五步"]
+T=0 [入口] 24B规范成内部32B
+T=1 [tcache] 命中返回；落空进入后续
+T=2 [arena] 多线程获取或复用分配池
+T=3 [_int_malloc] fastbin / 对应smallbin
+T=4 [后续搜索] unsorted与其他候选
+T=5 [top] 足够就切分；不足再sysmalloc
+
+[narration]
+如果三十二字节桶空了，才需要下层库存。多线程路径获取池并协调共享状态；单线程还有专门分支。小请求先有快速桶和对应小块桶的机会，再处理待分类队列及后续搜索，最后才考虑末端余量。源码还可能顺手补充线程缓存。这条条件路径已经修正了那种所有请求都按四类桶依次扫一遍的想象。
+
+---
+
+## 23 top切分也需要保留最小余块
+
+[visual: code_explain lang=c title="top切分也需要保留最小余块（glibc2.34）"]
+      victim = av->top;
+      size = chunksize (victim);
+
+      if (__glibc_unlikely (size > av->system_mem))
+        malloc_printerr ("malloc(): corrupted top size");
+
+      if ((unsigned long) (size) >= (unsigned long) (nb + MINSIZE))
+        {
+          remainder_size = size - nb;
+          remainder = chunk_at_offset (victim, nb);
+          av->top = remainder;
+          set_head (victim, nb | PREV_INUSE |
+                    (av != &main_arena ? NON_MAIN_ARENA : 0));
+          set_head (remainder, remainder_size | PREV_INUSE);
+
+          check_malloced_chunk (av, victim, nb);
+          void *p = chunk2mem (victim);
+          alloc_perturb (p, bytes);
+          return p;
+        }
+
+===HIGHLIGHT===
+lines=1-6
+victim是当前top
+读取内部尺寸
+尺寸不得超过池统计
+损坏时拒绝继续
+===HIGHLIGHT===
+lines=8-15
+必须留下至少MINSIZE
+本块取nb，余量取size-nb
+新top指向剩余块
+双方边界头都更新
+===HIGHLIGHT===
+lines=17-21
+检查结果状态
+chunk2mem返回用户指针
+必要时填充调试数据
+现有库存足够，无syscall
+
+[narration]
+池中没有更合适的块时，末端余量才出场。源码要求它不只装得下本次请求，还要留下一个最小块；否则就需要补充，而不是把它切到零。成功时更新末端指针，给借出的块和剩余块分别设置头信息，再返回用户地址。只要现有余量够，这次申请既不用新映射，也不必调用内核。
+
+---
+
+## 24 新映射的两个含义
+
+[visual: ascii title="扩展arena与独立mmap块不能混淆"]
+扩展库存                         独立大块映射
+--------------------             --------------------
+主arena常经brk扩展               sysmalloc按阈值等条件尝试
+其他arena常用mmap堆段            chunk带IS_MMAPPED标志
+里面继续切分很多chunk            归还该块可munmap
+chunk仍由arena管理               不作为普通arena空闲块
+
+[sidebar]
+arena扩容 -> 多块库存
+独立映射 -> 单块回收
+阈值策略 -> 允许变化
+
+[narration]
+现有库存不足才进入补充路径。主池通常用调整程序断点扩展，其他池常用映射堆段；这些映射里还会切出很多普通块。另一种映射专门服务独立大块，释放时可以单独撤掉。两者都可能用同一个系统调用，却具有不同归还语义。大请求也可能先复用已有库存，映射阈值还能随历史调整，绝不是超过固定数字就必然直奔内核。
+
+---
+
+## 25 free先恢复身份，再分派
+
+[visual: code_explain lang=c title="free先恢复身份，再分派（glibc2.34）"]
+  p = mem2chunk (mem);
+
+  if (chunk_is_mmapped (p))                       /* release mmapped memory. */
+    {
+      /* See if the dynamic brk/mmap threshold needs adjusting.
+	 Dumped fake mmapped chunks do not affect the threshold.  */
+      if (!mp_.no_dyn_threshold
+          && chunksize_nomask (p) > mp_.mmap_threshold
+          && chunksize_nomask (p) <= DEFAULT_MMAP_THRESHOLD_MAX)
+        {
+          mp_.mmap_threshold = chunksize (p);
+          mp_.trim_threshold = 2 * mp_.mmap_threshold;
+          LIBC_PROBE (memory_mallopt_free_dyn_thresholds, 2,
+                      mp_.mmap_threshold, mp_.trim_threshold);
+        }
+      munmap_chunk (p);
+    }
+===HIGHLIGHT===
+lines=1-4
+用户指针还原chunk
+检查IS_MMAPPED身份
+独立映射走专门分支
+不是所有mmap来源块都走此处
+===HIGHLIGHT===
+lines=5-13
+满足条件时提高动态阈值
+受上限和用户配置影响
+历史会改变后续分配策略
+128KiB只是典型初始值
+===HIGHLIGHT===
+lines=14-17
+独立映射由munmap_chunk处理
+不进入普通bin复用
+回收虚拟映射
+与arena扩容映射区分
+
+[narration]
+归还时先从用户指针恢复块边界，然后检查是否独立映射。如果是，就有机会更新动态阈值，再撤销映射。这里的标志不是说这段地址从来有没有经过映射系统调用，而是说当前块是否具备独立映射的回收身份。普通线程池里的块通常不具有这个身份，所以不能看到mmap这个词就推断每次释放都会撤映射。
+
+---
+
+## 26 普通free优先放入线程缓存
+
+[visual: code_explain lang=c title="普通free优先放入线程缓存（glibc2.34）"]
+	if (tcache->counts[tc_idx] < mp_.tcache_count)
+	  {
+	    tcache_put (p, tc_idx);
+	    return;
+	  }
+      }
+===HIGHLIGHT===
+lines=1-2
+前置：尺寸适用且缓存存在
+当前桶计数未达上限
+常见默认每桶7个
+这个值可以配置
+===HIGHLIGHT===
+lines=3-6
+tcache_put压入线程本地链表
+随后直接返回
+不立即与邻块合并
+应用所有权已经结束
+
+[narration]
+普通块沿自己的归属进入内部释放逻辑，但不要急着想象共享池锁。尺寸适用、当前线程缓存存在而且没满，就把指针放入缓存并返回；链表信息还会复用这块用户区域。到这一步，应用已经不能再访问它，分配器却刻意保留它。缓存满时通常转向下层，而不是每次立即清空整个缓存。
+
+---
+
+## 27 释放并不是一条线性状态链
+
+[visual: statemap title="此图展示普通可合并分支；缓存分支会暂存"]
+应用持有
+普通释放且不走缓存
+检查物理邻居
+合并并撤旧索引
+进入unsorted或并入top
+
+[narration]
+这条状态链只画普通可合并分支：恢复尺寸，检查前后物理邻居，必要时撤掉旧索引，合并后进待分类队列，或者并入末端余量。线程缓存和快速桶是旁路，常常暂时维持边界上的在用标记，推迟合并。后续集中整理才把快速桶里的碎片接回来。释放大块或末端余量积累到条件时，也可能自动尝试收缩。
+
+---
+
+## 28 RSS不降该看哪一层
+
+[visual: text title="复用、映射与物理驻留分开观察"]
+free 不保证RSS立即下降
+malloc_trim不只会收缩brk
+缓存、碎片与活对象一起看
+
+[sidebar]
+活对象 -> 应用持有
+空闲库存 -> 可复用
+RSS -> 物理驻留
+
+[example]
+在Linux上可以同时比较应用活对象、分配器统计、进程驻留和映射系统调用。若活对象持续上升先查生命周期；若它稳定而驻留上升，再检查线程数、缓存保留和碎片。不要只凭一次释放后的top读数判断。
+
+[narration]
+释放后驻留量不变，既不能直接判泄漏，也不能直接宣称一切正常。小块缓存保留指针，活对象夹住空闲块，都会阻止整段归还。主动整理会处理快速桶，也能对空闲块内部完整页面建议丢弃；主池末端才可能收缩断点。线程缓存未必被全部清空，页面、地址空间和分配器库存三个数字需要分开理解。
+
+---
+
+## 29 把malloc变成可迁移工程原则
+
+[visual: html_slide image="ep3-summary-card.png" title="把malloc变成可迁移工程原则"]
+
+
+[step: auto]
+scroll auto
+
+[narration]
+现在把二十四字节的旅程合起来：块内元数据恢复身份，空闲索引负责查找，线程缓存把常见操作移出共享路径，分配池协调剩下的竞争，映射接口只在库存或回收条件需要时出现。这个设计把系统调用、锁和整理工作摊薄了，代价是库存保留与延迟合并。评估分配器时，必须同时看热路径成本和长期内存占用。
+
+---
+
+## 下集回到设计诞生现场
+
+[visual: spotlight]
+本集就到这里，下集见
+Origin：三代人如何接力？
+
+[narration]
+本集到这里。下集回到设计起点，看三代人接力。如果有收获，欢迎一键三连。
+

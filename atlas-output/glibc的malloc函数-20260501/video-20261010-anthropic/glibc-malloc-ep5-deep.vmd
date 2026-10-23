@@ -1,0 +1,649 @@
+# 第 5 集 Deep 阶段 — 三次 malloc 如何走出不同路径
+
+[intro-line] 今天固定 glibc 二点三四的 malloc，沿真实源码追踪缓存、管理池和独立映射的条件分叉。
+
+## 1 Deep 阶段开场
+
+[visual: spotlight]
+现在我们钻进 Deep 阶段
+三次 malloc，为何走不同的路？
+
+[narration]
+同样八千字节，有时根本不进内核。第五集翻源码，找出路径分叉的真正条件。
+
+---
+
+## 2 大小相同也能有不同路径
+
+[visual: text title="大小相同也能有不同路径"]
+24 字节：缓存是否有货？
+8 KiB：现有空间够不够？
+200 KiB：最终是否独立映射？
+
+[sidebar]
+大小 -> 第一层条件
+库存 -> 当前状态
+阈值 -> 策略条件
+
+[example]
+一个线程先申请二十四字节再释放，下一次可能直接取回刚才那块。另一个线程第一次申请同样大小时缓存为空，就必须让底层补货。请求大小相同，经过的管理过程却不同。
+
+[narration]
+我们追的不是三个固定尺寸对应三条固定道路，而是同一入口怎样根据大小、缓存和 arena 状态分流。先预测一个基本事实：只要现有空闲空间能够满足请求，分配器就没有理由每次申请都进内核。源码会检验这个预测，也会修正原先对阈值的简单想象。
+
+---
+
+## 3 固定版本和职责地图
+
+[visual: layers title="本集固定 glibc 2.34"]
+应用调用：malloc / free
+入口分流：__libc_malloc / __libc_free
+本地缓存：tcache
+共享管理：arena / _int_malloc / _int_free
+补充与回收：sysmalloc / munmap_chunk
+系统接口：brk / mmap / munmap
+
+[narration]
+这次把版本固定为 glibc 二点三四，在常见六十四位、十六字节对齐且没有启用内存标记的条件下计算尺寸。真实实现有编译选项、线程状态和失败回退，不能把不同年代的函数拼成一份源码。先沿入口到返回走通，再用实验区分用户态复用和系统申请。
+
+---
+
+## 4 入口到系统的完整分叉
+
+[visual: ascii title="入口到系统的完整分叉"]
+malloc
+  └──> __libc_malloc
+        ├──> tcache 有货 ──> 直接返回
+        └──> arena ──> _int_malloc
+                         ├──> bin / top 可用 ──> 返回
+                         └──> sysmalloc
+                               ├──> 扩展管理堆
+                               └──> 独立 mmap
+free
+  └──> __libc_free
+        ├──> 独立映射 ──> munmap_chunk
+        └──> 原 arena ──> _int_free
+
+[sidebar]
+缓存 -> 快速复用
+管理池 -> 搜索与切分
+系统接口 -> 缺货后补充
+
+[narration]
+图上最关键的箭头是先在已有空间里找，找不到再补充。线程缓存命中能够提前返回；普通路径让 arena 管理空闲块和剩余空间；实在不够时才由系统相关代码尝试扩展或独立映射。释放先辨认块的来源，独立映射直接撤销，普通块仍交给所属管理池处理。
+
+---
+
+## 5 从零件工作台预测真实路径
+
+[visual: text title="从零件工作台预测真实路径"]
+手边盒：重复小件立即取用
+公共仓库：搜索现有库存
+外部采购：确实缺货再执行
+
+[sidebar]
+线程缓存 -> 手边盒
+arena -> 公共仓库
+sysmalloc -> 外部采购
+
+[example]
+师傅需要一个小零件，手边盒里有就拿；手边没有先问仓库库存；仓库确实没有才采购。同一个采购需求不意味着每次都要开车进货，这正对应同样大小的申请会因状态不同走不同路径。
+
+[narration]
+这个模型预测了两处提前返回：本地缓存中有块时，以及公共空间里有合适块时。共同条件是库存必须已经存在，不能把未来采购当成现有资源。类比到此为止，真实内存还要对齐、保存块头和维护邻接状态；下面逐行找这两条预测在代码中的落点。
+
+---
+
+## 6 尺寸正规化：24 字节变成 32
+
+[visual: code_explain lang=c title="尺寸正规化：24 字节变成 32" source="https://raw.githubusercontent.com/bminor/glibc/glibc-2.34/malloc/malloc.c" ref=glibc-2.34 symbols="request2size"]
+#define request2size(req)                                         \
+  (((req) + SIZE_SZ + MALLOC_ALIGN_MASK < MINSIZE)  ?             \
+   MINSIZE :                                                      \
+   ((req) + SIZE_SZ + MALLOC_ALIGN_MASK) & ~MALLOC_ALIGN_MASK)
+===HIGHLIGHT===
+lines=1-1
+request2size：正规化请求
+req 是应用需要的字节数
+常见六十四位 SIZE_SZ = 8
+不是每次机械加 16
+===HIGHLIGHT===
+lines=2-3
+先加长度字段与对齐余量
+小于 MINSIZE 时取最小块
+常见 MINSIZE = 32
+保护自由链表所需空间
+===HIGHLIGHT===
+lines=4-4
+掩码把结果向上对齐
+24 + 8 + 15 = 47
+对齐后为 32 字节
+用户区可复用后邻居的 prev_size
+
+[narration]
+源码修正了一个常见误算：用户指针前面虽然有两个字长的头部布局，普通块的净开销不等于每次简单加十六字节。在本集条件下，公式先加八字节和对齐余量，再向上对齐，所以二十四字节变成三十二。桶号以最小块三十二为起点，因此它对应零号桶。
+
+---
+
+## 7 入口先验证缓存，再考虑 arena
+
+[visual: code_explain lang=c title="入口先验证缓存，再考虑 arena" source="https://raw.githubusercontent.com/bminor/glibc/glibc-2.34/malloc/malloc.c" ref=glibc-2.34 symbols="__libc_malloc"]
+  /* int_free also calls request2size, be careful to not pad twice.  */
+  size_t tbytes;
+  if (!checked_request2size (bytes, &tbytes))
+    {
+      __set_errno (ENOMEM);
+      return NULL;
+    }
+  size_t tc_idx = csize2tidx (tbytes);
+
+  MAYBE_INIT_TCACHE ();
+
+  DIAG_PUSH_NEEDS_COMMENT;
+  if (tc_idx < mp_.tcache_bins
+      && tcache
+      && tcache->counts[tc_idx] > 0)
+    {
+      victim = tcache_get (tc_idx);
+      return tag_new_usable (victim);
+    }
+  DIAG_POP_NEEDS_COMMENT;
+#endif
+===HIGHLIGHT===
+lines=1-8
+入口先正规化尺寸
+过大的请求会失败
+设置 ENOMEM 并返回空指针
+不会把溢出当小请求
+===HIGHLIGHT===
+lines=9-12
+按正规化尺寸计算桶号
+线程缓存按需初始化
+首次初始化可能走底层
+冷启动不能等同热命中
+===HIGHLIGHT===
+lines=13-21
+桶号有效且计数大于零
+取出本地块后立即返回
+尚未进入 arena 获取过程
+验证预测：缓存能提前返回
+
+[narration]
+要找的证据是，缓存命中是否真的在共享管理之前返回。看入口里的三个条件：桶号在范围内、当前线程有缓存、对应计数大于零。满足才取块返回。因此第一次调用和热命中要分开，初始化与补货可能访问底层，但已经有货的命中分支跳过后面的 arena 获取过程。
+
+---
+
+## 8 tcache_get 真身：更新本地链表
+
+[visual: code_explain lang=c title="tcache_get 真身：更新本地链表" source="https://raw.githubusercontent.com/bminor/glibc/glibc-2.34/malloc/malloc.c" ref=glibc-2.34 symbols="tcache_get"]
+static __always_inline void *
+tcache_get (size_t tc_idx)
+{
+  tcache_entry *e = tcache->entries[tc_idx];
+  if (__glibc_unlikely (!aligned_OK (e)))
+    malloc_printerr ("malloc(): unaligned tcache chunk detected");
+  tcache->entries[tc_idx] = REVEAL_PTR (e->next);
+  --(tcache->counts[tc_idx]);
+  e->key = 0;
+  return (void *) e;
+}
+
+===HIGHLIGHT===
+lines=1-4
+从当前线程的桶头取块
+tc_idx 是已验证的桶号
+不再扫描共享 bin
+入口负责确认桶有货
+===HIGHLIGHT===
+lines=5-7
+检查块地址对齐
+解码 next 并移动桶头
+链表状态由本线程维护
+指针保护不是应用鉴权
+===HIGHLIGHT===
+lines=8-12
+桶计数减一
+清除缓存标记 key
+返回可用数据地址
+这不是新一次系统申请
+
+[narration]
+短路径的工作现在很具体了：拿当前桶头，检查对齐，更新下一节点，减去计数，清掉缓存标记，再返回地址。我们看到的是少访问一组共享状态，而不是什么都不做。这也解释了为何不能给它宣称一个固定纳秒数：缓存是否热、处理器和测量方法，都会影响最终耗时。
+
+---
+
+## 9 tcache_put 真身：归还到释放线程
+
+[visual: code_explain lang=c title="tcache_put 真身：归还到释放线程" source="https://raw.githubusercontent.com/bminor/glibc/glibc-2.34/malloc/malloc.c" ref=glibc-2.34 symbols="tcache_put"]
+static __always_inline void
+tcache_put (mchunkptr chunk, size_t tc_idx)
+{
+  tcache_entry *e = (tcache_entry *) chunk2mem (chunk);
+
+  /* Mark this chunk as "in the tcache" so the test in _int_free will
+     detect a double free.  */
+  e->key = tcache_key;
+
+  e->next = PROTECT_PTR (&e->next, tcache->entries[tc_idx]);
+  tcache->entries[tc_idx] = e;
+  ++(tcache->counts[tc_idx]);
+}
+===HIGHLIGHT===
+lines=1-4
+块转回用户数据地址
+空闲数据区可放缓存节点
+chunk 物理归属没有改变
+释放线程持有自己的 tcache
+===HIGHLIGHT===
+lines=5-8
+key 记录进入缓存的状态
+用于触发进一步重复检查
+不代替完整所有权契约
+正确应用仍不能重复释放
+===HIGHLIGHT===
+lines=9-13
+保护 next 并执行头插
+新块变成当前桶头
+对应计数加一
+调用者已经检查容量
+
+[narration]
+释放小块时，用户已经不用的数据区域会承载缓存节点，头插和计数更新都落在当前释放线程的缓存上。注意原始 arena 归属不会因此改变，未来回到底层仍要认得原管理者。这个函数也不自己决定容量；外层已经检查桶能否接收，满了就继续走其他释放路径。
+
+---
+
+## 10 关闭缓存检验因果
+
+[visual: text title="关闭缓存检验因果"]
+同一演示，关闭 tcache 后重跑
+观察 _int_malloc 是否出现
+系统调用仍可能完全不增加
+
+[sidebar]
+本地捷径 -> 可关闭
+共享复用 -> 仍存在
+无系统调用 -> 不能独证命中
+
+[example]
+用线程缓存容量为零的环境变量启动演示，第二次二十四字节申请就不会从该缓存返回。它可能改从 fastbin 等现成库存获得空间，因此依然没有新的系统调用，这和“没有进内核”并不矛盾。
+
+[narration]
+这个反事实能把两种结论分开：没有系统调用只证明没有向系统申请新空间；命中本地缓存还需要函数路径或断点证据。开关移除的是一层捷径，不会让底下的管理网络消失。在多线程状态下，更多请求可能经过共享管理，是否变慢仍要按真实负载测量。
+
+---
+
+## 11 三路径全图
+
+[visual: html_slide image="pics/05-call-stack-three-paths.png" title="三种条件路径并列"]
+
+[step: auto]
+scroll auto
+
+[narration]
+三列放在一起就能读出差异：左列先有线程库存，中列复用 arena 的空闲块或末端余量，右列是管理空间不足后尝试独立映射。大块申请仍可能先经过 arena，在多线程路径中还可能持有它的锁。真正绕过普通释放管理的，是已经确认独立映射来源的那条释放分支。
+
+---
+
+## 12 8 KiB 的 arena 查找过程
+
+[visual: timeline title="先复用，缺货才扩展"]
+T=1 [入口] 8192 -> 8208，超出默认 tcache 范围
+T=2 [arena] 选择管理池并保护共享状态
+T=3 [_int_malloc] 检查 unsorted 与按大小索引
+T=4 [top] 末端余量足够则切分返回
+T=5 [sysmalloc] 缺货后尝试系统补充
+
+[narration]
+八千一百九十二字节正规化后是八千二百零八，默认线程缓存不覆盖它。进入底层后，仍先尝试现成块与剩余空间。只有这些路径满足不了，才进入系统补充。因此把八 KiB 叫作必然的 brk 路径会误导：主 arena 可扩展 program break，非主 arena 的管理堆还有自己的映射与扩展方式。
+
+---
+
+## 13 arena_get 真身：线程偏好不等于免锁
+
+[visual: code_explain lang=c title="arena_get 真身：线程偏好不等于免锁" source="https://raw.githubusercontent.com/bminor/glibc/glibc-2.34/malloc/arena.c" ref=glibc-2.34 symbols="arena_get,arena_lock,arena_for_chunk"]
+#define arena_get(ptr, size) do { \
+      ptr = thread_arena;						      \
+      arena_lock (ptr, size);						      \
+  } while (0)
+
+#define arena_lock(ptr, size) do {					      \
+      if (ptr)								      \
+        __libc_lock_lock (ptr->mutex);					      \
+      else								      \
+        ptr = arena_get2 ((size), NULL);				      \
+  } while (0)
+
+/* find the heap and corresponding arena for a given ptr */
+
+#define heap_for_ptr(ptr) \
+  ((heap_info *) ((unsigned long) (ptr) & ~(HEAP_MAX_SIZE - 1)))
+#define arena_for_chunk(ptr) \
+  (chunk_main_arena (ptr) ? &main_arena : heap_for_ptr (ptr)->ar_ptr)
+===HIGHLIGHT===
+lines=1-4
+从 thread_arena 取得偏好
+调用 arena_lock 保护状态
+偏好 arena 不是线程私有
+多个线程可能共享同一池
+===HIGHLIGHT===
+lines=5-11
+已有 arena 就获取它的锁
+否则通过 arena_get2 选择
+数据归属与同步一起管理
+单线程入口另有简化分支
+===HIGHLIGHT===
+lines=12-18
+heap_for_ptr 按对齐找堆头
+主块直接找到 main_arena
+非主块读 heap_info 的 ar_ptr
+支持跨线程释放时追溯归属
+
+[narration]
+线程记住一个偏好的管理池，可以减少每次重新选择的工作，却不等于独占这个池。宏里已有指针时照样获取对应的锁；没有时才选择或创建管理单位。下面的归属宏又确认另一个预测：从块地址和标志找回原池，而不是根据谁正在释放就随意更换物理空间的管理者。
+
+---
+
+## 14 top 真身：库存够就不调用系统
+
+[visual: code_explain lang=c title="top 真身：库存够就不调用系统" source="https://raw.githubusercontent.com/bminor/glibc/glibc-2.34/malloc/malloc.c" ref=glibc-2.34 symbols="_int_malloc"]
+      victim = av->top;
+      size = chunksize (victim);
+
+      if (__glibc_unlikely (size > av->system_mem))
+        malloc_printerr ("malloc(): corrupted top size");
+
+      if ((unsigned long) (size) >= (unsigned long) (nb + MINSIZE))
+        {
+          remainder_size = size - nb;
+          remainder = chunk_at_offset (victim, nb);
+          av->top = remainder;
+          set_head (victim, nb | PREV_INUSE |
+                    (av != &main_arena ? NON_MAIN_ARENA : 0));
+          set_head (remainder, remainder_size | PREV_INUSE);
+
+          check_malloced_chunk (av, victim, nb);
+          void *p = chunk2mem (victim);
+          alloc_perturb (p, bytes);
+          return p;
+        }
+
+===HIGHLIGHT===
+lines=1-6
+读取末端余量及大小
+对不合理的 top 大小报错
+仍属于 arena 管理状态
+不是直接操作系统页表
+===HIGHLIGHT===
+lines=7-13
+需保留至少 MINSIZE 余量
+把请求部分与剩余部分分开
+av->top 指向新的末端
+避免把管理尾部彻底耗尽
+===HIGHLIGHT===
+lines=14-20
+设置块头和原 arena 标志
+检查并返回用户地址
+普通库存满足了请求
+后面的 sysmalloc 无需执行
+
+[narration]
+第二个提前返回的预测也验证了。末端余量除了满足这次请求，还要留下可用的最小管理块；条件满足就分开两部分，更新末端指针和标志，直接返回。真实代码里还保留非主 arena 标志，说明切分没有丢失归属。这里没有新一次系统调用，八 KiB 也可以纯粹从库存中取得。
+
+---
+
+## 15 普通释放的状态变化
+
+[visual: statemap title="归还不一定撤销映射"]
+应用结束使用
+检查块头与所属 arena
+可缓存则暂存
+普通合并与空闲索引
+满足回收条件才归还部分页
+
+[narration]
+普通块归还后可能进入缓存，也可能在锁保护下与邻居合并，再挂入空闲索引；靠近末端时还有合并到末端和后续裁剪的机会。所以既不能把每次释放都说成归还系统，也不能说普通块永远不能归还。应用可复用、地址空间仍保留、物理页仍驻留，是三个需要分别观察的状态。
+
+---
+
+## 16 容器里该按哪层排查
+
+[visual: text title="容器里该按哪层排查"]
+应用：活对象与生命周期
+分配器：缓存、碎片与保留
+内核：页驻留与 cgroup 计费
+
+[sidebar]
+生命周期 -> 应用证据
+缓存保留 -> 分配器证据
+内存限制 -> 平台预算
+
+[example]
+容器内存接近限制时，先确认业务活对象是否持续增加，再看分配器是否保留了空闲空间，同时读 cgroup 的内存计费。单看进程常驻内存不下降，就认定泄漏，可能把缓存和碎片问题混在一起。
+
+[narration]
+合理的分层不是宣称 glibc 绝对不能感知系统，而是让掌握负载与预算的层决定调参策略。减少 arena 上限、调整裁剪或更换分配器，都可能改变吞吐和尾延迟。先建立可回退的小规模对照，再比较活对象、驻留页、分配等待和容器计费，才能判断问题落在哪层。
+
+---
+
+## 17 大块分叉报幕
+
+[visual: spotlight]
+200 KiB 超过阈值
+就一定直接 mmap 吗？
+
+[narration]
+超过初始阈值只是条件之一，已有空间和运行历史也会改变结果。
+
+---
+
+## 18 sysmalloc 真身：条件成立才尝试映射
+
+[visual: code_explain lang=c title="sysmalloc 真身：条件成立才尝试映射" source="https://raw.githubusercontent.com/bminor/glibc/glibc-2.34/malloc/malloc.c" ref=glibc-2.34 symbols="sysmalloc"]
+  /*
+     If have mmap, and the request size meets the mmap threshold, and
+     the system supports mmap, and there are few enough currently
+     allocated mmapped regions, try to directly map this request
+     rather than expanding top.
+   */
+
+  if (av == NULL
+      || ((unsigned long) (nb) >= (unsigned long) (mp_.mmap_threshold)
+	  && (mp_.n_mmaps < mp_.n_mmaps_max)))
+    {
+      char *mm;           /* return value from mmap call*/
+
+    try_mmap:
+      /*
+         Round up size to nearest page.  For mmapped chunks, the overhead
+         is one SIZE_SZ unit larger than for normal chunks, because there
+         is no following chunk whose prev_size field could be used.
+
+         See the front_misalign handling below, for glibc there is no
+         need for further alignments unless we have have high alignment.
+       */
+      if (MALLOC_ALIGNMENT == CHUNK_HDR_SZ)
+        size = ALIGN_UP (nb + SIZE_SZ, pagesize);
+      else
+        size = ALIGN_UP (nb + SIZE_SZ + MALLOC_ALIGN_MASK, pagesize);
+      tried_mmap = true;
+
+      /* Don't try if size wraps around 0 */
+      if ((unsigned long) (size) > (unsigned long) (nb))
+        {
+===HIGHLIGHT===
+lines=1-9
+到这里已经需要补充空间
+无 arena 时可尝试映射
+有 arena 时还检查阈值
+独立映射数量不能超预算
+===HIGHLIGHT===
+lines=10-20
+映射块不能借后块字段
+比普通块多考虑一个字长
+申请量按系统页向上对齐
+页大小由系统提供
+===HIGHLIGHT===
+lines=21-31
+标记本次已尝试 mmap
+尺寸溢出时不发起申请
+成功仍要后续设置来源标志
+失败会继续其他可用回退
+
+[narration]
+要找的是哪几个条件一起决定映射尝试。已有 arena 的情况不仅要求请求达到当前阈值，还检查映射数量预算，而且要先走到需要补充空间的位置。尺寸再向系统页边界对齐，防止溢出后才尝试。即使走到这里也可能失败，源码必须保留其他回退，不能把尺寸比较当成结果保证。
+
+---
+
+## 19 独立映射释放：入口分流与阈值历史
+
+[visual: code_explain lang=c title="独立映射释放：入口分流与阈值历史" source="https://raw.githubusercontent.com/bminor/glibc/glibc-2.34/malloc/malloc.c" ref=glibc-2.34 symbols="__libc_free"]
+  int err = errno;
+
+  p = mem2chunk (mem);
+
+  if (chunk_is_mmapped (p))                       /* release mmapped memory. */
+    {
+      /* See if the dynamic brk/mmap threshold needs adjusting.
+	 Dumped fake mmapped chunks do not affect the threshold.  */
+      if (!mp_.no_dyn_threshold
+          && chunksize_nomask (p) > mp_.mmap_threshold
+          && chunksize_nomask (p) <= DEFAULT_MMAP_THRESHOLD_MAX)
+        {
+          mp_.mmap_threshold = chunksize (p);
+          mp_.trim_threshold = 2 * mp_.mmap_threshold;
+          LIBC_PROBE (memory_mallopt_free_dyn_thresholds, 2,
+                      mp_.mmap_threshold, mp_.trim_threshold);
+        }
+      munmap_chunk (p);
+    }
+  else
+    {
+      MAYBE_INIT_TCACHE ();
+
+      /* Mark the chunk as belonging to the library again.  */
+      (void)tag_region (chunk2mem (p), memsize (p));
+
+      ar_ptr = arena_for_chunk (p);
+      _int_free (ar_ptr, p, 0);
+===HIGHLIGHT===
+lines=1-6
+用户指针转换到块头
+检查独立映射来源标志
+不是按当前请求大小猜来源
+来源决定最终释放道路
+===HIGHLIGHT===
+lines=7-17
+未固定阈值时允许调整
+合适的释放块可抬高阈值
+同时调整裁剪阈值
+运行历史会影响下次请求
+===HIGHLIGHT===
+lines=18-20
+调用 munmap_chunk
+独立映射走撤销映射
+绕过普通 _int_free
+不是说分配阶段从未持锁
+===HIGHLIGHT===
+lines=21-28
+普通块初始化缓存环境
+找回所属 arena
+再交给 _int_free
+空间归属仍决定底层更新
+
+[narration]
+真正的路由证据藏在释放入口：识别独立映射标志后进入撤销映射，否则找回 arena 再做普通释放。这个分支还会在允许动态调整时提高阈值，解释了相同大小的大块为何在不同运行历史下可能选择不同路径。注意绕过普通释放，不意味着先前的分配过程从未接触共享池或持锁。
+
+---
+
+## 20 映射、页驻留和阈值要分开
+
+[visual: text title="映射、页驻留和阈值要分开"]
+初始阈值：128 KiB，可调整
+申请映射：按页取整并含元数据
+触页后才观察实际驻留变化
+
+[sidebar]
+mmap -> 地址空间
+首次写入 -> 驻留页
+munmap -> 撤销映射
+
+[example]
+假设四 KiB 页，这次二百 KiB 的独立申请加上元数据后，映射会向上取整到二百零四 KiB。若成功得到独立映射，释放会撤销它；但申请后没有触碰的页，原先就未必全部驻留在物理内存中。
+
+[narration]
+精确数字必须带前提。这里的映射申请量来自页对齐计算，不是说应用多得到同样多的可用字节；常驻内存的变化又受触页和统计时点影响。把阈值提高或降低，改变的是尝试映射的策略，也改变后续回收与复用机会，不存在兼顾所有负载的万能阈值。
+
+---
+
+## 21 实践：编译与系统调用观察
+
+[visual: code_explain lang=bash title="Linux 上运行演示" evidence=practice practice_id=malloc-path-commands purpose="编译并追踪三种尺寸分配" expected="看到实际 brk mmap munmap 记录" boundary="系统调用不能独自证明 tcache 命中"]
+gcc -O0 -g -o demo src/05-demo.c
+strace -e trace=brk,mmap,munmap,write ./demo
+GLIBC_TUNABLES=glibc.malloc.tcache_count=0 ./demo
+===HIGHLIGHT===
+lines=1-1
+用 -O0 保留可追踪调用
+用 -g 提供调试信息
+在 Linux glibc 环境编译
+主机 macOS 不能验证同一实现
+===HIGHLIGHT===
+lines=2-2
+用 write 标记区分演示区间
+启动的 mmap 不属于每次请求
+实际记录可能不同于示意
+不要把整份 trace 截成固定结论
+===HIGHLIGHT===
+lines=3-3
+关闭线程缓存进行对照
+只是移除缓存捷径
+底层仍可复用现有块
+不保证新产生系统调用
+
+[narration]
+实践在 Linux 的 glibc 环境里执行，先确认运行版本再编译。你应看到实际 brk mmap munmap 记录，靠写入标记区分启动和演示阶段。系统调用不能独自证明 tcache 命中，所以保留缓存关闭对照。这里没有伪造本机实验结果；在 macOS 上运行默认 C 库，验证的并不是这份 glibc 实现。
+
+---
+
+## 22 调试器回答谁走了哪条路
+
+[visual: text title="调试器回答谁走了哪条路"]
+断点：__libc_malloc、_int_malloc
+补充：sysmalloc、munmap_chunk
+观察：bt 与实际参数
+
+[sidebar]
+断点 -> 入口证据
+调用栈 -> 路径证据
+版本符号 -> 可解释前提
+
+[example]
+在调试器里启用共享库未加载时的待定断点，给分配入口、底层管理和系统补充分别设断点。第二次小块申请若在入口返回而未到达底层，就有了比“没有系统调用”更强的路径证据。
+
+[narration]
+要用匹配版本的调试符号，必要时设置待定断点，并查看参数和调用栈。很多小函数被内联，不能拿栈帧数量当固定算法层数；未命中断点也可能是符号、优化或过滤条件有问题。用同一演示改变一个开关，再核对函数路径与系统记录，比背三条固定调用栈更可靠。
+
+---
+
+## 23 源码路径工程总结
+
+[visual: html_slide image="ep5-summary-card.png" title="根据条件解释实际路径"]
+
+[step: auto]
+scroll auto
+
+[narration]
+六个落点串起来了：固定版本和尺寸公式，核对缓存提前返回，检查 arena 的库存，再看缺货后怎样补充，按块来源解释释放，最后用追踪和对照验证。路径成本来自经过的工作，不能用未经测量的倍率替代证据。小块、中块与独立映射互相补位，完整回退保证通用接口能够工作。
+
+---
+
+## 24 下集预告
+
+[visual: spotlight]
+本集就到这里，下集见
+其他分配器把成本放在哪里？
+
+[narration]
+下集比较其他分配器，看看同一组约束为什么有不同答案。本集就到这里，下集见。
+
+---

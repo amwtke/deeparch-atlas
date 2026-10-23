@@ -1,0 +1,177 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 11.3
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Comparison 阶段开场过场",
+  "start": 11.3,
+  "end": 18.13
+ },
+ {
+  "idx": 3,
+  "type": "ascii",
+  "title": "先比较需求权重",
+  "start": 18.13,
+  "end": 42.1
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "六个观察维度",
+  "start": 42.1,
+  "end": 66.47
+ },
+ {
+  "idx": 5,
+  "type": "text",
+  "title": "默认方案也有明确取舍",
+  "start": 66.47,
+  "end": 113.43
+ },
+ {
+  "idx": 6,
+  "type": "facetime",
+  "title": "JasonEvans",
+  "start": 113.43,
+  "end": 135.8
+ },
+ {
+  "idx": 7,
+  "type": "ascii",
+  "title": "缓存所有权必须说清",
+  "start": 135.8,
+  "end": 161.9
+ },
+ {
+  "idx": 8,
+  "type": "timeline",
+  "title": "对象空闲与页归还之间",
+  "start": 161.9,
+  "end": 186.23
+ },
+ {
+  "idx": 9,
+  "type": "facetime",
+  "title": "SanjayGhemawat",
+  "start": 186.23,
+  "end": 211.0
+ },
+ {
+  "idx": 10,
+  "type": "ascii",
+  "title": "同名方案的不同前端",
+  "start": 211.0,
+  "end": 238.0
+ },
+ {
+  "idx": 11,
+  "type": "layers",
+  "title": "优化技法清单：本地缓存与批量补退",
+  "start": 238.0,
+  "end": 264.07
+ },
+ {
+  "idx": 12,
+  "type": "facetime",
+  "title": "DaanLeijen",
+  "start": 264.07,
+  "end": 287.93
+ },
+ {
+  "idx": 13,
+  "type": "ascii",
+  "title": "页本地链表与跨线程交接",
+  "start": 287.93,
+  "end": 314.4
+ },
+ {
+  "idx": 14,
+  "type": "text",
+  "title": "清退参数不是永恒默认",
+  "start": 314.4,
+  "end": 356.47
+ },
+ {
+  "idx": 15,
+  "type": "layers",
+  "title": "Go运行时三层分配",
+  "start": 356.47,
+  "end": 381.4
+ },
+ {
+  "idx": 16,
+  "type": "text",
+  "title": "GOMEMLIMIT的能力边界",
+  "start": 381.4,
+  "end": 423.9
+ },
+ {
+  "idx": 17,
+  "type": "ascii",
+  "title": "释放契约改变了什么",
+  "start": 423.9,
+  "end": 449.77
+ },
+ {
+  "idx": 18,
+  "type": "text",
+  "title": "契约与实现分成两层",
+  "start": 449.77,
+  "end": 493.73
+ },
+ {
+  "idx": 19,
+  "type": "html_slide",
+  "title": "两条独立的设计轴",
+  "start": 493.73,
+  "end": 518.67
+ },
+ {
+  "idx": 20,
+  "type": "ascii",
+  "title": "用负载作选择而非品牌排名",
+  "start": 518.67,
+  "end": 545.1
+ },
+ {
+  "idx": 21,
+  "type": "timeline",
+  "title": "四层内存账本",
+  "start": 545.1,
+  "end": 571.47
+ },
+ {
+  "idx": 22,
+  "type": "text",
+  "title": "跨技术栈类比：策略输入与机制分工",
+  "start": 571.47,
+  "end": 617.23
+ },
+ {
+  "idx": 23,
+  "type": "text",
+  "title": "元数据与归还是不同问题",
+  "start": 617.23,
+  "end": 661.7
+ },
+ {
+  "idx": 24,
+  "type": "html_slide",
+  "title": "选择的是约束组合",
+  "start": 661.7,
+  "end": 689.3
+ },
+ {
+  "idx": 25,
+  "type": "spotlight",
+  "title": "收束预告：从取舍走向方法",
+  "start": 689.3,
+  "end": 700.3
+ }
+]

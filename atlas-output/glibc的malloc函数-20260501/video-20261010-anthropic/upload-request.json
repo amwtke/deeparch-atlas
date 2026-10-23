@@ -1,0 +1,65 @@
+{
+  "platform": "bilibili",
+  "title": "glibc malloc 大电影 — 7 集深度解读",
+  "parts": [
+    {
+      "file": "glibc-malloc-ep0-toc.mp4",
+      "bytes": 13730665,
+      "sha256": "4cd44a85d8da3e7594e69c29b8cfbbdb6ebc29f31e320dc147250ccefe996743"
+    },
+    {
+      "file": "glibc-malloc-ep1-what.mp4",
+      "bytes": 24821225,
+      "sha256": "9ec59b4780738ff829619c15891bb1279408625b5432b9ad635303e7d734df92"
+    },
+    {
+      "file": "glibc-malloc-ep2-why.mp4",
+      "bytes": 30463868,
+      "sha256": "850743bb32b0d261c8277b33f5ece2027ada66f2af728dabae4d53057770398e"
+    },
+    {
+      "file": "glibc-malloc-ep3-how.mp4",
+      "bytes": 49111599,
+      "sha256": "d3f671711ae01c833d3f51c626b321bd4ac1f6d9a080ed599b95ef1ef5679665"
+    },
+    {
+      "file": "glibc-malloc-ep4-origin.mp4",
+      "bytes": 33077834,
+      "sha256": "fe208e637797511bb5b799b23c925342db428cf3fd0179494f5fa1a8021af7f8"
+    },
+    {
+      "file": "glibc-malloc-ep5-deep.mp4",
+      "bytes": 36820222,
+      "sha256": "f290e2087202f11718cc3732c7c664329c91c98dbd80d7b425e4f57115fb9abc"
+    },
+    {
+      "file": "glibc-malloc-ep6-comparison.mp4",
+      "bytes": 42972991,
+      "sha256": "3b85c920bf79dec7980734e36ebda7bb80791c212aae1a996c09b8cfc4df6630"
+    },
+    {
+      "file": "glibc-malloc-ep7-synthesis.mp4",
+      "bytes": 45444081,
+      "sha256": "732aa411d25826bc301b99ac8fe6ce31e8a9a7952ec07df5173e2194057df338"
+    }
+  ],
+  "cover": "cover-atlas.png",
+  "desc_file": "glibc-malloc-ep0-toc.desc.txt",
+  "tags": [
+    "glibc",
+    "malloc",
+    "Linux",
+    "内存分配",
+    "C语言",
+    "C++",
+    "ptmalloc",
+    "tcache",
+    "源码分析",
+    "系统编程"
+  ],
+  "multipart": true,
+  "season": null,
+  "charging": false,
+  "scheduled": false,
+  "authorized_at": "2026-10-10T04:09:43.457634+00:00"
+}

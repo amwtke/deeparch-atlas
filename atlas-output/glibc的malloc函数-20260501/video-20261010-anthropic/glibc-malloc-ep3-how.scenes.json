@@ -1,0 +1,219 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 11.47
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 How阶段开场",
+  "start": 11.47,
+  "end": 17.47
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "申请 24 字节",
+  "start": 17.47,
+  "end": 34.3
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "\"先分清存储、查找与并发\"",
+  "start": 34.3,
+  "end": 55.3
+ },
+ {
+  "idx": 5,
+  "type": "text",
+  "title": "\"用户态切块，内核管理映射\"",
+  "start": 55.3,
+  "end": 91.03
+ },
+ {
+  "idx": 6,
+  "type": "analogy",
+  "title": "\"借用SLAB零件仓库理解本地缓存\"",
+  "start": 91.03,
+  "end": 114.97
+ },
+ {
+  "idx": 7,
+  "type": "ascii",
+  "title": "\"malloc/free 主架构路径\"",
+  "start": 114.97,
+  "end": 138.67
+ },
+ {
+  "idx": 8,
+  "type": "html_slide",
+  "title": "\"四件事骨架鸟瞰\"",
+  "start": 138.67,
+  "end": 162.0
+ },
+ {
+  "idx": 9,
+  "type": "code",
+  "title": "\"chunk真身：字段不是额外对象（glibc2.34）\"",
+  "start": 162.0,
+  "end": 184.83
+ },
+ {
+  "idx": 10,
+  "type": "ascii",
+  "title": "\"LP64、16B对齐、无内存标记的普通chunk\"",
+  "start": 184.83,
+  "end": 208.63
+ },
+ {
+  "idx": 11,
+  "type": "code",
+  "title": "\"request2size验证24到32（glibc2.34）\"",
+  "start": 208.63,
+  "end": 232.87
+ },
+ {
+  "idx": 12,
+  "type": "html_slide",
+  "title": "\"物理位置与索引归属\"",
+  "start": 232.87,
+  "end": 258.4
+ },
+ {
+  "idx": 13,
+  "type": "text",
+  "title": "\"一次归还，同时维护两套关系\"",
+  "start": 258.4,
+  "end": 295.27
+ },
+ {
+  "idx": 14,
+  "type": "layers",
+  "title": "\"先按行为，再按尺寸\"",
+  "start": 295.27,
+  "end": 320.27
+ },
+ {
+  "idx": 15,
+  "type": "text",
+  "title": "\"把小块维护成本移出热路径\"",
+  "start": 320.27,
+  "end": 360.37
+ },
+ {
+  "idx": 16,
+  "type": "text",
+  "title": "\"双链表支持从中间撤下邻居\"",
+  "start": 360.37,
+  "end": 397.23
+ },
+ {
+  "idx": 17,
+  "type": "text",
+  "title": "\"有限尺寸区间内再按大小组织\"",
+  "start": 397.23,
+  "end": 435.97
+ },
+ {
+  "idx": 18,
+  "type": "text",
+  "title": "\"双链待分类队列，而非另一种尺寸\"",
+  "start": 435.97,
+  "end": 469.77
+ },
+ {
+  "idx": 19,
+  "type": "code",
+  "title": "\"arena字段为何分成两个数组（glibc2.34）\"",
+  "start": 469.77,
+  "end": 492.83
+ },
+ {
+  "idx": 20,
+  "type": "text",
+  "title": "\"类型选择先于缓存布局推测\"",
+  "start": 492.83,
+  "end": 530.97
+ },
+ {
+  "idx": 21,
+  "type": "html_slide",
+  "title": "\"线程缓存与共享池的详细关系\"",
+  "start": 530.97,
+  "end": 559.27
+ },
+ {
+  "idx": 22,
+  "type": "code",
+  "title": "\"tcache命中先于arena获取（glibc2.34）\"",
+  "start": 559.27,
+  "end": 583.5
+ },
+ {
+  "idx": 23,
+  "type": "timeline",
+  "title": "\"条件路径，不是固定五步\"",
+  "start": 583.5,
+  "end": 610.13
+ },
+ {
+  "idx": 24,
+  "type": "code",
+  "title": "\"top切分也需要保留最小余块（glibc2.34）\"",
+  "start": 610.13,
+  "end": 633.3
+ },
+ {
+  "idx": 25,
+  "type": "ascii",
+  "title": "\"扩展arena与独立mmap块不能混淆\"",
+  "start": 633.3,
+  "end": 661.67
+ },
+ {
+  "idx": 26,
+  "type": "code",
+  "title": "\"free先恢复身份，再分派（glibc2.34）\"",
+  "start": 661.67,
+  "end": 687.9
+ },
+ {
+  "idx": 27,
+  "type": "code",
+  "title": "\"普通free优先放入线程缓存（glibc2.34）\"",
+  "start": 687.9,
+  "end": 713.03
+ },
+ {
+  "idx": 28,
+  "type": "statemap",
+  "title": "\"此图展示普通可合并分支；缓存分支会暂存\"",
+  "start": 713.03,
+  "end": 739.67
+ },
+ {
+  "idx": 29,
+  "type": "text",
+  "title": "\"复用、映射与物理驻留分开观察\"",
+  "start": 739.67,
+  "end": 785.63
+ },
+ {
+  "idx": 30,
+  "type": "html_slide",
+  "title": "\"把malloc变成可迁移工程原则\"",
+  "start": 785.63,
+  "end": 812.63
+ },
+ {
+  "idx": 31,
+  "type": "spotlight",
+  "title": "下集回到设计诞生现场",
+  "start": 812.63,
+  "end": 820.5
+ }
+]

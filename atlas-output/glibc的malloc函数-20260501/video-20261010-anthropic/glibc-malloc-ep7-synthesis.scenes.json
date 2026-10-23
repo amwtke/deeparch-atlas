@@ -1,0 +1,177 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 11.33
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Synthesis 阶段开场过场",
+  "start": 11.33,
+  "end": 18.07
+ },
+ {
+  "idx": 3,
+  "type": "text",
+  "title": "约束的硬度来自前提",
+  "start": 18.07,
+  "end": 63.43
+ },
+ {
+  "idx": 4,
+  "type": "ascii",
+  "title": "资源、索引、池与本地旁路",
+  "start": 63.43,
+  "end": 88.03
+ },
+ {
+  "idx": 5,
+  "type": "timeline",
+  "title": "路径由状态与条件共同决定",
+  "start": 88.03,
+  "end": 113.73
+ },
+ {
+  "idx": 6,
+  "type": "ascii",
+  "title": "每项选择都写出反事实",
+  "start": 113.73,
+  "end": 141.8
+ },
+ {
+  "idx": 7,
+  "type": "text",
+  "title": "优化技法清单：缓存与延迟维护",
+  "start": 141.8,
+  "end": 186.57
+ },
+ {
+  "idx": 8,
+  "type": "html_slide",
+  "title": "五个维度看四个系统",
+  "start": 186.57,
+  "end": 212.27
+ },
+ {
+  "idx": 9,
+  "type": "layers",
+  "title": "看新系统的五个入口",
+  "start": 212.27,
+  "end": 237.03
+ },
+ {
+  "idx": 10,
+  "type": "ascii",
+  "title": "本地快路径相似，存活判断不同",
+  "start": 237.03,
+  "end": 263.7
+ },
+ {
+  "idx": 11,
+  "type": "text",
+  "title": "GC收回对象不等于进程RSS即时下降",
+  "start": 263.7,
+  "end": 306.7
+ },
+ {
+  "idx": 12,
+  "type": "ascii",
+  "title": "内核分配的单位与承载",
+  "start": 306.7,
+  "end": 333.23
+ },
+ {
+  "idx": 13,
+  "type": "text",
+  "title": "缓存页的生命周期比空闲块多一步",
+  "start": 333.23,
+  "end": 383.1
+ },
+ {
+  "idx": 14,
+  "type": "layers",
+  "title": "调度问题的角色映射",
+  "start": 383.1,
+  "end": 408.2
+ },
+ {
+  "idx": 15,
+  "type": "spotlight",
+  "title": "四条元规则，先记四个追问",
+  "start": 408.2,
+  "end": 412.63
+ },
+ {
+  "idx": 16,
+  "type": "text",
+  "title": "先核对时代与前提",
+  "start": 412.63,
+  "end": 459.97
+ },
+ {
+  "idx": 17,
+  "type": "text",
+  "title": "复合阻力要逐层拆",
+  "start": 459.97,
+  "end": 502.93
+ },
+ {
+  "idx": 18,
+  "type": "text",
+  "title": "责任由信息与失效后果决定",
+  "start": 502.93,
+  "end": 546.9
+ },
+ {
+  "idx": 19,
+  "type": "text",
+  "title": "没人做与做不到是两种解释",
+  "start": 546.9,
+  "end": 591.63
+ },
+ {
+  "idx": 20,
+  "type": "timeline",
+  "title": "分析任何技术系统的五步法",
+  "start": 591.63,
+  "end": 618.8
+ },
+ {
+  "idx": 21,
+  "type": "ascii",
+  "title": "先列候选，后测竞争与内存",
+  "start": 618.8,
+  "end": 645.67
+ },
+ {
+  "idx": 22,
+  "type": "text",
+  "title": "对照实验需要固定输入",
+  "start": 645.67,
+  "end": 691.63
+ },
+ {
+  "idx": 23,
+  "type": "text",
+  "title": "同一种现象，先找真正责任层",
+  "start": 691.63,
+  "end": 739.73
+ },
+ {
+  "idx": 24,
+  "type": "html_slide",
+  "title": "把问题结构带到下一个系统",
+  "start": 739.73,
+  "end": 766.87
+ },
+ {
+  "idx": 25,
+  "type": "spotlight",
+  "title": "系列收束",
+  "start": 766.87,
+  "end": 772.87
+ }
+]

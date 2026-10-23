@@ -4,3 +4,7 @@
 *.mp4
 *.mp4.uploaded
 .deeparch_video_tmp/
+atlas-output/**/logs/
+__pycache__/
+*.dSYM/
+atlas-output/**/src/demo-macos

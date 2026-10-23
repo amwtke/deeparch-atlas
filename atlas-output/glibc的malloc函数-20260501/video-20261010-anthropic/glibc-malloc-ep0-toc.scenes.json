@@ -1,0 +1,58 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 11.47
+ },
+ {
+  "idx": 2,
+  "type": "title",
+  "title": "glibc malloc",
+  "start": 11.47,
+  "end": 31.07
+ },
+ {
+  "idx": 3,
+  "type": "spotlight",
+  "title": "2 一行调用里的三层职责",
+  "start": 31.07,
+  "end": 39.7
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "七篇从现象走到工程判断",
+  "start": 39.7,
+  "end": 84.1
+ },
+ {
+  "idx": 5,
+  "type": "layers",
+  "title": "人物与可复查的贡献",
+  "start": 84.1,
+  "end": 120.77
+ },
+ {
+  "idx": 6,
+  "type": "spotlight",
+  "title": "5 七图打开同一条因果链",
+  "start": 120.77,
+  "end": 128.63
+ },
+ {
+  "idx": 7,
+  "type": "html_slide",
+  "title": "七篇学习路线",
+  "start": 128.63,
+  "end": 171.87
+ },
+ {
+  "idx": 8,
+  "type": "title",
+  "title": "进入第一篇",
+  "start": 171.87,
+  "end": 208.63
+ }
+]

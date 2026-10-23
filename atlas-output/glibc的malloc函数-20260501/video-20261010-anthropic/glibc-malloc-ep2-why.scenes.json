@@ -1,0 +1,149 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 11.77
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Why 阶段开场",
+  "start": 11.77,
+  "end": 19.57
+ },
+ {
+  "idx": 3,
+  "type": "ascii",
+  "title": "假设每次分配释放都要系统调用",
+  "start": 19.57,
+  "end": 43.63
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "三组压力共同决定设计",
+  "start": 43.63,
+  "end": 66.83
+ },
+ {
+  "idx": 5,
+  "type": "text",
+  "title": "前置背景：同一次请求的两种成本",
+  "start": 66.83,
+  "end": 101.27
+ },
+ {
+  "idx": 6,
+  "type": "analogy",
+  "title": "常用零件留在近处",
+  "start": 101.27,
+  "end": 123.03
+ },
+ {
+  "idx": 7,
+  "type": "ascii",
+  "title": "先预测实现需要保存什么",
+  "start": 123.03,
+  "end": 145.47
+ },
+ {
+  "idx": 8,
+  "type": "text",
+  "title": "高频请求必须减少重复工作",
+  "start": 145.47,
+  "end": 183.73
+ },
+ {
+  "idx": 9,
+  "type": "ascii",
+  "title": "brk 无法单独剪去中间块",
+  "start": 183.73,
+  "end": 207.63
+ },
+ {
+  "idx": 10,
+  "type": "ascii",
+  "title": "小块与映射粒度的错位",
+  "start": 207.63,
+  "end": 231.97
+ },
+ {
+  "idx": 11,
+  "type": "text",
+  "title": "释放接口要求能够恢复块信息",
+  "start": 231.97,
+  "end": 271.67
+ },
+ {
+  "idx": 12,
+  "type": "facetime",
+  "title": "\"Donald Knuth\"",
+  "start": 271.67,
+  "end": 294.53
+ },
+ {
+  "idx": 13,
+  "type": "ascii",
+  "title": "只有相邻空闲块才能直接合并",
+  "start": 294.53,
+  "end": 319.13
+ },
+ {
+  "idx": 14,
+  "type": "ascii",
+  "title": "并发正确性与竞争成本",
+  "start": 319.13,
+  "end": 342.3
+ },
+ {
+  "idx": 15,
+  "type": "layers",
+  "title": "glibc选择的一组组件",
+  "start": 342.3,
+  "end": 366.2
+ },
+ {
+  "idx": 16,
+  "type": "ascii",
+  "title": "约束与应对的对应关系",
+  "start": 366.2,
+  "end": 389.63
+ },
+ {
+  "idx": 17,
+  "type": "timeline",
+  "title": "第三集的验证路线",
+  "start": 389.63,
+  "end": 411.17
+ },
+ {
+  "idx": 18,
+  "type": "ascii",
+  "title": "相同思想，不同管理单位",
+  "start": 411.17,
+  "end": 435.73
+ },
+ {
+  "idx": 19,
+  "type": "text",
+  "title": "改变前提，就可能改变最优解",
+  "start": 435.73,
+  "end": 472.17
+ },
+ {
+  "idx": 20,
+  "type": "html_slide",
+  "title": "从压力到职责",
+  "start": 472.17,
+  "end": 495.53
+ },
+ {
+  "idx": 21,
+  "type": "spotlight",
+  "title": "下集预告",
+  "start": 495.53,
+  "end": 507.87
+ }
+]

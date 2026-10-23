@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "artifact": "glibc-malloc-ep0-toc.mp4",
+  "platforms": {
+    "bilibili": {
+      "remote_id": "BV1PSpY6tEBd",
+      "uploaded": true,
+      "collection": false,
+      "charging": false
+    }
+  }
+}

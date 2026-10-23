@@ -1,0 +1,128 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 10.8
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 What 阶段开场",
+  "start": 10.8,
+  "end": 18.07
+ },
+ {
+  "idx": 3,
+  "type": "ascii",
+  "title": "同一次释放，两层账本",
+  "start": 18.07,
+  "end": 39.4
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "沿着所有权找管理员",
+  "start": 39.4,
+  "end": 60.53
+ },
+ {
+  "idx": 5,
+  "type": "text",
+  "title": "前置背景：申请地址与触碰页面",
+  "start": 60.53,
+  "end": 95.2
+ },
+ {
+  "idx": 6,
+  "type": "text",
+  "title": "酒店前台的两本账",
+  "start": 95.2,
+  "end": 130.03
+ },
+ {
+  "idx": 7,
+  "type": "ascii",
+  "title": "用户态分配器站在哪里",
+  "start": 130.03,
+  "end": 154.5
+ },
+ {
+  "idx": 8,
+  "type": "timeline",
+  "title": "同尺寸请求的复用路径",
+  "start": 154.5,
+  "end": 177.37
+ },
+ {
+  "idx": 9,
+  "type": "analogy",
+  "title": "批量补货，局部取用",
+  "start": 177.37,
+  "end": 200.0
+ },
+ {
+  "idx": 10,
+  "type": "text",
+  "title": "先把基本词放对位置",
+  "start": 200.0,
+  "end": 235.37
+ },
+ {
+  "idx": 11,
+  "type": "ascii",
+  "title": "中间空闲不等于末端空闲",
+  "start": 235.37,
+  "end": 258.33
+ },
+ {
+  "idx": 12,
+  "type": "ascii",
+  "title": "两条接口具有不同边界",
+  "start": 258.33,
+  "end": 280.6
+ },
+ {
+  "idx": 13,
+  "type": "code",
+  "title": "glibc2.34释放分支",
+  "start": 280.6,
+  "end": 302.4
+ },
+ {
+  "idx": 14,
+  "type": "layers",
+  "title": "同一接口，多种实现",
+  "start": 302.4,
+  "end": 326.4
+ },
+ {
+  "idx": 15,
+  "type": "ascii",
+  "title": "每次映射与批量复用",
+  "start": 326.4,
+  "end": 349.53
+ },
+ {
+  "idx": 16,
+  "type": "text",
+  "title": "把诊断拆成三层证据",
+  "start": 349.53,
+  "end": 389.9
+ },
+ {
+  "idx": 17,
+  "type": "html_slide",
+  "title": "先区分归还给谁",
+  "start": 389.9,
+  "end": 411.73
+ },
+ {
+  "idx": 18,
+  "type": "spotlight",
+  "title": "下集预告",
+  "start": 411.73,
+  "end": 423.2
+ }
+]
