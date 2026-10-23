@@ -3,7 +3,7 @@
   "status": "submitted",
   "bvid": "BV116nt63EX8",
   "url": "https://www.bilibili.com/video/BV116nt63EX8",
-  "title": "Linux 文件 IO 大电影 — 7 集深度解读",
+  "title": "Linux IO 从 VFS 到 BIO 深度解读（83 分钟大电影）",
   "part_count": 8,
   "submitted_at": "2026-10-23T19:02:38+0800",
   "charging": false,
@@ -11,5 +11,8 @@
   "remote_verified": true,
   "aid": 117489870575544,
   "remote_state": -1,
-  "remote_state_desc": "复核中"
+  "remote_state_desc": "复核中",
+  "title_original": "Linux 文件 IO 大电影 — 7 集深度解读",
+  "cover": "cover-atlas-v3.png",
+  "edited_at": "2026-10-24"
 }

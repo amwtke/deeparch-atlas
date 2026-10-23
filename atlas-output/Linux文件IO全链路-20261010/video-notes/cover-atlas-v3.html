@@ -1,0 +1,38 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:NB;src:url(file:///Users/jin.xiao/Library/Fonts/NotoSansCJKsc-Black.otf)}
+@font-face{font-family:NM;src:url(file:///Users/jin.xiao/Library/Fonts/NotoSansCJKsc-Bold.otf)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1920px;height:1080px;overflow:hidden;background:#0d0f14;font-family:NM;position:relative}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:60px 60px}
+.photo{position:absolute;right:-40px;top:0;height:1080px;width:900px;background:url(file:///Users/jin.xiao/workshop/deeparch-atlas/atlas-output/Linux文件IO全链路-20261010/pics/person-linus-torvalds.jpg) center 20%/cover no-repeat;filter:saturate(.9) brightness(.82) contrast(1.05);
+ -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.55) 22%,#000 48%);}
+.vign{position:absolute;inset:0;background:linear-gradient(0deg,rgba(13,15,20,.95) 0%,rgba(13,15,20,0) 34%)}
+.logo{position:absolute;right:56px;top:44px;width:132px;height:132px;border-radius:50%;background:url(file:///Users/jin.xiao/workshop/deeparch-video/assets/bilibili-avatar.jpg) center/cover;box-shadow:0 0 0 4px #0d0f14,0 0 0 7px rgba(255,200,61,.85)}
+.ribbon{position:absolute;left:84px;top:78px;font-family:NB;font-size:52px;color:#ff5a4f;letter-spacing:4px}
+.t1{position:absolute;left:78px;top:160px;font-family:NB;font-size:190px;line-height:1;color:#ffc83d;letter-spacing:-2px;text-shadow:0 6px 0 #7a4a00,0 14px 40px rgba(0,0,0,.6)}
+.t2{position:absolute;left:84px;top:378px;font-family:NB;font-size:132px;line-height:1.05;color:#fff;text-shadow:0 5px 0 #3a3f4a,0 12px 34px rgba(0,0,0,.6)}
+.t2 em{font-style:normal;color:#ffc83d}
+.sub{position:absolute;left:88px;top:560px;font-family:NB;font-size:58px;color:#5fd3ff;letter-spacing:2px}
+.chain{position:absolute;left:70px;right:70px;bottom:78px;display:flex;align-items:center;gap:14px}
+.chip{flex:none;padding:20px 26px;border-radius:18px;font-family:NB;font-size:44px;color:#0d0f14;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+.chip small{display:block;font-family:NM;font-size:24px;opacity:.75;margin-top:4px;letter-spacing:1px}
+.arr{flex:none;font-family:NB;font-size:46px;color:#ffc83d}
+.c1{background:#f4f1ea}.c2{background:#ffe08a}.c3{background:#ffc83d}.c4{background:#ff9f43}.c5{background:#ff6b4f}.c6{background:#ff4f6d;color:#fff}
+.badge{position:absolute;left:88px;top:668px;display:flex;gap:18px}
+.badge span{font-family:NB;font-size:36px;color:#ffc83d;border:3px solid #ffc83d;border-radius:14px;padding:8px 20px;background:rgba(255,200,61,.08)}
+</style></head><body>
+<div class="grid"></div><div class="photo"></div><div class="vign"></div><div class="logo"></div>
+<div class="ribbon">83 分钟大电影 · 源码级硬核</div>
+<div class="t1">Linux IO</div>
+<div class="t2">从 <em>VFS</em> 到 <em>BIO</em></div>
+<div class="sub">深度解读 · 文件 → 文件系统 → 块层全链路</div>
+<div class="badge"><span>Linux 6.12 源码</span><span>7 集 · 一次讲透</span></div>
+<div class="chain">
+ <div class="chip c1">read()<small>系统调用</small></div><div class="arr">▶</div>
+ <div class="chip c2">VFS<small>函数表派活</small></div><div class="arr">▶</div>
+ <div class="chip c3">ext4<small>文件系统</small></div><div class="arr">▶</div>
+ <div class="chip c4">page cache<small>命中 &lt;1μs</small></div><div class="arr">▶</div>
+ <div class="chip c5">bio / blk-mq<small>块层</small></div><div class="arr">▶</div>
+ <div class="chip c6">NVMe<small>设备 80μs</small></div>
+</div>
+</body></html>
