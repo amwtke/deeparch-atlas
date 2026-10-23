@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" width="1200" height="780" font-family="JetBrains Mono, Consolas, monospace">
+<rect width="1200" height="780" fill="#0a0c10"/>
+<text x="600" y="30" fill="#e0e6f0" font-size="18" font-weight="bold" text-anchor="middle">电梯算法:同一批请求,四种派发顺序,磁头走的路差 3 倍</text>
+<text x="600" y="52" fill="#9aa4b2" font-size="12" text-anchor="middle">磁头在柱面 53;队列里依次到达:98, 183, 37, 122, 14, 124, 65, 67;盘面 0 ~ 199。横轴 = 柱面,每条泳道内自上而下 = 时间</text>
+<line x1="300.0" y1="100" x2="1096.0" y2="100" stroke="#6a7280" stroke-width="1.5"/>
+<text x="300.0" y="90" fill="#9aa4b2" font-size="10" text-anchor="middle">0</text><text x="1096.0" y="90" fill="#9aa4b2" font-size="10" text-anchor="middle">199</text>
+<line x1="356.0" y1="94" x2="356.0" y2="106" stroke="#c08040" stroke-width="2"/>
+<line x1="448.0" y1="94" x2="448.0" y2="106" stroke="#c08040" stroke-width="2"/>
+<line x1="560.0" y1="94" x2="560.0" y2="106" stroke="#c08040" stroke-width="2"/>
+<line x1="568.0" y1="94" x2="568.0" y2="106" stroke="#c08040" stroke-width="2"/>
+<line x1="692.0" y1="94" x2="692.0" y2="106" stroke="#c08040" stroke-width="2"/>
+<line x1="788.0" y1="94" x2="788.0" y2="106" stroke="#c08040" stroke-width="2"/>
+<line x1="796.0" y1="94" x2="796.0" y2="106" stroke="#c08040" stroke-width="2"/>
+<line x1="1032.0" y1="94" x2="1032.0" y2="106" stroke="#c08040" stroke-width="2"/>
+<text x="356.0" y="120" fill="#ffaa55" font-size="10" text-anchor="middle">14</text>
+<text x="448.0" y="120" fill="#ffaa55" font-size="10" text-anchor="middle">37</text>
+<text x="554.0" y="120" fill="#ffaa55" font-size="10" text-anchor="middle">65</text>
+<text x="576.0" y="120" fill="#ffaa55" font-size="10" text-anchor="middle">67</text>
+<text x="692.0" y="120" fill="#ffaa55" font-size="10" text-anchor="middle">98</text>
+<text x="781.0" y="120" fill="#ffaa55" font-size="10" text-anchor="middle">122</text>
+<text x="805.0" y="120" fill="#ffaa55" font-size="10" text-anchor="middle">124</text>
+<text x="1032.0" y="120" fill="#ffaa55" font-size="10" text-anchor="middle">183</text>
+<line x1="512.0" y1="88" x2="512.0" y2="112" stroke="#40c060" stroke-width="3"/>
+<text x="512.0" y="84" fill="#88ff88" font-size="10" text-anchor="middle" font-weight="bold">磁头 53</text>
+<line x1="356.0" y1="130" x2="356.0" y2="630" stroke="#1c2330" stroke-width="1"/>
+<line x1="448.0" y1="130" x2="448.0" y2="630" stroke="#1c2330" stroke-width="1"/>
+<line x1="560.0" y1="130" x2="560.0" y2="630" stroke="#1c2330" stroke-width="1"/>
+<line x1="568.0" y1="130" x2="568.0" y2="630" stroke="#1c2330" stroke-width="1"/>
+<line x1="692.0" y1="130" x2="692.0" y2="630" stroke="#1c2330" stroke-width="1"/>
+<line x1="788.0" y1="130" x2="788.0" y2="630" stroke="#1c2330" stroke-width="1"/>
+<line x1="796.0" y1="130" x2="796.0" y2="630" stroke="#1c2330" stroke-width="1"/>
+<line x1="1032.0" y1="130" x2="1032.0" y2="630" stroke="#1c2330" stroke-width="1"/>
+<line x1="512.0" y1="130" x2="512.0" y2="630" stroke="#1e3a2a" stroke-width="1"/>
+<rect x="40" y="140" width="1140" height="112" rx="6" fill="#12161c" stroke="#c04040" stroke-width="1"/>
+<text x="52" y="158" fill="#ff8888" font-size="12" font-weight="bold">FCFS 先来先服务</text>
+<text x="52" y="174" fill="#f0c0c0" font-size="10">按到达顺序做</text>
+<text x="52" y="240" fill="#ff8888" font-size="12" font-weight="bold">总移动 640</text>
+<polyline points="512.0,150 692.0,161 1032.0,172 448.0,183 788.0,194 356.0,205 796.0,216 560.0,227 568.0,238" fill="none" stroke="#c04040" stroke-width="2"/>
+<circle cx="512.0" cy="150" r="3" fill="#ff8888"/>
+<circle cx="692.0" cy="161" r="3" fill="#ff8888"/>
+<circle cx="1032.0" cy="172" r="3" fill="#ff8888"/>
+<circle cx="448.0" cy="183" r="3" fill="#ff8888"/>
+<circle cx="788.0" cy="194" r="3" fill="#ff8888"/>
+<circle cx="356.0" cy="205" r="3" fill="#ff8888"/>
+<circle cx="796.0" cy="216" r="3" fill="#ff8888"/>
+<circle cx="560.0" cy="227" r="3" fill="#ff8888"/>
+<circle cx="568.0" cy="238" r="3" fill="#ff8888"/>
+<rect x="40" y="260" width="1140" height="112" rx="6" fill="#12161c" stroke="#c08040" stroke-width="1"/>
+<text x="52" y="278" fill="#ffaa55" font-size="12" font-weight="bold">SSTF 最短寻道优先</text>
+<text x="52" y="294" fill="#e8d0b0" font-size="10">每次挑离磁头最近的</text>
+<text x="52" y="308" fill="#e8d0b0" font-size="10">隐患:远处的会饿死</text>
+<text x="52" y="360" fill="#ffaa55" font-size="12" font-weight="bold">总移动 236</text>
+<polyline points="512.0,270 560.0,281 568.0,292 448.0,303 356.0,314 692.0,325 788.0,336 796.0,347 1032.0,358" fill="none" stroke="#c08040" stroke-width="2"/>
+<circle cx="512.0" cy="270" r="3" fill="#ffaa55"/>
+<circle cx="560.0" cy="281" r="3" fill="#ffaa55"/>
+<circle cx="568.0" cy="292" r="3" fill="#ffaa55"/>
+<circle cx="448.0" cy="303" r="3" fill="#ffaa55"/>
+<circle cx="356.0" cy="314" r="3" fill="#ffaa55"/>
+<circle cx="692.0" cy="325" r="3" fill="#ffaa55"/>
+<circle cx="788.0" cy="336" r="3" fill="#ffaa55"/>
+<circle cx="796.0" cy="347" r="3" fill="#ffaa55"/>
+<circle cx="1032.0" cy="358" r="3" fill="#ffaa55"/>
+<rect x="40" y="380" width="1140" height="122" rx="6" fill="#12161c" stroke="#4080c0" stroke-width="1"/>
+<text x="52" y="398" fill="#88c0ff" font-size="12" font-weight="bold">SCAN 电梯</text>
+<text x="52" y="414" fill="#c8d4e4" font-size="10">先向 0 扫到底,折返向 199</text>
+<text x="52" y="428" fill="#c8d4e4" font-size="10">顺路做完;不会饿死,但</text>
+<text x="52" y="442" fill="#c8d4e4" font-size="10">刚扫过的位置要等一整圈</text>
+<text x="52" y="490" fill="#88c0ff" font-size="12" font-weight="bold">总移动 236</text>
+<polyline points="512.0,390 448.0,401 356.0,412 300.0,423 560.0,434 568.0,445 692.0,456 788.0,467 796.0,478 1032.0,489" fill="none" stroke="#4080c0" stroke-width="2"/>
+<circle cx="512.0" cy="390" r="3" fill="#88c0ff"/>
+<circle cx="448.0" cy="401" r="3" fill="#88c0ff"/>
+<circle cx="356.0" cy="412" r="3" fill="#88c0ff"/>
+<circle cx="300.0" cy="423" r="3" fill="#88c0ff"/>
+<circle cx="560.0" cy="434" r="3" fill="#88c0ff"/>
+<circle cx="568.0" cy="445" r="3" fill="#88c0ff"/>
+<circle cx="692.0" cy="456" r="3" fill="#88c0ff"/>
+<circle cx="788.0" cy="467" r="3" fill="#88c0ff"/>
+<circle cx="796.0" cy="478" r="3" fill="#88c0ff"/>
+<circle cx="1032.0" cy="489" r="3" fill="#88c0ff"/>
+<text x="308.0" y="448" fill="#6a7280" font-size="9">到边 0(LOOK 变体在 14 就折返:208)</text>
+<rect x="40" y="510" width="1140" height="112" rx="6" fill="#12161c" stroke="#8040c0" stroke-width="1"/>
+<text x="52" y="528" fill="#c088ff" font-size="12" font-weight="bold">C-LOOK 单向电梯</text>
+<text x="52" y="544" fill="#d8c8f0" font-size="10">只向一个方向做,做完</text>
+<text x="52" y="558" fill="#d8c8f0" font-size="10">最远的直接跳回最近的</text>
+<text x="52" y="572" fill="#d8c8f0" font-size="10">等待时间最均匀</text>
+<text x="52" y="610" fill="#c088ff" font-size="12" font-weight="bold">总移动 322</text>
+<polyline points="512.0,520 560.0,531 568.0,542 692.0,553 788.0,564 796.0,575 1032.0,586" fill="none" stroke="#8040c0" stroke-width="2"/>
+<line x1="1032.0" y1="586" x2="356.0" y2="597" stroke="#8040c0" stroke-width="2" stroke-dasharray="6,4"/>
+<polyline points="356.0,597 448.0,608" fill="none" stroke="#8040c0" stroke-width="2"/>
+<circle cx="512.0" cy="520" r="3" fill="#c088ff"/>
+<circle cx="560.0" cy="531" r="3" fill="#c088ff"/>
+<circle cx="568.0" cy="542" r="3" fill="#c088ff"/>
+<circle cx="692.0" cy="553" r="3" fill="#c088ff"/>
+<circle cx="788.0" cy="564" r="3" fill="#c088ff"/>
+<circle cx="796.0" cy="575" r="3" fill="#c088ff"/>
+<circle cx="1032.0" cy="586" r="3" fill="#c088ff"/>
+<circle cx="356.0" cy="597" r="3" fill="#c088ff"/>
+<circle cx="448.0" cy="608" r="3" fill="#c088ff"/>
+<text x="640" y="608" fill="#6a7280" font-size="9">空跑回最低位,不做事(Linux deadline 的派发就是这个形状)</text>
+<rect x="40" y="648" width="1140" height="90" rx="6" fill="#12161c" stroke="#40c060" stroke-width="1.5"/>
+<text x="52" y="668" fill="#88ff88" font-size="12" font-weight="bold">Linux 的做法(deadline / mq-deadline)= 单向电梯 + 截止时间</text>
+<text x="52" y="688" fill="#c8e4d0" font-size="10">两套索引同时挂着同一批 request:① 按扇区排序的红黑树(读 / 写各一棵)—— 平时从上次派发的位置往上取,取到头回最低位,就是 C-LOOK;</text>
+<text x="52" y="704" fill="#c8e4d0" font-size="10">② 按到达顺序的 FIFO(读 / 写各一条),每个 request 带截止时间(读 500 ms / 写 5 s)—— FIFO 头部到期了,就放下电梯先去做它。</text>
+<text x="52" y="720" fill="#c8e4d0" font-size="10">于是:绝大多数时间磁头在顺路扫(吞吐),任何请求最多等一个截止时间(不饿死)。NVMe 上默认换成 none:没有磁头,排序只剩 CPU 开销和延迟。</text>
+<text x="52" y="760" fill="#6a7280" font-size="10">数字来自教科书经典算例(Silberschatz, Operating System Concepts);C-SCAN(到边再跳)= 382。所有策略做的都是同一批 8 个请求,差别只在顺序。</text>
+</svg>

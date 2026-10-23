@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" width="1200" height="760" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="760" fill="#0a0c10"/>
+  <defs>
+    <marker id="ab" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4080c0"/></marker>
+    <marker id="ag" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#40c060"/></marker>
+    <marker id="ap" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8040c0"/></marker>
+  </defs>
+  <text x="600" y="30" fill="#e0e6f0" font-size="18" font-weight="bold" text-anchor="middle">从页到 bio:ext4_mpage_readpages 把 page cache 的 folio 变成块层的 bio</text>
+
+  <!-- unit conversion strip -->
+  <text x="40" y="60" fill="#9aa4b2" font-size="12">单位换算链(页号坐标 → 扇区坐标):</text>
+  <g font-size="12">
+    <rect x="40" y="70" width="150" height="40" rx="5" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
+    <text x="50" y="87" fill="#88ff88" font-weight="bold">字节偏移 8192</text><text x="50" y="103" fill="#c8e4d0" font-size="10">进程给的</text>
+    <line x1="190" y1="90" x2="228" y2="90" stroke="#4080c0" stroke-width="2" marker-end="url(#ab)"/><text x="196" y="124" fill="#9aa4b2" font-size="9">&gt;&gt; 12</text>
+    <rect x="230" y="70" width="150" height="40" rx="5" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+    <text x="240" y="87" fill="#ffaa55" font-weight="bold">页号 index = 2</text><text x="240" y="103" fill="#e8d0b0" font-size="10">XArray 的键</text>
+    <line x1="380" y1="90" x2="418" y2="90" stroke="#4080c0" stroke-width="2" marker-end="url(#ab)"/><text x="356" y="124" fill="#9aa4b2" font-size="9">&lt;&lt; (12 − blkbits)</text>
+    <rect x="420" y="70" width="160" height="40" rx="5" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+    <text x="430" y="87" fill="#ffaa55" font-weight="bold">文件逻辑块 lblk = 2</text><text x="430" y="103" fill="#e8d0b0" font-size="10">4 KiB 块:一页一块</text>
+    <line x1="580" y1="90" x2="618" y2="90" stroke="#4080c0" stroke-width="2" marker-end="url(#ab)"/><text x="548" y="124" fill="#9aa4b2" font-size="9">查 extent {0, 256, 81920}</text>
+    <rect x="620" y="70" width="170" height="40" rx="5" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+    <text x="630" y="87" fill="#c088ff" font-weight="bold">盘上物理块 pblk = 81922</text><text x="630" y="103" fill="#d8c8f0" font-size="10">81920 + (2 − 0)</text>
+    <line x1="790" y1="90" x2="828" y2="90" stroke="#4080c0" stroke-width="2" marker-end="url(#ab)"/><text x="800" y="124" fill="#9aa4b2" font-size="9">&lt;&lt; 3(× 8)</text>
+    <rect x="830" y="70" width="170" height="40" rx="5" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+    <text x="840" y="87" fill="#88c0ff" font-weight="bold">扇区 bi_sector = 655376</text><text x="840" y="103" fill="#c8d4e4" font-size="10">bio 永远按 512 B 计</text>
+    <line x1="1000" y1="90" x2="1038" y2="90" stroke="#4080c0" stroke-width="2" marker-end="url(#ab)"/>
+    <rect x="1040" y="70" width="120" height="40" rx="5" fill="#0f1a14" stroke="#40c060" stroke-width="1.5"/>
+    <text x="1050" y="87" fill="#88ff88" font-weight="bold">④ 再换 LBA</text><text x="1050" y="103" fill="#c8e4d0" font-size="10">4 KiB 盘 &gt;&gt; 3</text>
+  </g>
+
+  <!-- left: page cache -->
+  <rect x="40" y="140" width="330" height="430" rx="8" fill="#12161c" stroke="#c08040" stroke-width="1.5"/>
+  <text x="56" y="164" fill="#ffaa55" font-size="13" font-weight="bold">左手:page cache(页号坐标)</text>
+  <text x="56" y="184" fill="#e8d0b0" font-size="11">inode #1234 → i_mapping → i_pages(XArray)</text>
+  <text x="56" y="202" fill="#9aa4b2" font-size="10">readahead_control:页 2..33,共 32 页</text>
+  <text x="56" y="216" fill="#9aa4b2" font-size="10">已 filemap_add_folio:进 XArray、置 locked、挂 LRU</text>
+  <g font-size="11">
+    <rect x="56" y="232" width="120" height="34" rx="4" fill="#5f3a1e" stroke="#c08040"/><text x="64" y="246" fill="#ffaa55" font-weight="bold">folio 2</text><text x="64" y="260" fill="#e8d0b0" font-size="9">locked ¬uptodate</text>
+    <rect x="186" y="232" width="120" height="34" rx="4" fill="#5f3a1e" stroke="#c08040"/><text x="194" y="246" fill="#ffaa55" font-weight="bold">folio 3</text><text x="194" y="260" fill="#e8d0b0" font-size="9">locked ¬uptodate</text>
+    <rect x="56" y="276" width="120" height="34" rx="4" fill="#5f3a1e" stroke="#c08040"/><text x="64" y="290" fill="#ffaa55" font-weight="bold">folio 4</text><text x="64" y="304" fill="#e8d0b0" font-size="9">locked ¬uptodate</text>
+    <rect x="186" y="276" width="120" height="34" rx="4" fill="#5f3a1e" stroke="#c08040"/><text x="194" y="290" fill="#ffaa55" font-weight="bold">folio 5</text><text x="194" y="304" fill="#e8d0b0" font-size="9">locked ¬uptodate</text>
+    <text x="150" y="338" fill="#9aa4b2" font-size="14">… …</text>
+    <rect x="56" y="350" width="120" height="34" rx="4" fill="#5f3a1e" stroke="#c08040"/><text x="64" y="364" fill="#ffaa55" font-weight="bold">folio 32</text><text x="64" y="378" fill="#e8d0b0" font-size="9">locked ¬uptodate</text>
+    <rect x="186" y="350" width="120" height="34" rx="4" fill="#5f3a1e" stroke="#c08040"/><text x="194" y="364" fill="#ffaa55" font-weight="bold">folio 33</text><text x="194" y="378" fill="#e8d0b0" font-size="9">locked ¬uptodate</text>
+  </g>
+  <text x="56" y="416" fill="#9aa4b2" font-size="10">物理内存里这 32 页东一块西一块,</text>
+  <text x="56" y="430" fill="#9aa4b2" font-size="10">互不连续 —— 没关系,bio 按页记地址</text>
+  <text x="56" y="462" fill="#88ff88" font-size="11" font-weight="bold">进程睡在 folio 2 的等待队列上</text>
+  <text x="56" y="478" fill="#c8e4d0" font-size="10">(folio_wait_locked),等回程来解锁</text>
+  <rect x="56" y="500" width="300" height="56" rx="5" fill="#0f1a14" stroke="#40c060" stroke-width="1.5"/>
+  <text x="66" y="520" fill="#88ff88" font-size="11" font-weight="bold">回程:mpage_end_io(bio)</text>
+  <text x="66" y="536" fill="#c8e4d0" font-size="10">对 bio 里每个 folio:folio_mark_uptodate</text>
+  <text x="66" y="550" fill="#c8e4d0" font-size="10">+ folio_unlock → 唤醒睡在上面的进程</text>
+
+  <!-- middle: loop -->
+  <rect x="400" y="140" width="380" height="430" rx="8" fill="#12161c" stroke="#4080c0" stroke-width="1.5"/>
+  <text x="416" y="164" fill="#88c0ff" font-size="13" font-weight="bold">中间:ext4_mpage_readpages 的循环</text>
+  <text x="416" y="182" fill="#9aa4b2" font-size="10">对 rac 里每个 folio(readahead_folio 逐个取):</text>
+  <g font-size="11">
+    <rect x="416" y="194" width="348" height="40" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="426" y="210" fill="#88c0ff" font-weight="bold">1  lblk = folio-&gt;index &lt;&lt; (PAGE_SHIFT − blkbits)</text>
+    <text x="426" y="226" fill="#c8d4e4" font-size="10">页号坐标 → 文件块坐标</text>
+    <rect x="416" y="242" width="348" height="54" rx="4" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="426" y="258" fill="#c088ff" font-weight="bold">2  map 不覆盖 lblk?→ ext4_map_blocks(&amp;map)</text>
+    <text x="426" y="274" fill="#d8c8f0" font-size="10">先查内存 extent status 缓存,再走 extent 树</text>
+    <text x="426" y="288" fill="#d8c8f0" font-size="10">→ map{m_lblk=2, m_pblk=81922, m_len=254};洞 → 填零不发 IO</text>
+    <rect x="416" y="304" width="348" height="54" rx="4" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="426" y="320" fill="#ff8888" font-weight="bold">3  有 bio 且 bio_end_sector(bio) ≠ pblk &lt;&lt; 3 ?</text>
+    <text x="426" y="336" fill="#f0c0c0" font-size="10">盘上不连续(跨 extent)→ submit_bio(bio);bio = NULL</text>
+    <text x="426" y="350" fill="#f0c0c0" font-size="10">守的规矩:同一个 bio 里的页在盘上必须连续</text>
+    <rect x="416" y="366" width="348" height="54" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="426" y="382" fill="#88c0ff" font-weight="bold">4  无 bio → bio_alloc(bdev, n, READ|RAHEAD)</text>
+    <text x="426" y="398" fill="#c8d4e4" font-size="10">bi_iter.bi_sector = pblk &lt;&lt; 3 = 655376</text>
+    <text x="426" y="412" fill="#c8d4e4" font-size="10">bi_end_io = mpage_end_io(回程钩子现在就埋好)</text>
+    <rect x="416" y="428" width="348" height="40" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="426" y="444" fill="#88c0ff" font-weight="bold">5  bio_add_folio(bio, folio, 4096, 0)</text>
+    <text x="426" y="460" fill="#c8d4e4" font-size="10">装满(256 段)→ submit_bio,再开一个</text>
+    <text x="416" y="492" fill="#9aa4b2" font-size="10">循环结束:submit_bio(bio) → ③</text>
+    <text x="416" y="508" fill="#9aa4b2" font-size="10">外层包着 blk_start_plug / blk_finish_plug</text>
+    <text x="416" y="536" fill="#9aa4b2" font-size="10">本例:32 页同一 extent、盘上连续、不满 256 段</text>
+    <text x="416" y="550" fill="#9aa4b2" font-size="10">→ 只造 1 个 bio,128 KiB</text>
+  </g>
+
+  <!-- right: bio -->
+  <rect x="810" y="140" width="350" height="430" rx="8" fill="#12161c" stroke="#8040c0" stroke-width="1.5"/>
+  <text x="826" y="164" fill="#c088ff" font-size="13" font-weight="bold">右手:struct bio(扇区坐标)</text>
+  <g font-size="11">
+    <text x="826" y="188" fill="#c8d4e4">bi_bdev          /dev/nvme0n1p1</text>
+    <text x="826" y="206" fill="#c8d4e4">bi_opf           REQ_OP_READ | REQ_RAHEAD</text>
+    <text x="826" y="224" fill="#88c0ff" font-weight="bold">bi_iter.bi_sector   655376</text>
+    <text x="826" y="242" fill="#c8d4e4">bi_iter.bi_size     131072(32 × 4096)</text>
+    <text x="826" y="260" fill="#c8d4e4">bi_end_io        mpage_end_io</text>
+    <text x="826" y="284" fill="#c088ff" font-weight="bold">bi_io_vec[]  (page, len, offset)</text>
+    <rect x="826" y="294" width="318" height="22" rx="3" fill="#3a1e5f" stroke="#8040c0"/><text x="834" y="309" fill="#d8c8f0">[0]  folio 2,  4096, 0   ← 扇区 655376</text>
+    <rect x="826" y="320" width="318" height="22" rx="3" fill="#3a1e5f" stroke="#8040c0"/><text x="834" y="335" fill="#d8c8f0">[1]  folio 3,  4096, 0   ← 扇区 655384</text>
+    <rect x="826" y="346" width="318" height="22" rx="3" fill="#3a1e5f" stroke="#8040c0"/><text x="834" y="361" fill="#d8c8f0">[2]  folio 4,  4096, 0   ← 扇区 655392</text>
+    <text x="980" y="386" fill="#9aa4b2" font-size="14">… …</text>
+    <rect x="826" y="396" width="318" height="22" rx="3" fill="#3a1e5f" stroke="#8040c0"/><text x="834" y="411" fill="#d8c8f0">[31] folio 33, 4096, 0   ← 扇区 655624</text>
+    <text x="826" y="440" fill="#9aa4b2" font-size="10">只记一个起始扇区;后面的页靠"盘上连续"</text>
+    <text x="826" y="454" fill="#9aa4b2" font-size="10">依次对应。页的物理地址各自独立,DMA 按页取。</text>
+  </g>
+  <rect x="826" y="476" width="318" height="40" rx="5" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
+  <text x="836" y="493" fill="#88ff88" font-size="11" font-weight="bold">submit_bio(bio) → ③ 通用块层</text>
+  <text x="836" y="508" fill="#c8e4d0" font-size="10">从此只有扇区号和页,没有"文件"</text>
+
+  <!-- dashed links folio -> bvec -->
+
+  <!-- arrows between panels -->
+  <line x1="370" y1="300" x2="400" y2="300" stroke="#4080c0" stroke-width="2" marker-end="url(#ab)"/>
+  <line x1="780" y1="300" x2="810" y2="300" stroke="#8040c0" stroke-width="2" marker-end="url(#ap)"/>
+  <line x1="826" y1="528" x2="826" y2="540" stroke="#40c060" stroke-width="0"/>
+  <line x1="980" y1="516" x2="980" y2="600" stroke="#40c060" stroke-width="2" stroke-dasharray="6,4"/>
+  <line x1="980" y1="600" x2="206" y2="600" stroke="#40c060" stroke-width="2" stroke-dasharray="6,4"/>
+  <line x1="206" y1="600" x2="206" y2="560" stroke="#40c060" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#ag)"/>
+  <text x="520" y="594" fill="#88ff88" font-size="10">③④⑤ 走完之后,bio_endio 沿着埋好的钩子回来</text>
+
+  <!-- when multiple bios -->
+  <rect x="40" y="620" width="1120" height="70" rx="6" fill="#12161c" stroke="#6a7280" stroke-width="1"/>
+  <text x="56" y="642" fill="#e0e6f0" font-size="12" font-weight="bold">一批页什么时候会变成多个 bio:</text>
+  <text x="56" y="662" fill="#c8d4e4" font-size="11">① 跨 extent(文件在盘上不连续,第 3 步触发)   ② bio 装满 256 段(第 5 步触发)   ③ 中间有洞(洞页填零不发 IO,前后各一个 bio)</text>
+  <text x="56" y="680" fill="#9aa4b2" font-size="10">多个 bio 在 plug 里一起倒出;盘上相邻的到 ③ 还可能并成一个 request。写方向(ext4_bio_write_folio)用同一套规则,只是 bi_opf = WRITE、钩子 = ext4_end_bio。</text>
+
+  <!-- legend -->
+  <g font-size="10">
+    <rect x="40" y="712" width="12" height="12" fill="#5f3a1e" stroke="#c08040"/><text x="58" y="722" fill="#ffaa55">页号坐标的东西(folio / XArray)</text>
+    <rect x="280" y="712" width="12" height="12" fill="#3a1e5f" stroke="#8040c0"/><text x="298" y="722" fill="#c088ff">映射与 bio 的向量表</text>
+    <rect x="460" y="712" width="12" height="12" fill="#1e3a5f" stroke="#4080c0"/><text x="478" y="722" fill="#88c0ff">扇区坐标的东西 / 循环步骤</text>
+    <rect x="680" y="712" width="12" height="12" fill="#5f1e1e" stroke="#c04040"/><text x="698" y="722" fill="#ff8888">连续性检查(断 bio 的地方)</text>
+    <rect x="900" y="712" width="12" height="12" fill="#1e5f3a" stroke="#40c060"/><text x="918" y="722" fill="#88ff88">入口 / 出口 / 回程</text>
+  </g>
+</svg>

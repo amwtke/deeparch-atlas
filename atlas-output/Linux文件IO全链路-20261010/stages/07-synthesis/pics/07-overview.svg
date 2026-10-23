@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" width="1200" height="640" font-family="JetBrains Mono, Consolas, monospace">
+<rect width="1200" height="640" fill="#0a0c10"/>
+<text x="600" y="30" fill="#e0e6f0" font-size="18" font-weight="bold" text-anchor="middle">五根 → 十二叶 → 五层 → 十条洞察:推导链只有一个方向</text>
+<text x="600" y="50" fill="#9aa4b2" font-size="11" text-anchor="middle">左起:根约束 R1~R5 / 叶子约束 C1~C12 / 被逼出的五层与 page cache 旁路 / 十条必保洞察的落点;右下角 TCP 是同一条链另画一遍(§5.6)</text>
+
+<!-- column headers -->
+<text x="140" y="82" fill="#c088ff" font-size="12" font-weight="bold" text-anchor="middle">五根(R)</text>
+<text x="420" y="82" fill="#ffaa55" font-size="12" font-weight="bold" text-anchor="middle">十二叶(C)</text>
+<text x="700" y="82" fill="#88c0ff" font-size="12" font-weight="bold" text-anchor="middle">五层 + 旁路</text>
+<text x="1005" y="82" fill="#88ff88" font-size="12" font-weight="bold" text-anchor="middle">十条洞察(落点)</text>
+
+<!-- roots: purple -->
+<rect x="40" y="100" width="200" height="60" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="52" y="122" fill="#c088ff" font-size="12" font-weight="bold">R1·速度断崖</text>
+<text x="52" y="140" fill="#d8c8f0" font-size="10">设备≪CPU,盘≪内存,形状相反</text>
+<text x="52" y="153" fill="#9aa4b2" font-size="9">C2 C6 C9</text>
+
+<rect x="40" y="180" width="200" height="60" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="52" y="202" fill="#c088ff" font-size="12" font-weight="bold">R2·硬件多样</text>
+<text x="52" y="220" fill="#d8c8f0" font-size="10">接口厂商定,内核只能兼容</text>
+<text x="52" y="233" fill="#9aa4b2" font-size="9">C1 C4</text>
+
+<rect x="40" y="260" width="200" height="60" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="52" y="282" fill="#c088ff" font-size="12" font-weight="bold">R3·接口固定</text>
+<text x="52" y="300" fill="#d8c8f0" font-size="10">POSIX / 名字+流 固定,块物理变</text>
+<text x="52" y="313" fill="#9aa4b2" font-size="9">C8 C11</text>
+
+<rect x="40" y="340" width="200" height="60" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="52" y="362" fill="#c088ff" font-size="12" font-weight="bold">R4·多进程共享</text>
+<text x="52" y="380" fill="#d8c8f0" font-size="10">并发、互不可信、同文件多开</text>
+<text x="52" y="393" fill="#9aa4b2" font-size="9">C3 C5 C12</text>
+
+<rect x="40" y="420" width="200" height="60" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="52" y="442" fill="#c088ff" font-size="12" font-weight="bold">R5·活过断电</text>
+<text x="52" y="460" fill="#d8c8f0" font-size="10">跨块写不原子,缓存有窗口</text>
+<text x="52" y="473" fill="#9aa4b2" font-size="9">C7 C10</text>
+
+<!-- leaves: orange, 12 boxes, y = 92 + i*38, h=30 -->
+<rect x="320" y="92" width="200" height="30" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1"/>
+<text x="330" y="112" fill="#ffaa55" font-size="11">C1·厂商定接口</text>
+<rect x="320" y="130" width="200" height="30" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1"/>
+<text x="330" y="150" fill="#ffaa55" font-size="11">C2·设备慢且异步</text>
+<rect x="320" y="168" width="200" height="30" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1"/>
+<text x="330" y="188" fill="#ffaa55" font-size="11">C3·特权态门槛</text>
+<rect x="320" y="206" width="200" height="30" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1"/>
+<text x="330" y="226" fill="#ffaa55" font-size="11">C4·定长块</text>
+<rect x="320" y="244" width="200" height="30" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1"/>
+<text x="330" y="264" fill="#ffaa55" font-size="11">C5·多核并发</text>
+<rect x="320" y="282" width="200" height="30" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1"/>
+<text x="330" y="302" fill="#ffaa55" font-size="11">C6·介质形状相反</text>
+<rect x="320" y="320" width="200" height="30" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1"/>
+<text x="330" y="340" fill="#ffaa55" font-size="11">C7·跨块不原子</text>
+<rect x="320" y="358" width="200" height="30" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1"/>
+<text x="330" y="378" fill="#ffaa55" font-size="11">C8·流 vs 块</text>
+<rect x="320" y="396" width="200" height="30" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1"/>
+<text x="330" y="416" fill="#ffaa55" font-size="11">C9·速差+局部性</text>
+<rect x="320" y="434" width="200" height="30" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1"/>
+<text x="330" y="454" fill="#ffaa55" font-size="11">C10·内存装不下</text>
+<rect x="320" y="472" width="200" height="30" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1"/>
+<text x="330" y="492" fill="#ffaa55" font-size="11">C11·POSIX接口冻结</text>
+<rect x="320" y="510" width="200" height="30" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1"/>
+<text x="330" y="530" fill="#ffaa55" font-size="11">C12·同文件多开</text>
+
+<!-- roots -> leaves: dashed purple -->
+<g stroke="#8040c0" stroke-width="1" stroke-dasharray="6,4" fill="none">
+<line x1="240" y1="130" x2="320" y2="145"/>
+<line x1="240" y1="130" x2="320" y2="297"/>
+<line x1="240" y1="130" x2="320" y2="411"/>
+<line x1="240" y1="210" x2="320" y2="107"/>
+<line x1="240" y1="210" x2="320" y2="221"/>
+<line x1="240" y1="290" x2="320" y2="373"/>
+<line x1="240" y1="290" x2="320" y2="487"/>
+<line x1="240" y1="370" x2="320" y2="183"/>
+<line x1="240" y1="370" x2="320" y2="259"/>
+<line x1="240" y1="370" x2="320" y2="525"/>
+<line x1="240" y1="450" x2="320" y2="335"/>
+<line x1="240" y1="450" x2="320" y2="449"/>
+</g>
+
+<!-- layers: blue; page cache green; hardware = source -->
+<rect x="600" y="100" width="200" height="50" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="612" y="120" fill="#88c0ff" font-size="12" font-weight="bold">① VFS</text>
+<text x="612" y="138" fill="#c8d4e4" font-size="9">四对象 + 四张表;file/inode 分离</text>
+
+<rect x="600" y="170" width="200" height="50" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="612" y="190" fill="#88c0ff" font-size="12" font-weight="bold">② ext4</text>
+<text x="612" y="208" fill="#c8d4e4" font-size="9">extent 换坐标一次;jbd2 日志</text>
+
+<rect x="600" y="240" width="200" height="44" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5" stroke-dasharray="6,4"/>
+<text x="612" y="258" fill="#88ff88" font-size="12" font-weight="bold">page cache(旁路)</text>
+<text x="612" y="274" fill="#c8e4d0" font-size="9">(inode, 页号) XArray;预读;回写</text>
+
+<rect x="600" y="304" width="200" height="50" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="612" y="324" fill="#88c0ff" font-size="12" font-weight="bold">③ 块层</text>
+<text x="612" y="342" fill="#c8d4e4" font-size="9">bio→request;tag;blk-mq;调度器插槽</text>
+
+<rect x="600" y="374" width="200" height="50" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="612" y="394" fill="#88c0ff" font-size="12" font-weight="bold">④ nvme 驱动</text>
+<text x="612" y="412" fill="#c8d4e4" font-size="9">blk_mq_ops;SQ/CQ;门铃;MSI-X</text>
+
+<rect x="600" y="444" width="200" height="50" rx="6" fill="#12161c" stroke="#4080c0" stroke-width="1.5" stroke-dasharray="3,3"/>
+<text x="612" y="464" fill="#88c0ff" font-size="12" font-weight="bold">⑤ 硬件</text>
+<text x="612" y="482" fill="#9aa4b2" font-size="9">约束的来源(R1 R2 由它产生)</text>
+
+<!-- leaves -> layers: dashed orange -->
+<g stroke="#c08040" stroke-width="1" stroke-dasharray="6,4" fill="none">
+<line x1="520" y1="183" x2="600" y2="125"/>
+<line x1="520" y1="487" x2="600" y2="125"/>
+<line x1="520" y1="525" x2="600" y2="125"/>
+<line x1="520" y1="221" x2="600" y2="195"/>
+<line x1="520" y1="335" x2="600" y2="195"/>
+<line x1="520" y1="373" x2="600" y2="195"/>
+<line x1="520" y1="411" x2="600" y2="262"/>
+<line x1="520" y1="449" x2="600" y2="262"/>
+<line x1="520" y1="145" x2="600" y2="329"/>
+<line x1="520" y1="221" x2="600" y2="329"/>
+<line x1="520" y1="259" x2="600" y2="329"/>
+<line x1="520" y1="297" x2="600" y2="329"/>
+<line x1="520" y1="107" x2="600" y2="399"/>
+<line x1="520" y1="145" x2="600" y2="399"/>
+<line x1="520" y1="183" x2="600" y2="399"/>
+</g>
+
+<!-- layers -> insights: one bracket arrow -->
+<line x1="800" y1="300" x2="850" y2="300" stroke="#40c060" stroke-width="1.5" stroke-dasharray="6,4"/>
+<text x="825" y="292" fill="#88ff88" font-size="9" text-anchor="middle">落点</text>
+
+<!-- insights: green list, y = 112 + i*34 -->
+<rect x="850" y="96" width="310" height="372" rx="6" fill="#12161c" stroke="#40c060" stroke-width="1"/>
+<text x="862" y="116" fill="#88ff88" font-size="10">1 块层解耦 M×N → M+N</text><text x="1150" y="116" fill="#9aa4b2" font-size="9" text-anchor="end">③</text>
+<text x="862" y="150" fill="#88ff88" font-size="10">2 缓存键 (inode, 页号),站在翻译之前</text><text x="1150" y="150" fill="#9aa4b2" font-size="9" text-anchor="end">②·pc</text>
+<text x="862" y="184" fill="#88ff88" font-size="10">3 两个窄腰,共享同一块页</text><text x="1150" y="184" fill="#9aa4b2" font-size="9" text-anchor="end">①②·②③</text>
+<text x="862" y="218" fill="#88ff88" font-size="10">4 五根十二叶,每层至少两根</text><text x="1150" y="218" fill="#9aa4b2" font-size="9" text-anchor="end">约束</text>
+<text x="862" y="252" fill="#88ff88" font-size="10">5 一切皆文件是 VFS 太成功的副产品</text><text x="1150" y="252" fill="#9aa4b2" font-size="9" text-anchor="end">约束·①</text>
+<text x="862" y="286" fill="#88ff88" font-size="10">6 三件货物 file+inode / folio / bio→request</text><text x="1150" y="286" fill="#9aa4b2" font-size="9" text-anchor="end">层间</text>
+<text x="862" y="320" fill="#88ff88" font-size="10">7 换单位 vs 换坐标:位移位移查表位移位移</text><text x="1150" y="320" fill="#9aa4b2" font-size="9" text-anchor="end">②→③</text>
+<text x="862" y="354" fill="#88ff88" font-size="10">8 电梯四顺序 + deadline 双索引 + NVMe 无电梯</text><text x="1150" y="354" fill="#9aa4b2" font-size="9" text-anchor="end">③</text>
+<text x="862" y="388" fill="#88ff88" font-size="10">9 异步建在同步上 vs 同步建在异步上</text><text x="1150" y="388" fill="#9aa4b2" font-size="9" text-anchor="end">系统之外</text>
+<text x="862" y="422" fill="#88ff88" font-size="10">10 数据库拿在飞数:InnoDB 2010 / PG 18 2025</text><text x="1150" y="422" fill="#9aa4b2" font-size="9" text-anchor="end">系统之外</text>
+<text x="862" y="456" fill="#9aa4b2" font-size="9">各条的出处行号与反例见 §3;五元组表 §2 各占一行</text>
+
+<!-- TCP box: red -->
+<rect x="850" y="480" width="310" height="60" rx="6" fill="#5f1e1e" stroke="#c04040" stroke-width="1.5"/>
+<text x="862" y="500" fill="#ff8888" font-size="11" font-weight="bold">离题验证:TCP 拥塞控制(§5.6)</text>
+<text x="862" y="516" fill="#f0c8c8" font-size="9">T1~T6 六约束 → K1~K5 五候选 → 代价 → 现实 → 局部最优</text>
+<text x="862" y="531" fill="#f0c8c8" font-size="9">cwnd ↔ tag 位图;慢启动 ↔ 预读翻倍;可插拔 CC ↔ elevator</text>
+
+<!-- bottom conclusion -->
+<rect x="40" y="556" width="1120" height="36" rx="6" fill="#12161c" stroke="#8040c0" stroke-width="1"/>
+<text x="52" y="572" fill="#c088ff" font-size="10" font-weight="bold">读法:箭头只从左往右。层是结果不是前提("必须分五层"不是约束);page cache 不占层号但接的根最重;⑤ 不解约束,它产生约束。</text>
+<text x="52" y="586" fill="#9aa4b2" font-size="9">局部最优 = 约束一松形状就退(§2.2 九行):取消 C11 → NT 的 IRP;取消 C3 → SPDK;取消 C10 → tmpfs;取消 C6 → 写死调度器;取消 C12 → MS-DOS FCB;取消 C7 → ext2。</text>
+
+<!-- legend -->
+<rect x="40" y="612" width="12" height="12" fill="#3a1e5f" stroke="#8040c0"/><text x="58" y="622" fill="#c088ff" font-size="9">根约束 R</text>
+<rect x="140" y="612" width="12" height="12" fill="#5f3a1e" stroke="#c08040"/><text x="158" y="622" fill="#ffaa55" font-size="9">叶子约束 C</text>
+<rect x="250" y="612" width="12" height="12" fill="#1e3a5f" stroke="#4080c0"/><text x="268" y="622" fill="#88c0ff" font-size="9">被逼出的层</text>
+<rect x="360" y="612" width="12" height="12" fill="#1e5f3a" stroke="#40c060"/><text x="378" y="622" fill="#88ff88" font-size="9">旁路 / 洞察落点</text>
+<rect x="490" y="612" width="12" height="12" fill="#5f1e1e" stroke="#c04040"/><text x="508" y="622" fill="#ff8888" font-size="9">离题验证(另一领域)</text>
+<text x="1160" y="622" fill="#9aa4b2" font-size="9" text-anchor="end">虚线 = 逻辑推导;实线框 = 实体</text>
+</svg>

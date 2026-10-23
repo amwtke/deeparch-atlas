@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" width="1200" height="640" font-family="JetBrains Mono, Consolas, monospace">
+<rect width="1200" height="640" fill="#0a0c10"/>
+<text x="600" y="30" fill="#e0e6f0" font-size="18" font-weight="bold" text-anchor="middle">两套 I/O 栈并排:上三层差异大,下四层趋同</text>
+<text x="600" y="50" fill="#9aa4b2" font-size="11" text-anchor="middle">左 Linux 6.12(读 /mnt/nvme/notes.txt),右 Windows NT(读 D:\notes.txt);中间一列是这一行两边差多少</text>
+
+<!-- column headers -->
+<text x="300" y="80" fill="#88c0ff" font-size="13" font-weight="bold" text-anchor="middle">Linux</text>
+<text x="900" y="80" fill="#c088ff" font-size="13" font-weight="bold" text-anchor="middle">Windows NT</text>
+<text x="600" y="80" fill="#9aa4b2" font-size="11" text-anchor="middle">差异</text>
+
+<!-- highlight band for top 3 rows (接口 / ① / 缓存) -->
+<rect x="40" y="92" width="1120" height="196" rx="8" fill="#3a1e5f" fill-opacity="0.18" stroke="#8040c0" stroke-width="1" stroke-dasharray="6,4"/>
+<text x="52" y="106" fill="#c088ff" font-size="10">对照篇重点:上面三层</text>
+
+<!-- row 0: 接口 -->
+<rect x="80" y="112" width="440" height="48" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="92" y="130" fill="#88c0ff" font-size="12" font-weight="bold">接口:pread / epoll / io_uring</text>
+<text x="92" y="148" fill="#c8d4e4" font-size="10">就绪优先(2002);完成模型 2019 才有;共享环 0 ~ 1 次系统调用</text>
+<rect x="680" y="112" width="440" height="48" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="692" y="130" fill="#c088ff" font-size="12" font-weight="bold">接口:ReadFile + OVERLAPPED / IOCP / IoRing</text>
+<text x="692" y="148" fill="#d8c8f0" font-size="10">完成优先(1994);并发值 + LIFO 唤醒;共享环 2021 才有</text>
+<rect x="560" y="122" width="80" height="28" rx="4" fill="#5f1e1e" stroke="#c04040"/>
+<text x="600" y="141" fill="#ff8888" font-size="11" text-anchor="middle" font-weight="bold">大</text>
+
+<!-- row 1: ① VFS vs I/O 管理器 -->
+<rect x="80" y="172" width="440" height="48" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="92" y="190" fill="#88c0ff" font-size="12" font-weight="bold">① VFS:file_operations 函数调用链</text>
+<text x="92" y="208" fill="#c8d4e4" font-size="10">read_iter 可以睡;异步靠 ki_complete / IOCB_WAITQ / io-wq 事后拼接</text>
+<rect x="680" y="172" width="440" height="48" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="692" y="190" fill="#c088ff" font-size="12" font-weight="bold">I/O 管理器:IRP 包 + 每层一个栈位</text>
+<text x="692" y="208" fill="#d8c8f0" font-size="10">任何一层 IoMarkIrpPending;同步 = 内核替你等;过滤驱动随便插</text>
+<rect x="560" y="182" width="80" height="28" rx="4" fill="#5f1e1e" stroke="#c04040"/>
+<text x="600" y="201" fill="#ff8888" font-size="11" text-anchor="middle" font-weight="bold">最大</text>
+
+<!-- NT packet boundary: below API row -->
+<line x1="680" y1="166" x2="1120" y2="166" stroke="#ffaa55" stroke-width="2.5" stroke-dasharray="8,4"/>
+<text x="1118" y="163" fill="#ffaa55" font-size="10" text-anchor="end">包的边界:IRP 从这里开始</text>
+
+<!-- row 2: 缓存 -->
+<rect x="80" y="232" width="440" height="48" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
+<text x="92" y="250" fill="#88ff88" font-size="12" font-weight="bold">旁路 page cache:XArray (inode, 页号)</text>
+<text x="92" y="268" fill="#c8e4d0" font-size="10">文件系统显式查、显式造 bio;预读 4 → 16 → 32;比例阈值回写</text>
+<rect x="680" y="232" width="300" height="48" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
+<text x="692" y="250" fill="#88ff88" font-size="12" font-weight="bold">缓存管理器 Cc:256 KB 视图(VACB)</text>
+<text x="692" y="268" fill="#c8e4d0" font-size="10">memcpy 缺页 → Mm 发 paging I/O;lazy writer 每秒 1/8</text>
+<rect x="990" y="232" width="130" height="48" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+<text x="1055" y="250" fill="#ffaa55" font-size="11" font-weight="bold" text-anchor="middle">内存管理器 Mm</text>
+<text x="1055" y="268" fill="#e8d0b0" font-size="9" text-anchor="middle">section / 原型 PTE / 页</text>
+<rect x="560" y="242" width="80" height="28" rx="4" fill="#5f1e1e" stroke="#c04040"/>
+<text x="600" y="261" fill="#ff8888" font-size="11" text-anchor="middle" font-weight="bold">大</text>
+
+<!-- fast paths: dashed arrows from row0 to cache row, both sides -->
+<path d="M 60 136 C 30 136, 30 256, 80 256" fill="none" stroke="#40c060" stroke-width="1.5" stroke-dasharray="5,3"/>
+<text x="46" y="200" fill="#88ff88" font-size="9" transform="rotate(-90 46 200)" text-anchor="middle">IOCB_NOWAIT 命中直达</text>
+<path d="M 1140 136 C 1175 136, 1175 256, 1120 256" fill="none" stroke="#40c060" stroke-width="1.5" stroke-dasharray="5,3"/>
+<text x="1158" y="200" fill="#88ff88" font-size="9" transform="rotate(90 1158 200)" text-anchor="middle">Fast I/O 不造 IRP</text>
+
+<!-- row 3: ② 文件系统 -->
+<rect x="80" y="302" width="440" height="44" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1"/>
+<text x="92" y="320" fill="#88c0ff" font-size="12" font-weight="bold">② ext4 + jbd2</text>
+<text x="92" y="337" fill="#c8d4e4" font-size="10">extent 映射;WAL 三档 data=;环形日志</text>
+<rect x="680" y="302" width="440" height="44" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1"/>
+<text x="692" y="320" fill="#c088ff" font-size="12" font-weight="bold">NTFS + $LogFile</text>
+<text x="692" y="337" fill="#d8c8f0" font-size="10">MFT;WAL 只记元数据;重启区 + 环形日志区;LSN</text>
+<rect x="560" y="310" width="80" height="28" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+<text x="600" y="329" fill="#ffaa55" font-size="11" text-anchor="middle" font-weight="bold">中</text>
+
+<!-- Linux packet boundary: below fs row -->
+<line x1="80" y1="352" x2="520" y2="352" stroke="#ffaa55" stroke-width="2.5" stroke-dasharray="8,4"/>
+<text x="82" y="364" fill="#ffaa55" font-size="10">包的边界:bio 从这里开始</text>
+
+<!-- row 4: ③ 块层 -->
+<rect x="80" y="372" width="440" height="44" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1"/>
+<text x="92" y="390" fill="#88c0ff" font-size="12" font-weight="bold">③ 通用块层 blk-mq</text>
+<text x="92" y="407" fill="#c8d4e4" font-size="10">bio → request → tag;每核一队列;调度器可换;NVMe 原生,无翻译</text>
+<rect x="680" y="372" width="440" height="44" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1"/>
+<text x="692" y="390" fill="#c088ff" font-size="12" font-weight="bold">volmgr → partmgr → disk.sys → storport</text>
+<text x="692" y="407" fill="#d8c8f0" font-size="10">IRP → SRB(SCSI CDB)窄腰;2025 Server 才有原生 nvmedisk.sys</text>
+<rect x="560" y="380" width="80" height="28" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+<text x="600" y="399" fill="#ffaa55" font-size="11" text-anchor="middle" font-weight="bold">中</text>
+
+<!-- row 5: ④ 驱动 -->
+<rect x="80" y="432" width="440" height="44" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1"/>
+<text x="92" y="450" fill="#88c0ff" font-size="12" font-weight="bold">④ drivers/nvme</text>
+<text x="92" y="467" fill="#c8d4e4" font-size="10">每核 SQ/CQ;门铃;MSI-X;tag = CID</text>
+<rect x="680" y="432" width="440" height="44" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1"/>
+<text x="692" y="450" fill="#c088ff" font-size="12" font-weight="bold">stornvme.sys(miniport)</text>
+<text x="692" y="467" fill="#d8c8f0" font-size="10">SCSI → NVMe 翻译;其余由规范规定,形状同左</text>
+<rect x="560" y="440" width="80" height="28" rx="4" fill="#1e5f3a" stroke="#40c060"/>
+<text x="600" y="459" fill="#88ff88" font-size="11" text-anchor="middle" font-weight="bold">小</text>
+
+<!-- row 6: ⑤ 硬件 -->
+<rect x="80" y="492" width="440" height="40" rx="6" fill="#12161c" stroke="#6a7280" stroke-width="1"/>
+<text x="92" y="516" fill="#e0e6f0" font-size="12" font-weight="bold">⑤ NVMe SSD</text>
+<rect x="680" y="492" width="440" height="40" rx="6" fill="#12161c" stroke="#6a7280" stroke-width="1"/>
+<text x="692" y="516" fill="#e0e6f0" font-size="12" font-weight="bold">同一块 NVMe SSD</text>
+<rect x="560" y="498" width="80" height="28" rx="4" fill="#1e5f3a" stroke="#40c060"/>
+<text x="600" y="517" fill="#88ff88" font-size="11" text-anchor="middle" font-weight="bold">无</text>
+
+<!-- vertical flow arrows (both sides) -->
+<line x1="300" y1="160" x2="300" y2="172" stroke="#4080c0" stroke-width="1"/>
+<line x1="300" y1="220" x2="300" y2="232" stroke="#4080c0" stroke-width="1"/>
+<line x1="300" y1="280" x2="300" y2="302" stroke="#4080c0" stroke-width="1"/>
+<line x1="300" y1="346" x2="300" y2="372" stroke="#4080c0" stroke-width="1"/>
+<line x1="300" y1="416" x2="300" y2="432" stroke="#4080c0" stroke-width="1"/>
+<line x1="300" y1="476" x2="300" y2="492" stroke="#4080c0" stroke-width="1"/>
+<line x1="900" y1="160" x2="900" y2="172" stroke="#8040c0" stroke-width="1"/>
+<line x1="900" y1="220" x2="900" y2="232" stroke="#8040c0" stroke-width="1"/>
+<line x1="900" y1="280" x2="900" y2="302" stroke="#8040c0" stroke-width="1"/>
+<line x1="900" y1="346" x2="900" y2="372" stroke="#8040c0" stroke-width="1"/>
+<line x1="900" y1="416" x2="900" y2="432" stroke="#8040c0" stroke-width="1"/>
+<line x1="900" y1="476" x2="900" y2="492" stroke="#8040c0" stroke-width="1"/>
+
+<!-- bottom conclusion -->
+<rect x="40" y="548" width="1120" height="52" rx="6" fill="#12161c" stroke="#40c060" stroke-width="1.5"/>
+<text x="52" y="568" fill="#88ff88" font-size="11" font-weight="bold">读法:差异从上往下递减。上三层的不同全部能追到血统(VMS 的"发出去再通知" vs Unix 的"返回即有数据")和包的边界画在哪;</text>
+<text x="52" y="586" fill="#c8e4d0" font-size="10">② 以下硬件约束一样(C1 厂商定接口 / C4 定长块 / C6 介质形状相反 / C7 跨块不原子),解法也一样:日志、分层驱动、每核一队列、命令 ID。约束一样的地方形状就一样。</text>
+
+<!-- legend -->
+<rect x="40" y="612" width="12" height="12" fill="#1e3a5f" stroke="#4080c0"/><text x="58" y="622" fill="#88c0ff" font-size="9">Linux 层</text>
+<rect x="130" y="612" width="12" height="12" fill="#3a1e5f" stroke="#8040c0"/><text x="148" y="622" fill="#c088ff" font-size="9">NT 层</text>
+<rect x="210" y="612" width="12" height="12" fill="#1e5f3a" stroke="#40c060"/><text x="228" y="622" fill="#88ff88" font-size="9">缓存旁路 / 快路径 / 差异小</text>
+<rect x="400" y="612" width="12" height="12" fill="#5f3a1e" stroke="#c08040"/><text x="418" y="622" fill="#ffaa55" font-size="9">包的边界 / 差异中</text>
+<rect x="540" y="612" width="12" height="12" fill="#5f1e1e" stroke="#c04040"/><text x="558" y="622" fill="#ff8888" font-size="9">差异大</text>
+</svg>

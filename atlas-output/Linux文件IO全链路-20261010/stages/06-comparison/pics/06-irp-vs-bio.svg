@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" width="1200" height="700" font-family="JetBrains Mono, Consolas, monospace">
+<rect width="1200" height="700" fill="#0a0c10"/>
+<text x="600" y="30" fill="#e0e6f0" font-size="18" font-weight="bold" text-anchor="middle">同一次读(文件第 3 页,缓存未命中):函数调用链 vs 请求包</text>
+<text x="600" y="50" fill="#9aa4b2" font-size="11" text-anchor="middle">左:Linux,异步建在同步上(包只在 ② 以下);右:Windows NT,同步建在异步上(包从 ① 之上开始)。绿色虚线 = 命中时的快路径</text>
+
+<!-- LEFT: Linux -->
+<text x="300" y="82" fill="#88c0ff" font-size="13" font-weight="bold" text-anchor="middle">Linux:pread / io_uring</text>
+<rect x="120" y="96" width="360" height="40" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="132" y="113" fill="#88c0ff" font-size="11" font-weight="bold">vfs_read → new_sync_read:造 kiocb + iov_iter</text>
+<text x="132" y="129" fill="#c8d4e4" font-size="9">pread:ki_complete = NULL;io_uring:ki_complete = io_complete_rw</text>
+<line x1="300" y1="136" x2="300" y2="150" stroke="#4080c0" stroke-width="1.5"/>
+<rect x="120" y="150" width="360" height="40" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="132" y="167" fill="#88c0ff" font-size="11" font-weight="bold">ext4_file_read_iter → filemap_read(函数调用,可以睡)</text>
+<text x="132" y="183" fill="#c8d4e4" font-size="9">filemap_get_pages:查 XArray → 没有 → 发预读</text>
+<line x1="300" y1="190" x2="300" y2="204" stroke="#4080c0" stroke-width="1.5"/>
+<rect x="120" y="204" width="360" height="54" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+<text x="132" y="221" fill="#ffaa55" font-size="11" font-weight="bold">等待的三种表达(异步是拼出来的)</text>
+<text x="132" y="236" fill="#e8d0b0" font-size="9">pread:folio_wait_locked 睡在页上</text>
+<text x="132" y="250" fill="#e8d0b0" font-size="9">io_uring 缓冲:IOCB_NOWAIT 先试 → IOCB_WAITQ 回调挂页 → io-wq 兜底</text>
+<line x1="300" y1="258" x2="300" y2="272" stroke="#4080c0" stroke-width="1.5"/>
+<rect x="120" y="272" width="360" height="40" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="132" y="289" fill="#88c0ff" font-size="11" font-weight="bold">ext4_mpage_readpages:extent → 块号 → 扇区</text>
+<text x="132" y="305" fill="#c8d4e4" font-size="9">文件系统自己造包:bio_alloc + bio_add_folio × 32</text>
+<!-- packet boundary -->
+<line x1="100" y1="322" x2="500" y2="322" stroke="#ffaa55" stroke-width="2.5" stroke-dasharray="8,4"/>
+<text x="102" y="336" fill="#ffaa55" font-size="10" font-weight="bold">包从这里开始:bio {bi_sector, bi_io_vec, bi_end_io}</text>
+<rect x="120" y="346" width="360" height="40" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="132" y="363" fill="#c088ff" font-size="11" font-weight="bold">submit_bio → blk_mq_submit_bio:切分 / 合并 / tag / plug</text>
+<text x="132" y="379" fill="#d8c8f0" font-size="9">叠加设备(dm / md)靠克隆 bio 往下发,不是在包里加栈位</text>
+<line x1="300" y1="386" x2="300" y2="400" stroke="#8040c0" stroke-width="1.5"/>
+<rect x="120" y="400" width="360" height="40" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="132" y="417" fill="#c088ff" font-size="11" font-weight="bold">nvme_queue_rq:request → 64 B 命令,tag = CID,敲门铃</text>
+<text x="132" y="433" fill="#d8c8f0" font-size="9">设备 DMA 写页 → MSI-X → nvme_irq → nvme_find_rq(CID)</text>
+<line x1="300" y1="440" x2="300" y2="454" stroke="#8040c0" stroke-width="1.5"/>
+<rect x="120" y="454" width="360" height="54" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
+<text x="132" y="471" fill="#88ff88" font-size="11" font-weight="bold">回程:bio_endio → bi_end_io → folio_end_read</text>
+<text x="132" y="486" fill="#c8e4d0" font-size="9">pread:唤醒睡在页上的进程</text>
+<text x="132" y="500" fill="#c8e4d0" font-size="9">io_uring:页回调 → task_work 重跑 __io_read → cqe;O_DIRECT:ki_complete → cqe</text>
+<!-- Linux fast path -->
+<path d="M 110 170 C 70 170, 70 480, 120 480" fill="none" stroke="#40c060" stroke-width="1.5" stroke-dasharray="5,3"/>
+<text x="84" y="330" fill="#88ff88" font-size="9" transform="rotate(-90 84 330)" text-anchor="middle">命中:IOCB_NOWAIT 当场拷贝,不造 bio</text>
+
+<!-- RIGHT: Windows NT -->
+<text x="900" y="82" fill="#c088ff" font-size="13" font-weight="bold" text-anchor="middle">Windows NT:ReadFile + OVERLAPPED / IOCP</text>
+<rect x="720" y="96" width="360" height="40" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="732" y="113" fill="#c088ff" font-size="11" font-weight="bold">NtReadFile:I/O 管理器先查 FAST_IO_DISPATCH</text>
+<text x="732" y="129" fill="#d8c8f0" font-size="9">FastIoRead → FsRtlCopyRead → CcCopyRead;Wait=FALSE 时页不在就返回 FALSE</text>
+<!-- packet boundary NT -->
+<line x1="700" y1="146" x2="1100" y2="146" stroke="#ffaa55" stroke-width="2.5" stroke-dasharray="8,4"/>
+<text x="702" y="160" fill="#ffaa55" font-size="10" font-weight="bold">包从这里开始:IRP {头 + 每层一个 IO_STACK_LOCATION}</text>
+<rect x="720" y="170" width="360" height="54" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="732" y="187" fill="#c088ff" font-size="11" font-weight="bold">IoCallDriver → 过滤驱动 / minifilter(可选,任意多层)</text>
+<text x="732" y="202" fill="#d8c8f0" font-size="9">每层三选一:完成 / 转发(复制栈位 + 完成例程)/ 挂起</text>
+<text x="732" y="216" fill="#d8c8f0" font-size="9">挂起 = IoMarkIrpPending + 返回 STATUS_PENDING;ReadFile 得到 ERROR_IO_PENDING</text>
+<line x1="900" y1="224" x2="900" y2="238" stroke="#8040c0" stroke-width="1.5"/>
+<rect x="720" y="238" width="360" height="40" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="732" y="255" fill="#c088ff" font-size="11" font-weight="bold">NTFS(IRP_MJ_READ):簇 → LCN</text>
+<text x="732" y="271" fill="#d8c8f0" font-size="9">缓存读走 CcCopyRead;memcpy 缺页 → Mm 发 IRP_PAGING_IO 读回到 NTFS</text>
+<line x1="900" y1="278" x2="900" y2="292" stroke="#8040c0" stroke-width="1.5"/>
+<rect x="720" y="292" width="360" height="40" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="732" y="309" fill="#c088ff" font-size="11" font-weight="bold">volmgr → partmgr → disk.sys:IRP → SRB(SCSI CDB)</text>
+<text x="732" y="325" fill="#d8c8f0" font-size="9">同一个 IRP 继续往下传,每层用自己的栈位</text>
+<line x1="900" y1="332" x2="900" y2="346" stroke="#8040c0" stroke-width="1.5"/>
+<rect x="720" y="346" width="360" height="40" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="732" y="363" fill="#c088ff" font-size="11" font-weight="bold">storport + stornvme:SCSI Read → NVMe Read,敲门铃</text>
+<text x="732" y="379" fill="#d8c8f0" font-size="9">设备 DMA → MSI-X → 中断服务 → 完成 SRB</text>
+<line x1="900" y1="386" x2="900" y2="400" stroke="#8040c0" stroke-width="1.5"/>
+<rect x="720" y="400" width="360" height="54" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
+<text x="732" y="417" fill="#88ff88" font-size="11" font-weight="bold">回程:IoCompleteRequest 沿栈位往上回走</text>
+<text x="732" y="432" fill="#c8e4d0" font-size="9">逐层调完成例程 → 到顶:排 APC 到发起线程,写回 OVERLAPPED、触发事件</text>
+<text x="732" y="446" fill="#c8e4d0" font-size="9">句柄绑了端口:改排完成包 → GetQueuedCompletionStatus 的线程按 LIFO 醒</text>
+<line x1="900" y1="454" x2="900" y2="468" stroke="#40c060" stroke-width="1.5"/>
+<rect x="720" y="468" width="360" height="40" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+<text x="732" y="485" fill="#ffaa55" font-size="11" font-weight="bold">同步句柄 = 薄壳</text>
+<text x="732" y="501" fill="#e8d0b0" font-size="9">没开 FILE_FLAG_OVERLAPPED:NtReadFile 自己等文件对象的事件再返回</text>
+<!-- NT fast path -->
+<path d="M 1090 116 C 1130 116, 1130 426, 1080 426" fill="none" stroke="#40c060" stroke-width="1.5" stroke-dasharray="5,3"/>
+<text x="1116" y="270" fill="#88ff88" font-size="9" transform="rotate(90 1116 270)" text-anchor="middle">命中:Fast I/O 当场拷贝,不造 IRP</text>
+
+<!-- middle comparison column -->
+<rect x="520" y="200" width="160" height="150" rx="6" fill="#12161c" stroke="#6a7280" stroke-width="1"/>
+<text x="600" y="220" fill="#e0e6f0" font-size="10" font-weight="bold" text-anchor="middle">同一道题</text>
+<text x="600" y="240" fill="#9aa4b2" font-size="9" text-anchor="middle">C2 完成是异步的</text>
+<text x="600" y="256" fill="#9aa4b2" font-size="9" text-anchor="middle">C9 命中是常态</text>
+<text x="600" y="272" fill="#9aa4b2" font-size="9" text-anchor="middle">C1 驱动要分层</text>
+<text x="600" y="296" fill="#e0e6f0" font-size="10" font-weight="bold" text-anchor="middle">不同的答案</text>
+<text x="600" y="314" fill="#88c0ff" font-size="9" text-anchor="middle">左:包放在必须异步的最低层</text>
+<text x="600" y="330" fill="#c088ff" font-size="9" text-anchor="middle">右:包放在最高层,同步靠等</text>
+
+<!-- bottom -->
+<rect x="40" y="540" width="1120" height="110" rx="6" fill="#12161c" stroke="#40c060" stroke-width="1.5"/>
+<text x="52" y="560" fill="#88ff88" font-size="11" font-weight="bold">三个一一对应</text>
+<text x="52" y="580" fill="#c8e4d0" font-size="10">1. 快路径:IOCB_NOWAIT ↔ Fast I/O 的 Wait=FALSE —— 都是"乐观先试,页不在就立刻返回,失败再走全套"。两边独立长出来的同一个形状(C9)。</text>
+<text x="52" y="598" fill="#c8e4d0" font-size="10">2. 挂起的表达:ki_complete 非空 / -EIOCBQUEUED(事后加,2002 年 AIO 起)↔ IoMarkIrpPending + STATUS_PENDING(从头就在驱动合同里)。</text>
+<text x="52" y="616" fill="#c8e4d0" font-size="10">3. 回程:bio_endio 沿 bi_end_io 一跳到文件系统 ↔ IoCompleteRequest 沿栈位逐层回走。Linux 一跳是因为 ① 没有包;NT 逐层是因为每层都可能截。</text>
+<text x="52" y="638" fill="#9aa4b2" font-size="9">Linux 行号见 Deep §3.2 / §4.2;NT 侧依据微软 WDK 文档(IRP 速查表、FAST_IO_DISPATCH、FsRtlCopyRead)与 Windows Internals,未逐函数核对。</text>
+</svg>

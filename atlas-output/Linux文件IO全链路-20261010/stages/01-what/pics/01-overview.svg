@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 770" width="1200" height="770" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="770" fill="#0a0c10"/>
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4080c0"/>
+    </marker>
+    <marker id="arrg" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#40c060"/>
+    </marker>
+  </defs>
+
+  <text x="600" y="34" fill="#e0e6f0" font-size="20" font-weight="bold" text-anchor="middle">一次 read() 的五层链路(去程 ↓ / 回程 ↑)</text>
+
+  <!-- 进程 -->
+  <rect x="100" y="56" width="540" height="50" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="120" y="87" fill="#88ff88" font-size="17" font-weight="bold">你的进程   read(fd, buf, n)</text>
+
+  <line x1="370" y1="106" x2="370" y2="166" stroke="#4080c0" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="385" y="128" fill="#9aa4b2" font-size="13">fd + 偏移 + 长度</text>
+
+  <!-- 系统调用边界 -->
+  <line x1="90" y1="140" x2="640" y2="140" stroke="#6a7280" stroke-width="1.5" stroke-dasharray="8,5"/>
+  <text x="105" y="158" fill="#6a7280" font-size="12">系统调用边界(用户态 | 内核态)</text>
+
+  <!-- ① VFS -->
+  <rect x="100" y="170" width="540" height="70" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="120" y="198" fill="#88c0ff" font-size="18" font-weight="bold">① VFS 虚拟文件系统</text>
+  <text x="120" y="224" fill="#c8d4e4" font-size="14">统一入口:不管底下是什么,都给你一个"文件"</text>
+
+  <line x1="370" y1="240" x2="370" y2="271" stroke="#4080c0" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="385" y="262" fill="#9aa4b2" font-size="13">file 对象 + inode + 偏移</text>
+
+  <!-- ② 文件系统 -->
+  <rect x="100" y="275" width="540" height="70" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="120" y="303" fill="#88c0ff" font-size="18" font-weight="bold">② 文件系统 ext4</text>
+  <text x="120" y="329" fill="#c8d4e4" font-size="14">文件第 N 字节 → 在盘上是第几个块</text>
+
+  <line x1="370" y1="345" x2="370" y2="381" stroke="#4080c0" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="385" y="368" fill="#9aa4b2" font-size="13">bio = 扇区号 + 内存页(缓存未命中时)</text>
+
+  <!-- page cache 旁路 -->
+  <line x1="640" y1="330" x2="680" y2="330" stroke="#c08040" stroke-width="2" stroke-dasharray="6,4"/>
+  <rect x="680" y="300" width="240" height="62" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+  <text x="696" y="325" fill="#ffaa55" font-size="16" font-weight="bold">page cache(旁路)</text>
+  <text x="696" y="348" fill="#e8d0b0" font-size="13">按(文件, 页号)缓存,命中即返回</text>
+
+  <!-- ③ 块层 -->
+  <rect x="100" y="385" width="540" height="70" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="120" y="413" fill="#88c0ff" font-size="18" font-weight="bold">③ 通用块层 block layer</text>
+  <text x="120" y="439" fill="#c8d4e4" font-size="14">打包、合并、排队、调度;跟具体设备无关</text>
+
+  <line x1="370" y1="455" x2="370" y2="491" stroke="#4080c0" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="385" y="478" fill="#9aa4b2" font-size="13">request(合并后的 bio)</text>
+
+  <!-- ④ 驱动 -->
+  <rect x="100" y="495" width="540" height="70" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="120" y="523" fill="#88c0ff" font-size="18" font-weight="bold">④ 设备驱动 nvme</text>
+  <text x="120" y="549" fill="#c8d4e4" font-size="14">通用请求 → 这块盘听得懂的命令</text>
+
+  <line x1="370" y1="565" x2="370" y2="601" stroke="#4080c0" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="385" y="588" fill="#9aa4b2" font-size="13">NVMe 命令 → 提交队列 + 按门铃</text>
+
+  <!-- ⑤ 硬件 -->
+  <rect x="100" y="605" width="540" height="70" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="120" y="633" fill="#88ff88" font-size="18" font-weight="bold">⑤ 硬件 NVMe SSD</text>
+  <text x="120" y="659" fill="#c8e4d0" font-size="14">读闪存;完成后 DMA 搬数据 + 发中断</text>
+
+  <!-- 回程 -->
+  <line x1="70" y1="665" x2="70" y2="70" stroke="#40c060" stroke-width="2.5" stroke-dasharray="6,4" marker-end="url(#arrg)"/>
+  <text x="56" y="420" fill="#88ff88" font-size="13" text-anchor="middle" transform="rotate(-90 56 420)">回程:DMA 把数据搬进内存 → 中断一路唤醒 → 拷进 buf</text>
+
+  <!-- 分叉 / 优化标记 -->
+  <line x1="640" y1="140" x2="960" y2="140" stroke="#8040c0" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <rect x="960" y="116" width="220" height="50" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="2"/>
+  <text x="972" y="137" fill="#c088ff" font-size="13" font-weight="bold">epoll / io_uring</text>
+  <text x="972" y="156" fill="#d8c8f0" font-size="12">改"怎么提交、怎么等"</text>
+
+  <line x1="640" y1="205" x2="960" y2="205" stroke="#8040c0" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <rect x="960" y="182" width="220" height="50" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="2"/>
+  <text x="972" y="203" fill="#c088ff" font-size="13" font-weight="bold">socket read()</text>
+  <text x="972" y="222" fill="#d8c8f0" font-size="12">在 ① 拐去网络栈</text>
+
+  <line x1="640" y1="285" x2="960" y2="285" stroke="#8040c0" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <rect x="960" y="250" width="220" height="50" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="2"/>
+  <text x="972" y="271" fill="#c088ff" font-size="13" font-weight="bold">O_DIRECT(数据库)</text>
+  <text x="972" y="290" fill="#d8c8f0" font-size="12">跳过 page cache 直进 ③</text>
+
+  <line x1="920" y1="345" x2="960" y2="345" stroke="#8040c0" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <rect x="960" y="320" width="220" height="50" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="2"/>
+  <text x="972" y="341" fill="#c088ff" font-size="13" font-weight="bold">mmap</text>
+  <text x="972" y="360" fill="#d8c8f0" font-size="12">进程直接映射缓存页</text>
+
+  <line x1="640" y1="420" x2="960" y2="420" stroke="#8040c0" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <rect x="960" y="396" width="220" height="50" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="2"/>
+  <text x="972" y="417" fill="#c088ff" font-size="13" font-weight="bold">机械盘 vs NVMe</text>
+  <text x="972" y="436" fill="#d8c8f0" font-size="12">③ 调度策略截然不同</text>
+
+  <!-- 图例 -->
+  <g font-size="12">
+    <rect x="100" y="712" width="16" height="16" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="122" y="725" fill="#88c0ff">主线五层(软件)</text>
+    <rect x="270" y="712" width="16" height="16" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="292" y="725" fill="#88ff88">两端:进程 / 硬件</text>
+    <rect x="440" y="712" width="16" height="16" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="462" y="725" fill="#ffaa55">旁路缓存</text>
+    <rect x="570" y="712" width="16" height="16" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="592" y="725" fill="#c088ff">分叉 / 优化位置(后面展开)</text>
+    <line x1="800" y1="720" x2="840" y2="720" stroke="#40c060" stroke-width="2.5" stroke-dasharray="6,4"/>
+    <text x="848" y="725" fill="#88ff88">回程</text>
+    <text x="100" y="752" fill="#6a7280">箭头旁小字 = 层与层之间交接的"货物"</text>
+  </g>
+</svg>

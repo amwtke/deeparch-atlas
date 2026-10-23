@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" width="1200" height="760" font-family="JetBrains Mono, Consolas, monospace">
+<rect width="1200" height="760" fill="#0a0c10"/>
+<text x="600" y="30" fill="#e0e6f0" font-size="18" font-weight="bold" text-anchor="middle">一次缓冲读未命中(128 KiB 预读,NVMe)的时间都花在哪 —— 量级估计,约 94 μs</text>
+<text x="600" y="52" fill="#9aa4b2" font-size="11" text-anchor="middle">上:按比例;下:每段放大标数。数字是典型量级(消费级 NVMe、无 IOMMU 直通、核未深睡),不是实测;实测方法见正文 §3.4</text>
+<text x="60" y="74" fill="#9aa4b2" font-size="10">按比例(总长 = 94 μs):</text>
+<rect x="60.0" y="80" width="3.4" height="34" fill="#1e3a5f" stroke="#4080c0" stroke-width="1"/>
+<rect x="63.4" y="80" width="1.2" height="34" fill="#5f3a1e" stroke="#c08040" stroke-width="1"/>
+<rect x="64.6" y="80" width="45.9" height="34" fill="#5f3a1e" stroke="#c08040" stroke-width="1"/>
+<rect x="110.5" y="80" width="8.0" height="34" fill="#1e3a5f" stroke="#4080c0" stroke-width="1"/>
+<rect x="118.5" y="80" width="11.5" height="34" fill="#3a1e5f" stroke="#8040c0" stroke-width="1"/>
+<rect x="130.0" y="80" width="17.2" height="34" fill="#1e5f3a" stroke="#40c060" stroke-width="1"/>
+<rect x="147.2" y="80" width="918.2" height="34" fill="#5f1e1e" stroke="#c04040" stroke-width="1"/>
+<text x="606.3" y="102" fill="#ff8888" font-size="11" text-anchor="middle">⑤ 80 μs</text>
+<rect x="1065.4" y="80" width="17.2" height="34" fill="#1e5f3a" stroke="#40c060" stroke-width="1"/>
+<rect x="1082.6" y="80" width="17.2" height="34" fill="#3a1e5f" stroke="#8040c0" stroke-width="1"/>
+<rect x="1099.8" y="80" width="34.4" height="34" fill="#1e3a5f" stroke="#4080c0" stroke-width="1"/>
+<rect x="1134.3" y="80" width="5.7" height="34" fill="#1e3a5f" stroke="#4080c0" stroke-width="1"/>
+<text x="60" y="138" fill="#ff8888" font-size="11">设备那一段占 85%;CPU 侧全部加起来约 14 μs(≈ 15%)。命中时整条链路只剩首尾两段,约 0.5 ~ 1 μs。</text>
+<text x="60" y="160" fill="#9aa4b2" font-size="10">逐段放大(条长按 log 刻度,便于看清小段):</text>
+<rect x="60" y="170" width="228.4" height="30" rx="4" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="70" y="190" fill="#88c0ff" font-size="12" font-weight="bold"> 1. 边界 / ①</text>
+<text x="300.4" y="183" fill="#c8d4e4" font-size="11">系统调用进入 + fd→file + 检查</text>
+<text x="300.4" y="197" fill="#9aa4b2" font-size="10">≈ 0.3 μs</text>
+<rect x="60" y="214" width="174.2" height="30" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+<text x="70" y="234" fill="#ffaa55" font-size="12" font-weight="bold"> 2. ②</text>
+<text x="246.2" y="227" fill="#c8d4e4" font-size="11">XArray 查页 2:未命中</text>
+<text x="246.2" y="241" fill="#9aa4b2" font-size="10">≈ 0.1 μs</text>
+<rect x="60" y="258" width="410.3" height="30" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+<text x="70" y="278" fill="#ffaa55" font-size="12" font-weight="bold"> 3. ②</text>
+<text x="482.3" y="271" fill="#c8d4e4" font-size="11">预读:分配 32 folio + 入 XArray + 置 locked</text>
+<text x="482.3" y="285" fill="#9aa4b2" font-size="10">≈ 4.0 μs</text>
+<rect x="60" y="302" width="282.6" height="30" rx="4" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="70" y="322" fill="#88c0ff" font-size="12" font-weight="bold"> 4. ②</text>
+<text x="354.6" y="315" fill="#c8d4e4" font-size="11">ext4_map_blocks(es 缓存命中)+ 造 bio</text>
+<text x="354.6" y="329" fill="#9aa4b2" font-size="10">≈ 0.7 μs</text>
+<rect x="60" y="346" width="307.5" height="30" rx="4" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="70" y="366" fill="#c088ff" font-size="12" font-weight="bold"> 5. ③</text>
+<text x="379.5" y="359" fill="#c8d4e4" font-size="11">submit_bio → 重映射 / 切分 / 合并尝试 / tag / request</text>
+<text x="379.5" y="373" fill="#9aa4b2" font-size="10">≈ 1.0 μs</text>
+<rect x="60" y="390" width="336.7" height="30" rx="4" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
+<text x="70" y="410" fill="#88ff88" font-size="12" font-weight="bold"> 6. ④</text>
+<text x="408.7" y="403" fill="#c8d4e4" font-size="11">nvme_queue_rq:命令 + PRP(DMA 映射)+ 门铃 MMIO</text>
+<text x="408.7" y="417" fill="#9aa4b2" font-size="10">≈ 1.5 μs</text>
+<rect x="60" y="434" width="642.7" height="30" rx="4" fill="#5f1e1e" stroke="#c04040" stroke-width="1.5"/>
+<text x="70" y="454" fill="#ff8888" font-size="12" font-weight="bold"> 7. ⑤</text>
+<text x="714.7" y="447" fill="#c8d4e4" font-size="11">设备:取命令 → 闪存 → DMA 写 32 页 → CQ → MSI-X</text>
+<text x="714.7" y="461" fill="#9aa4b2" font-size="10">≈ 80.0 μs</text>
+<rect x="60" y="478" width="336.7" height="30" rx="4" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
+<text x="70" y="498" fill="#88ff88" font-size="12" font-weight="bold"> 8. ④</text>
+<text x="408.7" y="491" fill="#c8d4e4" font-size="11">中断进入 → nvme_irq → 按 CID 找 request</text>
+<text x="408.7" y="505" fill="#9aa4b2" font-size="10">≈ 1.5 μs</text>
+<rect x="60" y="522" width="336.7" height="30" rx="4" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="70" y="542" fill="#c088ff" font-size="12" font-weight="bold"> 9. ③②</text>
+<text x="408.7" y="535" fill="#c8d4e4" font-size="11">blk_mq_complete → bio_endio → folio 解锁 → 唤醒</text>
+<text x="408.7" y="549" fill="#9aa4b2" font-size="10">≈ 1.5 μs</text>
+<rect x="60" y="566" width="388.4" height="30" rx="4" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="70" y="586" fill="#88c0ff" font-size="12" font-weight="bold">10. 调度</text>
+<text x="460.4" y="579" fill="#c8d4e4" font-size="11">调度器把进程调回来(空闲核退出 C 状态会更久)</text>
+<text x="460.4" y="593" fill="#9aa4b2" font-size="10">≈ 3.0 μs</text>
+<rect x="60" y="610" width="260.1" height="30" rx="4" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="70" y="630" fill="#88c0ff" font-size="12" font-weight="bold">11. ① / 边界</text>
+<text x="332.1" y="623" fill="#c8d4e4" font-size="11">copy_folio_to_iter 4 KiB + 返回用户态</text>
+<text x="332.1" y="637" fill="#9aa4b2" font-size="10">≈ 0.5 μs</text>
+<rect x="60" y="664" width="1080" height="64" rx="6" fill="#12161c" stroke="#6a7280" stroke-width="1"/>
+<text x="72" y="684" fill="#c8d4e4" font-size="10">读法:epoll 与 io_uring 动的是第 1、10、11 段(系统调用、唤醒、拷贝)—— 它们合起来不到 5%;所以在磁盘上"省系统调用"只有在 IOPS 很高、把这几段乘以百万次时才值钱。</text>
+<text x="72" y="700" fill="#c8d4e4" font-size="10">IOPOLL(轮询完成队列)动的是第 8 ~ 10 段:不等中断、不睡觉,用一个核的空转换掉 ~5 μs 的中断 + 唤醒。NVMe 延迟越低(企业盘 10 ~ 20 μs),这 5 μs 的比例越大,轮询越划算。</text>
+<text x="72" y="716" fill="#9aa4b2" font-size="10">颜色:蓝 = ① / 边界 / 调度;橙 = ② page cache;紫 = ③ 块层;绿 = ④ 驱动;红 = ⑤ 设备。</text>
+</svg>
