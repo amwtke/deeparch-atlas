@@ -1,0 +1,275 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 11.37
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "How 阶段开场",
+  "start": 11.37,
+  "end": 18.73
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "读 4 KiB",
+  "start": 18.73,
+  "end": 41.83
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "\"三件货物：层的边界就是货物的边界\"",
+  "start": 41.83,
+  "end": 64.07
+ },
+ {
+  "idx": 5,
+  "type": "html_slide",
+  "title": "\"去程与回程：三件货物在五层间转手\"",
+  "start": 64.07,
+  "end": 86.5
+ },
+ {
+  "idx": 6,
+  "type": "spotlight",
+  "title": "第一站 VFS",
+  "start": 86.5,
+  "end": 91.73
+ },
+ {
+  "idx": 7,
+  "type": "ascii",
+  "title": "\"VFS 四个对象与函数表\"",
+  "start": 91.73,
+  "end": 113.93
+ },
+ {
+  "idx": 8,
+  "type": "text",
+  "title": "\"打开实例和文件本身必须分开\"",
+  "start": 113.93,
+  "end": 151.2
+ },
+ {
+  "idx": 9,
+  "type": "code",
+  "title": "\"vfs_read：检查，再按函数表派活（Linux 6.12）\"",
+  "start": 151.2,
+  "end": 175.07
+ },
+ {
+  "idx": 10,
+  "type": "spotlight",
+  "title": "第二站 page cache",
+  "start": 175.07,
+  "end": 180.3
+ },
+ {
+  "idx": 11,
+  "type": "ascii",
+  "title": "\"page cache 与 ext4：两套坐标在 folio 交汇\"",
+  "start": 180.3,
+  "end": 201.8
+ },
+ {
+  "idx": 12,
+  "type": "text",
+  "title": "\"folio：一页或几页连续内存，带四个状态位\"",
+  "start": 201.8,
+  "end": 230.6
+ },
+ {
+  "idx": 13,
+  "type": "code",
+  "title": "\"page_cache_sync_ra：先判断你是不是在顺序读（Linux 6.12）\"",
+  "start": 230.6,
+  "end": 253.1
+ },
+ {
+  "idx": 14,
+  "type": "timeline",
+  "title": "\"顺序读：预读窗口怎么长大\"",
+  "start": 253.1,
+  "end": 274.7
+ },
+ {
+  "idx": 15,
+  "type": "ascii",
+  "title": "\"从字节偏移到设备 LBA：只有一次查表\"",
+  "start": 274.7,
+  "end": 297.9
+ },
+ {
+  "idx": 16,
+  "type": "text",
+  "title": "\"对账实验：文件坐标真的等于盘坐标吗\"",
+  "start": 297.9,
+  "end": 338.7
+ },
+ {
+  "idx": 17,
+  "type": "code",
+  "title": "\"对账命令：文件坐标 = 盘坐标（在 Linux 上执行）\"",
+  "start": 338.7,
+  "end": 359.4
+ },
+ {
+  "idx": 18,
+  "type": "html_slide",
+  "title": "\"从页到 bio：两套坐标在这里对接\"",
+  "start": 359.4,
+  "end": 382.2
+ },
+ {
+  "idx": 19,
+  "type": "code",
+  "title": "\"ext4_mpage_readpages：断开、开新 bio、挂页（Linux 6.12）\"",
+  "start": 382.2,
+  "end": 403.5
+ },
+ {
+  "idx": 20,
+  "type": "spotlight",
+  "title": "第三站 块层",
+  "start": 403.5,
+  "end": 409.3
+ },
+ {
+  "idx": 21,
+  "type": "html_slide",
+  "title": "\"一个 bio 从 submit_bio 到驱动的路\"",
+  "start": 409.3,
+  "end": 429.5
+ },
+ {
+  "idx": 22,
+  "type": "text",
+  "title": "\"bio、request、tag：各管一件事\"",
+  "start": 429.5,
+  "end": 468.67
+ },
+ {
+  "idx": 23,
+  "type": "code",
+  "title": "\"blk_mq_submit_bio：切分、合并、新建 request（Linux 6.12）\"",
+  "start": 468.67,
+  "end": 487.83
+ },
+ {
+  "idx": 24,
+  "type": "ascii",
+  "title": "\"2013 年前的单队列 vs blk-mq 两层队列\"",
+  "start": 487.83,
+  "end": 509.8
+ },
+ {
+  "idx": 25,
+  "type": "html_slide",
+  "title": "\"电梯算法：同一批请求，四种派发顺序\"",
+  "start": 509.8,
+  "end": 531.7
+ },
+ {
+  "idx": 26,
+  "type": "text",
+  "title": "\"mq-deadline：一份请求，挂两套索引\"",
+  "start": 531.7,
+  "end": 567.73
+ },
+ {
+  "idx": 27,
+  "type": "code",
+  "title": "\"elevator_get_default：队列数决定默认策略（Linux 6.12）\"",
+  "start": 567.73,
+  "end": 587.77
+ },
+ {
+  "idx": 28,
+  "type": "spotlight",
+  "title": "第四站 驱动和硬件",
+  "start": 587.77,
+  "end": 593.03
+ },
+ {
+  "idx": 29,
+  "type": "ascii",
+  "title": "\"NVMe：内存里的两个环，加一个门铃\"",
+  "start": 593.03,
+  "end": 611.27
+ },
+ {
+  "idx": 30,
+  "type": "code",
+  "title": "\"nvme_queue_rq：翻译、交地址、敲门铃（Linux 6.12）\"",
+  "start": 611.27,
+  "end": 633.4
+ },
+ {
+  "idx": 31,
+  "type": "timeline",
+  "title": "\"回程：中断把完成一层层送回去\"",
+  "start": 633.4,
+  "end": 655.03
+ },
+ {
+  "idx": 32,
+  "type": "ascii",
+  "title": "\"同一个五层，不同调用走到不同深度\"",
+  "start": 655.03,
+  "end": 678.1
+ },
+ {
+  "idx": 33,
+  "type": "text",
+  "title": "\"写的完成有三个时刻\"",
+  "start": 678.1,
+  "end": 716.3
+ },
+ {
+  "idx": 34,
+  "type": "ascii",
+  "title": "\"O_DIRECT 与 mmap：两条省拷贝的路，省法相反\"",
+  "start": 716.3,
+  "end": 738.13
+ },
+ {
+  "idx": 35,
+  "type": "text",
+  "title": "\"四种走法实验：同一个文件，走到不同深度\"",
+  "start": 738.13,
+  "end": 770.53
+ },
+ {
+  "idx": 36,
+  "type": "code",
+  "title": "\"四种走法实验：fsync 模式（用户态代码，Linux）\"",
+  "start": 770.53,
+  "end": 791.83
+ },
+ {
+  "idx": 37,
+  "type": "text",
+  "title": "\"三个常见误解\"",
+  "start": 791.83,
+  "end": 822.5
+ },
+ {
+  "idx": 38,
+  "type": "html_slide",
+  "title": "\"How 阶段：三件货物的五层往返\"",
+  "start": 822.5,
+  "end": 849.37
+ },
+ {
+  "idx": 39,
+  "type": "spotlight",
+  "title": "下集预告",
+  "start": 849.37,
+  "end": 861.53
+ }
+]

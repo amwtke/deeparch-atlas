@@ -1,0 +1,58 @@
+{
+  "episode": 4,
+  "people": [
+    {
+      "name": "Dennis Ritchie",
+      "file": "pics/person-dennis-ritchie.jpg",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/2/23/Dennis_Ritchie_2011.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Dennis_Ritchie_2011.jpg",
+      "verified": true,
+      "note": "Wikipedia 条目主图，2011 年日本国际奖典礼"
+    },
+    {
+      "name": "Linus Torvalds",
+      "file": "pics/person-linus-torvalds.jpg",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/0/01/LinuxCon_Europe_Linus_Torvalds_03_%28cropped%29.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:LinuxCon_Europe_Linus_Torvalds_03_(cropped).jpg",
+      "verified": true,
+      "note": "Wikipedia 条目主图，LinuxCon Europe 2014"
+    },
+    {
+      "name": "Stephen Tweedie",
+      "file": "pics/person-stephen-tweedie.jpg",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/b/ba/Stephen_Tweedie.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Stephen_Tweedie.jpg",
+      "verified": true,
+      "note": "Commons 描述 'Stephen Tweedie delivers an ode'，2005-07-22，背景为渥太华 Les Suites 酒店与 OLS 白板（OLS 2005 会期）"
+    },
+    {
+      "name": "Jens Axboe",
+      "file": "pics/person-jens-axboe.jpg",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/e/e9/Jens_Axboe.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Jens_Axboe.jpg",
+      "verified": true,
+      "note": "Wikipedia 条目主图"
+    }
+  ],
+  "text_only": [
+    {
+      "name": "Steve Kleiman",
+      "reason": "Commons 唯一同姓结果是 Rich Kleiman（TechCrunch 2017）；facetime_search 返回拖拉机图片"
+    },
+    {
+      "name": "Alex Tomas",
+      "reason": "无公开肖像；facetime_search 返回国旗表情图"
+    },
+    {
+      "name": "Andrea Arcangeli",
+      "reason": "Wikipedia/Commons 同名条目为意大利演员与 DJ；facetime_search 返回汽车图片"
+    },
+    {
+      "name": "Matthew Wilcox",
+      "reason": "无 Wikipedia 条目；facetime_search 返回无关笔记图片"
+    }
+  ],
+  "rejected_downloads": [
+    "Ken Thompson 照片已下载但本集未单独介绍，已删除"
+  ]
+}

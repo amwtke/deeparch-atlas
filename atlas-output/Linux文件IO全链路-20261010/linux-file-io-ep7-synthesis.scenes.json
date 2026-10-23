@@ -1,0 +1,219 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 13.83
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Synthesis 阶段开场过场",
+  "start": 13.83,
+  "end": 20.3
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "必须这样？",
+  "start": 20.3,
+  "end": 43.57
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "前六集给出的五种答案",
+  "start": 43.57,
+  "end": 61.47
+ },
+ {
+  "idx": 5,
+  "type": "text",
+  "title": "这一集只做三件事",
+  "start": 61.47,
+  "end": 85.1
+ },
+ {
+  "idx": 6,
+  "type": "html_slide",
+  "title": "推导链只有一个方向",
+  "start": 85.1,
+  "end": 105.57
+ },
+ {
+  "idx": 7,
+  "type": "spotlight",
+  "title": "6 报幕：设计是筛剩下的",
+  "start": 105.57,
+  "end": 110.77
+ },
+ {
+  "idx": 8,
+  "type": "ascii",
+  "title": "一条五元组：缓冲读只拷贝一次",
+  "start": 110.77,
+  "end": 134.0
+ },
+ {
+  "idx": 9,
+  "type": "text",
+  "title": "日志：用一次单块写系住全局",
+  "start": 134.0,
+  "end": 172.63
+ },
+ {
+  "idx": 10,
+  "type": "ascii",
+  "title": "2013 年前后的块层：一把锁对每核一队列",
+  "start": 172.63,
+  "end": 201.43
+ },
+ {
+  "idx": 11,
+  "type": "text",
+  "title": "延迟回写：窗口必有，谁来关由应用定",
+  "start": 201.43,
+  "end": 235.1
+ },
+ {
+  "idx": 12,
+  "type": "spotlight",
+  "title": "11 报幕：拿掉一条约束",
+  "start": 235.1,
+  "end": 240.23
+ },
+ {
+  "idx": 13,
+  "type": "layers",
+  "title": "约束一松，形状就退",
+  "start": 240.23,
+  "end": 265.47
+ },
+ {
+  "idx": 14,
+  "type": "spotlight",
+  "title": "13 报幕：十条洞察",
+  "start": 265.47,
+  "end": 272.83
+ },
+ {
+  "idx": 15,
+  "type": "ascii",
+  "title": "两个窄腰共享同一块页",
+  "start": 272.83,
+  "end": 300.17
+ },
+ {
+  "idx": 16,
+  "type": "timeline",
+  "title": "一切皆文件：VFS 太成功的副产品",
+  "start": 300.17,
+  "end": 327.17
+ },
+ {
+  "idx": 17,
+  "type": "text",
+  "title": "五个数四次换算，只有一次查表",
+  "start": 327.17,
+  "end": 363.63
+ },
+ {
+  "idx": 18,
+  "type": "text",
+  "title": "电梯：四种顺序，两套索引",
+  "start": 363.63,
+  "end": 394.83
+ },
+ {
+  "idx": 19,
+  "type": "code",
+  "title": "\"默认调度器怎么选（Linux 6.12）\"",
+  "start": 394.83,
+  "end": 415.57
+ },
+ {
+  "idx": 20,
+  "type": "ascii",
+  "title": "异步建在同步上，同步建在异步上",
+  "start": 415.57,
+  "end": 444.27
+ },
+ {
+  "idx": 21,
+  "type": "text",
+  "title": "数据库怎么拿到在飞数",
+  "start": 444.27,
+  "end": 478.1
+ },
+ {
+  "idx": 22,
+  "type": "layers",
+  "title": "同一套形状，三个领域又长了一遍",
+  "start": 478.1,
+  "end": 504.5
+ },
+ {
+  "idx": 23,
+  "type": "spotlight",
+  "title": "22 报幕：五步法",
+  "start": 504.5,
+  "end": 509.6
+ },
+ {
+  "idx": 24,
+  "type": "statemap",
+  "title": "五步法：每一步的产出是下一步的输入",
+  "start": 509.6,
+  "end": 535.9
+ },
+ {
+  "idx": 25,
+  "type": "text",
+  "title": "TCP 拥塞控制：先找约束",
+  "start": 535.9,
+  "end": 562.7
+ },
+ {
+  "idx": 26,
+  "type": "ascii",
+  "title": "五个候选，各付什么价",
+  "start": 562.7,
+  "end": 591.07
+ },
+ {
+  "idx": 27,
+  "type": "text",
+  "title": "公平：块层是策略，TCP 是协议",
+  "start": 591.07,
+  "end": 628.9
+ },
+ {
+  "idx": 28,
+  "type": "timeline",
+  "title": "时代局限：约束没变，代价变了",
+  "start": 628.9,
+  "end": 654.4
+ },
+ {
+  "idx": 29,
+  "type": "layers",
+  "title": "五根约束各落在哪",
+  "start": 654.4,
+  "end": 680.47
+ },
+ {
+  "idx": 30,
+  "type": "html_slide",
+  "title": "七集收束",
+  "start": 680.47,
+  "end": 709.67
+ },
+ {
+  "idx": 31,
+  "type": "title",
+  "title": "read 背后的五层",
+  "start": 709.67,
+  "end": 732.87
+ }
+]

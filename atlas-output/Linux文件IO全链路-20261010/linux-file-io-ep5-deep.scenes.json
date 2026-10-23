@@ -1,0 +1,240 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 11.53
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Deep 阶段开场",
+  "start": 11.53,
+  "end": 19.5
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "同一次 4KB 读",
+  "start": 19.5,
+  "end": 41.23
+ },
+ {
+  "idx": 4,
+  "type": "html_slide",
+  "title": "一次缓冲读未命中的时间账",
+  "start": 41.23,
+  "end": 65.1
+ },
+ {
+  "idx": 5,
+  "type": "layers",
+  "title": "三条主线，三个问题",
+  "start": 65.1,
+  "end": 84.47
+ },
+ {
+  "idx": 6,
+  "type": "spotlight",
+  "title": "5 报幕：主线 A",
+  "start": 84.47,
+  "end": 89.2
+ },
+ {
+  "idx": 7,
+  "type": "code",
+  "title": "\"new_sync_read：工单与目的地（Linux 6.12）\"",
+  "start": 89.2,
+  "end": 113.97
+ },
+ {
+  "idx": 8,
+  "type": "code",
+  "title": "\"filemap_get_pages：查、预读、保底（Linux 6.12）\"",
+  "start": 113.97,
+  "end": 142.8
+ },
+ {
+  "idx": 9,
+  "type": "text",
+  "title": "8 预读窗口凭什么变大",
+  "start": 142.8,
+  "end": 183.1
+ },
+ {
+  "idx": 10,
+  "type": "code",
+  "title": "\"get_init_ra_size 与 get_next_ra_size（Linux 6.12）\"",
+  "start": 183.1,
+  "end": 209.7
+ },
+ {
+  "idx": 11,
+  "type": "ascii",
+  "title": "read 与 mmap 汇合在同一棵索引树",
+  "start": 209.7,
+  "end": 235.6
+ },
+ {
+  "idx": 12,
+  "type": "text",
+  "title": "11 缓冲读为什么非拷一次不可",
+  "start": 235.6,
+  "end": 276.43
+ },
+ {
+  "idx": 13,
+  "type": "spotlight",
+  "title": "12 报幕：主线 B",
+  "start": 276.43,
+  "end": 283.27
+ },
+ {
+  "idx": 14,
+  "type": "timeline",
+  "title": "从页号到 NVMe 命令，再回来",
+  "start": 283.27,
+  "end": 310.43
+ },
+ {
+  "idx": 15,
+  "type": "code",
+  "title": "\"ext4_mpage_readpages：页拼成 bio（Linux 6.12）\"",
+  "start": 310.43,
+  "end": 337.2
+ },
+ {
+  "idx": 16,
+  "type": "text",
+  "title": "15 回来的结果怎么找到主人",
+  "start": 337.2,
+  "end": 377.8
+ },
+ {
+  "idx": 17,
+  "type": "code",
+  "title": "\"blk_mq_get_tag：领号与等待（Linux 6.12）\"",
+  "start": 377.8,
+  "end": 405.3
+ },
+ {
+  "idx": 18,
+  "type": "code",
+  "title": "\"nvme_queue_rq：命令进提交队列（Linux 6.12）\"",
+  "start": 405.3,
+  "end": 430.1
+ },
+ {
+  "idx": 19,
+  "type": "code",
+  "title": "\"nvme_cid 与 nvme_find_rq：号码去与回（Linux 6.12）\"",
+  "start": 430.1,
+  "end": 456.37
+ },
+ {
+  "idx": 20,
+  "type": "text",
+  "title": "19 队列深度为什么是 1024",
+  "start": 456.37,
+  "end": 494.47
+ },
+ {
+  "idx": 21,
+  "type": "spotlight",
+  "title": "20 报幕：主线 C",
+  "start": 494.47,
+  "end": 500.07
+ },
+ {
+  "idx": 22,
+  "type": "text",
+  "title": "21 epoll 解决了什么，留下了什么",
+  "start": 500.07,
+  "end": 534.6
+ },
+ {
+  "idx": 23,
+  "type": "code",
+  "title": "\"do_epoll_ctl：普通文件为何 EPERM（Linux 6.12）\"",
+  "start": 534.6,
+  "end": 560.3
+ },
+ {
+  "idx": 24,
+  "type": "html_slide",
+  "title": "等就绪与等完成在内核里的样子",
+  "start": 560.3,
+  "end": 582.83
+ },
+ {
+  "idx": 25,
+  "type": "code",
+  "title": "\"__io_read：先试不睡（Linux 6.12）\"",
+  "start": 582.83,
+  "end": 605.97
+ },
+ {
+  "idx": 26,
+  "type": "code",
+  "title": "\"io_rw_should_retry：回调挂在页上（Linux 6.12）\"",
+  "start": 605.97,
+  "end": 633.6
+ },
+ {
+  "idx": 27,
+  "type": "ascii",
+  "title": "两条不睡的读路：回调挂在哪",
+  "start": 633.6,
+  "end": 655.7
+ },
+ {
+  "idx": 28,
+  "type": "code",
+  "title": "\"__iomap_dio_rw：等，还是先返回（Linux 6.12）\"",
+  "start": 655.7,
+  "end": 681.5
+ },
+ {
+  "idx": 29,
+  "type": "text",
+  "title": "28 四条进步，和一个常见的失望",
+  "start": 681.5,
+  "end": 715.2
+ },
+ {
+  "idx": 30,
+  "type": "timeline",
+  "title": "完成模型：Windows 早，Linux 晚",
+  "start": 715.2,
+  "end": 741.63
+ },
+ {
+  "idx": 31,
+  "type": "text",
+  "title": "30 必然还是偶然",
+  "start": 741.63,
+  "end": 787.2
+ },
+ {
+  "idx": 32,
+  "type": "text",
+  "title": "31 三条线钉回约束",
+  "start": 787.2,
+  "end": 814.47
+ },
+ {
+  "idx": 33,
+  "type": "html_slide",
+  "title": "本集总结",
+  "start": 814.47,
+  "end": 843.0
+ },
+ {
+  "idx": 34,
+  "type": "spotlight",
+  "title": "33 下集预告",
+  "start": 843.0,
+  "end": 853.07
+ }
+]

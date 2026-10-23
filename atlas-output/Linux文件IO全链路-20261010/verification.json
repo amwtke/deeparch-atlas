@@ -1,0 +1,213 @@
+{
+  "status": "complete",
+  "generated_at": "2026-10-23T19:00:04+0800",
+  "source": "Linux文件IO全链路-atlas.md",
+  "source_sha256": "b07882f6968b6913a110d02fc0fb2ad8c03542b7c4f1c3fa5717e502383f70ee",
+  "kernel_version": "v6.12",
+  "theme": "anthropic",
+  "total_minutes": 83.71,
+  "episodes": [
+    {
+      "file": "linux-file-io-ep0-toc.mp4",
+      "duration_seconds": 161.8,
+      "bytes": 12270566,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "vmd_sha256": "aa10da6bdd8276682b0154acf0f5e6a7c3deef4831a676c4e883ce9ce2ca543e",
+      "scene_count_rendered": 8,
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "scene_timeline_matches": true,
+        "srt_present": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "status": "PASS",
+      "part_title": "P0 目录：七集路线图",
+      "mp4_sha256": "d24e7f2536883f2cb182fe36f4338601cb5bc8d7e681c41d0deca38266383ded"
+    },
+    {
+      "file": "linux-file-io-ep1-what.mp4",
+      "duration_seconds": 527.9,
+      "bytes": 32179265,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "vmd_sha256": "73e5aa55fdc49352854f17d85d4bfb57dc41fbcd792abebd1c3e24f3c6a863db",
+      "scene_count_rendered": 24,
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "scene_timeline_matches": true,
+        "srt_present": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "status": "PASS",
+      "part_title": "P1 What：你调一次 read，数据到底穿过了谁",
+      "mp4_sha256": "61659456d6e200b663da25dfc9a71ecc68fa9b2ed2aeaad3b00110d461512bd1"
+    },
+    {
+      "file": "linux-file-io-ep2-why.mp4",
+      "duration_seconds": 679.6,
+      "bytes": 40264184,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "vmd_sha256": "dab631729c1525ac19c6b7ad0d143a64d69be7dcfef72d901e061badb430e9a1",
+      "scene_count_rendered": 26,
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "scene_timeline_matches": true,
+        "srt_present": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "status": "PASS",
+      "part_title": "P2 Why：把五层一刀全切，看它在哪里撞墙",
+      "mp4_sha256": "2bdf655eddb98b8e79da2324385c8807249d54e88894f303b4613f52b15510d9"
+    },
+    {
+      "file": "linux-file-io-ep3-how.mp4",
+      "duration_seconds": 861.533333,
+      "bytes": 53740881,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "vmd_sha256": "54e308bfbef0295f1e56927cc8ebddfcb90bca4bea2c28628b34b0be05db3d7c",
+      "scene_count_rendered": 39,
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "scene_timeline_matches": true,
+        "srt_present": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "status": "PASS",
+      "part_title": "P3 How：一次 pread 在五层里怎么走、怎么回",
+      "mp4_sha256": "c904b708aa28f766949eb86da2a9f8534db0f431e0e568224a6d9c1ab3772fa6"
+    },
+    {
+      "file": "linux-file-io-ep4-origin.mp4",
+      "duration_seconds": 564.066667,
+      "bytes": 35739058,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "vmd_sha256": "8fdf62bdc8f533b7518b60b79ee5636acd167474c131b0a4a6a5a200adcd8c25",
+      "scene_count_rendered": 29,
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "scene_timeline_matches": true,
+        "srt_present": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "status": "PASS",
+      "part_title": "P4 Origin：1974 到 2021，五个转折点和它们的人",
+      "mp4_sha256": "356e834b19d6ec9f76e278ee22432842cc39baee75f88fe8cc0c7cd192f471b0"
+    },
+    {
+      "file": "linux-file-io-ep5-deep.mp4",
+      "duration_seconds": 853.066667,
+      "bytes": 52038167,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "vmd_sha256": "2805baf135edcf06a6cb488c8204828a04bf4524507f76d312c2f07eaa8c7719",
+      "scene_count_rendered": 34,
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "scene_timeline_matches": true,
+        "srt_present": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "status": "PASS",
+      "part_title": "P5 Deep：钻进 6.12 源码，一次未命中读的纳秒账本",
+      "mp4_sha256": "7e2584c74743a59ae7119cf7f6fc5848b349699b675229fe7c5fe3864b5c3397"
+    },
+    {
+      "file": "linux-file-io-ep6-comparison.mp4",
+      "duration_seconds": 641.866667,
+      "bytes": 40840108,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "vmd_sha256": "c38a8e15330dfd78ed8d3781c37f72054075f254f80211d3c1790c8d380c2ef7",
+      "scene_count_rendered": 30,
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "scene_timeline_matches": true,
+        "srt_present": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "status": "PASS",
+      "part_title": "P6 Comparison：同样的硬件，Windows NT 为什么长出另一套",
+      "mp4_sha256": "a7b12175cda0cb6f5c7bf507dc3eb9302c5e79b1cedc80095d5499b4eb5eb82a"
+    },
+    {
+      "file": "linux-file-io-ep7-synthesis.mp4",
+      "duration_seconds": 732.866667,
+      "bytes": 46182373,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "vmd_sha256": "87e7c2961ccc42bc40e550ece3e0390305ac6bf49562076ba3ac32fafdf09b86",
+      "scene_count_rendered": 31,
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "scene_timeline_matches": true,
+        "srt_present": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "status": "PASS",
+      "part_title": "P7 Synthesis：把七集推导压成一套能带走的方法",
+      "mp4_sha256": "4fcd95bb975be53e3a26b6d39e52ac35b9d31d24bf2d6f280005e517364f5af6"
+    }
+  ],
+  "cover": "cover-atlas.png",
+  "desc_file": "linux-file-io-ep0-toc.desc.txt"
+}

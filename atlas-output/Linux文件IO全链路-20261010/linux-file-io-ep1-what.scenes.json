@@ -1,0 +1,170 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 12.57
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 What 阶段开场",
+  "start": 12.57,
+  "end": 18.17
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "同一行 read",
+  "start": 18.17,
+  "end": 41.2
+ },
+ {
+  "idx": 4,
+  "type": "text",
+  "title": "一句话定义",
+  "start": 41.2,
+  "end": 72.4
+ },
+ {
+  "idx": 5,
+  "type": "analogy",
+  "title": "把一次读文件想成图书馆调书",
+  "start": 72.4,
+  "end": 95.67
+ },
+ {
+  "idx": 6,
+  "type": "text",
+  "title": "从图书馆推出的三条性质",
+  "start": 95.67,
+  "end": 129.23
+ },
+ {
+  "idx": 7,
+  "type": "html_slide",
+  "title": "一次 read 的五层链路",
+  "start": 129.23,
+  "end": 153.0
+ },
+ {
+  "idx": 8,
+  "type": "timeline",
+  "title": "层与层之间交接的货物",
+  "start": 153.0,
+  "end": 177.17
+ },
+ {
+  "idx": 9,
+  "type": "spotlight",
+  "title": "8 文件概念的终点",
+  "start": 177.17,
+  "end": 184.1
+ },
+ {
+  "idx": 10,
+  "type": "layers",
+  "title": "五层各是谁",
+  "start": 184.1,
+  "end": 208.7
+ },
+ {
+  "idx": 11,
+  "type": "code",
+  "title": "\"ext4 交给 VFS 的接口表（Linux 6.12 fs/ext4/file.c）\"",
+  "start": 208.7,
+  "end": 232.1
+ },
+ {
+  "idx": 12,
+  "type": "text",
+  "title": "机械盘与固态盘：慢在哪里不一样",
+  "start": 232.1,
+  "end": 255.1
+ },
+ {
+  "idx": 13,
+  "type": "ascii",
+  "title": "一条队列对几万条队列",
+  "start": 255.1,
+  "end": 282.27
+ },
+ {
+  "idx": 14,
+  "type": "text",
+  "title": "四对最容易混的边界",
+  "start": 282.27,
+  "end": 310.37
+ },
+ {
+  "idx": 15,
+  "type": "spotlight",
+  "title": "14 思考题：去掉块层",
+  "start": 310.37,
+  "end": 317.67
+ },
+ {
+  "idx": 16,
+  "type": "ascii",
+  "title": "没有块层对有块层",
+  "start": 317.67,
+  "end": 345.93
+ },
+ {
+  "idx": 17,
+  "type": "text",
+  "title": "机制固定，策略可换",
+  "start": 345.93,
+  "end": 380.97
+ },
+ {
+  "idx": 18,
+  "type": "code",
+  "title": "\"新盘默认挂哪个调度器（Linux 6.12 block/elevator.c）\"",
+  "start": 380.97,
+  "end": 402.63
+ },
+ {
+  "idx": 19,
+  "type": "spotlight",
+  "title": "18 思考题：缓存的坐标",
+  "start": 402.63,
+  "end": 408.2
+ },
+ {
+  "idx": 20,
+  "type": "ascii",
+  "title": "两种索引的代价",
+  "start": 408.2,
+  "end": 433.97
+ },
+ {
+  "idx": 21,
+  "type": "layers",
+  "title": "一条链上的两个窄腰",
+  "start": 433.97,
+  "end": 458.83
+ },
+ {
+  "idx": 22,
+  "type": "ascii",
+  "title": "只标位置，原因后面讲",
+  "start": 458.83,
+  "end": 483.77
+ },
+ {
+  "idx": 23,
+  "type": "html_slide",
+  "title": "五层一条链",
+  "start": 483.77,
+  "end": 514.37
+ },
+ {
+  "idx": 24,
+  "type": "spotlight",
+  "title": "23 下集预告",
+  "start": 514.37,
+  "end": 527.9
+ }
+]

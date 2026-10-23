@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "artifact": "P1 What：你调一次 read，数据到底穿过了谁.mp4",
+  "platforms": {
+    "bilibili": {
+      "remote_id": "BV116nt63EX8",
+      "uploaded": true,
+      "collection": false,
+      "charging": false
+    }
+  }
+}

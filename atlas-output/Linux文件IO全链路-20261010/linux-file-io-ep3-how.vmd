@@ -1,0 +1,923 @@
+# 第 3 集 How 阶段 — 读 4 KiB，内核到底搬几页？一次 pread 的五层往返
+
+[intro-line] 今天跟着一次 pread 走完五层：从 fd 到 NVMe 命令，再沿中断回到你的缓冲区。
+
+## 1 How阶段开场
+
+[visual: spotlight title=How 阶段开场]
+现在我们来拆解 How 阶段
+一次 pread 在五层里怎么转手？
+
+[narration]
+上一集讲了五层为什么非有不可。这一集跟着一次读，看每层收什么、交什么。
+
+---
+
+## 2 只读一页的那一次
+
+[visual: title]
+读 4 KiB
+内核到底搬几页？
+
+[narration]
+你在一台 32 核、装着 NVMe 盘的 Linux 机器上，刚打开 1 MiB 的 notes.txt，用 pread 从第 8192 字节读 4096 字节，这页不在内存里。很多资料说，内核会顺手搬回 128 KiB。真是这样吗？我们沿着这次读走完五层，用 Linux 6.12 的源码核对每个数。
+
+---
+
+## 3 三件货物
+
+[visual: layers title="三件货物：层的边界就是货物的边界"]
+第一层 VFS：fd 变成 file 和 inode
+第二层 ext4 + page cache：偏移变成 folio
+第三层 块层：bio 变成 request + tag
+第四层 nvme 驱动：request 变成 64 字节命令
+第五层 NVMe SSD：DMA 写进 folio，再发中断
+
+[sidebar]
+C12·同文件多开
+C9·速差+局部性
+C1·厂商定接口
+
+[narration]
+先认三件货物。file 加 inode 来自 C12 同文件多开，一个记偏移，一个代表文件本身。folio 来自 C9 速差加局部性，它是缓存页，也是 DMA 落点。bio 和 request 来自 C1 厂商定接口，让文件系统不必懂任何一块盘。每过一层，货物换一件。
+
+---
+
+## 4 去程与回程鸟瞰
+
+[visual: html_slide image="pics/03-overview.png" title="去程与回程：三件货物在五层间转手"]
+
+[step: auto]
+scroll auto
+
+[narration]
+左边是去程，自上而下每层换一件货物；右边是回程，把完成往回送。橙色那格是 folio，唯一去程回程都在场的货物：去程在第二层造好，回程 DMA 直接写进它。接头暗号叫 tag，发出时带上，完成时原样带回。缓存命中的话，下面三层根本不出场。
+
+---
+
+## 5 第一站 VFS
+
+[visual: spotlight title=第一站 VFS]
+第一站 VFS
+一个整数怎么找到 ext4？
+
+[narration]
+进程手里只有一个整数 fd，它怎么一路找到 ext4？
+
+---
+
+## 6 VFS 的四个对象
+
+[visual: ascii title="VFS 四个对象与函数表"]
+fd 表
+ [3] ──> file ──> dentry ──> inode ──────> super_block
+         f_pos    d_name     i_size        s_blocksize
+         f_flags  d_parent   i_mapping     s_root
+         f_op                i_fop / i_op  s_op
+          │                   │
+          ▼                   ▼
+  file_operations      inode_operations
+  read_iter / mmap     lookup / create
+          ▲
+          └── ext4 填表：ext4_file_operations
+
+一次打开   一个名字   文件本身   一个挂载实例
+
+[sidebar]
+file：一次打开
+dentry：名字缓存
+inode：文件本身
+super_block：挂载
+C11·POSIX接口冻结
+
+[narration]
+VFS 用四个对象抽象四件事：一次打开、一个名字、文件本身、一个挂载实例。每个对象挂一张函数表，操作交给实现者去填。为什么这样拆？C11 POSIX 接口冻结：接口几十年不动，文件系统却一直在加。VFS 只认表，新实现填表就能接进来。
+
+---
+
+## 7 偏移为什么挂在 file 上
+
+[visual: text title="打开实例和文件本身必须分开"]
+file：每次 open 一份，记偏移和打开标志
+inode：全内核一份，记大小、权限、缓存索引
+fork 复制 fd 表，两个 fd 指向同一个 file
+
+[sidebar]
+两次 open：两个 file
+fork：共享一个 file
+十次打开：一个 inode
+C12·同文件多开
+
+[example]
+比如进程 A 和 B 各自打开 notes.txt。A 读到第 100 字节，B 还从头读，因为它们是两个 file。
+
+再比如 shell 里两条命令先后追加写同一个日志。两个子进程从同一个父进程 fork 出来，共享同一个 file，第二条就接着第一条的末尾写。
+
+[narration]
+一个文件为什么要两个对象？C12 同文件多开同时提了两个要求：每次打开各有偏移，文件对象却只能有一份。偏移挂在 file 上，大小、权限和缓存挂在 inode 上，两个要求就同时满足了。
+
+---
+
+## 8 vfs_read 只做三件事
+
+[visual: code_explain lang=c title="vfs_read：检查，再按函数表派活（Linux 6.12）"]
+ssize_t vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
+{
+	ssize_t ret;
+
+	if (!(file->f_mode & FMODE_READ))
+		return -EBADF;
+	if (!(file->f_mode & FMODE_CAN_READ))
+		return -EINVAL;
+	if (unlikely(!access_ok(buf, count)))
+		return -EFAULT;
+
+	ret = rw_verify_area(READ, file, pos, count);
+	if (ret)
+		return ret;
+	if (count > MAX_RW_COUNT)
+		count =  MAX_RW_COUNT;
+
+	if (file->f_op->read)
+		ret = file->f_op->read(file, buf, count, pos);
+	else if (file->f_op->read_iter)
+		ret = new_sync_read(file, buf, count, pos);
+	else
+		ret = -EINVAL;
+===HIGHLIGHT===
+lines=5-10
+打开模式必须允许读
+access_ok：buf 必须落在用户空间
+只查地址范围，不碰数据
+C3·特权态门槛：先验再代用
+===HIGHLIGHT===
+lines=12-16
+rw_verify_area：偏移不越界
+再过安全模块和 fsnotify 钩子
+单次长度封顶 MAX_RW_COUNT
+===HIGHLIGHT===
+lines=18-23
+ext4 不填 read，只填 read_iter
+new_sync_read 把 buf 包成 iov_iter
+再调 f_op->read_iter，进入第二层
+VFS 的活到此为止
+
+[narration]
+源码里要找三件事：查 fd、做检查、按表派活。pread 先从 fd 表拿到 file，再进 vfs_read：先看打开模式和用户指针，再查偏移和长度，最后看函数表。ext4 只填了 read_iter，于是你的 buf 被包成 iov_iter 交下去。VFS 到此收手，它不知道数据从哪来。
+
+---
+
+## 9 第二站 page cache
+
+[visual: spotlight title=第二站 page cache]
+第二站 page cache
+先查缓存，再翻译坐标
+
+[narration]
+ext4 接过活，几乎立刻转给一段所有文件系统共用的代码。
+
+---
+
+## 10 page cache 与 ext4 的分工
+
+[visual: ascii title="page cache 与 ext4：两套坐标在 folio 交汇"]
+inode #1234   notes.txt   i_size = 1048576
+ │
+ ├─ i_mapping ──> address_space
+ │     ├─ i_pages (XArray)：页号 ──> folio
+ │     │     0 ──> folio [uptodate]
+ │     │     1 ──> folio [uptodate]
+ │     │     2 ──> 空：未命中
+ │     ├─ a_ops ──> ext4 填：readahead / read_folio
+ │     └─ 状态位：locked uptodate dirty writeback
+ │
+ └─ ext4 extent：{ 文件块 0，长 256，盘上块 81920 }
+
+全局 LRU：内存紧时先扔最久没碰的 folio
+
+[sidebar]
+键：页号，不是扇区
+folio：缓存兼 DMA 目标
+a_ops：没命中找 ext4
+C9·速差+局部性
+C8·流 vs 块
+
+[narration]
+第二层是两个人配合：page cache 管页，ext4 管块。page cache 以页号为键，ext4 用 extent 表把文件块翻成盘上块。键为什么是页号？查缓存发生在翻译之前，命中就不付翻译费，这是 C9 速差加局部性的收益；C8 流和块的翻译，只在没命中时做一次。
+
+---
+
+## 11 folio 和四个状态位
+
+[visual: text title="folio：一页或几页连续内存，带四个状态位"]
+folio 用头页代表，类型上保证不是尾页
+locked 正在读盘，uptodate 内容可用
+dirty 改过未写回，writeback 正在写回
+
+[sidebar]
+locked：别人来了先睡
+uptodate：可以拷走
+dirty：回写线程找活
+writeback：写回中又被改
+C5·多核并发
+
+[example]
+比如两个进程同时没命中同一页。第一个分配 folio、上锁、去读盘；第二个看到这页锁着，就睡在这页上，既不重复读盘，也不会拷走半页垃圾。
+
+[narration]
+folio 代表一页或几页物理连续的内存，用头页代表，类型上保证你拿的不是尾页，本集按一页一个讲。它的四个状态位对付 C5 多核并发：同一页被多个进程同时碰，靠位来排队，不靠一把大锁。
+
+---
+
+## 12 预读窗口到底多大
+
+[visual: code_explain lang=c title="page_cache_sync_ra：先判断你是不是在顺序读（Linux 6.12）"]
+	if (!index || req_count > max_pages || index - prev_index <= 1UL) {
+		ra->start = index;
+		ra->size = get_init_ra_size(req_count, max_pages);
+		ra->async_size = ra->size > req_count ? ra->size - req_count :
+							ra->size >> 1;
+		goto readit;
+	}
+
+	/*
+	 * Query the page cache and look for the traces(cached history pages)
+	 * that a sequential stream would leave behind.
+	 */
+	rcu_read_lock();
+	miss = page_cache_prev_miss(ractl->mapping, index - 1, max_pages);
+	rcu_read_unlock();
+	contig_count = index - miss - 1;
+	/*
+	 * Standalone, small random read. Read as is, and do not pollute the
+	 * readahead state.
+	 */
+	if (contig_count <= req_count) {
+		do_page_cache_ra(ractl, req_count, 0);
+		return;
+	}
+===HIGHLIGHT===
+lines=1-7
+三种情况开新窗口
+文件开头、一次读太大、紧接上次
+请求 1 页，初始窗口 4 页
+===HIGHLIGHT===
+lines=13-16
+往前看：前面几页在不在缓存
+本例页 1、页 0 都不在
+contig_count = 2 - 1 - 1 = 0
+===HIGHLIGHT===
+lines=21-24
+孤立的小随机读：要多少读多少
+本例只读页 2，4 KiB
+也不改动预读状态
+
+[narration]
+没命中时，内核会调同步预读。窗口是固定 128 KiB 吗？源码说要先看你是不是在顺序读：文件开头、或者紧接上次读的位置，开一个四页的窗口。像这次刚打开就跳到第 8192 字节，前面一页都没缓存，属于孤立随机读，内核只读你要的那一页。
+
+---
+
+## 13 顺序读时窗口怎么长大
+
+[visual: timeline title="顺序读：预读窗口怎么长大"]
+T=第一窗 [文件开头] 要 1 页，给 4 页，16 KiB
+T=第二窗 [碰到预读标记] 后台再读 8 页，32 KiB
+T=第三窗 [继续顺序] 16 页，64 KiB
+T=第四窗 [到达上限] 32 页封顶，128 KiB
+T=随机读 [前面无缓存] 只读请求的那几页
+
+[narration]
+换成从头顺序读，故事就变了。第一次要一页，内核给四页，并在里面插一面小旗；你读到小旗，它就在后台把下一窗翻倍，八页、十六页，直到三十二页、128 KiB 封顶。所以 128 KiB 是顺序读的稳态，是 C9 速差加局部性里空间局部性的实物。
+
+---
+
+## 14 五个数，四次换算
+
+[visual: ascii title="从字节偏移到设备 LBA：只有一次查表"]
+字节偏移 8192
+   │  >> 12 ......................... 换单位
+   ▼
+页号 2                 page cache 的键
+   │  << (12 - 12)，4 KiB 块一页一块 ... 换单位
+   ▼
+文件逻辑块 2
+   │  查 extent {0, 256, 81920} ...... 换坐标，唯一查表
+   ▼
+分区物理块 81922
+   │  << 3，bio 永远按 512 B 扇区计 .. 换单位
+   ▼
+分区扇区 655376
+   │  + 2048，块层加上分区起点 ...... 换单位
+   ▼
+整盘扇区 657424
+   │  >> 3，4 KiB LBA 的盘 ........... 换单位
+   ▼
+设备 LBA 82178
+
+[sidebar]
+位移：换单位
+查表：换坐标
+页地址与块号无关
+C8·流 vs 块
+
+[narration]
+没命中后，偏移要变成盘懂的坐标。8192 右移 12 位得页号 2；一页一块，文件块也是 2；查 extent 得盘上块 81922；乘 8 得扇区 655376；块层再加分区起点 2048。只有查 extent 是真正的映射，这是 C8 流和块的实物，其余全是换刻度。
+
+---
+
+## 15 对账实验怎么设计
+
+[visual: text title="对账实验：文件坐标真的等于盘坐标吗"]
+从文件偏移 10300 取 64 字节
+从分区块 81922 的第 2108 字节取 64 字节
+两段十六进制应当逐字节相同
+
+[sidebar]
+10300：页 2 + 2108
+页 2：盘块 81922
+dd 跳着取字节
+xxd 逐字节比
+
+[example]
+先算账：10300 等于两个 4096 再加 2108，落在页 2 的第 2108 字节，查 extent 得盘上块 81922。
+
+然后在 Linux 上用 root 跑两条 dd：一条从文件跳过 10300 字节取 64 字节；一条从分区跳到块 81922，再丢掉前 2108 字节取 64 字节，都交给 xxd 比对。
+
+[narration]
+这条链能在真机上验证吗？设计很简单：同一批字节，用文件坐标取一次，用盘坐标再取一次，两边一比。偏移故意选 10300，让它不对齐，落在页 2 的中间。
+
+---
+
+## 16 对账命令
+
+[visual: code lang=bash title="对账命令：文件坐标 = 盘坐标（在 Linux 上执行）"]
+$ sudo filefrag -v /mnt/nvme/notes.txt
+$ cat /sys/block/nvme0n1/nvme0n1p1/start
+$ dd if=/mnt/nvme/notes.txt bs=1 skip=10300 count=64 2>/dev/null | xxd
+$ sudo dd if=/dev/nvme0n1p1 bs=4096 skip=81922 count=1 2>/dev/null \
+    | tail -c +2109 | head -c 64 | xxd
+===HIGHLIGHT===
+lines=1-2
+filefrag：预期 logical 0..255
+对应 physical 81920 起
+分区起点预期 2048 扇区
+===HIGHLIGHT===
+lines=3-5
+第一路：按文件坐标取
+第二路：绕开文件系统读分区
+tail -c +2109：跳过 2108 字节
+预期：两段 xxd 逐字节相同
+
+[narration]
+前两条确认已知条件：extent 从盘上块 81920 起，分区从第 2048 扇区开始。后两条是对账：第一路走文件，第二路绕开文件系统直接读分区。在 Linux 上，两段输出应当逐字节相同，说明文件系统做的就是一次查表加几次位移。
+
+---
+
+## 17 从页到 bio
+
+[visual: html_slide image="pics/03-folio-to-bio.png" title="从页到 bio：两套坐标在这里对接"]
+
+[step: auto]
+scroll auto
+
+[narration]
+这是坐标翻译的现场，画的是顺序读进入稳态、一窗 32 页的样子。左手是按页号排好的 folio，每页上着锁；中间是 ext4 的循环，逐页查 extent；右手是 bio，只记起始扇区 655376，后面的页靠盘上连续依次对应。回程的钩子，造 bio 时就埋好了。
+
+---
+
+## 18 ext4 造 bio 的循环
+
+[visual: code_explain lang=c title="ext4_mpage_readpages：断开、开新 bio、挂页（Linux 6.12）"]
+		if (bio && (last_block_in_bio != first_block - 1 ||
+			    !fscrypt_mergeable_bio(bio, inode, next_block))) {
+		submit_and_realloc:
+			submit_bio(bio);
+			bio = NULL;
+		}
+		if (bio == NULL) {
+			/*
+			 * bio_alloc will _always_ be able to allocate a bio if
+			 * __GFP_DIRECT_RECLAIM is set, see bio_alloc_bioset().
+			 */
+			bio = bio_alloc(bdev, bio_max_segs(nr_pages),
+					REQ_OP_READ, GFP_KERNEL);
+			fscrypt_set_bio_crypt_ctx(bio, inode, next_block,
+						  GFP_KERNEL);
+			ext4_set_bio_post_read_ctx(bio, inode, folio->index);
+			bio->bi_iter.bi_sector = first_block << (blkbits - 9);
+			bio->bi_end_io = mpage_end_io;
+			if (rac)
+				bio->bi_opf |= REQ_RAHEAD;
+		}
+
+		length = first_hole << blkbits;
+		if (!bio_add_folio(bio, folio, length, 0))
+			goto submit_and_realloc;
+===HIGHLIGHT===
+lines=1-6
+这页的盘上块和上一页不相邻？
+先把手里的 bio 发走
+同一个 bio 里的页，盘上必须连续
+文件碎片在这里变成多个 bio
+===HIGHLIGHT===
+lines=12-21
+新开 bio，最多 256 段
+起始扇区 = 盘上块 << 3
+完成回调 mpage_end_io 现在就埋好
+预读路径打上 REQ_RAHEAD
+===HIGHLIGHT===
+lines=23-25
+把整个 folio 挂进 bio
+装满了就发走，再开一个
+
+[narration]
+翻源码要找三样东西：何时断开、起点怎么算、钩子埋在哪。第一段问这一页和上一页在盘上挨不挨着，不挨着就先把旧 bio 发走。第二段新开 bio，起始扇区是盘上块左移三位，回调设成 mpage_end_io。第三段把 folio 挂进去，装满再换一个。
+
+---
+
+## 19 第三站 块层
+
+[visual: spotlight title=第三站 块层]
+第三站 块层
+bio 怎么变成设备肯接的命令？
+
+[narration]
+bio 还太粗糙，它要被切、被合、被排队，才能交给驱动。
+
+---
+
+## 20 一个 bio 在块层走的路
+
+[visual: html_slide image="pics/03-block-layer.png" title="一个 bio 从 submit_bio 到驱动的路"]
+
+[step: auto]
+scroll auto
+
+[narration]
+这是一个 bio 在块层走的路。上排在提交者自己的上下文里做：加分区起点、按设备上限切分、和相邻请求合并、拿 tag。中间是暂存篮 plug 和可换的调度器。下面是两层队列，被箭头压住的那一格是硬件队列，数量等于设备给的队列数。
+
+---
+
+## 21 bio、request、tag 各管一件事
+
+[visual: text title="bio、request、tag：各管一件事"]
+bio：一段 IO，属于上层，带完成回调
+request：相邻 bio 合成的派发单位
+tag：设备命令槽位号，拿不到就睡
+
+[sidebar]
+bio：设备无关描述
+request：可合可切
+tag：对号 + 背压
+plug：攒一批再倒出
+C6·介质形状相反
+
+[example]
+比如两个线程各读同一文件的相邻两段，各造一个 64 KiB 的 bio。到块层扇区挨着，就并成一个 128 KiB 的 request。
+
+再比如 NVMe 一个硬件队列默认深度 1024，tag 就有 1024 个。号用光了，新来的提交者就睡下，压力一路顶回进程。
+
+[narration]
+bio 之外为什么还要 request？bio 的粒度由上层定，可能很碎，也可能太大，合并和切分需要块层自己的容器。机械盘靠合并少寻道，NVMe 靠它少敲门铃，这正是 C6 介质形状相反。
+
+---
+
+## 22 合并在前，拿号在后
+
+[visual: code_explain lang=c title="blk_mq_submit_bio：切分、合并、新建 request（Linux 6.12）"]
+	bio = __bio_split_to_limits(bio, &q->limits, &nr_segs);
+	if (!bio)
+		goto queue_exit;
+
+	if (!bio_integrity_prep(bio))
+		goto queue_exit;
+
+	if (blk_mq_attempt_bio_merge(q, bio, nr_segs))
+		goto queue_exit;
+
+	if (blk_queue_is_zoned(q) && blk_zone_plug_bio(bio, nr_segs))
+		goto queue_exit;
+
+new_request:
+	if (!rq) {
+		rq = blk_mq_get_new_requests(q, plug, bio, nr_segs);
+		if (unlikely(!rq))
+			goto queue_exit;
+	} else {
+		blk_mq_use_cached_rq(rq, plug, bio);
+	}
+===HIGHLIGHT===
+lines=1-3
+按设备申报的上限切分
+max_sectors、max_segments
+驱动填表，块层执行
+C1·厂商定接口
+===HIGHLIGHT===
+lines=8-9
+先试着并进已有 request
+先查 plug 篮子，再查队列
+并进去了，这个 bio 到此结束
+===HIGHLIGHT===
+lines=14-21
+并不进去才新建 request
+这一步拿 tag
+tag 用光就睡：这就是背压
+
+[narration]
+要验证两件事：合并在前，拿号在后。块层先按驱动申报的上限切分，再试着把 bio 并进已有请求，先查进程手里的篮子，再查队列，并进去就收工。并不进去，才新建 request，在这一步拿 tag，号用光了提交者就睡下。
+
+---
+
+## 23 一把锁和两层队列
+
+[visual: ascii title="2013 年前的单队列 vs blk-mq 两层队列"]
+┌─ 单队列：全内核一条请求队列
+│   CPU0    CPU1   ...   CPU31
+│     └───────┼──────────┘
+│             ▼
+│   一条队列 + 一把锁：32 个核抢它
+│             ▼
+│           设备
+└─ 实测约 80 万 IOPS 就不再涨
+
+┌─ blk-mq：每核软件队列 + 硬件队列
+│   CPU0    CPU1   ...   CPU31
+│    ▼       ▼            ▼
+│   ctx0    ctx1   ...   ctx31   本核入队，不跨核加锁
+│    ▼       ▼            ▼
+│   hctx0   hctx1  ...   hctx31  每队列一张 tag 位图
+│    ▼       ▼            ▼
+│   SQ0     SQ1    ...   SQ31    NVMe 一核一对队列
+└─ 代价：全局排序变难
+
+[sidebar]
+一把锁：锁成热点
+每核队列：提交免锁
+每队列 tag：并发上限
+C5·多核并发
+
+[narration]
+2013 年以前，块层全内核一条请求队列配一把锁。机械盘一秒几百次 IO，锁不热；NVMe 一块盘能跑百万 IOPS，32 个核抢一把锁，老块层到 80 万左右就不涨了。blk-mq 让每个核往自己的队列放请求，这是 C5 多核并发的答案，代价是全局排序变难。
+
+---
+
+## 24 电梯算法
+
+[visual: html_slide image="pics/03-elevator.png" title="电梯算法：同一批请求，四种派发顺序"]
+
+[step: auto]
+scroll auto
+
+[narration]
+机械盘算的是另一本账。磁头停在柱面 53，八个请求依次到达。先来先服务来回甩，走 640 个柱面；最短寻道优先只走 236，但远处的会饿死；电梯算法也是 236，扫到底再折返，谁都最多等一趟；单向电梯走 322，换来等待最均匀。
+
+---
+
+## 25 mq-deadline 的两套索引
+
+[visual: text title="mq-deadline：一份请求，挂两套索引"]
+按扇区排序的红黑树：平时顺路扫
+按到达顺序的 FIFO：盖上截止时间
+读 500 ms、写 5 s，到期就插队
+
+[sidebar]
+红黑树：吞吐
+FIFO 截止：不饿死
+读优先：写不堵读
+none：NVMe 默认
+C6·介质形状相反
+
+[example]
+比如后台在回写几百个写请求，纯电梯会让你的一次读排在后面。mq-deadline 给读 500 毫秒截止、写 5 秒，读就不会被写堵死。
+
+搬到 NVMe 上，没有磁头，控制器还会自己重排，排序只剩代价，所以多队列设备默认用 none。
+
+[narration]
+Linux 的做法是一份请求挂两套索引：按扇区排的红黑树平时顺路派发；按到达顺序的队列给每个请求盖上截止时间，头部一到期就先做它。这是 C6 介质形状相反在机械盘那一侧的解法。
+
+---
+
+## 26 默认调度器怎么选
+
+[visual: code_explain lang=c title="elevator_get_default：队列数决定默认策略（Linux 6.12）"]
+/*
+ * For single queue devices, default to using mq-deadline. If we have multiple
+ * queues or mq-deadline is not available, default to "none".
+ */
+static struct elevator_type *elevator_get_default(struct request_queue *q)
+{
+	if (q->tag_set->flags & BLK_MQ_F_NO_SCHED_BY_DEFAULT)
+		return NULL;
+
+	if (q->nr_hw_queues != 1 &&
+	    !blk_mq_is_shared_tags(q->tag_set->flags))
+		return NULL;
+
+	return elevator_find_get("mq-deadline");
+}
+===HIGHLIGHT===
+lines=7-8
+驱动可以声明默认不要调度器
+返回 NULL 就是 none
+===HIGHLIGHT===
+lines=10-12
+硬件队列不止一条，又不共享 tag
+默认 none，NVMe 落在这里
+===HIGHLIGHT===
+lines=14-14
+单队列或共享 tag 的设备
+默认挂 mq-deadline，SATA 盘落在这里
+C6·介质形状相反：策略可换
+
+[narration]
+默认挂哪个调度器？源码只看两件事：驱动声明不要的不给；硬件队列不止一条、又不共享槽位的也不给，NVMe 落在这里。只剩单队列或共享槽位的设备，才默认挂 mq-deadline。kyber 和 bfq 不会自动挂上，要你在 sysfs 里自己换。
+
+---
+
+## 27 第四站 驱动和硬件
+
+[visual: spotlight title=第四站 驱动和硬件]
+第四站 驱动和硬件
+CPU 只碰一次寄存器
+
+[narration]
+request 交到驱动手里，CPU 要最后一次亲手碰硬件了。
+
+---
+
+## 28 提交队列、门铃和完成队列
+
+[visual: ascii title="NVMe：内存里的两个环，加一个门铃"]
+┌─ CPU 核 i 的去程
+│   填 64 字节命令进 SQ i：普通内存写
+│   写一次 SQ i 的门铃寄存器：唯一的 MMIO
+│        ▼
+├─ NVMe 控制器
+│   DMA 从 SQ i 取命令：opcode CID SLBA NLB PRP
+│   读闪存，按 PRP 地址表逐页 DMA 写进 folio
+│   DMA 往 CQ i 写 16 字节条目：状态 + CID
+│        ▼
+└─ 回到核 i
+    MSI-X 中断，向量绑在提交的那个核上
+    CID 低 12 位是 tag，高 4 位是代数
+
+[sidebar]
+SQ/CQ 在主机内存
+门铃：一次 MMIO
+PRP：离散页地址表
+CID：找回 request
+C2·设备慢且异步
+
+[narration]
+驱动和设备之间只有两种动作：CPU 写一次门铃，设备往内存里写。提交队列和完成队列都在主机内存，每核一对；地址表让设备逐页写进分散的 folio。CPU 敲完门铃就脱手，这是 C2 设备慢且异步的答案。
+
+---
+
+## 29 nvme_queue_rq
+
+[visual: code_explain lang=c title="nvme_queue_rq：翻译、交地址、敲门铃（Linux 6.12）"]
+	struct nvme_queue *nvmeq = hctx->driver_data;
+	struct nvme_dev *dev = nvmeq->dev;
+	struct request *req = bd->rq;
+	struct nvme_iod *iod = blk_mq_rq_to_pdu(req);
+	blk_status_t ret;
+
+	/*
+	 * We should not need to do this, but we're still using this to
+	 * ensure we can drain requests on a dying queue.
+	 */
+	if (unlikely(!test_bit(NVMEQ_ENABLED, &nvmeq->flags)))
+		return BLK_STS_IOERR;
+
+	if (unlikely(!nvme_check_ready(&dev->ctrl, req, true)))
+		return nvme_fail_nonready_command(&dev->ctrl, req);
+
+	ret = nvme_prep_rq(dev, req);
+	if (unlikely(ret))
+		return ret;
+	spin_lock(&nvmeq->sq_lock);
+	nvme_sq_copy_cmd(nvmeq, &iod->cmd);
+	nvme_write_sq_db(nvmeq, bd->last);
+	spin_unlock(&nvmeq->sq_lock);
+	return BLK_STS_OK;
+}
+===HIGHLIGHT===
+lines=1-4
+hctx 一一对应一个 nvme_queue
+块层硬件队列 = 设备的一对 SQ/CQ
+request 自带驱动私有区 iod
+===HIGHLIGHT===
+lines=17-19
+nvme_prep_rq：填 64 字节读命令
+SLBA、NLB、CID 都在这里
+DMA 映射后填 PRP 地址表
+C3·特权态门槛：地址由内核给
+===HIGHLIGHT===
+lines=20-24
+在本队列的小锁里拷进 SQ
+bd->last 才写门铃：一批只敲一次
+返回 OK，CPU 就此脱手
+
+[narration]
+驱动最少要做三件事：翻译命令、交出地址、通知设备，源码正是这三步。先从硬件队列拿到设备队列；再填好 64 字节读命令，做 DMA 映射、写地址表；最后在队列的小锁里把命令拷进提交队列，一批里最后一个请求才写门铃。返回成功，CPU 就不管了。
+
+---
+
+## 30 回程
+
+[visual: timeline title="回程：中断把完成一层层送回去"]
+T=中断 [nvme 驱动] 扫完成队列，取出 CID
+T=对号 [nvme_find_rq] CID 低 12 位 -> tag -> request
+T=收尾 [块层] 释放 tag，逐个 bio 调 bi_end_io
+T=解锁 [mpage_end_io] folio_end_read：置 uptodate 并解锁
+T=唤醒 [进程] 从 folio 的等待队列醒来
+T=拷贝 [VFS 边界] copy_folio_to_iter，4096 字节进 buf
+
+[narration]
+回程走的不是原路的函数，而是去程埋下的钩子。中断来了，驱动用命令号的低 12 位找回 request；块层释放 tag，调 bio 的回调；回调用一个原子操作把 folio 标成就绪并解锁，叫醒睡在这页上的进程。进程醒来把 4096 字节拷进你的缓冲区，pread 才返回。
+
+---
+
+## 31 五条路，走到不同深度
+
+[visual: ascii title="同一个五层，不同调用走到不同深度"]
+                 VFS    page cache   make bio    blk/drv/hw  copy
+buffered hit      Y      hit          -           -           1
+buffered miss     Y      miss         Y           Y           1
+write             Y      dirty        -           -           1
+fsync             Y      -            data+log    Y           0
+O_DIRECT read     Y      skip         user pages  Y           0
+mmap read         first  on fault     on miss     Y           0
+socket read       Y      -            -           -           1
+
+Y：这一层参与    -：这一层不出场    copy：内核拷贝次数
+
+[sidebar]
+命中只剩两层
+O_DIRECT 绕开缓存
+mmap 省掉拷贝
+socket 第一层拐走
+
+[narration]
+主线走完再看分叉。命中时只剩前两层；write 写进缓存就返回；fsync 一路压到硬件；O_DIRECT 跳过缓存，却绕不开下面三层；mmap 缺页之后不再进内核。socket 在第一层就拐进网络栈，它等的是数据到来，不是自己发出的 IO 完成，这是后面 epoll 和 io_uring 的伏笔。
+
+---
+
+## 32 写的完成有三个时刻
+
+[visual: text title="写的完成有三个时刻"]
+write 返回：数据只进了 page cache
+回写线程：30 秒后或脏页太多才下盘
+fsync 返回：数据、日志、Flush 都被盘确认
+
+[sidebar]
+write：进缓存
+回写：落介质
+fsync：元数据提交
+R5·活过断电
+C10·内存装不下
+
+[example]
+比如你 write 了 10 KiB 立刻返回，这时断电，盘上什么都没变，默认最长有 30 秒窗口。
+
+调 fsync 时，ext4 先写完脏页，再提交日志；提交块带着 PREFLUSH 和 FUA，块层先发一条 Flush 让盘刷写缓存，再写提交块，三件事都等完才返回。
+
+[narration]
+读的完成只有一个时刻，写却有三个。write 返回时数据只在内存，这是 C10 内存装不下逼出的延迟回写。fsync 慢不是内核拖沓，它要串行等三件事，这就是 R5 活过断电的价格。
+
+---
+
+## 33 两条省拷贝的路
+
+[visual: ascii title="O_DIRECT 与 mmap：两条省拷贝的路，省法相反"]
+┌─ 路线 A：O_DIRECT 读，数据库那条路
+│   read(fd, buf, 64 KiB)
+│    ▼ 检查对齐：偏移、长度、buf 都要按块
+│    ▼ 钉住用户页，DMA 期间不许换出
+│    ▼ 查 extent，bio 直接指向用户页
+│    ▼ 块层、驱动、硬件：和主线相同
+│    ▼ DMA 落进 buf，没有内核拷贝
+└─ 省：缓存、预读、拷贝    付：对齐、每次下盘
+
+┌─ 路线 B：mmap 读
+│   mmap 之后读 p[8192]
+│    ▼ 页表里没有这一页：缺页异常
+│    ▼ filemap_fault 查同一份 page cache
+│    ▼ 没命中：同一套预读和等待
+│    ▼ folio 的物理地址直接填进页表
+│    ▼ 以后读这页，不再进内核
+└─ 省：系统调用、拷贝      付：缺页、页表、预读失控
+
+[sidebar]
+O_DIRECT：绕开缓存
+mmap：共用缓存
+数据库选 O_DIRECT
+C4·定长块
+
+[narration]
+两条省拷贝的路，省法相反。O_DIRECT 把你的缓冲区直接当 DMA 目标，绕开缓存，却绕不开下面三层和 C4 定长块，所以要对齐；数据库愿意这么换，因为它的缓冲池更懂自己。mmap 和普通读共用同一份缓存，所以两种方式看到的数据永远一致。
+
+---
+
+## 34 四种走法的实验设计
+
+[visual: text title="四种走法实验：同一个文件，走到不同深度"]
+用 dd 造一个 256 MiB 的随机文件
+同一程序四种模式：buffered、direct、fsync、mmap
+看耗时和系统调用次数
+
+[sidebar]
+buffered：第二遍快
+direct：每遍都下盘
+fsync：每次穿到硬件
+mmap：几乎没有 read
+
+[example]
+buffered 连跑两遍，第二遍全部命中缓存，在 Linux 上预期快十倍以上；direct 每遍都下盘，两遍差不多。
+
+fsync 每写 64 KiB 落一次盘；mmap 用 strace 看，几乎没有 read，数据靠缺页进来。
+
+[narration]
+怎么亲眼看到这些差别？实验设计是控制变量：同一个文件、同一个程序，只换走法，测耗时和系统调用次数。这个实验要在 Linux 上做，macOS 没有 O_DIRECT。
+
+---
+
+## 35 实验代码
+
+[visual: code_explain lang=c title="四种走法实验：fsync 模式（用户态代码，Linux）"]
+static long run_fsync(const char *path, void *buf) {
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd < 0) die("open write");
+    memset(buf, 0x5a, CHUNK);
+    long total = 0;
+    for (int i = 0; i < 64; i++) {           /* 64 × 64 KiB = 4 MiB */
+        if (write(fd, buf, CHUNK) != CHUNK) die("write");
+        total += CHUNK;
+        if (fsync(fd) < 0) die("fsync");     /* 注释掉这一行再跑一遍,感受 R5·活过断电 的价格 */
+    }
+    close(fd);
+    return total;
+}
+===HIGHLIGHT===
+lines=2-4
+新建测试文件并截断为空
+用 0x5a 填满 64 KiB 缓冲区
+每次写的内容都一样
+===HIGHLIGHT===
+lines=6-10
+64 次，每次 64 KiB，共 4 MiB
+每写一块就 fsync 一次
+每次都等 Flush 和 FUA 被盘确认
+对照组：注释掉 fsync 那一行
+
+[narration]
+看最能说明问题的 fsync 模式：新建文件，循环写 64 次，每次 64 KiB，每写一块就 fsync。对照组只改一处，把 fsync 那一行注释掉。在 Linux 上，带 fsync 的版本明显更慢，差出来的就是每次穿到硬件、等盘确认的代价。
+
+---
+
+## 36 三个常见误解
+
+[visual: text title="三个常见误解"]
+read 返回了，不等于刚从盘上读过
+write 返回了，不等于数据已在盘上
+调度器设成 none，不等于块层没用了
+
+[sidebar]
+看 pgpgin，不看返回值
+fsync 才等到盘确认
+none 只关掉排序
+
+[example]
+第一条，大多数读根本没下盘；想知道有没有，看 vmstat 里的 pgpgin。
+
+第二条，write 返回只说明进了缓存；fsync 返回才表示穿到硬件、盘已确认。
+
+第三条，none 只关掉排序；切分、合并、tag、多队列和背压一个不少。
+
+[narration]
+把这一集的机制放回日常，最容易踩的是三个误解。它们有一个共同点：把某一层的完成，当成了整条链的完成。
+
+---
+
+## 37 本集总结
+
+[visual: html_slide image="pics/ep3-summary-card.png" title="How 阶段：三件货物的五层往返"]
+
+[step: auto]
+scroll auto
+
+[narration]
+这一集六件事。一，VFS 找 file、做检查、按表派活。二，page cache 先查缓存再翻译。三，随机读只读一页，顺序读四页起步、三十二页封顶。四，整条链只查一次表。五，块层机制固定、策略可换，tag 用光就是背压。六，一次门铃、一次中断，钩子把完成送回来。
+
+---
+
+## 38 下集预告
+
+[visual: spotlight title=下集预告]
+本集就到这里
+下集：Origin 阶段，这五层是怎么来的？
+
+[narration]
+本集就到这里，下集见。下一集回到历史：这五层是谁、在什么约束下，一步步做出来的。
+
+---

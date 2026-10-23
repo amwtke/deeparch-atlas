@@ -1,0 +1,184 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 11.27
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Why阶段开场",
+  "start": 11.27,
+  "end": 17.37
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "开机那 512 字节",
+  "start": 17.37,
+  "end": 37.53
+ },
+ {
+  "idx": 4,
+  "type": "text",
+  "title": "\"没有文件，没有缓存，没有并发\"",
+  "start": 37.53,
+  "end": 77.73
+ },
+ {
+  "idx": 5,
+  "type": "adv_animation",
+  "title": "\"一刀全切，再一层层补回来\"",
+  "start": 77.73,
+  "end": 97.6
+ },
+ {
+  "idx": 6,
+  "type": "ascii",
+  "title": "\"同一个读请求，三种盘三种说法\"",
+  "start": 97.6,
+  "end": 122.37
+ },
+ {
+  "idx": 7,
+  "type": "code",
+  "title": "\"NVMe 驱动填的那张表（Linux 6.12）\"",
+  "start": 122.37,
+  "end": 148.87
+ },
+ {
+  "idx": 8,
+  "type": "ascii",
+  "title": "\"第二幕：M 个上层 × N 个驱动\"",
+  "start": 148.87,
+  "end": 176.83
+ },
+ {
+  "idx": 9,
+  "type": "text",
+  "title": "\"三个互不认识的上层，同一个 submit_bio\"",
+  "start": 176.83,
+  "end": 221.07
+ },
+ {
+  "idx": 10,
+  "type": "spotlight",
+  "title": "9 第三幕报幕",
+  "start": 221.07,
+  "end": 227.57
+ },
+ {
+  "idx": 11,
+  "type": "timeline",
+  "title": "\"ext4 保存 10 KiB 的 notes.txt\"",
+  "start": 227.57,
+  "end": 249.5
+ },
+ {
+  "idx": 12,
+  "type": "ascii",
+  "title": "\"同一次保存：原位直接改 vs 先写日志\"",
+  "start": 249.5,
+  "end": 270.8
+ },
+ {
+  "idx": 13,
+  "type": "statemap",
+  "title": "\"一个日志事务的一生\"",
+  "start": 270.8,
+  "end": 294.53
+ },
+ {
+  "idx": 14,
+  "type": "text",
+  "title": "\"只做原子和持久的迷你数据库\"",
+  "start": 294.53,
+  "end": 338.37
+ },
+ {
+  "idx": 15,
+  "type": "text",
+  "title": "\"第四幕：每次 read 都真的下盘\"",
+  "start": 338.37,
+  "end": 373.57
+ },
+ {
+  "idx": 16,
+  "type": "ascii",
+  "title": "\"读偏移 8192：命中 vs 未命中\"",
+  "start": 373.57,
+  "end": 399.17
+ },
+ {
+  "idx": 17,
+  "type": "text",
+  "title": "\"write 返回了，数据还不在盘上\"",
+  "start": 399.17,
+  "end": 435.27
+ },
+ {
+  "idx": 18,
+  "type": "ascii",
+  "title": "\"第五幕：同一个 cat，五种完全不同的东西\"",
+  "start": 435.27,
+  "end": 459.27
+ },
+ {
+  "idx": 19,
+  "type": "text",
+  "title": "\"同一个文件，两个进程各读各的\"",
+  "start": 459.27,
+  "end": 496.87
+ },
+ {
+  "idx": 20,
+  "type": "timeline",
+  "title": "\"先有理念，VFS 让它变便宜\"",
+  "start": 496.87,
+  "end": 521.0
+ },
+ {
+  "idx": 21,
+  "type": "layers",
+  "title": "\"12 条叶子收成 5 根\"",
+  "start": 521.0,
+  "end": 544.8
+ },
+ {
+  "idx": 22,
+  "type": "text",
+  "title": "\"这些常被当成约束，其实不是\"",
+  "start": 544.8,
+  "end": 589.9
+ },
+ {
+  "idx": 23,
+  "type": "ascii",
+  "title": "\"五层 = 五次坐标变换\"",
+  "start": 589.9,
+  "end": 617.3
+ },
+ {
+  "idx": 24,
+  "type": "ascii",
+  "title": "\"两道速度断崖，两种填法\"",
+  "start": 617.3,
+  "end": 640.77
+ },
+ {
+  "idx": 25,
+  "type": "html_slide",
+  "title": "五层的由来",
+  "start": 640.77,
+  "end": 669.03
+ },
+ {
+  "idx": 26,
+  "type": "spotlight",
+  "title": "下集预告",
+  "start": 669.03,
+  "end": 679.6
+ }
+]

@@ -1,0 +1,924 @@
+# 第 5 集 Deep 阶段 — 一次没命中的 pread，94 微秒都花在哪了？
+
+[intro-line] 今天钻进 Linux 六点一二的源码，追一次没命中的 pread，看九十多微秒都花在了哪一层。
+
+## 1 Deep 阶段开场
+
+[visual: spotlight]
+现在我们钻进 Deep 阶段
+真实源码到底长什么样？
+
+[narration]
+五层是什么、为什么、怎么来的，都讲过了。这一集，直接翻 Linux 六点一二的源码。
+
+---
+
+## 2 同一次读的两种命运
+
+[visual: title]
+同一次 4KB 读
+第一次 94 微秒
+第二次不到 1 微秒
+
+[narration]
+你在一台 NVMe 固态盘的 Linux 机器上，对 1MB 的文件 notes.txt 调用 pread，从第 8192 字节读 4K。第一次大约 94 微秒，紧接着再读一遍，不到 1 微秒。差了一百倍，多出来的时间花在了哪一层？这一集就拿这一次读，一路追到 NVMe 命令，再追回来。
+
+---
+
+## 3 一次未命中读的时间账
+
+[visual: html_slide image="pics/05-timeline.png" title=一次缓冲读未命中的时间账]
+
+[step: auto]
+scroll auto
+
+[narration]
+上半按比例画：94 微秒里，红色那段设备独占 80 微秒，占百分之八十五；CPU 这边十段加起来只有 14 微秒左右。下半逐段放大，这里按稳态的 128K 预读窗口算。命中时只剩首尾两段，半微秒到一微秒。所以命中率决定一切，其余手段都在抠那 14 微秒。
+
+---
+
+## 4 三条主线三个问题
+
+[visual: layers title=三条主线，三个问题]
+主线 A：read 和 mmap 怎么落到同一页
+主线 B：发出去的请求，回来怎么认领
+主线 C：等就绪，还是等完成
+
+[narration]
+这十一段时间，拆成三个问题。read 是系统调用，mmap 是缺页异常，凭什么读到同一份缓存？几十个核同时发请求，盘又乱序完成，结果怎么找回主人？epoll 和 io_uring 省的到底是哪几段？三条线，每条都落到源码行。
+
+---
+
+## 5 报幕：主线 A
+
+[visual: spotlight]
+主线 A
+两条入口，一份缓存
+
+[narration]
+先看最上面这一截：你的 read 进了内核，第一站去哪？
+
+---
+
+## 6 两样东西在这里出生
+
+[visual: code_explain lang=c title="new_sync_read：工单与目的地（Linux 6.12）"]
+static ssize_t new_sync_read(struct file *filp, char __user *buf, size_t len, loff_t *ppos)
+{
+	struct kiocb kiocb;
+	struct iov_iter iter;
+	ssize_t ret;
+
+	init_sync_kiocb(&kiocb, filp);
+	kiocb.ki_pos = (ppos ? *ppos : 0);
+	iov_iter_ubuf(&iter, ITER_DEST, buf, len);
+
+	ret = filp->f_op->read_iter(&kiocb, &iter);
+	BUG_ON(ret == -EIOCBQUEUED);
+	if (ppos)
+		*ppos = kiocb.ki_pos;
+	return ret;
+}
+===HIGHLIGHT===
+lines=3-4
+kiocb：这次读的工单
+记位置、标志、完成回调
+iov_iter：数据拷到哪
+用户指针、内核页都能装
+===HIGHLIGHT===
+lines=7-9
+init_sync_kiocb：同步工单
+完成回调为空 = 同步
+ki_pos 取文件偏移 8192
+===HIGHLIGHT===
+lines=11-12
+read_iter：交给 ext4
+同步路径不许"已排队"
+io_uring 走同一个入口
+C11·POSIX接口冻结
+接口不动，工单可扩
+
+[narration]
+vfs_read 检查完权限，就把活交到这里。先想想：同一条读路径要服务 pread、io_uring 和内核自己，光有缓冲区和长度不够，还得说清能不能睡、做完叫谁。源码果然造了两样东西：kiocb 是工单，iov_iter 说数据拷到哪。完成回调为空就是同步，所以最后断言，同步读绝不许返回已排队。
+
+---
+
+## 7 查页的三级尝试
+
+[visual: code_explain lang=c title="filemap_get_pages：查、预读、保底（Linux 6.12）"]
+	filemap_get_read_batch(mapping, index, last_index - 1, fbatch);
+	if (!folio_batch_count(fbatch)) {
+		if (iocb->ki_flags & IOCB_NOIO)
+			return -EAGAIN;
+		if (iocb->ki_flags & IOCB_NOWAIT)
+			flags = memalloc_noio_save();
+		page_cache_sync_readahead(mapping, ra, filp, index,
+				last_index - index);
+		if (iocb->ki_flags & IOCB_NOWAIT)
+			memalloc_noio_restore(flags);
+		filemap_get_read_batch(mapping, index, last_index - 1, fbatch);
+	}
+	if (!folio_batch_count(fbatch)) {
+		if (iocb->ki_flags & (IOCB_NOWAIT | IOCB_WAITQ))
+			return -EAGAIN;
+		err = filemap_create_folio(filp, mapping, iocb->ki_pos, fbatch);
+		if (err == AOP_TRUNCATED_PAGE)
+			goto retry;
+		return err;
+	}
+===HIGHLIGHT===
+lines=1-1
+第一层：批量查 XArray
+键是（文件，页号）
+命中就直接拷
+===HIGHLIGHT===
+lines=2-12
+第二层：没命中就同步预读
+预读发出 bio 后再查一遍
+NOWAIT 时分配也不许走 IO
+===HIGHLIGHT===
+lines=13-15
+还是空，又不许睡
+NOWAIT 或 WAITQ 回 EAGAIN
+io_uring 的命门在这
+===HIGHLIGHT===
+lines=16-20
+第三层：预读被关时的保底
+只建一页再读
+
+[narration]
+带着预期翻这段：缓存页有三种状态，在且读好、不在、在但正在读，所以该有三层尝试。第一层批量查索引树，命中直接拷。第二层没命中，发同步预读再查一遍。第三层预读被关，只建一页保底。中间那一刀最关键：工单带着不许睡的标志，就当场返回 EAGAIN，意思是稍后再试。io_uring 不阻塞，就靠这一刀。
+
+---
+
+## 8 预读窗口凭什么变大
+
+[visual: text]
+第一次没命中，分不清顺序读还是随机读
+窗口应该随"顺序"的证据变大
+上限由 read_ahead_kb 封顶，默认 128KB
+
+[sidebar]
+首次未命中：小窗口
+碰到标记页：窗口变大
+随机读：不浪费内存
+C9·速差+局部性
+C10·内存装不下
+
+[example]
+比如你从头顺序读这个文件。第一次没命中，内核只预读 4 页，也就是 16K，并在其中一页做个标记。
+
+你读到标记页，说明真是顺序读，下一窗提前发出，而且更大，直到 32 页、128K 封顶。
+
+[narration]
+第一次没命中时，内核根本不知道你是顺序读还是随机读。一上来读满 32 页，随机负载每次只用 1 页，就是八倍浪费，C10 内存装不下不允许；读太少，顺序负载又喂不饱盘，C9 速差加局部性不允许。所以窗口应该随着证据一步步变大。
+
+---
+
+## 9 预读窗口的初值与增长
+
+[visual: code_explain lang=c title="get_init_ra_size 与 get_next_ra_size（Linux 6.12）"]
+	unsigned long newsize = roundup_pow_of_two(size);
+
+	if (newsize <= max / 32)
+		newsize = newsize * 4;
+	else if (newsize <= max / 4)
+		newsize = newsize * 2;
+	else
+		newsize = max;
+
+	return newsize;
+}
+
+/*
+ *  Get the previous window size, ramp it up, and
+ *  return it as the new window size.
+ */
+static unsigned long get_next_ra_size(struct file_ra_state *ra,
+				      unsigned long max)
+{
+	unsigned long cur = ra->size;
+
+	if (cur < max / 16)
+		return 4 * cur;
+	if (cur <= max / 2)
+		return 2 * cur;
+===HIGHLIGHT===
+lines=1-10
+初值：请求页数凑成 2 的幂
+读 1 页：1 不超过 32/32
+乘 4，初始窗口 4 页 = 16KB
+===HIGHLIGHT===
+lines=17-25
+增长：小于上限 1/16 才乘 4
+32/16 = 2，4 不小于 2
+走翻倍：4、8、16、32
+到 32 页 = 128KB 封顶
+
+[narration]
+源码验证这个预期。初值函数把请求页数凑成二的幂，读一页时，一不超过三十二分之三十二，于是乘四，初始窗口四页。增长函数两档：小于上限的十六分之一就乘四，不超过一半就翻倍。上限三十二页的十六分之一是两页，四页不满足，所以走翻倍：四、八、十六、三十二。别记成四直接跳十六。
+
+---
+
+## 10 两条入口在哪里汇合
+
+[visual: ascii title=read 与 mmap 汇合在同一棵索引树]
+  read(fd, buf, 4096)           p[8192]：访问映射内存
+            │ 系统调用                      │ 缺页异常
+            ▼                               ▼
+┌────────────────────────┐    ┌────────────────────────────┐
+│ vfs_read               │    │ do_read_fault              │
+│ new_sync_read          │    │ 先填周围已缓存的 16 页     │
+│ filemap_read           │    │ filemap_fault              │
+└───────────┬────────────┘    └─────────────┬──────────────┘
+            │ 页号 = 8192 >> 12 = 2         │ 页号 = vmf->pgoff
+            ▼                               ▼
+┌──────────────────────────────────────────────────────────┐
+│ 同一棵 XArray：键是 (inode, 页号)，共用一套预读状态      │
+└───────────┬───────────────────────────────┬──────────────┘
+            │ 命中                          │ 命中
+            ▼                               ▼
+  拷 4KB 进你的 buf             页填进页表，之后访问不进内核
+
+[sidebar]
+read：系统调用入口
+mmap：缺页异常入口
+汇合点：查页这一层
+fault-around：一次 16 页
+C9·速差+局部性
+
+[narration]
+两条入口几乎没有共同点：左边是系统调用，右边是硬件缺页异常。可它们必须落到同一份页上，否则 write 写进去的数据，mmap 看不见。C9 速差加局部性要求缓存只有一份，所以汇合点选在查页这一层，预读状态也共用。mmap 还多一招：缺页时把周围已缓存的 16 页一次填进页表，顺序访问每十六页才异常一次。
+
+---
+
+## 11 缓冲读为什么非拷一次不可
+
+[visual: text]
+命中时仍要把 4KB 拷进你的 buf
+因为 buf 的地址由你决定
+零拷贝方案都要改签名，或者换范式
+
+[sidebar]
+映射给用户：TLB 广播
+O_DIRECT：对齐外露
+sendfile：仅 fd 到 fd
+大 folio：少循环
+C11·POSIX接口冻结
+
+[example]
+把缓存页直接映射给你，省了拷贝，却要改页表、在多核上广播 TLB 失效，要几微秒，比拷 4K 的 0.3 微秒贵一个数量级。
+
+用 O_DIRECT，盘直接写进你的缓冲区，代价是对齐要求外露、每次真下盘、缓存自己管，这正是数据库的选择。
+
+[narration]
+命中那半微秒里，最大一块就是拷贝。为什么不直接把缓存页交给你？因为 read 的签名是你给地址、内核往里填，这是 C11 POSIX 接口冻结下几十年不变的约定。在这个前提下，一次拷贝就是局部最优；每个省拷贝的方案，都在别处付了账。
+
+---
+
+## 12 报幕：主线 B
+
+[visual: spotlight]
+主线 B
+发出去的请求，回来时怎么认领？
+
+[narration]
+页不在缓存，就得真下盘。这一页的坐标，是怎么一路换成 NVMe 命令的？
+
+---
+
+## 13 一个预读 bio 的去程与回程
+
+[visual: timeline title=从页号到 NVMe 命令，再回来]
+T=1 [ext4] 页号 2 查 extent，得盘上第 81922 块
+T=2 [ext4] 块号乘 8 得扇区 655376，造 bio
+T=3 [块层] 加分区起点 2048，得整盘扇区 657424
+T=4 [块层] 切分、试合并、领 tag、组 request
+T=5 [驱动] 写 64 字节命令，命令号带上 tag，敲门铃
+T=6 [设备] 读闪存，DMA 写进这些页，写完成队列
+T=7 [驱动] 中断里按命令号找回 request
+T=8 [回程] bio 完成，页解锁，唤醒你的进程
+
+[narration]
+ext4 拿页号 2 查 extent，得到盘上第 81922 块；块层按 512 字节的扇区计数，块号乘以 8，再加上分区起点 2048，得到整盘坐标 657424。然后切分、试合并、领 tag、组 request。驱动把它写成 64 字节的 NVMe 命令，敲一次门铃。回来的路上，只凭命令里带回的一个号码，就找回了一切。
+
+---
+
+## 14 ext4 怎样把页拼成 bio
+
+[visual: code_explain lang=c title="ext4_mpage_readpages：页拼成 bio（Linux 6.12）"]
+		if (bio && (last_block_in_bio != first_block - 1 ||
+			    !fscrypt_mergeable_bio(bio, inode, next_block))) {
+		submit_and_realloc:
+			submit_bio(bio);
+			bio = NULL;
+		}
+		if (bio == NULL) {
+			/*
+			 * bio_alloc will _always_ be able to allocate a bio if
+			 * __GFP_DIRECT_RECLAIM is set, see bio_alloc_bioset().
+			 */
+			bio = bio_alloc(bdev, bio_max_segs(nr_pages),
+					REQ_OP_READ, GFP_KERNEL);
+			fscrypt_set_bio_crypt_ctx(bio, inode, next_block,
+						  GFP_KERNEL);
+			ext4_set_bio_post_read_ctx(bio, inode, folio->index);
+			bio->bi_iter.bi_sector = first_block << (blkbits - 9);
+			bio->bi_end_io = mpage_end_io;
+			if (rac)
+				bio->bi_opf |= REQ_RAHEAD;
+		}
+
+		length = first_hole << blkbits;
+		if (!bio_add_folio(bio, folio, length, 0))
+			goto submit_and_realloc;
+===HIGHLIGHT===
+lines=1-6
+和上一个 bio 在盘上不连续
+先把旧 bio 发出去
+盘上连续的页才拼一起
+===HIGHLIGHT===
+lines=12-13
+bio_alloc：新开一个 bio
+最多 256 段，一段一页
+===HIGHLIGHT===
+lines=17-20
+块号左移 3 位 = 扇区号
+81922 变 655376
+bi_end_io：回程钩子
+REQ_RAHEAD 一路带到盘
+===HIGHLIGHT===
+lines=23-25
+塞不下就发出去
+再开一个新的
+
+[narration]
+ext4 手里有页号和 extent，能算出每页在盘上的块号。可以预期：它会把盘上连续的页拼进同一个 bio，不连续就断开；还得在 bio 上留一个回程钩子。源码正是这样。先看和上一个 bio 接不接得上，接不上就先发走；新 bio 最多装 256 段；块号左移三位变成扇区号；回程函数挂上，预读标记一路带到盘。
+
+---
+
+## 15 回来的结果怎么找到主人
+
+[visual: text]
+完成是异步的，而且乱序
+几十个核同时提交，槽位有限
+回来的结果要一步找到主人
+
+[sidebar]
+C2·设备慢且异步
+C5·多核并发
+C1·厂商定接口
+号码牌：tag
+原样带回：命令号
+
+[example]
+假设 8 个核各发 100 个读，盘里同时在飞 800 个命令，第 37 个可能最先回来。用全局哈希表匹配，每次完成都抢一把全局锁；按顺序认领，乱序一来就认错人。
+
+[narration]
+先别看代码，推一推。C2 设备慢且异步，完成是乱序的；C5 多核并发，几十个核同时往盘上发；C1 厂商定接口，命令里只给你留一个小整数的位置。三件事一合，答案几乎只剩一个：提交时发一张号码牌，写进命令，让设备原样带回来，回来时按号查表。这张号码牌，就是 tag。
+
+---
+
+## 16 发号与背压
+
+[visual: code_explain lang=c title="blk_mq_get_tag：领号与等待（Linux 6.12）"]
+	tag = __blk_mq_get_tag(data, bt);
+	if (tag != BLK_MQ_NO_TAG)
+		goto found_tag;
+
+	if (data->flags & BLK_MQ_REQ_NOWAIT)
+		return BLK_MQ_NO_TAG;
+
+	ws = bt_wait_ptr(bt, data->hctx);
+	do {
+		struct sbitmap_queue *bt_prev;
+
+		/*
+		 * We're out of tags on this hardware queue, kick any
+		 * pending IO submits before going to sleep waiting for
+		 * some to complete.
+		 */
+		blk_mq_run_hw_queue(data->hctx, false);
+
+		/*
+		 * Retry tag allocation after running the hardware queue,
+		 * as running the queue may also have found completions.
+		 */
+		tag = __blk_mq_get_tag(data, bt);
+		if (tag != BLK_MQ_NO_TAG)
+			break;
+===HIGHLIGHT===
+lines=1-3
+快路径：位图里找一个 0
+置 1 就是领到号
+每个硬件队列一张位图
+===HIGHLIGHT===
+lines=5-6
+不许睡的请求
+没号直接失败
+io_uring 的 NOWAIT 走这
+===HIGHLIGHT===
+lines=8-17
+没号了，先催一下设备
+也许刚有命令完成
+===HIGHLIGHT===
+lines=23-25
+再抢一次
+还没有：登记等待
+接着 io_schedule() 睡下
+这就是背压点
+
+[narration]
+发号用的是一张位图，每个硬件队列一张，找到一个零、置成一，就领到了号。不许睡的请求，没号当场失败。普通请求没号时不急着睡：先催一下设备，也许刚有命令完成腾出了号，再抢一次；还抢不到，登记等待，然后睡下。这一睡就是整条链路的背压点：盘满了，压力一路顶回你的进程，而不是在内核里堆内存。
+
+---
+
+## 17 驱动这一站：翻译、入队、敲门铃
+
+[visual: code_explain lang=c title="nvme_queue_rq：命令进提交队列（Linux 6.12）"]
+static blk_status_t nvme_queue_rq(struct blk_mq_hw_ctx *hctx,
+			 const struct blk_mq_queue_data *bd)
+{
+	struct nvme_queue *nvmeq = hctx->driver_data;
+	struct nvme_dev *dev = nvmeq->dev;
+	struct request *req = bd->rq;
+	struct nvme_iod *iod = blk_mq_rq_to_pdu(req);
+	blk_status_t ret;
+
+	/*
+	 * We should not need to do this, but we're still using this to
+	 * ensure we can drain requests on a dying queue.
+	 */
+	if (unlikely(!test_bit(NVMEQ_ENABLED, &nvmeq->flags)))
+		return BLK_STS_IOERR;
+
+	if (unlikely(!nvme_check_ready(&dev->ctrl, req, true)))
+		return nvme_fail_nonready_command(&dev->ctrl, req);
+
+	ret = nvme_prep_rq(dev, req);
+	if (unlikely(ret))
+		return ret;
+	spin_lock(&nvmeq->sq_lock);
+	nvme_sq_copy_cmd(nvmeq, &iod->cmd);
+	nvme_write_sq_db(nvmeq, bd->last);
+===HIGHLIGHT===
+lines=1-7
+块层派发的那一跳
+硬件队列对应设备队列
+驱动私有数据紧跟 request
+不用再分配
+===HIGHLIGHT===
+lines=20-22
+nvme_prep_rq：组命令
+扇区换 LBA，tag 进命令号
+页换成 DMA 地址列表
+===HIGHLIGHT===
+lines=23-25
+每队列一把锁，不是全局
+64 字节命令拷进提交队列
+只在一批最后敲门铃
+
+[narration]
+驱动这一站该做三件事：翻译、入队、通知。前几行拿到对应的设备队列，驱动私有数据紧贴在 request 后面，不用再分配。准备函数把扇区换成盘的逻辑块号，把 tag 写进命令号，把页换成 DMA 地址。最后在本队列的锁里，把 64 字节命令拷进提交队列，只在一批的最后敲一次门铃。
+
+---
+
+## 18 号码牌回来以后
+
+[visual: code_explain lang=c title="nvme_cid 与 nvme_find_rq：号码去与回（Linux 6.12）"]
+static inline u16 nvme_cid(struct request *rq)
+{
+	return nvme_cid_install_genctr(nvme_req(rq)->genctr) | rq->tag;
+}
+
+static inline struct request *nvme_find_rq(struct blk_mq_tags *tags,
+		u16 command_id)
+{
+	u8 genctr = nvme_genctr_from_cid(command_id);
+	u16 tag = nvme_tag_from_cid(command_id);
+	struct request *rq;
+
+	rq = blk_mq_tag_to_rq(tags, tag);
+	if (unlikely(!rq)) {
+		pr_err("could not locate request for tag %#x\n",
+			tag);
+		return NULL;
+	}
+	if (unlikely(nvme_genctr_mask(nvme_req(rq)->genctr) != genctr)) {
+		dev_err(nvme_req(rq)->ctrl->device,
+			"request %#x genctr mismatch (got %#x expected %#x)\n",
+			tag, genctr, nvme_genctr_mask(nvme_req(rq)->genctr));
+		return NULL;
+	}
+	return rq;
+===HIGHLIGHT===
+lines=1-4
+去程：命令号 = 代数 | tag
+低 12 位是 tag
+高 4 位是代数计数
+===HIGHLIGHT===
+lines=6-10
+回程：读出命令号
+拆出代数和 tag
+===HIGHLIGHT===
+lines=13-18
+按 tag 一步查表
+没有哈希，没有全局锁
+===HIGHLIGHT===
+lines=19-25
+代数对不上就丢弃
+防止过期的完成认错主人
+tag 只有 12 位，深度上限 4095
+
+[narration]
+现在验证号码牌。去程，命令号由两部分拼成：低 12 位就是 tag，高 4 位是一个代数计数。回程，中断处理从完成队列读出命令号，调用这里：拆出 tag，一步查表找回 request；再核对代数，对不上说明是过期的完成，直接丢弃。设备替内核保存了索引，所以全程没有哈希表，也没有全局锁。
+
+---
+
+## 19 队列深度为什么是 1024
+
+[visual: text]
+队列深度默认 1024，可设 2 到 4095
+每个核一个队列，完成就地处理
+下界看并行度，上界看内存
+
+[sidebar]
+深度 64：随机读喂不饱
+深度 65536：内存白占
+一核一队列：不用 IPI
+C6·介质形状相反
+C10·内存装不下
+
+[example]
+把深度降到 64，随机 4K 读时每个队列在途只有 256K，按 80 微秒往返算约每秒 3GB，喂不饱一块每秒 7GB 的盘。
+
+一核一队列时，中断落在提交的那个核上，request 和页都还在它的缓存里，就地完成，不用跨核发 IPI。
+
+[narration]
+1024 不是算出来的精确值，是一个够宽的区间里挑的整数。下界由 C6 介质形状相反决定，并行度不够喂不饱闪存；上界由 C10 内存装不下决定，拉到 65536，每个核要预分配几十兆，盘却用不了这么多并行。
+
+---
+
+## 20 报幕：主线 C
+
+[visual: spotlight]
+主线 C
+等就绪，还是等完成？
+
+[narration]
+最后一条线回到最上面：epoll 和 io_uring，到底省掉了哪几段？
+
+---
+
+## 21 epoll 解决了什么，留下了什么
+
+[visual: text]
+select 和 poll：每次把全部 fd 问一遍
+epoll：登记一次，就绪时回调挂上链表
+代价从"登记数"变成"就绪数"
+
+[sidebar]
+C10k：上万慢连接
+回调：被动通知
+三个口子：模型自带
+C5·多核并发
+C3·特权态门槛
+
+[example]
+一台服务器挂着一万个连接，有数据的只有几十个。poll 每次把一万个 fd 全问一遍，epoll 只搬那几十个。
+
+它留下三个口子：读还得你自己再调一次 read；普通文件没有就绪状态；收割事件也要进内核。
+
+[narration]
+epoll 当年解决的是 C10k 问题，也是 C5 多核并发的一种形态：一个线程盯上万个慢连接，把挨个问改成等通知。但它的口子都和就绪模型绑在一起，每个事件两次系统调用，C3 特权态门槛要付两遍。
+
+---
+
+## 22 普通文件为什么进不了 epoll
+
+[visual: code_explain lang=c title="do_epoll_ctl：普通文件为何 EPERM（Linux 6.12）"]
+	error = -EBADF;
+	f = fdget(epfd);
+	if (!fd_file(f))
+		goto error_return;
+
+	/* Get the "struct file *" for the target file */
+	tf = fdget(fd);
+	if (!fd_file(tf))
+		goto error_fput;
+
+	/* The target file descriptor must support poll */
+	error = -EPERM;
+	if (!file_can_poll(fd_file(tf)))
+		goto error_tgt_fput;
+
+	/* Check if EPOLLWAKEUP is allowed */
+	if (ep_op_has_event(op))
+		ep_take_care_of_epollwakeup(epds);
+===HIGHLIGHT===
+lines=1-4
+先取 epoll 实例自己的 file
+===HIGHLIGHT===
+lines=6-9
+再取你要登记的目标 fd
+===HIGHLIGHT===
+lines=11-14
+目标必须能 poll
+file_can_poll = 有无 f_op->poll
+ext4 没有，返回 EPERM
+
+[narration]
+推一下：普通文件根本没有就绪这个状态，epoll 该怎么处理它？源码给的答案最直接。登记时先取出目标文件，然后只问一件事：它的文件操作表里有没有 poll 函数。ext4 的表里没有，因为对一个数据永远在盘上的文件，有没有数据这个问题没有意义。于是直接返回 EPERM。这不是没实现，是模型不适用。
+
+---
+
+## 23 两种模型在内核里的样子
+
+[visual: html_slide image="pics/05-epoll-vs-io_uring.png" title=等就绪与等完成在内核里的样子]
+
+[step: auto]
+scroll auto
+
+[narration]
+左边 epoll：红黑树记着登记过的 fd，数据一到，回调把条目挂上就绪链表。右边 io_uring：用户态和内核共享三段内存，提交条目 64 字节，完成条目 16 字节，两边各推自己那一端。它和 NVMe 的提交、完成队列是同一个形状：内核在你和它之间，也放了一对门铃队列。
+
+---
+
+## 24 io_uring 读文件的第一次尝试
+
+[visual: code_explain lang=c title="__io_read：先试不睡（Linux 6.12）"]
+	if (force_nonblock) {
+		/* If the file doesn't support async, just async punt */
+		if (unlikely(!io_file_supports_nowait(req, EPOLLIN)))
+			return -EAGAIN;
+		kiocb->ki_flags |= IOCB_NOWAIT;
+	} else {
+		/* Ensure we clear previously set non-block flag */
+		kiocb->ki_flags &= ~IOCB_NOWAIT;
+	}
+
+	ppos = io_kiocb_update_pos(req);
+
+	ret = rw_verify_area(READ, req->file, ppos, req->cqe.res);
+	if (unlikely(ret))
+		return ret;
+
+	ret = io_iter_do_read(rw, &io->iter);
+
+	/*
+	 * Some file systems like to return -EOPNOTSUPP for an IOCB_NOWAIT
+	 * issue, even though they should be returning -EAGAIN. To be safe,
+	 * retry from blocking context for either.
+	 */
+	if (ret == -EOPNOTSUPP && force_nonblock)
+		ret = -EAGAIN;
+===HIGHLIGHT===
+lines=1-5
+第一次提交：非阻塞
+工单打上 IOCB_NOWAIT
+===HIGHLIGHT===
+lines=6-9
+交给 io-wq 线程兜底时
+清掉标志，允许睡
+===HIGHLIGHT===
+lines=13-17
+和 pread 同一个检查
+io_iter_do_read 进 read_iter
+走同一条 filemap_read
+===HIGHLIGHT===
+lines=19-25
+有的文件系统回 EOPNOTSUPP
+一律当 EAGAIN 处理
+
+[narration]
+io_uring 读文件，没有另起一套路径。拿到一条读请求，第一次总是非阻塞地试：给工单打上不许睡的标志，然后调用的正是和 pread 同一个读入口。命中缓存，当场拷完，直接写完成条目，连线程都不用换；没命中，就从刚才那一刀返回 EAGAIN。关键在于，返回之后它做什么。
+
+---
+
+## 25 把回调挂到页上
+
+[visual: code_explain lang=c title="io_rw_should_retry：回调挂在页上（Linux 6.12）"]
+	/* never retry for NOWAIT, we just complete with -EAGAIN */
+	if (req->flags & REQ_F_NOWAIT)
+		return false;
+
+	/* Only for buffered IO */
+	if (kiocb->ki_flags & (IOCB_DIRECT | IOCB_HIPRI))
+		return false;
+
+	/*
+	 * just use poll if we can, and don't attempt if the fs doesn't
+	 * support callback based unlocks
+	 */
+	if (io_file_can_poll(req) ||
+	    !(req->file->f_op->fop_flags & FOP_BUFFER_RASYNC))
+		return false;
+
+	wait->wait.func = io_async_buf_func;
+	wait->wait.private = req;
+	wait->wait.flags = 0;
+	INIT_LIST_HEAD(&wait->wait.entry);
+	kiocb->ki_flags |= IOCB_WAITQ;
+	kiocb->ki_flags &= ~IOCB_NOWAIT;
+	kiocb->ki_waitq = wait;
+	return true;
+===HIGHLIGHT===
+lines=5-7
+只管缓冲读
+O_DIRECT 另有出路
+===HIGHLIGHT===
+lines=9-15
+socket 能 poll，走 poll 回调
+文件系统要声明支持
+ext4 标了 FOP_BUFFER_RASYNC
+===HIGHLIGHT===
+lines=17-24
+回调函数：io_async_buf_func
+换上 IOCB_WAITQ，去掉 NOWAIT
+再读一次：发预读、挂回调
+立刻返回，不睡
+
+[narration]
+在六点一二上，ext4 的未命中读并不交给线程池。先确认三件事：缓冲读、文件不能 poll、文件系统支持页回调，ext4 支持。然后换个标志再读一次：发出预读，不睡在页上，而是把回调挂进页的等待队列，立刻返回。页解锁时顺手触发回调，请求回到你的进程再跑一遍，这次命中。这条路五点九才加。
+
+---
+
+## 26 回调挂在页上，还是挂在 bio 上
+
+[visual: ascii title=两条不睡的读路：回调挂在哪]
+   io_uring 缓冲读                 io_uring O_DIRECT 读
+┌──────────────────────────┐    ┌──────────────────────────┐
+│ NOWAIT 先试：页不在      │    │ ext4_dio_read_iter       │
+│ 带 WAITQ 再读一次        │    │ iomap 钉住你的 buf       │
+│ 发预读，回调挂在页上     │    │ 回调挂在 bio 上          │
+└────────────┬─────────────┘    └────────────┬─────────────┘
+             ▼                               ▼
+┌──────────────────────────┐    ┌──────────────────────────┐
+│ 盘 DMA 写进缓存页        │    │ 盘 DMA 直接写进 buf      │
+└────────────┬─────────────┘    └────────────┬─────────────┘
+             ▼                               ▼
+┌──────────────────────────┐    ┌──────────────────────────┐
+│ 页解锁，触发回调         │    │ bio 完成，调 ki_complete │
+│ 回进程再读并拷贝         │    │ 没有拷贝                 │
+└────────────┬─────────────┘    └────────────┬─────────────┘
+             ▼                               ▼
+         写完成条目                      写完成条目
+
+pread 走哪条都一样：工单没有回调，只能睡着等
+
+[sidebar]
+缓冲读：回调挂在页上
+O_DIRECT：挂在 bio 上
+pread：工单无回调
+IOPOLL：仅限 O_DIRECT
+C2·设备慢且异步
+
+[narration]
+io_uring 的承诺是：一个线程放进几百个读，不能被任何一个卡住。C2 设备慢且异步在这里成了硬要求，每一种读都得有个不睡也能等到结果的办法。缓冲读把回调挂在缓存页上。可 O_DIRECT 绕过了缓存，根本没有页可挂。那它的回调挂在哪？答案在 bio 上。
+
+---
+
+## 27 O_DIRECT 的分岔：睡，还是返回
+
+[visual: code_explain lang=c title="__iomap_dio_rw：等，还是先返回（Linux 6.12）"]
+	dio->wait_for_completion = wait_for_completion;
+	if (!atomic_dec_and_test(&dio->ref)) {
+		if (!wait_for_completion) {
+			trace_iomap_dio_rw_queued(inode, iomi.pos, iomi.len);
+			return ERR_PTR(-EIOCBQUEUED);
+		}
+
+		for (;;) {
+			set_current_state(TASK_UNINTERRUPTIBLE);
+			if (!READ_ONCE(dio->submit.waiter))
+				break;
+
+			blk_io_schedule();
+		}
+		__set_current_state(TASK_RUNNING);
+	}
+
+	return dio;
+===HIGHLIGHT===
+lines=1-2
+bio 都已发出
+还有 bio 在飞吗
+===HIGHLIGHT===
+lines=3-6
+工单有 ki_complete：io_uring
+直接返回 -EIOCBQUEUED
+线程不睡
+===HIGHLIGHT===
+lines=8-14
+工单无回调：pread
+睡在 blk_io_schedule
+等最后一个 bio 叫醒
+
+[narration]
+O_DIRECT 由 iomap 负责：钉住你的缓冲区，直接做成 bio，每个 bio 挂上完成函数。发完只看一个开关：工单有没有完成回调。io_uring 的工单有，于是返回已排队，线程走人；盘做完时，bio 的完成函数调用工单回调，写成完成条目。pread 的工单没有，只能睡在这里。这正是开头那个同步断言的反面。
+
+---
+
+## 28 四条进步，和一个常见的失望
+
+[visual: text]
+io_uring 相对 epoll 的四条进步
+冷文件未命中读，它碰不到设备那 85%
+
+[sidebar]
+更少系统调用：0 到 1 次
+支持硬盘文件：不再 EPERM
+做完再通知：不用再 read
+可选零中断：IOPOLL
+
+[example]
+每秒几十万次读的服务，每次省一次系统调用，乘起来就是实打实的 CPU；O_DIRECT 加 IOPOLL，还能省掉约 5 微秒的中断和唤醒。
+
+可如果你只是读一个冷文件，80 微秒的设备时间一点不会少，io_uring 比 pread 快不了多少。
+
+[narration]
+进步压成四条：每个 I/O 的系统调用从至少 2 次降到 0 到 1 次；普通文件和 socket 走同一个接口；通知到时数据已在你的缓冲区里；O_DIRECT 下还能不要中断。但它们都只动第一层之上。
+
+---
+
+## 29 同一个模型，Linux 晚了 25 年
+
+[visual: timeline title=完成模型：Windows 早，Linux 晚]
+T=1977 [VMS] $QIO：发出去，回调通知
+T=1983 [Unix] select：就绪通知加在同步 read 旁边
+T=1994 [NT 3.5] IOCP 完成端口
+T=2002 [Linux] Davide Libenzi 的 epoll；原生 AIO 只对 O_DIRECT 真异步
+T=2003 [Linux] 缓冲 AIO 改造起步，之后 fibrils、syslets、acall 都没成
+T=2018 [Linux] aio poll 也失败；Spectre 让系统调用变贵
+T=2019 [Linux] Jens Axboe 的 io_uring 进 5.1
+T=2020 [Linux] 5.9 加上页回调
+T=2021 [Windows 11] IoRing 反向借鉴共享环
+
+[narration]
+完成模型 Windows 1994 年就有，Linux 晚了 25 年。一是血统：NT 设计者 Dave Cutler 来自 VMS，I/O 天生是发出去再回调；Unix 的 read 承诺返回时数据已在 buf 里。二是调用返回后内核还得能写你的 buf。三是五次改造都没成。四是痛不够，直到 2018 年系统调用变贵、盘又变快。
+
+---
+
+## 30 必然还是偶然
+
+[visual: text]
+方向是必然的，年份和字段是偶然的
+先试不睡，再挂回调，最后才交线程
+常见情况几乎免费，罕见情况才付全价
+
+[sidebar]
+就绪模型：回应 C5
+完成模型：回应 C2 与 C3
+NOWAIT 先试：乐观快路径
+io-wq：悲观慢路径
+C9·速差+局部性
+
+[example]
+假如去掉先试，所有读一律交给 io-wq 线程，一次命中读要入队、跨核唤醒、切换、再排回来，从半微秒变成五到十微秒，反而输给 pread。
+
+这个形状你这一集见过好几次：领 tag 先抢位图再睡，fault-around 只填已缓存的 16 页，预读先小后大。
+
+[narration]
+所以是必然还是偶然？方向是必然的：连接数远大于活跃数，就一定出现等就绪的接口，回应 C5；设备快到和系统调用同量级，就一定出现等完成的接口，回应 C2 和 C3。偶然的是年份和字段。io_uring 内部先试再兜底，用的是 C9 速差加局部性的老套路。
+
+---
+
+## 31 三条线钉回约束
+
+[visual: text]
+三条主线，各自落在哪几条约束上
+每个机制都是一笔交换：收益背后有账
+
+[sidebar]
+主线 A：C9 C11
+主线 B：C1 C2 C5
+主线 C：C2 C3
+两道背压：C10
+
+[narration]
+把三条线钉回约束。主线 A 回应 C9 速差加局部性和 C11 接口冻结；主线 B 回应 C1 厂商定接口、C2 设备慢且异步、C5 多核并发；主线 C 回应 C2 和 C3 特权态门槛；两道背压回应 C10 内存装不下。每个机制都是一笔交换：一份缓存让 mmap 承担缺页，tag 只有 12 位，io_uring 碰不到设备时间。
+
+---
+
+## 32 本集总结
+
+[visual: html_slide image="pics/ep5-summary-card.png" title=本集总结]
+
+[step: auto]
+scroll auto
+
+[narration]
+这一集带走六件事。一，未命中读的时间八成五在盘里。二，工单上的一个标志决定睡不睡。三，预读窗口按四、八、十六、三十二页翻。四，tag 写进命令号，回来一步查表。五，没号就睡、驱动忙就退回，两道背压把压力顶回进程。六，缓冲读把回调挂在页上，O_DIRECT 挂在 bio 上。
+
+---
+
+## 33 下集预告
+
+[visual: spotlight]
+本集就到这里
+下集：Windows NT 为什么走了另一条路
+
+[narration]
+本集就到这里。同样的硬件，Windows NT 为什么演化出另一套 I/O 栈？觉得有收获就一键三连，下集见。
+
+---

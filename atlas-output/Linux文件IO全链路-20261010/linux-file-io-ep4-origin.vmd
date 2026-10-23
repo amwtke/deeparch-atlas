@@ -1,0 +1,494 @@
+# 第 4 集 Origin 阶段 — 你的一次 read 走过的五层，没有一层是灵光一现
+
+[intro-line] 今天回到来路，看 read 背后的五层分别在哪一年、被哪条约束逼出来。
+
+## 1 Origin 阶段开场
+
+[visual: spotlight]
+现在我们回到 Origin 阶段
+这一切是从哪儿来的？
+
+[narration]
+五层不是一天长出来的。现在回到 Origin 阶段，看它们的出生证。
+
+---
+
+## 2 一次 read 的五张出生证
+
+[visual: title]
+你的一次 read
+踩着五十年的脚印
+
+[narration]
+你今天在 6.12 内核上读一个 ext4 文件，要穿过五层。最老的一层出生在 1974 年，最年轻的 NVMe 驱动 2011 年才发出来。read 这个接口五十年没变，底下却被重写了好几轮。谁在改，又是什么逼着他们改？
+
+---
+
+## 3 三十年收成三件事
+
+[visual: layers title=五层的来路收成三件事]
+1974~1992 原件定型：i-node、缓存、接口表
+1998~2008 活过断电与规模：日志、统一缓存、extent
+2002~2021 硬件逼块层重做：bio、blk-mq、folio
+
+[narration]
+三十年压成三件事。1974 到 1992 年，三样原件定型，形状从此没变。1998 到 2008 年，盘越来越大，断电和规模逼着文件系统和缓存各换了一次内脏。2002 到 2021 年，硬件把块层推翻了两遍。接口不变，内脏一直在换。
+
+---
+
+## 4 五层的来路时间线
+
+[visual: html_slide image="pics/04-timeline.png" title="五层的来路：1974 ~ 2021"]
+
+[step: auto]
+scroll auto
+
+[narration]
+横轴是年份，五条泳道就是五层。你看，上面三条线的第一个点，全在 1992 年那条虚线之前。紫色的块层在 2002 年和 2014 年各重做一次，中间挤着整条调度器谱系。最下面的驱动最年轻，一出现就把块层逼成了多队列。
+
+---
+
+## 5 1974 年的三样原件
+
+[visual: facetime title="Dennis Ritchie"]
+name: Dennis Ritchie
+role: Unix 与 C 语言的共同创造者
+org: 贝尔实验室，1974 年与 Ken Thompson 发表 Unix 论文
+photo: file:///Users/jin.xiao/workshop/deeparch-atlas/atlas-output/Linux%E6%96%87%E4%BB%B6IO%E5%85%A8%E9%93%BE%E8%B7%AF-20261010/pics/person-dennis-ritchie.jpg
+- i-node 留八个块地址，大文件再挂间接块
+- 内核维护缓冲，读写在用户眼里却是同步的
+- 每个设备至少对应一个特殊文件
+- 盘按 512 字节一块，从 0 开始编号
+
+[narration]
+1974 年，Ritchie 和 Ken Thompson 发表 Unix 论文。你今天用到的三样东西那时全在了：i-node 里留八个块地址，内核有一套缓冲，每个设备都对应一个特殊文件，和普通文件走同一个接口。read 的承诺，从这一年开始冻住。
+
+---
+
+## 6 Kleiman 的一张表
+
+[visual: text title="1986 年 Sun：一个内核装多种文件系统"]
+Steve Kleiman 提出 vnode 与 vfs
+文件系统切成无关层和相关层
+无关层只认一张函数指针表
+
+[sidebar]
+vnode -> 今天的 inode
+vnodeops -> file_operations
+vfs 对象 -> super_block
+本地盘与 NFS -> 同时挂载
+
+[example]
+如果每加一种文件系统，就在 read 里多写一个 if，内核会越改越乱。Kleiman 让上层只调表里的函数指针，下层各自填表；Sun 的 NFS 和本地盘，就这样挂进同一个内核。
+
+[narration]
+1974 年的文件系统只管映射对不对，快是十年后 BSD 的 FFS 补上的。再过两年，Sun 碰上新麻烦：一个内核要同时装好几种文件系统。Steve Kleiman 在 1986 年给出答案：用表，不用 if。
+
+---
+
+## 7 那张表今天还在
+
+[visual: code_explain lang=c title="Kleiman 那张表的直系后代：file_operations（Linux 6.12）"]
+struct file_operations {
+	struct module *owner;
+	fop_flags_t fop_flags;
+	loff_t (*llseek) (struct file *, loff_t, int);
+	ssize_t (*read) (struct file *, char __user *, size_t, loff_t *);
+	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
+	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
+	int (*iopoll)(struct kiocb *kiocb, struct io_comp_batch *,
+			unsigned int flags);
+	int (*iterate_shared) (struct file *, struct dir_context *);
+	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+	int (*mmap) (struct file *, struct vm_area_struct *);
+	int (*open) (struct inode *, struct file *);
+	int (*flush) (struct file *, fl_owner_t id);
+	int (*release) (struct inode *, struct file *);
+	int (*fsync) (struct file *, loff_t, loff_t, int datasync);
+===HIGHLIGHT===
+lines=1-4
+一张表描述一类文件的全部行为
+owner：实现它的模块
+llseek：移动打开实例的偏移
+VFS 只认表，不认文件系统名字
+===HIGHLIGHT===
+lines=5-8
+read 与 write：最早的两个槽
+read_iter 与 write_iter：带 kiocb 的新槽
+ext4 在这里填 ext4_file_read_iter
+vfs_read 查表，把你的 read 派过去
+===HIGHLIGHT===
+lines=15-19
+mmap、open、flush、release、fsync
+映射、打开、关闭、落盘全在表里
+新能力只能加槽，不能改 read
+
+[narration]
+带着这个答案翻 6.12 源码，形状一模一样。开头写这张表归哪个模块，紧接着就是 read、write，还有带 kiocb 的 read_iter，ext4 把读函数填在这里。再往下，mmap、open、fsync 也都在表里。三十八年过去，变的只是槽多了。
+
+---
+
+## 8 Linux 的第一个难题
+
+[visual: spotlight]
+1992 年
+Linux 想从 Minix 文件系统逃出来
+
+[narration]
+这张表的思路，六年后被一个芬兰学生用上了。
+
+---
+
+## 9 Linus 重写 VFS
+
+[visual: facetime title="Linus Torvalds"]
+name: Linus Torvalds
+role: Linux 内核作者与维护者
+org: 赫尔辛基大学，1992 年重写 VFS 并入内核
+photo: file:///Users/jin.xiao/workshop/deeparch-atlas/atlas-output/Linux%E6%96%87%E4%BB%B6IO%E5%85%A8%E9%93%BE%E8%B7%AF-20261010/pics/person-linus-torvalds.jpg
+- Minix 文件系统块号只有 16 位，分区最大 64 MB
+- 文件名最多 14 个字符
+- 重写 Chris Provenzano 的 VFS，随 0.96c 发布
+- 同时带来第一个用 VFS 的文件系统 ext
+
+[narration]
+Linux 最早只支持 Minix 文件系统，块号 16 位，分区最大 64 MB，文件名最多 14 个字符。想换文件系统，先得有一层能挂多种实现的接口。Linus 重写了 Chris Provenzano 的 VFS，1992 年 4 月随 0.96c 发布，带着第一个文件系统 ext。
+
+---
+
+## 10 ext 的死胡同与 ext2
+
+[visual: text title="ext 很快成了死胡同，ext2 赢在留了扩展口"]
+ext：上限 2 GB，文件名 255 字符
+空闲块用链表管，越用越乱
+1993 年 ext2 设计成将来可扩展
+
+[sidebar]
+VFS 类型表 -> 挂多种 fs
+file 与 inode 分开
+C12·同文件多开
+ext2 -> 事实标准
+
+[example]
+ext 的空闲块用链表串起来，用久了链表乱序，文件越来越碎。1993 年 ext2 从一开始就为扩展留了位置，后来的日志和 extent，都长在它的盘上格式里。
+
+[narration]
+ext 自己很快走进死胡同。但这一年的 VFS 已经是今天的形状：一张类型表，三类对象各有操作表。Linux 还把打开实例 file 和 inode 分开，同一个文件能被几个进程各带偏移打开，这就是 C12 同文件多开。
+
+---
+
+## 11 盘越大越难修
+
+[visual: spotlight]
+盘的容量每翻一倍
+崩溃后的检查时间也翻一倍
+
+[narration]
+1998 年，有人把这句话写进了论文的第一段。
+
+---
+
+## 12 Tweedie 的日志
+
+[visual: facetime title="Stephen Tweedie"]
+name: Stephen Tweedie
+role: ext3 日志作者，ext2 论文合作者
+org: 1998 年 LinuxExpo 发表日志论文，后在 Red Hat 推动 ext3
+photo: file:///Users/jin.xiao/workshop/deeparch-atlas/atlas-output/Linux%E6%96%87%E4%BB%B6IO%E5%85%A8%E9%93%BE%E8%B7%AF-20261010/pics/person-stephen-tweedie.jpg
+- 崩溃后扫全盘修复，可能停机一小时以上
+- 不造新文件系统，给 ext2 加事务日志
+- 复合事务：一段时间内的更新并成一个事务
+- 数据块先落盘，再提交分配它们的元数据
+
+[narration]
+Tweedie 的原话是：盘每年快一点，容量却涨得多得多，容量每翻一倍，检查修复时间就翻一倍，一台机器可能停一个多小时。他的决定很克制：不造新文件系统，给 ext2 加上事务日志。
+
+---
+
+## 13 四条路三条不走
+
+[visual: ascii title="1998 年摆在 Tweedie 面前的四条路"]
+┌──────────────────────────────────────────┐
+│ 同步元数据　     12 个目录项，同一块写 12 次  │
+│ soft updates   可靠了，恢复仍要扫全盘　　    │
+│ 写时复制树　     盘上结构全变，ext2 用不了    │
+│ 日志结构 LFS　　 写得快，找数据难，另起炉灶    │
+├──────────────────────────────────────────┤
+│ 日志  选它　　   只扫日志，盘上格式不动　　    │
+└──────────────────────────────────────────┘
+　　　　　　　　        ▼
+　　　　提交记录落盘才算数，崩溃后只重放日志
+
+[sidebar]
+C7·跨块不原子
+同步写 -> 太慢
+写时复制 -> 改格式
+日志 -> 只扫日志
+
+[narration]
+四条路摆在他面前。同步写元数据，建十二个目录项要把同一块写十二次。soft updates 恢复照样扫全盘。写时复制树最优雅，可盘上结构全得改。日志结构找数据难。他选了日志：提交记录落盘才算数，崩溃后只重放日志。C7 跨块不原子，就这样被一个提交块系住了。
+
+---
+
+## 14 三个决定与一条看不见的约束
+
+[visual: text title="三个决定，后来全成了 jbd2 的骨架"]
+复合事务：每 5 秒左右封一个
+记整块镜像，不做字节级合并
+数据先落盘，再提交元数据
+
+[sidebar]
+复合事务 -> 每 5 秒封一个
+整块镜像 -> 顺序写攒成簇
+data=ordered -> 防读到旧数据
+格式冻结 -> 零迁移升级
+
+[example]
+默认的 data=ordered 下，新文件的数据块先落盘，再提交元数据，否则崩溃后新文件里可能读出别人删掉的旧内容。
+
+如果当年能改盘上格式，他大概率走写时复制树；后来的 ZFS 和 btrfs 正是这么做的。
+
+[narration]
+三个决定后来全成了 jbd2 的骨架。但真正定方向的，是一条看不见的约束：几百万块 ext2 盘不能重新格式化。它砍掉了最优雅的设计，也换来了最快的普及。
+
+---
+
+## 15 从日志论文到 ext4
+
+[visual: timeline title=从日志论文到 ext4 稳定]
+T=1998 [Tweedie] 日志论文发表于 LinuxExpo
+T=2001-11 [Morton] ext3 合进 2.4.15
+T=2005-02 [Tomas] extent 与多块分配改动
+T=2006-08 [Tomas] extents for ext4，ext4 分叉
+T=2008-12 [2.6.28] ext4 去掉 dev 后缀
+
+[narration]
+日志论文到进主线，花了三年。2001 年 11 月，Andrew Morton 把 ext3 合进 2.4.15。可盘还在长大，ext3 的块号卡在 16 TB，逐块指针在大文件上又慢。这次救场的代码，是从一个集群文件系统搬来的。
+
+---
+
+## 16 extent 来自 Lustre
+
+[visual: text title="extent 来自 Lustre：Alex Tomas 的三年预演"]
+一条 extent = 逻辑起点 + 长度 + 物理起点
+一条最多 128 MB，inode 里直接放 4 条
+2008 年 12 月 2.6.28 宣布 ext4 稳定
+
+[sidebar]
+C8·流 vs 块
+Alex Tomas -> ClusterFS
+Lustre -> 先跑三年
+128 MB -> 一条映射
+
+[example]
+一个 1 GB 的连续文件，逐块指针要记二十六万多个块地址；换成 extent，八条记录就够了。
+
+[narration]
+extent 的作者是 ClusterFS 的 Alex Tomas，代码先在 Lustre 里跑了三年，2006 年 8 月才发给 ext4。它是 C8 流对块这条映射约束在大文件上的新解法。改了盘上格式，就只能另起名字，叫 ext4。
+
+---
+
+## 17 缓存那边先出了事
+
+[visual: title]
+两套缓存
+同一份数据存两遍
+
+[narration]
+文件系统在换内脏，缓存那边却先出了事：同一份数据，内核里存了两遍。
+
+---
+
+## 18 两套缓存互相抄
+
+[visual: text title="2.2 内核：page cache 与 buffer cache 互相抄"]
+文件数据在 page cache，块和元数据在 buffer cache
+写要先拷进 buffer cache 再落盘
+两边不同步，2001 年报出元数据损坏
+
+[sidebar]
+C9·速差+局部性
+两套缓存 -> 双份内存
+块设备 -> 当成大文件
+顺手长出 -> O_DIRECT
+
+[example]
+Andrea Arcangeli 的改动把整块盘当成一个大文件交给 page cache，还顺手加了 O_DIRECT，想绕开缓存的数据库从此不必再用 raw 设备。
+
+[narration]
+2.2 内核里，文件数据和块数据各有一套缓存，写还要互相抄。2001 年 5 月，这种不同步被报出了元数据损坏。Linus 不想只修 bug，他要根治：块设备也进 page cache。这是 C9 速差加局部性的解法，自己跟自己打了架。
+
+---
+
+## 19 九天里 Linus 改了主意
+
+[visual: timeline title=2001 年 9 月：九天里 Linus 改了主意]
+T=09-08 [Linus] 进 page cache 百分之百正确，但对 2.4 紧张
+T=09-17 [2.4.10-pre11] 合进 Arcangeli 的 VM 与块设备进缓存
+T=09-23 [2.4.10] 正式发布
+T=09-27 [LWN] Morton：懂 VM 的人从十个变成一个多
+
+[narration]
+9 月 8 日，Linus 说放进 page cache 百分之百正确，但在 2.4 里合有点紧张。九天后他改了主意，一次合进 Arcangeli 的整个 VM 重写。代价也来了，Morton 说，懂 Linux VM 的人从大概十个，变成了一个多一点。
+
+---
+
+## 20 Axboe 第一次重做块层
+
+[visual: facetime title="Jens Axboe"]
+name: Jens Axboe
+role: Linux 块层维护者，bio、blk-mq 与 io_uring 作者
+org: 2001 年起重写块层，2013 年推出多队列
+photo: file:///Users/jin.xiao/workshop/deeparch-atlas/atlas-output/Linux%E6%96%87%E4%BB%B6IO%E5%85%A8%E9%93%BE%E8%B7%AF-20261010/pics/person-jens-axboe.jpg
+- 2001 年底应 Linus 之邀写出 bio 接口说明
+- 2002 年写出 deadline 调度器
+- 2013 年与合作者提出多队列 blk-mq
+- 2018 年提交删除全部单队列调度器
+
+[narration]
+缓存统一之后，块层成了最旧的一层。2001 年底，Jens Axboe 列出 2.4 块层的毛病：驱动自己遍历 buffer_head 链，自己换算分区偏移，整个请求处理被一把全局锁串起来。他的回答叫 bio。
+
+---
+
+## 21 同一个人两次重做块层
+
+[visual: ascii title="同一个人两次重做块层"]
+┌───────── 2002 bio ──────────┐  ┌─────── 2013 blk-mq ────────┐
+│ 痛：驱动各管 buffer_head 链   │  │ 痛：一条队列一把锁　　　　     │
+│ 痛：全局锁 io_request_lock　  │  │ 痛：提交卡在 80 万 IOPS　　　 │
+└─────────────────────────────┘  └────────────────────────────┘
+               ▼　　　　　　　　                  ▼
+┌─────────────────────────────┐  ┌────────────────────────────┐
+│ bio：扇区 + 页向量　　　　     │  │ 每核一条软件队列　　　　　     │
+│ request：串起 bio 链　　      │  │ 每设备硬件队列 + tag　　　    │
+│ 驱动按段迭代　　　　　　　      │  │ 驱动实现 queue_rq　　　　　　 │
+└─────────────────────────────┘  └────────────────────────────┘
+　　     治 C1·厂商定接口　　　　　　　　　    治 C5·多核并发
+
+[sidebar]
+C1·厂商定接口
+C5·多核并发
+80 万 IOPS -> 旧单锁上限
+2019 年 5.0 -> 删光老路径
+
+[narration]
+两次重做治两条约束。2002 年的 bio 治 C1 厂商定接口，驱动只收扇区加页向量。那时机械盘一秒几百次 IO，一把锁不热。等 SSD 逼近百万 IOPS，这把锁把提交卡在 80 万，这是 C5 多核并发。2013 年他写了 blk-mq，2019 年的 5.0 删光老路径。
+
+---
+
+## 22 电梯调度器的二十年
+
+[visual: statemap title=电梯调度器的二十年]
+2000 电梯 + 防饿死序号
+2002 deadline 读写期限
+2003 anticipatory 读完等一下
+2003 CFQ 按进程公平
+2017 kyber 与 bfq
+2019 删光，多队列默认 none
+
+[narration]
+块层里还有一条更长的线。2000 年的电梯会饿死请求。2002 年 deadline 给每个请求一个期限。2003 年 anticipatory 读完故意停一下，等近处的下一个读，同年 CFQ 按进程分时间片。2017 年 kyber 和 bfq 为多队列而生。2019 年，老调度器全部删除。
+
+---
+
+## 23 从必须排序到默认不排
+
+[visual: text title="同一个槽位：从必须排序到默认不排"]
+机械盘：寻道贵，必须排序
+NVMe：多队列，排序反成负担
+机制留着，策略换了五轮
+
+[sidebar]
+C6·介质形状相反
+机械盘 -> mq-deadline
+NVMe -> none
+机制固定 -> 策略可换
+
+[example]
+在 6.12 的机器上看 NVMe 盘的调度器，通常是 none；单队列的 SATA 机械盘，默认是 mq-deadline。
+
+[narration]
+这就是 C6 介质形状相反的二十年反转。2000 年的问题是怎么排序才不饿死，2019 年的答案是多队列设备干脆不排。合并、切分、tag 一直都在，变的只有策略。
+
+---
+
+## 24 Wilcox：NVMe 驱动与 folio
+
+[visual: text title="Matthew Wilcox：NVMe 驱动与 folio"]
+2011 年 3 月 NVMe 1.0 发布，同月驱动发到 LKML
+每个在线 CPU 申请一条队列，各有锁和中断
+2021 年 folio：保证不是尾页的 struct page
+
+[sidebar]
+NVMe 驱动 -> 3.3 入主线
+每核一队列 -> 逼出 blk-mq
+folio -> 一定不是尾页
+5.16 -> 开窗第一个拉进
+
+[example]
+一个函数收到 struct page 指针，不知道它是头页还是尾页，只好反复调 compound_head。folio 把保证写进类型：拿到 folio，就一定不是尾页。
+
+[narration]
+最年轻的两样东西出自同一个人。2011 年 3 月 NVMe 1.0 发布，同月 Matthew Wilcox 就把驱动发到 LKML，每个 CPU 一条队列，随 3.3 进主线，正好撞上那堵 80 万的墙。十年后他又动了最老的页，5.16 一开始收代码，第一个拉进来的就是 folio。
+
+---
+
+## 25 每一层出生时缺了哪条约束
+
+[visual: ascii title="每一层出生时缺了哪条约束"]
+层 / 组件      出生　 当时没有　　  后来的债
+───────────────────────────────────────────
+i-node 指针　  1974  TB 级大盘    2006 extent
+buffer cache  1974  page cache  2001 统一
+ext3 日志　    2001  SSD 低延迟   只保护元数据
+bio           2002  多队列硬件　  一把锁到 2013
+电梯调度器　    2000  闪存　       2019 全删
+NVMe 驱动　    2011  多队列块层　  绕路近三年
+
+[sidebar]
+1974 -> 原件
+2001 -> 统一缓存
+2013 -> 多队列
+2021 -> folio
+
+[narration]
+把每一层放回它出生的那一年，你会看到同一个规律：它面对的约束都处理好了，没处理的，是那时还不存在的约束。1974 年没有 TB 级的盘，2002 年没有多队列硬件，2021 年的 folio 也在还旧账。
+
+---
+
+## 26 没有一个是灵光一现
+
+[visual: spotlight]
+五个转折点
+没有一个是灵光一现
+
+[narration]
+每一次，都是某条约束的代价第一次让人忍不了。
+
+---
+
+## 27 本集总结
+
+[visual: html_slide image="pics/ep4-summary-card.png" title=约束逼出五层]
+
+[step: auto]
+scroll auto
+
+[narration]
+六句话收住这一集。1974 年原件就位，read 从此冻结。1986 年一张函数指针表，1992 年长成 VFS。ext3 不改格式，换来零迁移升级。2001 年缓存统一，顺手长出 O_DIRECT。块层两次重做，各治一条约束。调度策略随介质反转，folio 还了旧账。
+
+---
+
+## 28 下集预告
+
+[visual: spotlight]
+本集就到这里
+下集：钻进 6.12 源码看纳秒账本
+
+[narration]
+本集就到这里，下集见。下一集钻进 6.12 源码，看一次未命中读的纳秒账本。
+
+---

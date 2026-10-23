@@ -1,0 +1,67 @@
+{
+  "platform": "bilibili",
+  "title": "Linux 文件 IO 大电影 — 7 集深度解读",
+  "parts": [
+    {
+      "file": "P0 目录：七集路线图.mp4",
+      "bytes": 12270566,
+      "sha256": "d24e7f2536883f2cb182fe36f4338601cb5bc8d7e681c41d0deca38266383ded"
+    },
+    {
+      "file": "P1 What：你调一次 read，数据到底穿过了谁.mp4",
+      "bytes": 32179265,
+      "sha256": "61659456d6e200b663da25dfc9a71ecc68fa9b2ed2aeaad3b00110d461512bd1"
+    },
+    {
+      "file": "P2 Why：把五层一刀全切，看它在哪里撞墙.mp4",
+      "bytes": 40264184,
+      "sha256": "2bdf655eddb98b8e79da2324385c8807249d54e88894f303b4613f52b15510d9"
+    },
+    {
+      "file": "P3 How：一次 pread 在五层里怎么走、怎么回.mp4",
+      "bytes": 53740881,
+      "sha256": "c904b708aa28f766949eb86da2a9f8534db0f431e0e568224a6d9c1ab3772fa6"
+    },
+    {
+      "file": "P4 Origin：1974 到 2021，五个转折点和它们的人.mp4",
+      "bytes": 35739058,
+      "sha256": "356e834b19d6ec9f76e278ee22432842cc39baee75f88fe8cc0c7cd192f471b0"
+    },
+    {
+      "file": "P5 Deep：钻进 6.12 源码，一次未命中读的纳秒账本.mp4",
+      "bytes": 52038167,
+      "sha256": "7e2584c74743a59ae7119cf7f6fc5848b349699b675229fe7c5fe3864b5c3397"
+    },
+    {
+      "file": "P6 Comparison：同样的硬件，Windows NT 为什么长出另一套.mp4",
+      "bytes": 40840108,
+      "sha256": "a7b12175cda0cb6f5c7bf507dc3eb9302c5e79b1cedc80095d5499b4eb5eb82a"
+    },
+    {
+      "file": "P7 Synthesis：把七集推导压成一套能带走的方法.mp4",
+      "bytes": 46182373,
+      "sha256": "4fcd95bb975be53e3a26b6d39e52ac35b9d31d24bf2d6f280005e517364f5af6"
+    }
+  ],
+  "cover": "cover-atlas.png",
+  "desc_file": "linux-file-io-ep0-toc.desc.txt",
+  "tags": [
+    "Linux",
+    "文件IO",
+    "VFS",
+    "page cache",
+    "ext4",
+    "块层",
+    "NVMe",
+    "io_uring",
+    "epoll",
+    "内核源码",
+    "系统设计",
+    "操作系统"
+  ],
+  "multipart": true,
+  "season": null,
+  "charging": false,
+  "scheduled": false,
+  "authorized_at": "2026-10-23T19:00:46+0800"
+}

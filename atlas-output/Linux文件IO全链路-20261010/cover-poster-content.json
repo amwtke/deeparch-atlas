@@ -1,0 +1,30 @@
+{
+ "calligraphy": "五层是筛剩下的",
+ "suptitle": "Linux 文件 IO 大电影 · 7 集深度解读",
+ "tags": ["Linux内核", "文件系统", "块层与NVMe"],
+ "panel": {
+  "title": "fs/read_write.c · Linux 6.12",
+  "lang": "c",
+  "lines": [
+   "ret = rw_verify_area(READ, file, pos, count);",
+   "if (file->f_op->read_iter)",
+   "        ret = new_sync_read(file, buf, count, pos);",
+   "/* VFS -> ext4 -> page cache -> bio -> nvme */"
+  ]
+ },
+ "data": {
+  "label": "一次未命中读 · 94 μs",
+  "before": "命中 <1 μs",
+  "after": "设备 80 μs",
+  "sub": "85% 的时间在盘里，软件能抠的只有 14 μs"
+ },
+ "features": [
+  {"cn": "VFS", "en": "函数表派活"},
+  {"cn": "page cache", "en": "inode + 页号"},
+  {"cn": "bio / blk-mq", "en": "tag 背压"},
+  {"cn": "nvme", "en": "一次门铃"}
+ ],
+ "portrait": "/Users/jin.xiao/workshop/deeparch-atlas/atlas-output/Linux文件IO全链路-20261010/pics/person-linus-torvalds.jpg",
+ "portrait_name": "Linus Torvalds",
+ "ribbon": "七集大电影 · 源码级硬核"
+}

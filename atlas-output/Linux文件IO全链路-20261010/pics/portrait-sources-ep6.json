@@ -1,0 +1,16 @@
+{
+  "episode": "ep6-comparison",
+  "portraits": [
+    {
+      "name": "Dave Cutler",
+      "file": "pics/person-dave-cutler.jpg",
+      "source_page": "https://en.wikipedia.org/wiki/Dave_Cutler",
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/DavidCutler_WindowsAzure.JPG/960px-DavidCutler_WindowsAzure.JPG",
+      "commons_file": "https://commons.wikimedia.org/wiki/File:DavidCutler_WindowsAzure.JPG",
+      "license": "CC BY 3.0",
+      "author": "Majorconfusion (Wikimedia Commons)",
+      "date": "2008-07-28",
+      "verified": "visually checked: real portrait, Wikipedia article lead image"
+    }
+  ]
+}

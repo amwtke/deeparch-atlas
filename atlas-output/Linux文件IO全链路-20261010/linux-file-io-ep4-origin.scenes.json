@@ -1,0 +1,205 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 10.23
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Origin 阶段开场",
+  "start": 10.23,
+  "end": 15.83
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "你的一次 read",
+  "start": 15.83,
+  "end": 34.6
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "五层的来路收成三件事",
+  "start": 34.6,
+  "end": 55.8
+ },
+ {
+  "idx": 5,
+  "type": "html_slide",
+  "title": "\"五层的来路：1974 ~ 2021\"",
+  "start": 55.8,
+  "end": 76.17
+ },
+ {
+  "idx": 6,
+  "type": "facetime",
+  "title": "\"Dennis Ritchie\"",
+  "start": 76.17,
+  "end": 94.5
+ },
+ {
+  "idx": 7,
+  "type": "text",
+  "title": "\"1986 年 Sun：一个内核装多种文件系统\"",
+  "start": 94.5,
+  "end": 127.43
+ },
+ {
+  "idx": 8,
+  "type": "code",
+  "title": "\"Kleiman 那张表的直系后代：file_operations（Linux 6.12）\"",
+  "start": 127.43,
+  "end": 148.9
+ },
+ {
+  "idx": 9,
+  "type": "spotlight",
+  "title": "8 Linux 的第一个难题",
+  "start": 148.9,
+  "end": 153.37
+ },
+ {
+  "idx": 10,
+  "type": "facetime",
+  "title": "\"Linus Torvalds\"",
+  "start": 153.37,
+  "end": 175.23
+ },
+ {
+  "idx": 11,
+  "type": "text",
+  "title": "\"ext 很快成了死胡同，ext2 赢在留了扩展口\"",
+  "start": 175.23,
+  "end": 208.03
+ },
+ {
+  "idx": 12,
+  "type": "spotlight",
+  "title": "11 盘越大越难修",
+  "start": 208.03,
+  "end": 212.57
+ },
+ {
+  "idx": 13,
+  "type": "facetime",
+  "title": "\"Stephen Tweedie\"",
+  "start": 212.57,
+  "end": 227.87
+ },
+ {
+  "idx": 14,
+  "type": "ascii",
+  "title": "\"1998 年摆在 Tweedie 面前的四条路\"",
+  "start": 227.87,
+  "end": 252.63
+ },
+ {
+  "idx": 15,
+  "type": "text",
+  "title": "\"三个决定，后来全成了 jbd2 的骨架\"",
+  "start": 252.63,
+  "end": 285.03
+ },
+ {
+  "idx": 16,
+  "type": "timeline",
+  "title": "从日志论文到 ext4 稳定",
+  "start": 285.03,
+  "end": 303.97
+ },
+ {
+  "idx": 17,
+  "type": "text",
+  "title": "\"extent 来自 Lustre：Alex Tomas 的三年预演\"",
+  "start": 303.97,
+  "end": 329.83
+ },
+ {
+  "idx": 18,
+  "type": "title",
+  "title": "两套缓存",
+  "start": 329.83,
+  "end": 336.33
+ },
+ {
+  "idx": 19,
+  "type": "text",
+  "title": "\"2.2 内核：page cache 与 buffer cache 互相抄\"",
+  "start": 336.33,
+  "end": 366.93
+ },
+ {
+  "idx": 20,
+  "type": "timeline",
+  "title": "2001 年 9 月：九天里 Linus 改了主意",
+  "start": 366.93,
+  "end": 384.57
+ },
+ {
+  "idx": 21,
+  "type": "facetime",
+  "title": "\"Jens Axboe\"",
+  "start": 384.57,
+  "end": 400.57
+ },
+ {
+  "idx": 22,
+  "type": "ascii",
+  "title": "\"同一个人两次重做块层\"",
+  "start": 400.57,
+  "end": 424.0
+ },
+ {
+  "idx": 23,
+  "type": "statemap",
+  "title": "电梯调度器的二十年",
+  "start": 424.0,
+  "end": 447.63
+ },
+ {
+  "idx": 24,
+  "type": "text",
+  "title": "\"同一个槽位：从必须排序到默认不排\"",
+  "start": 447.63,
+  "end": 472.3
+ },
+ {
+  "idx": 25,
+  "type": "text",
+  "title": "\"Matthew Wilcox：NVMe 驱动与 folio\"",
+  "start": 472.3,
+  "end": 506.63
+ },
+ {
+  "idx": 26,
+  "type": "ascii",
+  "title": "\"每一层出生时缺了哪条约束\"",
+  "start": 506.63,
+  "end": 522.77
+ },
+ {
+  "idx": 27,
+  "type": "spotlight",
+  "title": "26 没有一个是灵光一现",
+  "start": 522.77,
+  "end": 527.17
+ },
+ {
+  "idx": 28,
+  "type": "html_slide",
+  "title": "约束逼出五层",
+  "start": 527.17,
+  "end": 552.43
+ },
+ {
+  "idx": 29,
+  "type": "spotlight",
+  "title": "28 下集预告",
+  "start": 552.43,
+  "end": 564.07
+ }
+]

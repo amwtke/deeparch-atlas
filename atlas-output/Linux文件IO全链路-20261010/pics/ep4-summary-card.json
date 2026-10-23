@@ -1,0 +1,26 @@
+{
+  "title": "约束逼出五层",
+  "subtitle": "Linux 文件 IO · Origin",
+  "tagline": "五层没有一层是灵光一现，每次重写都发生在某条约束第一次让人忍不了的那一年。",
+  "pillars": [
+    {"icon": "box", "t": "原件", "d": "1974 年三样定型"},
+    {"icon": "shield", "t": "日志", "d": "活过断电不改格式"},
+    {"icon": "stack", "t": "块层", "d": "同一人重做两遍"},
+    {"icon": "route", "t": "策略", "d": "调度器随介质反转"}
+  ],
+  "items": [
+    {"icon": "box", "t": "1974 年原件就位", "d": "i-node、缓冲、特殊文件；read 的接口从此冻结。"},
+    {"icon": "link", "t": "一张函数指针表", "d": "1986 年 Kleiman 的 vnode，1992 年长成 Linux VFS。"},
+    {"icon": "shield", "t": "日志换来零迁移", "d": "ext3 不改盘上格式直接升级；extent 来自 Lustre。"},
+    {"icon": "db", "t": "2001 年统一缓存", "d": "块设备进 page cache，顺手长出 O_DIRECT。"},
+    {"icon": "stack", "t": "块层两次重做", "d": "bio 治接口多样，blk-mq 治 80 万 IOPS 的单锁墙。"},
+    {"icon": "route", "t": "策略随介质反转", "d": "从必须排序到默认 none；folio 还了一页一描述符的旧账。"}
+  ],
+  "gains_title": "带走的判断",
+  "gains": [
+    {"icon": "compass", "t": "看出生年份", "d": "问它当年缺了哪条约束"},
+    {"icon": "gear", "t": "分清形状与内脏", "d": "接口冻结，实现可换"},
+    {"icon": "chart", "t": "找忍不了的那一年", "d": "代价量化才会重写"}
+  ],
+  "takeaway": "读历史别问谁更聪明，问 **哪条约束在哪一年变得忍不了**。"
+}

@@ -1,0 +1,31 @@
+Linux 文件 IO 大电影 — 12 条不可再分约束 C1~C12（五根：R1 速度断崖 / R2 硬件多样 / R3 接口固定 / R4 多进程共享 / R5 活过断电）：
+[C1] 厂商定接口 — 硬件接口由厂商和标准定义，内核只能兼容，必须有翻译层
+[C2] 设备慢且异步 — 设备比 CPU 慢 10³~10⁷ 倍，完成靠中断，发出去再等
+[C3] 特权态门槛 — 寄存器、DMA、中断只能在内核态碰，每次 IO 至少付一次门票
+[C4] 定长块 — 持久设备最小单位是块，读 1 字节也搬一块
+[C5] 多核并发 — 多核多进程同时发 IO，一把锁浪费所有核
+[C6] 介质形状相反 — 机械臂和闪存通道是两种物理，调度策略必须可换
+[C7] 跨块不原子 — 断电可落在任意两次块写之间，要用一个单块写系住全局
+[C8] 流 vs 块 — 程序要名字加变长流，盘只给编号加定长块，必有一张表且表也在盘上
+[C9] 速差+局部性 — 内存与盘差 10²~10⁵ 倍，访问有局部性，命中率决定一切
+[C10] 内存装不下 — 缓存必须淘汰、延迟回写，不一致窗口必有
+[C11] POSIX 接口冻结 — 改 read 就得改所有程序，新能力只能旁开
+[C12] 同文件多开 — 多进程各有偏移而对象只有一份，打开实例与对象分开
+
+──────────────────
+
+你每天都在调 read 和 write，可数据离开缓冲区之后到底穿过了谁，又为什么非得是虚拟文件系统、文件系统、块层、驱动、硬件这五层？这部七集大电影只回答这一个问题：不是因为它最好，而是十二条约束同时过筛，只剩下这一个形状。
+
+P0 目录：七集路线、致敬人物与看完能做到的六件事。
+P1 What：一次 read 往下逐层翻译、往上送回数据；块层为什么把 M×N 降成 M+N；页缓存为什么按文件和页号索引。
+P2 Why：把五层一刀全切，从 bootloader 那 512 字节出发逐层补回，逼出 12 条约束、收成 5 根；write 返回不等于落盘。
+P3 How：跟着一次没命中的 pread 走完去程回程，file、folio、bio 三件货物转手，预读窗口、只查一次表、tag 背压、一次门铃一次中断。
+P4 Origin：1974 到 2021 五个转折点，Ritchie、Kleiman、Linus、Tweedie、Arcangeli、Axboe、Wilcox，每次重写都发生在约束的代价忍不了那一年。
+P5 Deep：Linux 6.12 源码里一次未命中读的 94 微秒账本，工单上的 NOWAIT 标志、命令号里的 tag、回调挂在页上还是 bio 上，epoll 与 io_uring 各省了哪几段。
+P6 Comparison：同一块盘读同一页，Windows NT 为什么先造一个包；IRP 对 bio、IOCP 对 epoll 与 io_uring、缓存管理器对 page cache，块层以下两边趋同。
+P7 Synthesis：五元组、必然与偶然的判别法、五步法，再拿 TCP 拥塞控制从头走一遍。
+
+人物：Dennis Ritchie、Ken Thompson、Steve Kleiman、Linus Torvalds、Stephen Tweedie、Alex Tomas、Andrea Arcangeli、Andrew Morton、Jens Axboe、Matthew Wilcox、Dave Cutler。
+适合人群：想把 VFS、page cache、块层、NVMe 驱动连成一条线的 Linux 开发者，做数据库或存储引擎的工程师，以及想学会用约束推导系统设计的技术读者。
+源码基准：Linux 6.12，ext4 加 NVMe SSD 主线；所有源码片段标注文件与行号，可自行核对。
+关键词：Linux,文件IO,VFS,page cache,ext4,块层,blk-mq,NVMe,io_uring,epoll,源码分析,系统设计

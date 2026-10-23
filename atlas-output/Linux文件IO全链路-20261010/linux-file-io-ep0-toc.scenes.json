@@ -1,0 +1,58 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 13.4
+ },
+ {
+  "idx": 2,
+  "type": "title",
+  "title": "Linux 文件 IO",
+  "start": 13.4,
+  "end": 25.03
+ },
+ {
+  "idx": 3,
+  "type": "spotlight",
+  "title": "2 一个问题，七种答案",
+  "start": 25.03,
+  "end": 34.47
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "七集路线：从现象走到方法",
+  "start": 34.47,
+  "end": 68.8
+ },
+ {
+  "idx": 5,
+  "type": "layers",
+  "title": "这些设计是谁做的",
+  "start": 68.8,
+  "end": 99.4
+ },
+ {
+  "idx": 6,
+  "type": "spotlight",
+  "title": "5 十一张图，一张不跳",
+  "start": 99.4,
+  "end": 110.57
+ },
+ {
+  "idx": 7,
+  "type": "html_slide",
+  "title": "七集路线图",
+  "start": 110.57,
+  "end": 140.13
+ },
+ {
+  "idx": 8,
+  "type": "title",
+  "title": "进入第 1 集",
+  "start": 140.13,
+  "end": 161.8
+ }
+]

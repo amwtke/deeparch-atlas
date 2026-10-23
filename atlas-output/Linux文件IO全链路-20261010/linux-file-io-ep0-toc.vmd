@@ -1,0 +1,92 @@
+# Linux 文件 IO 大电影 — 七集深度解读目录
+
+[intro-line] 今天开一部七集大电影，从一行 read 追到 NVMe 的门铃，把 Linux 文件 IO 的五层为什么必须这样，彻底讲透。
+
+## 1 大电影封面
+
+[visual: title]
+Linux 文件 IO
+大电影
+
+[narration]
+你每天都在调 read 和 write。可数据离开你的缓冲区之后，到底穿过了谁，又为什么非得穿过这些层？这部七集大电影，就回答这一个问题。
+
+---
+
+## 2 一个问题，七种答案
+
+[visual: spotlight]
+为什么必须是这五层？
+一个问题，七种答案
+
+[narration]
+虚拟文件系统、文件系统、块层、驱动、硬件。知道名字容易，说清为什么非它们不可，难。
+
+---
+
+## 3 七集的路线
+
+[visual: layers title=七集路线：从现象走到方法]
+第 1 集 What：一次 read 穿过了谁 · 约 9 分钟
+第 2 集 Why：一刀全切再逐层补回 · 约 11 分钟
+第 3 集 How：一次 pread 的五层往返 · 约 15 分钟
+第 4 集 Origin：1974 到 2021 五个转折点 · 约 9 分钟
+第 5 集 Deep：6.12 源码里的纳秒账本 · 约 15 分钟
+第 6 集 Comparison：对照 Windows NT · 约 11 分钟
+第 7 集 Synthesis：五元组与五步法 · 约 13 分钟
+
+[narration]
+第 1 集先画地图：一次 read 往下逐层翻译，往上送回数据。第 2 集把五层一刀全切，看进程直接对着裸盘会先在哪撞墙，逼出十二条约束。第 3 集跟着一次没命中的 pread 走完去程和回程。第 4 集回到历史，每一层出生那年，是哪条约束的代价让人忍不了了。第 5 集钻进 6.12 源码，一次未命中读的 94 微秒花在哪。第 6 集换 Windows NT 来答同一道题。第 7 集把推导压成能带走的方法。
+
+---
+
+## 4 设计背后的人
+
+[visual: layers title=这些设计是谁做的]
+Dennis Ritchie 与 Ken Thompson：1974 年的 i-node、缓冲与特殊文件
+Steve Kleiman：1986 年用一张函数指针表挂多种文件系统
+Linus Torvalds：1992 年重写 VFS，逃出 Minix 文件系统
+Stephen Tweedie 与 Alex Tomas：ext3 日志与 ext4 的 extent
+Andrea Arcangeli 与 Andrew Morton：2001 年块设备并入 page cache
+Jens Axboe：bio、blk-mq 与 io_uring，一个人重做块层两次
+Matthew Wilcox：NVMe 驱动与 folio
+Dave Cutler：Windows NT 的另一条路
+
+[narration]
+这条链不是一天长出来的。Ritchie 和 Thompson 定下 1974 年的原件；Kleiman 用一张表挂住多种文件系统；Linus 为了逃出 Minix 重写了 VFS；Tweedie 给 ext2 加上日志，Tomas 带来 extent；Axboe 一个人把块层推翻了两遍，又写了 io_uring；Wilcox 写下 NVMe 驱动，十年后又动了最老的页。第 6 集还会请出 Dave Cutler，看他为什么把 Windows NT 带上另一条路。
+
+---
+
+## 5 十一张图，一张不跳
+
+[visual: spotlight]
+十一张架构图
+每张都完整展示
+
+[narration]
+五层全景、三件货物、块层全图、电梯轨迹、纳秒时间线、两套栈并排。每张图都会在视频里完整展示并逐段解说。
+
+---
+
+## 6 看完你能做到什么
+
+[visual: html_slide image="pics/ep0-summary-card.png" title=七集路线图]
+
+[step: auto]
+scroll auto
+
+[narration]
+看完这七集，你应该能做到六件事。一，说出一次 read 停在哪一层。二，为每一层说出它被哪条约束逼出来。三，沿着 6.12 源码走完去程和回程。四，看懂历史上每一次重写发生在哪一年、为什么是那一年。五，拿另一套系统做对照，判断哪些形状是必然，哪些只是血统。六，把五步法带到下一个你要拆的系统。
+
+---
+
+## 7 进入第 1 集
+
+[visual: title]
+进入第 1 集
+你调一次 read，数据到底穿过了谁
+
+[narration]
+如果你第一次接触这条链，从第 1 集顺着看。读过内核源码的，建议先看第 2 集的约束，再去第 5 集核对自己的预测。只想拿方法论的，直接看第 7 集。现在，把那行 read 留在脑子里，第 1 集从这里把地图打开。
+
+---

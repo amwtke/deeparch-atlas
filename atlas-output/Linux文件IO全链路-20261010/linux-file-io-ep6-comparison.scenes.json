@@ -1,0 +1,212 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 11.8
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Comparison 阶段开场",
+  "start": 11.8,
+  "end": 18.6
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "同一块盘读同一页",
+  "start": 18.6,
+  "end": 38.23
+ },
+ {
+  "idx": 4,
+  "type": "html_slide",
+  "title": "两套 I/O 栈并排",
+  "start": 38.23,
+  "end": 63.63
+ },
+ {
+  "idx": 5,
+  "type": "facetime",
+  "title": "\"Dave Cutler\"",
+  "start": 63.63,
+  "end": 83.27
+ },
+ {
+  "idx": 6,
+  "type": "text",
+  "title": "\"NT 的出发点：少量线程扛大量在飞 I/O\"",
+  "start": 83.27,
+  "end": 111.03
+ },
+ {
+  "idx": 7,
+  "type": "spotlight",
+  "title": "6 第一层对照",
+  "start": 111.03,
+  "end": 116.17
+ },
+ {
+  "idx": 8,
+  "type": "timeline",
+  "title": "\"一次 ReadFile 在完成端口下的全程\"",
+  "start": 116.17,
+  "end": 137.5
+ },
+ {
+  "idx": 9,
+  "type": "text",
+  "title": "\"一个队列，两头两种顺序\"",
+  "start": 137.5,
+  "end": 162.27
+ },
+ {
+  "idx": 10,
+  "type": "analogy",
+  "title": "\"两家邮局：完成端口对共享环\"",
+  "start": 162.27,
+  "end": 180.53
+ },
+ {
+  "idx": 11,
+  "type": "ascii",
+  "title": "\"就绪模型对完成模型：两边各补对方一半\"",
+  "start": 180.53,
+  "end": 200.37
+ },
+ {
+  "idx": 12,
+  "type": "spotlight",
+  "title": "11 第二层对照",
+  "start": 200.37,
+  "end": 206.6
+ },
+ {
+  "idx": 13,
+  "type": "html_slide",
+  "title": "函数调用链对请求包",
+  "start": 206.6,
+  "end": 228.37
+ },
+ {
+  "idx": 14,
+  "type": "ascii",
+  "title": "\"IRP 是信封：栈位提前留好，扇区后填\"",
+  "start": 228.37,
+  "end": 250.8
+ },
+ {
+  "idx": 15,
+  "type": "text",
+  "title": "\"包太重，所以捷径是必需品\"",
+  "start": 250.8,
+  "end": 279.33
+ },
+ {
+  "idx": 16,
+  "type": "code",
+  "title": "\"vfs_read 进门第一步 rw_verify_area（Linux 6.12）\"",
+  "start": 279.33,
+  "end": 303.83
+ },
+ {
+  "idx": 17,
+  "type": "text",
+  "title": "\"钩子不比 NT 靠后，差在手里拿着什么\"",
+  "start": 303.83,
+  "end": 331.17
+ },
+ {
+  "idx": 18,
+  "type": "text",
+  "title": "\"overlayfs：代理，不是搬运\"",
+  "start": 331.17,
+  "end": 362.63
+ },
+ {
+  "idx": 19,
+  "type": "code",
+  "title": "\"ovl_read_iter 把读转给真实文件（Linux 6.12）\"",
+  "start": 362.63,
+  "end": 382.17
+ },
+ {
+  "idx": 20,
+  "type": "code",
+  "title": "\"叠加深度上限 FILESYSTEM_MAX_STACK_DEPTH（Linux 6.12）\"",
+  "start": 382.17,
+  "end": 406.7
+ },
+ {
+  "idx": 21,
+  "type": "text",
+  "title": "\"两个误解：包不等于并行，函数调用不等于锁\"",
+  "start": 406.7,
+  "end": 441.73
+ },
+ {
+  "idx": 22,
+  "type": "text",
+  "title": "\"现实版：数据库怎么同时等几百个页\"",
+  "start": 441.73,
+  "end": 476.2
+ },
+ {
+  "idx": 23,
+  "type": "spotlight",
+  "title": "22 底层早就异步了",
+  "start": 476.2,
+  "end": 483.7
+ },
+ {
+  "idx": 24,
+  "type": "text",
+  "title": "\"异步是守恒的：等待的空档总得有人接\"",
+  "start": 483.7,
+  "end": 515.0
+ },
+ {
+  "idx": 25,
+  "type": "timeline",
+  "title": "\"并发需求一步步把 OS 推向硬件的真异步\"",
+  "start": 515.0,
+  "end": 535.37
+ },
+ {
+  "idx": 26,
+  "type": "ascii",
+  "title": "\"缓存这一层：功能清单相同，索引机制不同\"",
+  "start": 535.37,
+  "end": 557.7
+ },
+ {
+  "idx": 27,
+  "type": "layers",
+  "title": "\"块层以下：两边趋同\"",
+  "start": 557.7,
+  "end": 578.33
+ },
+ {
+  "idx": 28,
+  "type": "text",
+  "title": "\"约束一样的地方，形状就一样\"",
+  "start": 578.33,
+  "end": 606.67
+ },
+ {
+  "idx": 29,
+  "type": "html_slide",
+  "title": "本集总结",
+  "start": 606.67,
+  "end": 630.2
+ },
+ {
+  "idx": 30,
+  "type": "spotlight",
+  "title": "下集预告",
+  "start": 630.2,
+  "end": 641.87
+ }
+]
