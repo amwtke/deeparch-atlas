@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" width="1200" height="520" font-family="JetBrains Mono, Consolas, monospace">
+<rect width="1200" height="520" fill="#0a0c10"/>
+<text x="600" y="30" fill="#e0e6f0" font-size="18" font-weight="bold" text-anchor="middle">五步法一条流水线:上排本次(Linux 进程),下排离题演练(MVCC 对两阶段锁)</text>
+<text x="600" y="50" fill="#9aa4b2" font-size="11" text-anchor="middle">每一步上面写它来自哪一份;判别法「必然 vs 偶然」横跨第四、五步</text>
+
+<!-- step boxes -->
+<g font-size="11">
+<rect x="30" y="80" width="200" height="60" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="130" y="100" fill="#88c0ff" font-size="12" font-weight="bold" text-anchor="middle">① 识别约束</text>
+<text x="130" y="118" fill="#c8d4e4" font-size="10" text-anchor="middle">从裸机起,一刀一条</text>
+<text x="130" y="132" fill="#9aa4b2" font-size="9" text-anchor="middle">Why</text>
+
+<rect x="265" y="80" width="200" height="60" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="365" y="100" fill="#88c0ff" font-size="12" font-weight="bold" text-anchor="middle">② 列举候选</text>
+<text x="365" y="118" fill="#c8d4e4" font-size="10" text-anchor="middle">历史的 / 别人的 / 没人做的,4~6 个</text>
+<text x="365" y="132" fill="#9aa4b2" font-size="9" text-anchor="middle">How 逼问 · Deep 反事实</text>
+
+<rect x="500" y="80" width="200" height="60" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="600" y="100" fill="#88c0ff" font-size="12" font-weight="bold" text-anchor="middle">③ 代价分析</text>
+<text x="600" y="118" fill="#c8d4e4" font-size="10" text-anchor="middle">违反哪条 / 付什么价;现状也要写</text>
+<text x="600" y="132" fill="#9aa4b2" font-size="9" text-anchor="middle">Deep · 五元组代价列</text>
+
+<rect x="735" y="80" width="200" height="60" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="835" y="100" fill="#88c0ff" font-size="12" font-weight="bold" text-anchor="middle">④ 现实对照</text>
+<text x="835" y="118" fill="#c8d4e4" font-size="10" text-anchor="middle">纵向人物 · 横向另一套血统</text>
+<text x="835" y="132" fill="#9aa4b2" font-size="9" text-anchor="middle">Origin · Comparison</text>
+
+<rect x="970" y="80" width="200" height="60" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="1070" y="100" fill="#88c0ff" font-size="12" font-weight="bold" text-anchor="middle">⑤ 局部最优</text>
+<text x="1070" y="118" fill="#c8d4e4" font-size="10" text-anchor="middle">逐条取消约束看谁反超</text>
+<text x="1070" y="132" fill="#9aa4b2" font-size="9" text-anchor="middle">Deep 结论 · §2.2</text>
+</g>
+<g stroke="#4080c0" stroke-width="1.5" fill="none">
+<path d="M230 110 L265 110"/><path d="M465 110 L500 110"/><path d="M700 110 L735 110"/><path d="M935 110 L970 110"/>
+</g>
+
+<!-- 判别法 band -->
+<rect x="735" y="150" width="435" height="30" rx="6" fill="#5f3a1e" fill-opacity="0.5" stroke="#c08040" stroke-width="1" stroke-dasharray="5,3"/>
+<text x="952" y="169" fill="#ffaa55" font-size="10" text-anchor="middle">判别法:另一套系统也这么做 = 必然;能追到血统或某年某人 = 偶然</text>
+
+<!-- row: Linux instance -->
+<text x="30" y="212" fill="#88c0ff" font-size="12" font-weight="bold">本次:Linux 进程</text>
+<g font-size="10" fill="#c8d4e4">
+<rect x="30" y="222" width="200" height="90" rx="6" fill="#0f1a2a" stroke="#1e3a5f"/>
+<text x="40" y="240">七刀 C1~C7</text>
+<text x="40" y="256">16 → 11 → 7 压缩</text>
+<text x="40" y="272">非约束:向后兼容、</text>
+<text x="40" y="288">「一页只有父子两主人」</text>
+
+<rect x="265" y="222" width="200" height="90" rx="6" fill="#0f1a2a" stroke="#1e3a5f"/>
+<text x="275" y="240">调度 A1~A5 + 切换 B1~B4</text>
+<text x="275" y="256">COW A~F(真复制…CHERI)</text>
+<text x="275" y="272">execve A~D</text>
+<text x="275" y="288">创建:fork+exec / spawn / vfork</text>
+
+<rect x="500" y="222" width="200" height="90" rx="6" fill="#0f1a2a" stroke="#1e3a5f"/>
+<text x="510" y="240">fork 多线程半残;20 GB 100~200 ms</text>
+<text x="510" y="256">EEVDF「急」要靠短 slice 模拟</text>
+<text x="510" y="272">判据③ 不必要的 COW</text>
+<text x="510" y="288">超售 → 可能被 OOM 杀</text>
+
+<rect x="735" y="222" width="200" height="90" rx="6" fill="#0f1a2a" stroke="#1e3a5f"/>
+<text x="745" y="240">Thompson / Linus / Drepper /</text>
+<text x="745" y="256">Arcangeli 四段债</text>
+<text x="745" y="272">NT:三行差异追到「有没有</text>
+<text x="745" y="288">fork」+ VMS 血统</text>
+
+<rect x="970" y="222" width="200" height="90" rx="6" fill="#0f1a2a" stroke="#1e3a5f"/>
+<text x="980" y="240">去 C3 → unikernel</text>
+<text x="980" y="256">去 C2 → SQLOS;去 C5 → DPDK</text>
+<text x="980" y="272">去 C4 复制便宜 → NT 不超售</text>
+<text x="980" y="288">去「兼容」→ spawn 上位</text>
+</g>
+
+<!-- row: MVCC instance -->
+<text x="30" y="346" fill="#c088ff" font-size="12" font-weight="bold">演练:MVCC 对两阶段锁</text>
+<g font-size="10" fill="#d8c8f0">
+<rect x="30" y="356" width="200" height="90" rx="6" fill="#1a0f2a" stroke="#3a1e5f"/>
+<text x="40" y="374">五刀 D1~D5:并发读写 /</text>
+<text x="40" y="390">事务互不信任 / 内存小盘慢 /</text>
+<text x="40" y="406">回滚恢复 / 多核</text>
+<text x="40" y="422">非约束:SQL 四级、读多写少</text>
+
+<rect x="265" y="356" width="200" height="90" rx="6" fill="#1a0f2a" stroke="#3a1e5f"/>
+<text x="275" y="374">K1 2PL  K2 纯 MVCC</text>
+<text x="275" y="390">K3 OCC  K4 串行</text>
+<text x="275" y="406">K5 MVCC + 写锁(主流)</text>
+<text x="275" y="422">版本 = COW 页;快照 = fork 时刻</text>
+
+<rect x="500" y="356" width="200" height="90" rx="6" fill="#1a0f2a" stroke="#3a1e5f"/>
+<text x="510" y="374">2PL 读写互阻 / 死锁</text>
+<text x="510" y="390">MVCC 版本膨胀;SI ≠ 可串行化</text>
+<text x="510" y="406">长事务拖住回收 = 不退出的</text>
+<text x="510" y="422">子进程拖住旧页</text>
+
+<rect x="735" y="356" width="200" height="90" rx="6" fill="#1a0f2a" stroke="#3a1e5f"/>
+<text x="745" y="374">System R 锁(内存几 MB)</text>
+<text x="745" y="390">POSTGRES 1986 堆内版本 → vacuum</text>
+<text x="745" y="406">Oracle undo;InnoDB undo + 行锁</text>
+<text x="745" y="422">SQL Server 2005 才加 SI</text>
+
+<rect x="970" y="356" width="200" height="90" rx="6" fill="#1a0f2a" stroke="#3a1e5f"/>
+<text x="980" y="374">去 D3 → 内存库纯 MVCC</text>
+<text x="980" y="390">去 D5 → VoltDB 串行</text>
+<text x="980" y="406">去高冲突 → Spanner OCC</text>
+<text x="980" y="422">去「不覆盖存储」→ zheap</text>
+</g>
+
+<line x1="30" y1="470" x2="1170" y2="470" stroke="#2a2f3a" stroke-width="1"/>
+<text x="600" y="492" fill="#9aa4b2" font-size="10" text-anchor="middle">两排都长出同样三件东西:只在检查点介入的收集者 / 把拷贝推迟到首写的标记 / 判断「还有谁在用」的计数 —— 必然;放 undo 还是放堆里、分不分两步 —— 偶然</text>
+</svg>

@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" width="1200" height="620" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="620" fill="#0a0c10"/>
+  <text x="600" y="32" text-anchor="middle" fill="#e6edf3" font-size="20">三扇门一扇出口:调度和 signal 都只发生在出口检查点</text>
+  <text x="600" y="52" text-anchor="middle" fill="#8b949e" font-size="12">x86-64,Linux 6.12 的 kernel/entry/common.c + arch/x86/entry/entry_64.S;ARM64 结构相同,指令名不同</text>
+
+  <!-- user band -->
+  <rect x="30" y="70" width="1140" height="80" fill="#11161d" stroke="#30363d"/>
+  <text x="40" y="90" fill="#8b949e" font-size="12">ring 3</text>
+  <rect x="120" y="86" width="200" height="48" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="220" y="106" text-anchor="middle" fill="#88c0ff" font-size="12">write(1, buf, n)</text>
+  <text x="220" y="124" text-anchor="middle" fill="#c9d1d9" font-size="11">mov rax,1 ; syscall</text>
+  <rect x="440" y="86" width="200" height="48" rx="4" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="540" y="106" text-anchor="middle" fill="#ff8888" font-size="12">for(;;) 纯算,不进内核</text>
+  <text x="540" y="124" text-anchor="middle" fill="#c9d1d9" font-size="11">APIC 定时器到点</text>
+  <rect x="760" y="86" width="200" height="48" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="860" y="106" text-anchor="middle" fill="#ffaa55" font-size="12">buf[0] = 1 (页还没映射)</text>
+  <text x="860" y="124" text-anchor="middle" fill="#c9d1d9" font-size="11">MMU 查页表 P=0</text>
+
+  <!-- doors down -->
+  <defs>
+    <marker id="g1" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#c08040"/></marker>
+    <marker id="g2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#40c060"/></marker>
+    <marker id="g3" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8040c0"/></marker>
+  </defs>
+  <g stroke="#c08040" stroke-width="2" fill="none" marker-end="url(#g1)">
+    <line x1="220" y1="134" x2="220" y2="176"/>
+    <line x1="540" y1="134" x2="540" y2="176"/>
+    <line x1="860" y1="134" x2="860" y2="176"/>
+  </g>
+  <g fill="#ffaa55" font-size="11">
+    <text x="228" y="160">门① syscall 指令</text>
+    <text x="548" y="160">门② 中断(IDT 向量)</text>
+    <text x="868" y="160">门③ 异常 #PF(IDT 14)</text>
+  </g>
+
+  <!-- kernel band -->
+  <rect x="30" y="180" width="1140" height="370" fill="#0f141a" stroke="#30363d"/>
+  <text x="40" y="200" fill="#8b949e" font-size="12">ring 0</text>
+
+  <!-- entry common -->
+  <rect x="120" y="190" width="840" height="50" rx="4" fill="#161b22" stroke="#30363d"/>
+  <text x="540" y="208" text-anchor="middle" fill="#e6edf3" font-size="12">进门(硬件 + entry_64.S):换到本任务内核栈(TSS.sp0)→ 压 ss/rsp/rflags/cs/rip → 入口代码压其余通用寄存器 = pt_regs</text>
+  <text x="540" y="226" text-anchor="middle" fill="#8b949e" font-size="11">syscall 指令不压栈,rip→rcx rflags→r11,入口代码手工构造同样的 pt_regs;swapgs 拿到 per-cpu 数据</text>
+
+  <!-- handlers -->
+  <rect x="120" y="252" width="200" height="90" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="220" y="270" text-anchor="middle" fill="#88c0ff" font-size="12">do_syscall_64</text>
+  <text x="130" y="288" fill="#c9d1d9" font-size="11">sys_call_table[rax]</text>
+  <text x="130" y="304" fill="#c9d1d9" font-size="11">→ ksys_write → vfs_write</text>
+  <text x="130" y="320" fill="#c9d1d9" font-size="11">可能睡:schedule()</text>
+  <text x="130" y="336" fill="#8b949e" font-size="11">返回值写回 pt_regs.rax</text>
+
+  <rect x="440" y="252" width="200" height="90" rx="4" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="540" y="270" text-anchor="middle" fill="#ff8888" font-size="12">sysvec_apic_timer_interrupt</text>
+  <text x="450" y="288" fill="#c9d1d9" font-size="11">→ scheduler_tick</text>
+  <text x="450" y="304" fill="#c9d1d9" font-size="11">  update_curr: 记账 vruntime</text>
+  <text x="450" y="320" fill="#c9d1d9" font-size="11">  到期? resched_curr →</text>
+  <text x="450" y="336" fill="#ff8888" font-size="11">  只标 TIF_NEED_RESCHED,不换人</text>
+
+  <rect x="760" y="252" width="200" height="90" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="860" y="270" text-anchor="middle" fill="#ffaa55" font-size="12">exc_page_fault</text>
+  <text x="770" y="288" fill="#c9d1d9" font-size="11">cr2 = 出事地址</text>
+  <text x="770" y="304" fill="#c9d1d9" font-size="11">find_vma → 合法? 权限对?</text>
+  <text x="770" y="320" fill="#c9d1d9" font-size="11">handle_mm_fault → 供页填 PTE</text>
+  <text x="770" y="336" fill="#8b949e" font-size="11">不合法 → force_sig(SIGSEGV)</text>
+
+  <!-- kill from elsewhere -->
+  <rect x="990" y="252" width="170" height="90" rx="4" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="1075" y="270" text-anchor="middle" fill="#c088ff" font-size="12">别的任务 kill()</text>
+  <text x="1000" y="288" fill="#c9d1d9" font-size="11">send_signal_locked:</text>
+  <text x="1000" y="304" fill="#c9d1d9" font-size="11">目标 pending 置位</text>
+  <text x="1000" y="320" fill="#c9d1d9" font-size="11">标 TIF_SIGPENDING</text>
+  <text x="1000" y="336" fill="#c9d1d9" font-size="11">在睡就叫醒 / 发 IPI</text>
+
+  <!-- converge arrows -->
+  <g stroke="#40c060" stroke-width="2" fill="none" marker-end="url(#g2)">
+    <path d="M220,342 L220,372 L540,372 L540,386"/>
+    <line x1="540" y1="342" x2="540" y2="386"/>
+    <path d="M860,342 L860,372 L540,372"/>
+  </g>
+  <g stroke="#8040c0" stroke-width="1.5" fill="none" stroke-dasharray="4 3" marker-end="url(#g3)">
+    <path d="M1075,342 L1075,440 L772,440"/>
+  </g>
+
+  <!-- exit checkpoint -->
+  <rect x="260" y="390" width="560" height="110" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="540" y="410" text-anchor="middle" fill="#88ff88" font-size="14">出口检查点 exit_to_user_mode_loop(循环直到没有待办)</text>
+  <text x="272" y="432" fill="#c9d1d9" font-size="11">TIF_NEED_RESCHED ? → schedule() → pick_next_task → context_switch</text>
+  <text x="272" y="448" fill="#c9d1d9" font-size="11">     → switch_mm(写 CR3,换件①)→ switch_to(换内核栈,换件②)→ 另一任务从它的出口回去</text>
+  <text x="272" y="466" fill="#c9d1d9" font-size="11">TIF_SIGPENDING ? → arch_do_signal_or_restart → get_signal</text>
+  <text x="272" y="482" fill="#c9d1d9" font-size="11">     默认动作(终止 → do_group_exit / 忽略)或 setup_rt_frame:在用户栈上压现场,rip 改成 handler</text>
+  <text x="272" y="496" fill="#8b949e" font-size="11">ptrace 停点、被阻塞的 signal 保持 pending、也在这里</text>
+
+  <!-- return -->
+  <rect x="260" y="508" width="560" height="32" rx="4" fill="#161b22" stroke="#30363d"/>
+  <text x="540" y="529" text-anchor="middle" fill="#e6edf3" font-size="12">弹 pt_regs → sysret(快)或 iretq(中断 / 异常 / 改过 cs 时)→ ring 3,从 pt_regs.rip 继续</text>
+  <g stroke="#40c060" stroke-width="2" fill="none" marker-end="url(#g2)">
+    <path d="M840,524 L1100,524 L1100,140 L980,140"/>
+  </g>
+  <text x="1105" y="330" fill="#88ff88" font-size="11" transform="rotate(90 1105 330)">回用户态(可能已经是另一个任务)</text>
+
+  <!-- hardware band -->
+  <rect x="30" y="556" width="1140" height="50" fill="#11161d" stroke="#30363d"/>
+  <text x="40" y="576" fill="#8b949e" font-size="12">硬件</text>
+  <text x="600" y="576" text-anchor="middle" fill="#c9d1d9" font-size="11">内核态抢占:preempt_count==0 且 NEED_RESCHED 时,中断返回到内核代码也会 schedule(CONFIG_PREEMPT);否则只在出口和主动 schedule() 处换人</text>
+  <text x="600" y="594" text-anchor="middle" fill="#8b949e" font-size="11">多核:核 0 想换核 1 上的任务 → resched_curr 标位 + 发 RESCHEDULE IPI → 核 1 走门② → 自己的出口检查点 → 换人</text>
+</svg>

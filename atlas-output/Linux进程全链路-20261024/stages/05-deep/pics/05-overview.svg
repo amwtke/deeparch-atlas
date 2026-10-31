@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" width="1200" height="560" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="560" fill="#0a0c10"/>
+  <text x="600" y="32" text-anchor="middle" fill="#e6edf3" font-size="20">三条主线钉到 Linux 6.12:函数、行号、判据、数字</text>
+  <text x="600" y="52" text-anchor="middle" fill="#8b949e" font-size="12">每列从上到下是一条调用链;粗体框是本份要钉死的判据或数字;右侧小字是源码行号(v6.12 tag)</text>
+
+  <!-- column 1: execve -->
+  <rect x="30" y="70" width="370" height="470" rx="6" fill="#0f141a" stroke="#4080c0"/>
+  <text x="215" y="92" text-anchor="middle" fill="#88c0ff" font-size="14">① execve:从文件到第一条指令</text>
+  <g font-size="11" fill="#c9d1d9">
+    <rect x="45" y="104" width="340" height="28" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="52" y="122">do_execveat_common → bprm_execve → exec_binprm</text><text x="330" y="122" fill="#8b949e" font-size="9">exec.c:1876</text>
+    <rect x="45" y="138" width="340" height="28" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="52" y="156">search_binary_handler → load_elf_binary</text><text x="330" y="156" fill="#8b949e" font-size="9">binfmt_elf.c:819</text>
+    <rect x="45" y="172" width="340" height="42" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="52" y="188" fill="#88c0ff">验头 / 读段表 / open ld.so / 验 ld.so 头</text>
+    <text x="52" y="204" fill="#88c0ff">全在 begin_new_exec 之前(:848 ~ :960)</text>
+    <rect x="45" y="220" width="340" height="28" rx="3" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="52" y="238" fill="#ff8888">begin_new_exec:de_thread → exec_mmap 不可回头</text><text x="330" y="238" fill="#8b949e" font-size="9">:996</text>
+    <rect x="45" y="254" width="340" height="28" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="52" y="272">setup_arg_pages:栈挪到随机顶,建 [stack] VMA</text><text x="330" y="272" fill="#8b949e" font-size="9">:1014</text>
+    <rect x="45" y="288" width="340" height="42" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="52" y="304" fill="#88c0ff">for PT_LOAD: elf_load → elf_map → vm_mmap</text>
+    <text x="52" y="320" fill="#88c0ff">memsz &gt; filesz:padzero + vm_brk_flags(bss)</text><text x="330" y="320" fill="#8b949e" font-size="9">:1167 / :400</text>
+    <rect x="45" y="336" width="340" height="28" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="52" y="354">start_brk = brk = PAGEALIGN(elf_brk)(+随机)</text><text x="330" y="354" fill="#8b949e" font-size="9">:1232</text>
+    <rect x="45" y="370" width="340" height="28" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="52" y="388">load_elf_interp → elf_entry = ld.so 入口</text><text x="330" y="388" fill="#8b949e" font-size="9">:1235</text>
+    <rect x="45" y="404" width="340" height="28" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="52" y="422">create_elf_tables:argc/argv/envp/auxv 上栈</text><text x="330" y="422" fill="#8b949e" font-size="9">:1276</text>
+    <rect x="45" y="438" width="340" height="28" rx="3" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="52" y="456" fill="#88ff88">START_THREAD:pt_regs.ip = 入口, sp = 栈顶</text><text x="330" y="456" fill="#8b949e" font-size="9">:1340</text>
+    <rect x="45" y="472" width="340" height="56" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="52" y="490">系统调用返回 → 出口 → sysret → ld.so _start</text>
+    <text x="52" y="506">→ 第一次缺页(页表全空)→ 主线 ③</text>
+    <text x="52" y="522" fill="#8b949e">数字:execve 本身 ~100 μs 量级,与程序大小无关</text>
+  </g>
+
+  <!-- column 2: sched -->
+  <rect x="415" y="70" width="370" height="470" rx="6" fill="#0f141a" stroke="#40c060"/>
+  <text x="600" y="92" text-anchor="middle" fill="#88ff88" font-size="14">② 调度与切换:从 tick 到另一条流</text>
+  <g font-size="11" fill="#c9d1d9">
+    <rect x="430" y="104" width="340" height="28" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="437" y="122">APIC 到点 → 门② → sched_tick</text><text x="715" y="122" fill="#8b949e" font-size="9">core.c:5584</text>
+    <rect x="430" y="138" width="340" height="42" rx="3" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="437" y="154" fill="#88ff88">task_tick_fair → update_curr:</text>
+    <text x="437" y="170" fill="#88ff88">vruntime += Δt × 1024 / weight</text><text x="715" y="170" fill="#8b949e" font-size="9">fair.c:1216</text>
+    <rect x="430" y="186" width="340" height="42" rx="3" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="437" y="202" fill="#88ff88">update_deadline:vruntime ≥ deadline ?</text>
+    <text x="437" y="218" fill="#88ff88">deadline = vruntime + slice × 1024 / weight</text><text x="715" y="218" fill="#8b949e" font-size="9">fair.c:1000</text>
+    <rect x="430" y="234" width="340" height="28" rx="3" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="437" y="252" fill="#ffaa55">slice = 0.75 ms × (1 + log2 min(cpus,8)) = 3 ms @8核</text>
+    <rect x="430" y="268" width="340" height="28" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="437" y="286">resched_curr:只标 TIF_NEED_RESCHED</text><text x="715" y="286" fill="#8b949e" font-size="9">core.c:1079</text>
+    <rect x="430" y="302" width="340" height="28" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="437" y="320">irqentry_exit → exit_to_user_mode_loop → schedule</text><text x="715" y="320" fill="#8b949e" font-size="9">entry/common.c:90</text>
+    <rect x="430" y="336" width="340" height="42" rx="3" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="437" y="352" fill="#88ff88">__schedule → pick_eevdf:eligible ∧ 最早 deadline</text>
+    <text x="437" y="368" fill="#88ff88">eligible ⇔ Σ(v_i − v₀)w_i ≥ (v − v₀)Σw_i</text><text x="715" y="368" fill="#8b949e" font-size="9">fair.c:907 / :726</text>
+    <rect x="430" y="384" width="340" height="28" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="437" y="402">context_switch:mm 判定 → switch_mm_irqs_off(CR3)</text><text x="715" y="402" fill="#8b949e" font-size="9">core.c:5271</text>
+    <rect x="430" y="418" width="340" height="42" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="437" y="434">__switch_to_asm:push 6 → 换 rsp → pop 6</text><text x="715" y="434" fill="#8b949e" font-size="9">entry_64.S:177</text>
+    <text x="437" y="450">__switch_to:FS/GS、TLS、FPU、sp0、current</text><text x="715" y="450" fill="#8b949e" font-size="9">process_64.c:609</text>
+    <rect x="430" y="466" width="340" height="62" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="437" y="482">finish_task_switch → next 回它的出口 → iretq</text>
+    <text x="437" y="498" fill="#8b949e">数字:tick 到新任务第一条指令 ~2 ~ 4 μs(直接)</text>
+    <text x="437" y="514" fill="#8b949e">TLB / cache 冷启动 ~10 ~ 100 μs(间接)</text>
+  </g>
+
+  <!-- column 3: page fault -->
+  <rect x="800" y="70" width="370" height="470" rx="6" fill="#0f141a" stroke="#c08040"/>
+  <text x="985" y="92" text-anchor="middle" fill="#ffaa55" font-size="14">③ 缺页与 COW:一次 #PF 的分支树</text>
+  <g font-size="11" fill="#c9d1d9">
+    <rect x="815" y="104" width="340" height="28" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="822" y="122">exc_page_fault:CR2 + 错误码 → do_user_addr_fault</text><text x="1100" y="122" fill="#8b949e" font-size="9">fault.c:1493</text>
+    <rect x="815" y="138" width="340" height="42" rx="3" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="822" y="154" fill="#ffaa55">lock_vma_under_rcu(per-VMA 锁)→ access_error?</text>
+    <text x="822" y="170" fill="#ffaa55">不合法 → bad_area → SIGSEGV</text><text x="1100" y="170" fill="#8b949e" font-size="9">:1329 / :1333</text>
+    <rect x="815" y="186" width="340" height="28" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="822" y="204">handle_mm_fault → __handle_mm_fault:逐级 pgd/p4d/pud/pmd</text><text x="1100" y="204" fill="#8b949e" font-size="9">memory.c:6042</text>
+    <rect x="815" y="220" width="340" height="90" rx="3" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="822" y="236" fill="#ffaa55">handle_pte_fault 五岔:</text><text x="1100" y="236" fill="#8b949e" font-size="9">:5732</text>
+    <text x="822" y="252">pte 空 → do_pte_missing → 匿名 do_anonymous_page</text>
+    <text x="822" y="268">                          → 文件 do_fault(read/cow/shared)</text>
+    <text x="822" y="284">pte 非 present → do_swap_page(主缺页)</text>
+    <text x="822" y="300">present 且写但 !pte_write → do_wp_page(COW)</text>
+    <rect x="815" y="316" width="340" height="56" rx="3" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="822" y="332" fill="#c088ff">do_wp_page 复用判据:</text><text x="1100" y="332" fill="#8b949e" font-size="9">:3655</text>
+    <text x="822" y="348" fill="#c088ff">PageAnonExclusive ∨ wp_can_reuse_anon_folio</text>
+    <text x="822" y="364" fill="#c088ff">  (ref_count == 1 ∧ !KSM ∧ !large,锁下验)</text><text x="1100" y="364" fill="#8b949e" font-size="9">:3585</text>
+    <rect x="815" y="378" width="340" height="42" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="822" y="394">reuse:置 R/W + dirty,不拷</text>
+    <text x="822" y="410">copy:wp_page_copy 分页 + 拷 4 KiB + 换 PTE + 旧页 ref−1</text><text x="1100" y="410" fill="#8b949e" font-size="9">:3331</text>
+    <rect x="815" y="426" width="340" height="42" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="822" y="442">fork 侧:copy_present_ptes → try_dup_anon_rmap</text><text x="1100" y="442" fill="#8b949e" font-size="9">:980</text>
+    <text x="822" y="458">  pinned → 立刻拷;否则 wrprotect 两边 + ref+1</text>
+    <rect x="815" y="474" width="340" height="56" rx="3" fill="#161b22" stroke="#30363d"/>
+    <text x="822" y="490">mm_account_fault:MAJOR ∨ TRIED → maj_flt++</text><text x="1100" y="490" fill="#8b949e" font-size="9">:5927</text>
+    <text x="822" y="506" fill="#8b949e">数字:次缺页 ~0.5 ~ 2 μs;COW 拷页 +~1 μs;</text>
+    <text x="822" y="522" fill="#8b949e">主缺页 = 盘:NVMe ~100 μs,机械盘 ~ms</text>
+  </g>
+</svg>

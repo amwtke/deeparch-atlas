@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="600" fill="#0a0c10"/>
+  <text x="600" y="34" text-anchor="middle" fill="#e6edf3" font-size="20">进程全链路骨架:三件事 × 四幕(内核只在三扇门后面干活)</text>
+
+  <!-- band labels -->
+  <text x="18" y="92" fill="#8b949e" font-size="13">ring 3</text>
+  <text x="18" y="108" fill="#8b949e" font-size="13">用户态</text>
+  <text x="18" y="300" fill="#8b949e" font-size="13">ring 0</text>
+  <text x="18" y="316" fill="#8b949e" font-size="13">内核</text>
+  <text x="18" y="530" fill="#8b949e" font-size="13">硬件</text>
+
+  <!-- bands -->
+  <rect x="80" y="60" width="1100" height="110" fill="#11161d" stroke="#30363d"/>
+  <rect x="80" y="190" width="1100" height="270" fill="#0f141a" stroke="#30363d"/>
+  <rect x="80" y="480" width="1100" height="100" fill="#11161d" stroke="#30363d"/>
+
+  <!-- act columns -->
+  <g stroke="#30363d" stroke-dasharray="4 4">
+    <line x1="360" y1="60" x2="360" y2="580"/>
+    <line x1="760" y1="60" x2="760" y2="580"/>
+    <line x1="980" y1="60" x2="980" y2="580"/>
+  </g>
+  <g fill="#8b949e" font-size="13" text-anchor="middle">
+    <text x="220" y="52">① 出生 fork + execve</text>
+    <text x="560" y="52">② 活着 三扇门 / 调度 / 缺页 / signal</text>
+    <text x="870" y="52">③ 死亡 exit / wait</text>
+    <text x="1090" y="52">④ 旁观 /proc</text>
+  </g>
+
+  <!-- user band content -->
+  <rect x="100" y="78" width="110" height="36" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="155" y="101" text-anchor="middle" fill="#88c0ff" font-size="12">bash: fork()</text>
+  <rect x="230" y="78" width="110" height="36" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="285" y="101" text-anchor="middle" fill="#88c0ff" font-size="12">execve(hello)</text>
+  <rect x="100" y="124" width="240" height="36" rx="4" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="220" y="147" text-anchor="middle" fill="#88ff88" font-size="12">ld.so → _start → main() 第一条指令</text>
+
+  <rect x="380" y="78" width="110" height="36" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="435" y="101" text-anchor="middle" fill="#88c0ff" font-size="12">write() 系统调用</text>
+  <rect x="505" y="78" width="110" height="36" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="560" y="101" text-anchor="middle" fill="#ffaa55" font-size="12">碰未映射页</text>
+  <rect x="630" y="78" width="110" height="36" rx="4" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="685" y="101" text-anchor="middle" fill="#ff8888" font-size="12">正在算,被闹钟打断</text>
+  <rect x="380" y="124" width="360" height="36" rx="4" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="560" y="147" text-anchor="middle" fill="#c088ff" font-size="12">signal handler 在用户栈上跑,完了 rt_sigreturn 回内核</text>
+
+  <rect x="780" y="78" width="180" height="36" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="870" y="101" text-anchor="middle" fill="#88c0ff" font-size="12">exit(0) / 被 SIGKILL</text>
+  <rect x="780" y="124" width="180" height="36" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="870" y="147" text-anchor="middle" fill="#88c0ff" font-size="12">父进程 wait4()</text>
+
+  <rect x="1000" y="78" width="160" height="36" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="1080" y="101" text-anchor="middle" fill="#88c0ff" font-size="12">ps / top / strace</text>
+  <rect x="1000" y="124" width="160" height="36" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="1080" y="147" text-anchor="middle" fill="#88c0ff" font-size="12">read(/proc/pid/*)</text>
+
+  <!-- doors -->
+  <g stroke="#c08040" stroke-width="2" fill="none" marker-end="url(#arr)">
+    <line x1="285" y1="114" x2="285" y2="196"/>
+    <line x1="435" y1="114" x2="435" y2="196"/>
+    <line x1="560" y1="114" x2="560" y2="196"/>
+    <line x1="685" y1="114" x2="685" y2="196"/>
+    <line x1="870" y1="114" x2="870" y2="196"/>
+    <line x1="1080" y1="160" x2="1080" y2="196"/>
+  </g>
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#c08040"/>
+    </marker>
+    <marker id="arrg" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#40c060"/>
+    </marker>
+  </defs>
+  <g fill="#ffaa55" font-size="11">
+    <text x="292" y="186">门①系统调用</text>
+    <text x="442" y="186">门①</text>
+    <text x="567" y="186">门③异常</text>
+    <text x="692" y="186">门②中断</text>
+    <text x="877" y="186">门①</text>
+    <text x="1087" y="186">门①</text>
+  </g>
+
+  <!-- kernel band: three things -->
+  <rect x="100" y="210" width="240" height="120" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="220" y="232" text-anchor="middle" fill="#88c0ff" font-size="14">件① mm_struct + 页表</text>
+  <text x="112" y="254" fill="#c9d1d9" font-size="11">VMA 串(每段一条) → pgd</text>
+  <text x="112" y="272" fill="#c9d1d9" font-size="11">execve: 读 ELF 段表 → 建 VMA</text>
+  <text x="112" y="290" fill="#c9d1d9" font-size="11">只建地图,不搬内容</text>
+  <text x="112" y="308" fill="#c9d1d9" font-size="11">fork: 复制 VMA + 页表,页标只读(COW)</text>
+  <text x="112" y="324" fill="#8b949e" font-size="10">由 C3·互不信任 + C4·文件≠内存 逼出</text>
+
+  <rect x="100" y="345" width="240" height="100" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="220" y="367" text-anchor="middle" fill="#88ff88" font-size="14">件② task_struct + 内核栈</text>
+  <text x="112" y="389" fill="#c9d1d9" font-size="11">栈顶 pt_regs = 进门时的用户现场</text>
+  <text x="112" y="407" fill="#c9d1d9" font-size="11">thread.sp = 上次 switch_to 停的地方</text>
+  <text x="112" y="425" fill="#c9d1d9" font-size="11">state / pid / parent / pending signals</text>
+  <text x="112" y="440" fill="#8b949e" font-size="10">由 C1·CPU快IO慢 逼出</text>
+
+  <rect x="380" y="210" width="360" height="90" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+  <text x="560" y="232" text-anchor="middle" fill="#ffaa55" font-size="14">门后的处理:sys_call_table / irq handler / do_page_fault</text>
+  <text x="392" y="256" fill="#c9d1d9" font-size="11">缺页:find_vma → 合法? → 读文件页 / 给零页 / COW 复制一页</text>
+  <text x="392" y="274" fill="#c9d1d9" font-size="11">时钟中断:scheduler_tick → 到期? → 标 TIF_NEED_RESCHED</text>
+  <text x="392" y="292" fill="#c9d1d9" font-size="11">kill:在目标 task_struct 记 pending 位,叫醒它</text>
+
+  <rect x="380" y="320" width="360" height="125" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="2"/>
+  <text x="560" y="342" text-anchor="middle" fill="#c088ff" font-size="14">件③ 每核就绪队列 + 出口检查点</text>
+  <text x="392" y="364" fill="#c9d1d9" font-size="11">出口 exit_to_user_mode_loop:</text>
+  <text x="392" y="382" fill="#c9d1d9" font-size="11">  NEED_RESCHED? → schedule() → 挑 rq 里下一个</text>
+  <text x="392" y="400" fill="#c9d1d9" font-size="11">     → switch_mm(写 CR3) → switch_to(换内核栈)</text>
+  <text x="392" y="418" fill="#c9d1d9" font-size="11">  SIGPENDING?  → 改用户栈,让它回去先跑 handler</text>
+  <text x="392" y="436" fill="#8b949e" font-size="10">由 C2·霸台不可预知 + C5·改流必经打断 逼出</text>
+
+  <rect x="780" y="210" width="180" height="235" rx="6" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="870" y="232" text-anchor="middle" fill="#ff8888" font-size="14">do_exit 两段</text>
+  <text x="792" y="256" fill="#c9d1d9" font-size="11">① 自己还:mmput(件①)</text>
+  <text x="792" y="274" fill="#c9d1d9" font-size="11">   files / fs / 子进程托孤</text>
+  <text x="792" y="292" fill="#c9d1d9" font-size="11">   发 SIGCHLD,state=ZOMBIE</text>
+  <text x="792" y="310" fill="#c9d1d9" font-size="11">   schedule() 永不回来</text>
+  <text x="792" y="334" fill="#c9d1d9" font-size="11">② 别人还:wait4 →</text>
+  <text x="792" y="352" fill="#c9d1d9" font-size="11">   release_task 回收 pid、</text>
+  <text x="792" y="370" fill="#c9d1d9" font-size="11">   task_struct + 内核栈(件②)</text>
+  <text x="792" y="394" fill="#c9d1d9" font-size="11">父先死 → init 收养</text>
+  <text x="792" y="434" fill="#8b949e" font-size="10">C6·资源有限须归还</text>
+
+  <rect x="1000" y="210" width="160" height="235" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="1080" y="232" text-anchor="middle" fill="#88c0ff" font-size="14">procfs 读账本</text>
+  <text x="1012" y="256" fill="#c9d1d9" font-size="11">stat: utime/stime</text>
+  <text x="1012" y="274" fill="#c9d1d9" font-size="11">  minflt/majflt/state</text>
+  <text x="1012" y="292" fill="#c9d1d9" font-size="11">maps: 遍历 VMA 串</text>
+  <text x="1012" y="310" fill="#c9d1d9" font-size="11">smaps: 走页表数 RSS</text>
+  <text x="1012" y="328" fill="#c9d1d9" font-size="11">strace: ptrace 在</text>
+  <text x="1012" y="346" fill="#c9d1d9" font-size="11">  出口检查点停住</text>
+  <text x="1012" y="364" fill="#c9d1d9" font-size="11">perf: PMU 中断 +</text>
+  <text x="1012" y="382" fill="#c9d1d9" font-size="11">  sched tracepoint</text>
+  <text x="1012" y="434" fill="#8b949e" font-size="10">派生,不被约束逼出</text>
+
+  <!-- hardware band -->
+  <g fill="#c9d1d9" font-size="12">
+    <rect x="100" y="496" width="240" height="68" rx="4" fill="#161b22" stroke="#30363d"/>
+    <text x="220" y="518" text-anchor="middle" fill="#88c0ff">③ MMU 四级页表 + TLB</text>
+    <text x="220" y="538" text-anchor="middle">CR3 指向 pgd;PTE 的 P/RW/US 位</text>
+    <text x="220" y="556" text-anchor="middle">没有 P → 缺页异常 #PF</text>
+    <rect x="380" y="496" width="360" height="68" rx="4" fill="#161b22" stroke="#30363d"/>
+    <text x="560" y="518" text-anchor="middle" fill="#ffaa55">① ring 0/3  ⑤ syscall/sysret + IDT  ④ APIC 时钟 / IPI</text>
+    <text x="560" y="538" text-anchor="middle">进门:硬件换到内核栈(TSS.sp0)、压 ss/rsp/rflags/cs/rip</text>
+    <text x="560" y="556" text-anchor="middle">出门:sysret / iretq 一条指令回 ring 3</text>
+    <rect x="780" y="496" width="380" height="68" rx="4" fill="#161b22" stroke="#30363d"/>
+    <text x="970" y="518" text-anchor="middle" fill="#88ff88">② 寄存器现场:rip rsp rflags + 通用 + FS 基址 + FPU/AVX</text>
+    <text x="970" y="538" text-anchor="middle">进门时硬件/入口代码存一半(pt_regs),switch_to 存另一半</text>
+    <text x="970" y="556" text-anchor="middle">多核:每核自己的 APIC、TLB、cache、rq</text>
+  </g>
+</svg>

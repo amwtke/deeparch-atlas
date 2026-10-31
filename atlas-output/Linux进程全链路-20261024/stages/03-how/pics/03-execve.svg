@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" width="1200" height="560" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="560" fill="#0a0c10"/>
+  <text x="600" y="32" text-anchor="middle" fill="#e6edf3" font-size="20">execve("hello"):从盘上的 ELF 到第一条用户指令,内核只搬了三样东西</text>
+  <text x="600" y="52" text-anchor="middle" fill="#8b949e" font-size="12">读段表 → 建 VMA(不搬内容)→ 在栈上摆 argv/envp/auxv → 改 pt_regs 的 rip/rsp → 走出口回 ring 3,落在 ld.so</text>
+
+  <!-- ELF file -->
+  <rect x="30" y="80" width="250" height="300" rx="6" fill="#161b22" stroke="#30363d"/>
+  <text x="155" y="102" text-anchor="middle" fill="#e6edf3" font-size="13">盘上的 hello(ELF)</text>
+  <g font-size="11">
+    <rect x="42" y="112" width="226" height="30" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="48" y="124" fill="#c088ff">ELF header: e_entry=0x401040</text>
+    <text x="48" y="138" fill="#c088ff">e_phoff / e_phnum / e_type=EXEC</text>
+    <rect x="42" y="146" width="226" height="86" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="48" y="160" fill="#88c0ff">Program headers(内核读这个)</text>
+    <text x="48" y="174" fill="#c9d1d9">PT_INTERP → /lib64/ld-linux-x86-64.so.2</text>
+    <text x="48" y="188" fill="#c9d1d9">PT_LOAD off=0x0000 va=0x400000 R</text>
+    <text x="48" y="202" fill="#c9d1d9">PT_LOAD off=0x1000 va=0x401000 RX</text>
+    <text x="48" y="216" fill="#c9d1d9">PT_LOAD off=0x2000 va=0x402000 R</text>
+    <text x="48" y="230" fill="#c9d1d9">PT_LOAD off=0x3e10 va=0x403e10 RW memsz>filesz</text>
+    <rect x="42" y="236" width="226" height="70" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="48" y="250" fill="#ffaa55">.text .rodata .data 的字节</text>
+    <text x="48" y="264" fill="#ffaa55">.dynamic .dynsym .rela.plt .got</text>
+    <text x="48" y="278" fill="#ffaa55">(这些给 ld.so,内核不看)</text>
+    <text x="48" y="298" fill="#8b949e">.bss 不占文件字节,只记 memsz</text>
+    <rect x="42" y="310" width="226" height="60" fill="#161b22" stroke="#30363d"/>
+    <text x="48" y="324" fill="#8b949e">Section headers(.symtab 等)</text>
+    <text x="48" y="338" fill="#8b949e">给链接器 / 调试器 / readelf 看</text>
+    <text x="48" y="352" fill="#8b949e">strip 掉也能跑</text>
+  </g>
+
+  <!-- kernel steps -->
+  <rect x="320" y="80" width="420" height="440" rx="6" fill="#0f141a" stroke="#30363d"/>
+  <text x="530" y="102" text-anchor="middle" fill="#e6edf3" font-size="13">内核 load_elf_binary(fs/binfmt_elf.c, 6.12)</text>
+  <g font-size="11" fill="#c9d1d9">
+    <rect x="332" y="112" width="396" height="46" rx="4" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="340" y="128" fill="#ff8888">① begin_new_exec:杀掉同组其他线程,exec_mmap 换上一本</text>
+    <text x="340" y="142" fill="#ff8888">   全新的 mm_struct;旧的 mmput(fork 来的 COW 账本作废)</text>
+    <rect x="332" y="166" width="396" height="46" rx="4" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="340" y="182" fill="#c088ff">② setup_arg_pages:把 argv/envp 字符串所在的临时栈页</text>
+    <text x="340" y="196" fill="#c088ff">   挪到最终栈位置(ASLR 随机),建 [stack] VMA</text>
+    <rect x="332" y="220" width="396" height="60" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="340" y="236" fill="#88c0ff">③ 对每个 PT_LOAD:elf_map → vm_mmap(file, va, MAP_PRIVATE|FIXED)</text>
+    <text x="340" y="250" fill="#88c0ff">   只建 VMA,一字节都不读;memsz>filesz 的尾巴(bss)</text>
+    <text x="340" y="264" fill="#88c0ff">   用 vm_brk_flags 补一段匿名 VMA;set_brk 定 [heap] 起点</text>
+    <rect x="332" y="288" width="396" height="46" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="340" y="304" fill="#ffaa55">④ 有 PT_INTERP → load_elf_interp:把 ld.so 也 mmap 进来</text>
+    <text x="340" y="318" fill="#ffaa55">   (同样只建 VMA);记下 ld.so 的入口</text>
+    <rect x="332" y="342" width="396" height="60" rx="4" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="340" y="358" fill="#c088ff">⑤ create_elf_tables:在用户栈上摆 argc, argv[], envp[],</text>
+    <text x="340" y="372" fill="#c088ff">   auxv{AT_PHDR, AT_ENTRY=0x401040, AT_BASE=ld.so 基址,</text>
+    <text x="340" y="386" fill="#c088ff">   AT_PAGESZ, AT_RANDOM...} —— ld.so 靠这些找到 hello</text>
+    <rect x="332" y="410" width="396" height="46" rx="4" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="340" y="426" fill="#88ff88">⑥ start_thread(regs, ld.so 入口, 栈顶):只改内核栈顶</text>
+    <text x="340" y="440" fill="#88ff88">   pt_regs 里的 rip / rsp / cs / ss,别的全清零</text>
+    <rect x="332" y="464" width="396" height="46" rx="4" fill="#161b22" stroke="#30363d"/>
+    <text x="340" y="480">⑦ 系统调用返回 → 出口检查点 → sysret/iretq 把 pt_regs 装回 CPU</text>
+    <text x="340" y="494">   → CPU 在 ring 3 取 ld.so 第一条指令 → 缺页(页表是空的)</text>
+  </g>
+
+  <!-- user side after -->
+  <rect x="780" y="80" width="390" height="440" rx="6" fill="#11161d" stroke="#30363d"/>
+  <text x="975" y="102" text-anchor="middle" fill="#e6edf3" font-size="13">回到 ring 3 之后(全在用户态,内核只供缺页)</text>
+  <g font-size="11" fill="#c9d1d9">
+    <rect x="792" y="112" width="366" height="76" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="800" y="128" fill="#ffaa55">ld.so _start(第一条用户指令,不是 main)</text>
+    <text x="800" y="142">  读 auxv 找到 hello 的 PT_DYNAMIC</text>
+    <text x="800" y="156">  按 DT_NEEDED 把 libc.so.6 mmap 进来(门①系统调用)</text>
+    <text x="800" y="170">  做重定位:填 GOT(全局变量地址、函数地址或 PLT 桩)</text>
+    <text x="800" y="184">  跑 libc 的 init;然后 jmp AT_ENTRY</text>
+    <rect x="792" y="196" width="366" height="46" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="800" y="212" fill="#88c0ff">hello 的 _start(crt1.o)→ __libc_start_main</text>
+    <text x="800" y="226">  收 argc/argv/envp,跑构造函数,call main</text>
+    <rect x="792" y="250" width="366" height="46" rx="4" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="800" y="266" fill="#88ff88">main():printf → PLT 桩 → 第一次走 _dl_runtime_resolve</text>
+    <text x="800" y="280">  填 GOT(延迟绑定,-z now 时提前到上一步)→ write(1,…)</text>
+    <rect x="792" y="304" width="366" height="100" rx="4" fill="#161b22" stroke="#30363d"/>
+    <text x="800" y="320" fill="#e6edf3">这一路的缺页(门③),全是"次缺页"除非盘上没缓存:</text>
+    <text x="800" y="336">  取 ld.so / libc / hello 代码页 → page cache 里有 → 直接映射</text>
+    <text x="800" y="350">  写 .data(counter)→ 文件页私有 COW 出一份</text>
+    <text x="800" y="364">  读 .bss(buf)→ 匿名零页;写它 → 分新页清零</text>
+    <text x="800" y="378">  栈往下碰 → VM_GROWSDOWN 自动扩</text>
+    <text x="800" y="392" fill="#8b949e">  一个 hello 跑完大约几十次缺页(/usr/bin/time -v 可数)</text>
+    <rect x="792" y="412" width="366" height="98" rx="4" fill="#161b22" stroke="#30363d"/>
+    <text x="800" y="428" fill="#e6edf3">内核在 execve 里没做的事:</text>
+    <text x="800" y="444">  没读 .text / .data 的内容(缺页时才读)</text>
+    <text x="800" y="458">  没做符号解析 / 重定位(ld.so 做)</text>
+    <text x="800" y="472">  没装 libc(ld.so 发 mmap 装)</text>
+    <text x="800" y="486">  没碰 main(它只知道 e_entry 和 PT_INTERP)</text>
+    <text x="800" y="500" fill="#8b949e">  所以 execve 本身是微秒级,和程序大小无关</text>
+  </g>
+
+  <defs>
+    <marker id="a3" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#c08040"/></marker>
+  </defs>
+  <g stroke="#c08040" stroke-width="1.5" fill="none" marker-end="url(#a3)">
+    <path d="M268,190 C300,190 300,250 328,250"/>
+    <path d="M268,174 C300,174 300,311 328,311"/>
+    <path d="M268,125 C300,125 300,372 328,372"/>
+    <path d="M730,487 C760,487 760,150 788,150"/>
+  </g>
+  <text x="600" y="545" text-anchor="middle" fill="#8b949e" font-size="12">段表 → VMA 的对账在 §4.4;fork 之后 execve 之前那本 COW 账本只活了几微秒,见 §4.1</text>
+</svg>

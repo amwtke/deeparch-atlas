@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 460" width="1200" height="460" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="460" fill="#0a0c10"/>
+  <text x="600" y="32" text-anchor="middle" fill="#e6edf3" font-size="20">四个人,四个选择,各自站在当年的约束上</text>
+  <text x="600" y="52" text-anchor="middle" fill="#8b949e" font-size="12">横轴是年份;每一行是一个人留下的东西,以及后来谁在替它还债</text>
+
+  <!-- axis -->
+  <line x1="80" y1="400" x2="1160" y2="400" stroke="#30363d" stroke-width="2"/>
+  <g fill="#8b949e" font-size="11" text-anchor="middle">
+    <text x="100" y="420">1965</text>
+    <text x="180" y="420">1969</text>
+    <text x="340" y="420">1991</text>
+    <text x="420" y="420">1996</text>
+    <text x="470" y="420">1998</text>
+    <text x="560" y="420">2002</text>
+    <text x="640" y="420">2005</text>
+    <text x="720" y="420">2009</text>
+    <text x="860" y="420">2016</text>
+    <text x="960" y="420">2020</text>
+    <text x="1040" y="420">2022</text>
+    <text x="1140" y="420">今天</text>
+  </g>
+  <g stroke="#30363d" stroke-dasharray="3 4">
+    <line x1="180" y1="70" x2="180" y2="400"/><line x1="340" y1="70" x2="340" y2="400"/><line x1="420" y1="70" x2="420" y2="400"/>
+    <line x1="560" y1="70" x2="560" y2="400"/><line x1="720" y1="70" x2="720" y2="400"/><line x1="960" y1="70" x2="960" y2="400"/>
+  </g>
+
+  <!-- lane 1 Thompson -->
+  <text x="20" y="100" fill="#88c0ff" font-size="12">Thompson</text>
+  <text x="20" y="114" fill="#8b949e" font-size="10">fork + exec</text>
+  <rect x="100" y="80" width="70" height="26" rx="4" fill="#161b22" stroke="#30363d"/>
+  <text x="135" y="97" text-anchor="middle" fill="#8b949e" font-size="10">Genie 有 fork</text>
+  <rect x="172" y="80" width="150" height="26" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="247" y="97" text-anchor="middle" fill="#88c0ff" font-size="10">PDP-7:fork = 27 行汇编</text>
+  <rect x="960" y="80" width="200" height="26" rx="4" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="1060" y="97" text-anchor="middle" fill="#ff8888" font-size="10">HotOS'19「fork 该退场」/ posix_spawn</text>
+  <line x1="322" y1="93" x2="958" y2="93" stroke="#4080c0" stroke-dasharray="2 4"/>
+
+  <!-- lane 2 Linus -->
+  <text x="20" y="170" fill="#88ff88" font-size="12">Linus</text>
+  <text x="20" y="184" fill="#8b949e" font-size="10">切换 / task_struct</text>
+  <rect x="330" y="150" width="90" height="26" rx="4" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="375" y="167" text-anchor="middle" fill="#88ff88" font-size="10">0.01: ljmp TSS</text>
+  <rect x="455" y="150" width="110" height="26" rx="4" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="510" y="167" text-anchor="middle" fill="#88ff88" font-size="10">2.1.x 软件 switch_to</text>
+  <rect x="570" y="150" width="60" height="26" rx="4" fill="#161b22" stroke="#30363d"/>
+  <text x="600" y="167" text-anchor="middle" fill="#8b949e" font-size="10">O(1)</text>
+  <rect x="660" y="150" width="60" height="26" rx="4" fill="#161b22" stroke="#30363d"/>
+  <text x="690" y="167" text-anchor="middle" fill="#8b949e" font-size="10">CFS</text>
+  <rect x="1020" y="150" width="70" height="26" rx="4" fill="#161b22" stroke="#30363d"/>
+  <text x="1055" y="167" text-anchor="middle" fill="#8b949e" font-size="10">EEVDF</text>
+  <text x="480" y="192" fill="#8b949e" font-size="10">1999 email:mm 与 active_mm(内核线程 mm = NULL)</text>
+
+  <!-- lane 3 Drepper -->
+  <text x="20" y="250" fill="#ffaa55" font-size="12">Drepper</text>
+  <text x="20" y="264" fill="#8b949e" font-size="10">线程 = task</text>
+  <rect x="410" y="230" width="120" height="26" rx="4" fill="#161b22" stroke="#30363d"/>
+  <text x="470" y="247" text-anchor="middle" fill="#8b949e" font-size="10">Leroy LinuxThreads</text>
+  <rect x="540" y="230" width="150" height="26" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="615" y="247" text-anchor="middle" fill="#ffaa55" font-size="10">NPTL 1:1 + futex + TLS</text>
+  <text x="700" y="247" fill="#8b949e" font-size="10">NGPT(M:N)2003 年放弃</text>
+
+  <!-- lane 4 Arcangeli -->
+  <text x="20" y="330" fill="#c088ff" font-size="12">Arcangeli</text>
+  <text x="20" y="344" fill="#8b949e" font-size="10">COW 的第三个主人</text>
+  <rect x="620" y="310" width="90" height="26" rx="4" fill="#161b22" stroke="#30363d"/>
+  <text x="665" y="327" text-anchor="middle" fill="#8b949e" font-size="10">Linus 修坏又撤</text>
+  <rect x="712" y="310" width="120" height="26" rx="4" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="772" y="327" text-anchor="middle" fill="#c088ff" font-size="10">fork vs O_DIRECT</text>
+  <rect x="845" y="310" width="80" height="26" rx="4" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="885" y="327" text-anchor="middle" fill="#ff8888" font-size="10">Dirty COW</text>
+  <rect x="940" y="310" width="110" height="26" rx="4" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="995" y="327" text-anchor="middle" fill="#ff8888" font-size="10">vmsplice CVE</text>
+  <rect x="1055" y="310" width="110" height="26" rx="4" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="1110" y="327" text-anchor="middle" fill="#c088ff" font-size="10">PageAnonExclusive</text>
+  <text x="940" y="358" fill="#8b949e" font-size="10">2020-08 page_count 取代 mapcount;2021-01 Arcangeli 反对</text>
+
+  <text x="600" y="448" text-anchor="middle" fill="#8b949e" font-size="11">灰框 = 别人的工作或接力;彩框 = 这个人自己的选择;红框 = 后来暴露的债</text>
+</svg>

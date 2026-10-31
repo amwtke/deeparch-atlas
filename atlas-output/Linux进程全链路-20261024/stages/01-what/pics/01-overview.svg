@@ -1,0 +1,212 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 690" width="1200" height="690" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="690" fill="#0a0c10"/>
+  <defs>
+    <marker id="arrB" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4080c0"/>
+    </marker>
+    <marker id="arrG" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#40c060"/>
+    </marker>
+    <marker id="arrR" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c04040"/>
+    </marker>
+    <marker id="arrO" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c08040"/>
+    </marker>
+    <marker id="arrP" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8040c0"/>
+    </marker>
+  </defs>
+
+  <text x="600" y="32" fill="#e0e6f0" font-size="20" font-weight="bold" text-anchor="middle">一个进程的一辈子:横着看四幕,竖着看三层</text>
+
+  <!-- 幕标签 -->
+  <text x="165" y="58" fill="#88ff88" font-size="13" font-weight="bold" text-anchor="middle">第一幕 出生</text>
+  <text x="705" y="58" fill="#88c0ff" font-size="13" font-weight="bold" text-anchor="middle">第二幕 活着</text>
+  <text x="930" y="58" fill="#ff8888" font-size="13" font-weight="bold" text-anchor="middle">第三幕 死亡</text>
+  <text x="1105" y="58" fill="#c088ff" font-size="13" font-weight="bold" text-anchor="middle">第四幕 旁观</text>
+
+  <!-- ===== 用户态 band ===== -->
+  <text x="20" y="130" fill="#6a7280" font-size="12">用户态</text>
+
+  <!-- ELF on disk -->
+  <rect x="90" y="78" width="150" height="100" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="165" y="104" fill="#88ff88" font-size="15" font-weight="bold" text-anchor="middle">磁盘上的剧本</text>
+  <text x="165" y="128" fill="#c8d4e4" font-size="13" text-anchor="middle">a.out(ELF)</text>
+  <text x="165" y="150" fill="#9aa4b2" font-size="12" text-anchor="middle">段表 + 入口 e_entry</text>
+  <text x="165" y="168" fill="#9aa4b2" font-size="12" text-anchor="middle">只是一叠纸,不会自己演</text>
+
+  <line x1="240" y1="128" x2="288" y2="128" stroke="#40c060" stroke-width="2" marker-end="url(#arrG)"/>
+  <text x="264" y="118" fill="#88ff88" font-size="11" text-anchor="middle">execve</text>
+
+  <!-- 地址空间 -->
+  <rect x="290" y="70" width="250" height="120" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="415" y="94" fill="#88c0ff" font-size="15" font-weight="bold" text-anchor="middle">进程 A 的地址空间(布景)</text>
+  <rect x="300" y="106" width="44" height="28" fill="#0f2240" stroke="#4080c0"/>
+  <text x="322" y="125" fill="#c8d4e4" font-size="12" text-anchor="middle">代码</text>
+  <rect x="346" y="106" width="44" height="28" fill="#0f2240" stroke="#4080c0"/>
+  <text x="368" y="125" fill="#c8d4e4" font-size="12" text-anchor="middle">数据</text>
+  <rect x="392" y="106" width="44" height="28" fill="#0f2240" stroke="#4080c0"/>
+  <text x="414" y="125" fill="#c8d4e4" font-size="12" text-anchor="middle">堆</text>
+  <rect x="438" y="106" width="44" height="28" fill="#0f2240" stroke="#4080c0"/>
+  <text x="460" y="125" fill="#c8d4e4" font-size="12" text-anchor="middle">mmap</text>
+  <rect x="484" y="106" width="46" height="28" fill="#0f2240" stroke="#4080c0"/>
+  <text x="507" y="125" fill="#c8d4e4" font-size="12" text-anchor="middle">栈</text>
+  <text x="415" y="156" fill="#9aa4b2" font-size="12" text-anchor="middle">私有:别的进程看不见</text>
+  <text x="415" y="176" fill="#9aa4b2" font-size="12" text-anchor="middle">线程 = 同一布景里的第二条执行流</text>
+
+  <line x1="540" y1="128" x2="578" y2="128" stroke="#4080c0" stroke-width="2" marker-end="url(#arrB)"/>
+
+  <!-- 执行流 -->
+  <rect x="580" y="70" width="250" height="120" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="705" y="94" fill="#88c0ff" font-size="15" font-weight="bold" text-anchor="middle">执行流(正在台上的演员)</text>
+  <text x="705" y="118" fill="#c8d4e4" font-size="13" text-anchor="middle">rip  rsp  rax ...  = 现场</text>
+  <text x="705" y="140" fill="#9aa4b2" font-size="12" text-anchor="middle">CPU 顺着 rip 一条条执行</text>
+  <text x="705" y="160" fill="#9aa4b2" font-size="12" text-anchor="middle">直到:自己敲门 / 外面敲门 / 绊倒</text>
+  <text x="705" y="180" fill="#9aa4b2" font-size="12" text-anchor="middle">或者被换下台</text>
+
+  <line x1="830" y1="128" x2="868" y2="128" stroke="#c04040" stroke-width="2" marker-end="url(#arrR)"/>
+
+  <!-- exit -->
+  <rect x="870" y="78" width="120" height="100" rx="6" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="930" y="104" fill="#ff8888" font-size="15" font-weight="bold" text-anchor="middle">exit()</text>
+  <text x="930" y="128" fill="#c8d4e4" font-size="13" text-anchor="middle">布景拆除</text>
+  <text x="930" y="150" fill="#9aa4b2" font-size="12" text-anchor="middle">地址空间释放</text>
+  <text x="930" y="168" fill="#9aa4b2" font-size="12" text-anchor="middle">文件关闭</text>
+
+  <!-- 旁观工具 -->
+  <rect x="1030" y="78" width="150" height="100" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="2"/>
+  <text x="1105" y="104" fill="#c088ff" font-size="15" font-weight="bold" text-anchor="middle">旁观者</text>
+  <text x="1105" y="128" fill="#c8d4e4" font-size="13" text-anchor="middle">ps  top  htop</text>
+  <text x="1105" y="150" fill="#c8d4e4" font-size="13" text-anchor="middle">strace  perf</text>
+  <text x="1105" y="168" fill="#9aa4b2" font-size="12" text-anchor="middle">只读账本,不干预</text>
+
+  <!-- 三扇门 / 一扇出口 -->
+  <line x1="615" y1="190" x2="615" y2="236" stroke="#c08040" stroke-width="2" marker-end="url(#arrO)"/>
+  <line x1="690" y1="190" x2="690" y2="236" stroke="#c08040" stroke-width="2" marker-end="url(#arrO)"/>
+  <line x1="765" y1="190" x2="765" y2="236" stroke="#c08040" stroke-width="2" marker-end="url(#arrO)"/>
+  <line x1="815" y1="238" x2="815" y2="192" stroke="#40c060" stroke-width="2" marker-end="url(#arrG)"/>
+
+  <!-- 系统调用边界 -->
+  <line x1="80" y1="205" x2="1190" y2="205" stroke="#6a7280" stroke-width="1.5" stroke-dasharray="8,5"/>
+  <text x="90" y="222" fill="#6a7280" font-size="12">特权级边界(ring 3 | ring 0):进内核三扇门 ↓ ,出内核一扇 ↑</text>
+
+  <!-- ===== 内核态 band ===== -->
+  <text x="20" y="320" fill="#6a7280" font-size="12">内核态</text>
+
+  <!-- fork / execve 注解 -->
+  <rect x="90" y="240" width="180" height="62" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="180" y="262" fill="#88ff88" font-size="13" font-weight="bold" text-anchor="middle">fork()</text>
+  <text x="180" y="280" fill="#c8d4e4" font-size="11" text-anchor="middle">复制账本 + 地图</text>
+  <text x="180" y="295" fill="#c8d4e4" font-size="11" text-anchor="middle">内容不复制:物理页 COW 共享</text>
+  <line x1="270" y1="271" x2="288" y2="271" stroke="#40c060" stroke-width="2" marker-end="url(#arrG)"/>
+
+  <rect x="90" y="318" width="180" height="54" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="180" y="340" fill="#88ff88" font-size="13" font-weight="bold" text-anchor="middle">execve()</text>
+  <text x="180" y="360" fill="#c8d4e4" font-size="11" text-anchor="middle">换掉地图,账本(PID)不动</text>
+  <line x1="270" y1="345" x2="288" y2="345" stroke="#40c060" stroke-width="2" marker-end="url(#arrG)"/>
+
+  <!-- task_struct -->
+  <rect x="290" y="240" width="250" height="62" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+  <text x="415" y="262" fill="#ffaa55" font-size="14" font-weight="bold" text-anchor="middle">账本 task_struct(每条执行流一本)</text>
+  <text x="415" y="281" fill="#c8d4e4" font-size="11" text-anchor="middle">pid  状态(运行/就绪/睡眠)  父子关系</text>
+  <text x="415" y="296" fill="#c8d4e4" font-size="11" text-anchor="middle">pending signal  调度统计  存下来的现场</text>
+
+  <!-- mm_struct -->
+  <rect x="290" y="318" width="250" height="54" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="415" y="340" fill="#88c0ff" font-size="14" font-weight="bold" text-anchor="middle">地图 mm_struct</text>
+  <text x="415" y="360" fill="#c8d4e4" font-size="11" text-anchor="middle">VMA 列表 + 页表根(CR3 的值)</text>
+  <line x1="415" y1="318" x2="415" y2="192" stroke="#4080c0" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <text x="430" y="212" fill="#6a7280" font-size="11">描述</text>
+
+  <!-- 门厅 -->
+  <rect x="580" y="240" width="250" height="62" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+  <text x="705" y="262" fill="#ffaa55" font-size="14" font-weight="bold" text-anchor="middle">门厅:每次进来都查一遍</text>
+  <text x="705" y="281" fill="#c8d4e4" font-size="11" text-anchor="middle">系统调用 | 中断 | 异常(缺页 / COW)</text>
+  <text x="705" y="296" fill="#c8d4e4" font-size="11" text-anchor="middle">出去前:该换人了吗?有 signal 要送吗?</text>
+  <text x="608" y="232" fill="#ffaa55" font-size="10" text-anchor="middle">syscall</text>
+  <text x="690" y="232" fill="#ffaa55" font-size="10" text-anchor="middle">中断</text>
+  <text x="765" y="232" fill="#ffaa55" font-size="10" text-anchor="middle">缺页</text>
+  <text x="840" y="232" fill="#88ff88" font-size="10" text-anchor="middle">返回+signal</text>
+
+  <line x1="705" y1="302" x2="705" y2="326" stroke="#8040c0" stroke-width="2" marker-end="url(#arrP)"/>
+
+  <!-- 调度器 -->
+  <rect x="580" y="328" width="250" height="56" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="2"/>
+  <text x="705" y="349" fill="#c088ff" font-size="14" font-weight="bold" text-anchor="middle">排班经理:调度器 + 就绪队列(每核一条)</text>
+  <text x="705" y="370" fill="#c8d4e4" font-size="11" text-anchor="middle">挑下一个 task,算它能演多久(CFS → EEVDF)</text>
+
+  <line x1="705" y1="384" x2="705" y2="408" stroke="#8040c0" stroke-width="2" marker-end="url(#arrP)"/>
+  <text x="840" y="400" fill="#c088ff" font-size="11">切换 = 存现场 → 换 CR3 → 换栈 → 取现场</text>
+
+  <!-- CPU -->
+  <rect x="580" y="410" width="250" height="40" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="705" y="435" fill="#88ff88" font-size="14" font-weight="bold" text-anchor="middle">CPU 核 = 舞台:同一时刻只演一个 task</text>
+
+  <!-- 僵尸 -->
+  <line x1="930" y1="178" x2="930" y2="238" stroke="#c04040" stroke-width="2" marker-end="url(#arrR)"/>
+  <rect x="870" y="240" width="120" height="62" rx="6" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="930" y="262" fill="#ff8888" font-size="14" font-weight="bold" text-anchor="middle">僵尸</text>
+  <text x="930" y="281" fill="#c8d4e4" font-size="11" text-anchor="middle">账本还在</text>
+  <text x="930" y="296" fill="#c8d4e4" font-size="11" text-anchor="middle">只剩退出码</text>
+  <line x1="930" y1="302" x2="930" y2="326" stroke="#c04040" stroke-width="2" marker-end="url(#arrR)"/>
+  <rect x="870" y="328" width="120" height="56" rx="6" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="930" y="349" fill="#ff8888" font-size="13" font-weight="bold" text-anchor="middle">父进程 wait()</text>
+  <text x="930" y="370" fill="#c8d4e4" font-size="11" text-anchor="middle">收走退出码,账本销毁</text>
+
+  <!-- /proc -->
+  <line x1="1105" y1="178" x2="1105" y2="238" stroke="#8040c0" stroke-width="2" marker-end="url(#arrP)"/>
+  <rect x="1030" y="240" width="150" height="62" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="2"/>
+  <text x="1105" y="262" fill="#c088ff" font-size="14" font-weight="bold" text-anchor="middle">/proc/&lt;pid&gt;/</text>
+  <text x="1105" y="281" fill="#c8d4e4" font-size="11" text-anchor="middle">账本的只读窗口</text>
+  <text x="1105" y="296" fill="#c8d4e4" font-size="11" text-anchor="middle">stat  status  maps  sched</text>
+  <polyline points="540,290 560,290 560,440 1105,440 1105,302" fill="none" stroke="#8040c0" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <text x="900" y="432" fill="#6a7280" font-size="11">/proc 读的就是 task_struct 和 mm_struct</text>
+
+  <!-- ===== 硬件 band ===== -->
+  <line x1="80" y1="468" x2="1190" y2="468" stroke="#6a7280" stroke-width="1.5"/>
+  <text x="90" y="488" fill="#6a7280" font-size="12">硬件:CPU 给进程管理准备的五个开关(内核能做的一切都架在它们上面)</text>
+
+  <rect x="90" y="500" width="200" height="86" rx="6" fill="#161a24" stroke="#8040c0" stroke-width="2"/>
+  <text x="190" y="522" fill="#c088ff" font-size="13" font-weight="bold" text-anchor="middle">① 特权级 ring 0 / 3</text>
+  <text x="190" y="542" fill="#c8d4e4" font-size="11" text-anchor="middle">CPU 的当前身份</text>
+  <text x="190" y="558" fill="#c8d4e4" font-size="11" text-anchor="middle">用户态碰不了特权指令</text>
+  <text x="190" y="576" fill="#9aa4b2" font-size="11" text-anchor="middle">→ 那条虚线边界</text>
+
+  <rect x="310" y="500" width="200" height="86" rx="6" fill="#161a24" stroke="#8040c0" stroke-width="2"/>
+  <text x="410" y="522" fill="#c088ff" font-size="13" font-weight="bold" text-anchor="middle">② 寄存器组 + CR3</text>
+  <text x="410" y="542" fill="#c8d4e4" font-size="11" text-anchor="middle">通用寄存器 = 现场</text>
+  <text x="410" y="558" fill="#c8d4e4" font-size="11" text-anchor="middle">CR3 = 页表根,换它 = 换地址空间</text>
+  <text x="410" y="576" fill="#9aa4b2" font-size="11" text-anchor="middle">→ 上下文切换</text>
+
+  <rect x="530" y="500" width="200" height="86" rx="6" fill="#161a24" stroke="#8040c0" stroke-width="2"/>
+  <text x="630" y="522" fill="#c088ff" font-size="13" font-weight="bold" text-anchor="middle">③ MMU + 页表 + TLB</text>
+  <text x="630" y="542" fill="#c8d4e4" font-size="11" text-anchor="middle">虚拟地址 → 物理地址</text>
+  <text x="630" y="558" fill="#c8d4e4" font-size="11" text-anchor="middle">翻不出 / 没权限 → 缺页异常</text>
+  <text x="630" y="576" fill="#9aa4b2" font-size="11" text-anchor="middle">→ 按需装载 / 缺页 / COW</text>
+
+  <rect x="750" y="500" width="200" height="86" rx="6" fill="#161a24" stroke="#8040c0" stroke-width="2"/>
+  <text x="850" y="522" fill="#c088ff" font-size="13" font-weight="bold" text-anchor="middle">④ 时钟中断 + APIC</text>
+  <text x="850" y="542" fill="#c8d4e4" font-size="11" text-anchor="middle">每核一个闹钟,到点打断</text>
+  <text x="850" y="558" fill="#c8d4e4" font-size="11" text-anchor="middle">IPI:跨核踢人</text>
+  <text x="850" y="576" fill="#9aa4b2" font-size="11" text-anchor="middle">→ 抢占调度</text>
+
+  <rect x="970" y="500" width="210" height="86" rx="6" fill="#161a24" stroke="#8040c0" stroke-width="2"/>
+  <text x="1075" y="522" fill="#c088ff" font-size="13" font-weight="bold" text-anchor="middle">⑤ syscall 指令 + IDT</text>
+  <text x="1075" y="542" fill="#c8d4e4" font-size="11" text-anchor="middle">主动进门:syscall / sysret</text>
+  <text x="1075" y="558" fill="#c8d4e4" font-size="11" text-anchor="middle">被动进门:中断向量表按号跳</text>
+  <text x="1075" y="576" fill="#9aa4b2" font-size="11" text-anchor="middle">→ 三扇门 + 一扇出口</text>
+
+  <!-- 图例 -->
+  <rect x="90" y="630" width="14" height="14" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="112" y="642" fill="#9aa4b2" font-size="12">出生 / 入口 / 舞台</text>
+  <rect x="290" y="630" width="14" height="14" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="312" y="642" fill="#9aa4b2" font-size="12">活着:地址空间 / 执行流</text>
+  <rect x="520" y="630" width="14" height="14" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="542" y="642" fill="#9aa4b2" font-size="12">死亡 / 僵尸 / 回收</text>
+  <rect x="720" y="630" width="14" height="14" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="742" y="642" fill="#9aa4b2" font-size="12">内核记账 / 进门事件</text>
+  <rect x="940" y="630" width="14" height="14" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="962" y="642" fill="#9aa4b2" font-size="12">调度器 / 旁观 / 硬件开关</text>
+  <text x="600" y="672" fill="#6a7280" font-size="11" text-anchor="middle">实线 = 控制流 / 数据流;虚线 = 描述 / 读取关系</text>
+</svg>
