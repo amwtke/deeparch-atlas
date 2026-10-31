@@ -1,0 +1,205 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 14.03
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Comparison 阶段开场",
+  "start": 14.03,
+  "end": 23.4
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "Windows 没有 fork",
+  "start": 23.4,
+  "end": 44.0
+ },
+ {
+  "idx": 4,
+  "type": "html_slide",
+  "title": "三条主线并排：Linux 对 Windows NT",
+  "start": 44.0,
+  "end": 70.63
+ },
+ {
+  "idx": 5,
+  "type": "facetime",
+  "title": "\"Dave Cutler\"",
+  "start": 70.63,
+  "end": 93.2
+ },
+ {
+  "idx": 6,
+  "type": "text",
+  "title": "\"NT 的出发点：内核造壳，子系统填内容\"",
+  "start": 93.2,
+  "end": 122.33
+ },
+ {
+  "idx": 7,
+  "type": "spotlight",
+  "title": "6 第一条对照",
+  "start": 122.33,
+  "end": 131.0
+ },
+ {
+  "idx": 8,
+  "type": "ascii",
+  "title": "\"创建：两步加一扇窗，对一步加一张参数表\"",
+  "start": 131.0,
+  "end": 155.8
+ },
+ {
+  "idx": 9,
+  "type": "timeline",
+  "title": "\"一次 CreateProcess 的七个阶段\"",
+  "start": 155.8,
+  "end": 179.7
+ },
+ {
+  "idx": 10,
+  "type": "code",
+  "title": "\"窗口变成参数：CreateProcessW 原型（Microsoft Learn 文档）\"",
+  "start": 179.7,
+  "end": 206.97
+ },
+ {
+  "idx": 11,
+  "type": "text",
+  "title": "\"窗口的代价：父进程的一切默认都漏给子进程\"",
+  "start": 206.97,
+  "end": 234.13
+ },
+ {
+  "idx": 12,
+  "type": "text",
+  "title": "\"不是做不到，是不想给 Win32\"",
+  "start": 234.13,
+  "end": 265.6
+ },
+ {
+  "idx": 13,
+  "type": "text",
+  "title": "\"两种创建，各付各的账\"",
+  "start": 265.6,
+  "end": 293.5
+ },
+ {
+  "idx": 14,
+  "type": "spotlight",
+  "title": "第二条对照",
+  "start": 293.5,
+  "end": 302.17
+ },
+ {
+  "idx": 15,
+  "type": "layers",
+  "title": "\"NT 的 32 级优先级：先看你是谁\"",
+  "start": 302.17,
+  "end": 323.33
+ },
+ {
+  "idx": 16,
+  "type": "timeline",
+  "title": "\"一个编辑器线程的一次加分\"",
+  "start": 323.33,
+  "end": 343.67
+ },
+ {
+  "idx": 17,
+  "type": "text",
+  "title": "\"为什么 NT 看级：桌面优先加 VMS 血统\"",
+  "start": 343.67,
+  "end": 369.3
+ },
+ {
+  "idx": 18,
+  "type": "code",
+  "title": "\"Linux 的账：vruntime_eligible（Linux 6.12 kernel/sched/fair.c）\"",
+  "start": 369.3,
+  "end": 392.4
+ },
+ {
+  "idx": 19,
+  "type": "ascii",
+  "title": "\"同一条约束，两种回答：级对账\"",
+  "start": 392.4,
+  "end": 418.13
+ },
+ {
+  "idx": 20,
+  "type": "text",
+  "title": "\"SQL Server 绕开的不是加分，是抢占\"",
+  "start": 418.13,
+  "end": 448.03
+ },
+ {
+  "idx": 21,
+  "type": "spotlight",
+  "title": "20 第三条对照",
+  "start": 448.03,
+  "end": 460.83
+ },
+ {
+  "idx": 22,
+  "type": "layers",
+  "title": "\"NT 内存管理器的四个概念，各对一个 Linux 的东西\"",
+  "start": 460.83,
+  "end": 487.43
+ },
+ {
+  "idx": 23,
+  "type": "code",
+  "title": "\"独占才复用：do_wp_page 尾段（Linux 6.12 mm/memory.c 第 3723 行起）\"",
+  "start": 487.43,
+  "end": 512.7
+ },
+ {
+  "idx": 24,
+  "type": "ascii",
+  "title": "\"写时拷贝：文件页一半相同，匿名页一半只有 Linux 有\"",
+  "start": 512.7,
+  "end": 537.0
+ },
+ {
+  "idx": 25,
+  "type": "text",
+  "title": "\"记账也跟着 fork 走：预扣对超售\"",
+  "start": 537.0,
+  "end": 566.03
+ },
+ {
+  "idx": 26,
+  "type": "text",
+  "title": "\"一样的是约束逼的，不一样的追到 fork\"",
+  "start": 566.03,
+  "end": 594.03
+ },
+ {
+  "idx": 27,
+  "type": "spotlight",
+  "title": "26 带走一个判别法",
+  "start": 594.03,
+  "end": 603.67
+ },
+ {
+  "idx": 28,
+  "type": "html_slide",
+  "title": "本集总结",
+  "start": 603.67,
+  "end": 632.8
+ },
+ {
+  "idx": 29,
+  "type": "spotlight",
+  "title": "下集预告",
+  "start": 632.8,
+  "end": 649.27
+ }
+]

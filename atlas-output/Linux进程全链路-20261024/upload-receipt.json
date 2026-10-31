@@ -1,0 +1,14 @@
+{
+  "platform": "bilibili",
+  "status": "submitted",
+  "bvid": "BV1LTxC6mE5N",
+  "url": "https://www.bilibili.com/video/BV1LTxC6mE5N",
+  "title": "Linux 进程从 execve 到 exit 深度解读（88 分钟大电影）",
+  "part_count": 8,
+  "submitted_at": "2026-10-31T16:31:03+08:00",
+  "charging": false,
+  "season": null,
+  "remote_verified": true,
+  "aid": 117534581851702,
+  "cover": "cover-atlas.png"
+}

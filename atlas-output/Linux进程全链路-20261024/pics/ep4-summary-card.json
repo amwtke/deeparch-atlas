@@ -1,0 +1,26 @@
+{
+  "title": "四个人，四笔债",
+  "subtitle": "Linux 进程全链路 · Origin",
+  "tagline": "每个形状都是某个人在当年约束下最便宜的选择；债总留在当时还不存在的那条约束上。",
+  "pillars": [
+    {"icon": "box", "t": "fork", "d": "27 行汇编起家"},
+    {"icon": "gear", "t": "切换", "d": "从 ljmp 到软件 switch_to"},
+    {"icon": "stack", "t": "线程", "d": "线程就是一个 task"},
+    {"icon": "shield", "t": "独占", "d": "判据修了五轮"}
+  ],
+  "items": [
+    {"icon": "box", "t": "fork 因便宜而生", "d": "PDP-7 上 27 行汇编；职责清晰是后来长出的好处。"},
+    {"icon": "link", "t": "两步之间的窗口", "d": "dup2、close、chdir 用普通系统调用布置子进程。"},
+    {"icon": "gear", "t": "硬件切换让位软件", "d": "Wine 改 LDT 加上多核自旋锁，1998 年改成软件切换。"},
+    {"icon": "route", "t": "任务与地址空间分账", "d": "1999 年 mm 与 active_mm：内核线程借用页表。"},
+    {"icon": "stack", "t": "管理线程塞回内核", "d": "NPTL 用线程组与 futex，10 万线程起停 2 秒。"},
+    {"icon": "shield", "t": "COW 判据还在修", "d": "从 mapcount 到 page_count，再到独占位。"}
+  ],
+  "gains_title": "带走的判断",
+  "gains": [
+    {"icon": "compass", "t": "看出生年份", "d": "问它当年缺了哪条约束"},
+    {"icon": "eye", "t": "分清约束与选择", "d": "选择能换，约束不能"},
+    {"icon": "chart", "t": "看谁在还债", "d": "债多半不是原作者还"}
+  ],
+  "takeaway": "便宜的共享总在预支正确性，**债留在当年还不存在的那条约束上**。"
+}

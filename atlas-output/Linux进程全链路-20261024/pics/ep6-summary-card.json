@@ -1,0 +1,26 @@
+{
+  "title": "约束与血统",
+  "subtitle": "Linux 进程全链路 · Comparison",
+  "tagline": "同一组约束：两边一样的是约束逼的，不一样的都追到「有没有 fork」加 VMS 血统。",
+  "pillars": [
+    {"icon": "route", "t": "创建", "d": "两步一窗对一步"},
+    {"icon": "gear", "t": "调度", "d": "看账对看级"},
+    {"icon": "box", "t": "写时拷贝", "d": "一半同一半无"},
+    {"icon": "db", "t": "记账", "d": "超售对预扣"}
+  ],
+  "items": [
+    {"icon": "route", "t": "窗口变成参数表", "d": "fork 与 exec 之间的配置，NT 写进 CreateProcess 的参数。"},
+    {"icon": "mask", "t": "NT 内核藏着 fork", "d": "只给 POSIX 与 WSL1，从不暴露给 Win32。"},
+    {"icon": "chart", "t": "账是守恒量", "d": "eligible 只比应得与实得，不看设备和前台。"},
+    {"icon": "target", "t": "级是经验值", "d": "32 级严格抢占，IO 完成按设备加分，每片减一。"},
+    {"icon": "stack", "t": "复用题是 fork 的衍生物", "d": "文件页两边都首写必拷，匿名页独占判据只有 Linux 有。"},
+    {"icon": "shield", "t": "记账跟着 fork 走", "d": "NT 预扣不超售；Linux 为 fork 选择超售。"}
+  ],
+  "gains_title": "带走的判别法",
+  "gains": [
+    {"icon": "check", "t": "形状相同 → 约束", "d": "两套内核独立长成一样"},
+    {"icon": "compass", "t": "形状不同 → 血统", "d": "Unix 1969 对 VMS"},
+    {"icon": "eye", "t": "找一个二元选择", "d": "差异常追到一处"}
+  ],
+  "takeaway": "七条约束里没有一条写着 **必须有 fork**；判断设计是否必然，就看另一套从头设计的系统在 **同一条约束** 下是否也这么做。"
+}

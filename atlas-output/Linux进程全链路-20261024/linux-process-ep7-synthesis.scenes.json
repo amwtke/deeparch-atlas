@@ -1,0 +1,226 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 13.97
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Synthesis 阶段开场过场",
+  "start": 13.97,
+  "end": 23.13
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "知道它怎么做",
+  "start": 23.13,
+  "end": 42.7
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "前六集给出的六种证据",
+  "start": 42.7,
+  "end": 60.83
+ },
+ {
+  "idx": 5,
+  "type": "text",
+  "title": "这一集只做三件事",
+  "start": 60.83,
+  "end": 74.2
+ },
+ {
+  "idx": 6,
+  "type": "html_slide",
+  "title": "五步法一条流水线",
+  "start": 74.2,
+  "end": 97.57
+ },
+ {
+  "idx": 7,
+  "type": "spotlight",
+  "title": "6 报幕：设计是筛剩下的",
+  "start": 97.57,
+  "end": 113.0
+ },
+ {
+  "idx": 8,
+  "type": "ascii",
+  "title": "一行五元组：fork 加 exec 两步走",
+  "start": 113.0,
+  "end": 138.43
+ },
+ {
+  "idx": 9,
+  "type": "text",
+  "title": "时钟中断只打标记，换人在出口",
+  "start": 138.43,
+  "end": 160.43
+ },
+ {
+  "idx": 10,
+  "type": "code",
+  "title": "\"时间片随核数放大（Linux 6.12 kernel/sched/fair.c）\"",
+  "start": 160.43,
+  "end": 188.8
+ },
+ {
+  "idx": 11,
+  "type": "ascii",
+  "title": "同一条 C2：NT 用级，Linux 用账",
+  "start": 188.8,
+  "end": 216.47
+ },
+ {
+  "idx": 12,
+  "type": "spotlight",
+  "title": "11 报幕：拿掉一条约束",
+  "start": 216.47,
+  "end": 221.57
+ },
+ {
+  "idx": 13,
+  "type": "layers",
+  "title": "约束一松，形状就退",
+  "start": 221.57,
+  "end": 250.5
+ },
+ {
+  "idx": 14,
+  "type": "ascii",
+  "title": "必然和偶然，分开记账",
+  "start": 250.5,
+  "end": 275.93
+ },
+ {
+  "idx": 15,
+  "type": "spotlight",
+  "title": "14 报幕：十一条洞察",
+  "start": 275.93,
+  "end": 283.37
+ },
+ {
+  "idx": 16,
+  "type": "text",
+  "title": "一本账，把一台机器变成 N 台",
+  "start": 283.37,
+  "end": 319.47
+ },
+ {
+  "idx": 17,
+  "type": "layers",
+  "title": "内核总是只做一半",
+  "start": 319.47,
+  "end": 348.63
+ },
+ {
+  "idx": 18,
+  "type": "timeline",
+  "title": "copy on write 判据的三轮补丁",
+  "start": 348.63,
+  "end": 377.37
+ },
+ {
+  "idx": 19,
+  "type": "text",
+  "title": "fork 是一次历史偶然，后来被兼容锁死",
+  "start": 377.37,
+  "end": 411.73
+ },
+ {
+  "idx": 20,
+  "type": "ascii",
+  "title": "三个领域，同一套零件",
+  "start": 411.73,
+  "end": 439.8
+ },
+ {
+  "idx": 21,
+  "type": "spotlight",
+  "title": "20 报幕：五步法",
+  "start": 439.8,
+  "end": 444.9
+ },
+ {
+  "idx": 22,
+  "type": "statemap",
+  "title": "五步法：每一步的产出是下一步的输入",
+  "start": 444.9,
+  "end": 473.5
+ },
+ {
+  "idx": 23,
+  "type": "text",
+  "title": "数据库并发控制：先找约束",
+  "start": 473.5,
+  "end": 496.03
+ },
+ {
+  "idx": 24,
+  "type": "ascii",
+  "title": "五个候选，各付什么价",
+  "start": 496.03,
+  "end": 522.83
+ },
+ {
+  "idx": 25,
+  "type": "ascii",
+  "title": "同一约束两种解：旧版本放哪里",
+  "start": 522.83,
+  "end": 549.47
+ },
+ {
+  "idx": 26,
+  "type": "text",
+  "title": "局部最优：拿掉一条再看",
+  "start": 549.47,
+  "end": 579.53
+ },
+ {
+  "idx": 27,
+  "type": "layers",
+  "title": "时代局限：约束没变，代价变了",
+  "start": 579.53,
+  "end": 604.47
+ },
+ {
+  "idx": 28,
+  "type": "timeline",
+  "title": "十年赌注：建新程序的默认路径离开 fork",
+  "start": 604.47,
+  "end": 627.9
+ },
+ {
+  "idx": 29,
+  "type": "spotlight",
+  "title": "28 偶然的设计不会被删",
+  "start": 627.9,
+  "end": 646.07
+ },
+ {
+  "idx": 30,
+  "type": "layers",
+  "title": "七条约束各落在哪",
+  "start": 646.07,
+  "end": 667.6
+ },
+ {
+  "idx": 31,
+  "type": "html_slide",
+  "title": "七集收束",
+  "start": 667.6,
+  "end": 696.4
+ },
+ {
+  "idx": 32,
+  "type": "title",
+  "title": "不是知道它怎么做",
+  "start": 696.4,
+  "end": 723.23
+ }
+]

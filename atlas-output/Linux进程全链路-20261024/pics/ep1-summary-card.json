@@ -1,0 +1,26 @@
+{
+  "title": "一个进程的一辈子",
+  "subtitle": "Linux 进程全链路 · What",
+  "tagline": "进程 = 一份被内核记账的地址空间 + 在里面跑的执行流；生于 execve，死于 exit。",
+  "pillars": [
+    {"icon": "box", "t": "两本账", "d": "mm_struct 与 task_struct"},
+    {"icon": "route", "t": "四幕", "d": "从出生到旁观"},
+    {"icon": "shield", "t": "三扇门一出口", "d": "调度和信号挂出口"},
+    {"icon": "gear", "t": "五个开关", "d": "CPU 给的硬件底座"}
+  ],
+  "items": [
+    {"icon": "target", "t": "内核里只有 task", "d": "进程是共用一本 mm 的一组 task；线程是第二条执行流。"},
+    {"icon": "link", "t": "clone 一念之差", "d": "CLONE_VM 共用地图是线程；dup_mm 复制地图是进程。"},
+    {"icon": "stack", "t": "execve 只画地图", "d": "读段表、建 VMA、映射 ld.so；内容等缺页来搬。"},
+    {"icon": "shield", "t": "三扇门一扇出口", "d": "系统调用、中断、异常进门；出门前查换人和信号。"},
+    {"icon": "db", "t": "先拆布景后销账", "d": "exit 释放地址空间，僵尸只剩退出码，等父进程 wait。"},
+    {"icon": "eye", "t": "旁观全是读账本", "d": "ps、top、maps 读 /proc；strace 慢在每次都停一下。"}
+  ],
+  "gains_title": "看完你能",
+  "gains": [
+    {"icon": "compass", "t": "把六个问题挂到四幕上", "d": "装载、调度、缺页、销毁、监视"},
+    {"icon": "bulb", "t": "说清线程切换便宜在哪", "d": "省掉 TLB 冷启动"},
+    {"icon": "check", "t": "读懂两家数据库的选择", "d": "隔离对代价"}
+  ],
+  "takeaway": "两个例子问的是同一件事：**地址空间** 是共享，还是 **便宜地复制**。"
+}

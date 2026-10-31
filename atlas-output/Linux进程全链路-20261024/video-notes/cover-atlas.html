@@ -1,0 +1,60 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:NB;src:url(file:///Users/jin.xiao/Library/Fonts/NotoSansCJKsc-Black.otf)}
+@font-face{font-family:NM;src:url(file:///Users/jin.xiao/Library/Fonts/NotoSansCJKsc-Bold.otf)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1920px;height:1080px;overflow:hidden;background:radial-gradient(ellipse at 30% 40%,#1a1712 0%,#0d0f14 60%);font-family:NM;position:relative}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:60px 60px}
+.code{position:absolute;left:1000px;top:40px;width:900px;font-family:Menlo,monospace;font-size:22px;line-height:1.55;color:rgba(255,200,61,.07);white-space:pre}
+.photo{position:absolute;right:-30px;top:0;height:1080px;width:880px;background:url(PHOTO) center 18%/cover no-repeat;filter:grayscale(.15) brightness(.86) contrast(1.08);
+ -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.5) 22%,#000 50%);}
+.vign{position:absolute;inset:0;background:linear-gradient(0deg,rgba(13,15,20,.97) 0%,rgba(13,15,20,0) 36%)}
+.glow{position:absolute;left:-200px;top:60px;width:1100px;height:620px;background:radial-gradient(ellipse,rgba(255,170,40,.16),transparent 65%)}
+.logo{position:absolute;right:56px;top:44px;width:132px;height:132px;border-radius:50%;background:url(file:///Users/jin.xiao/workshop/deeparch-video/assets/bilibili-avatar.jpg) center/cover;box-shadow:0 0 0 4px #0d0f14,0 0 0 7px rgba(255,200,61,.85)}
+.ribbon{position:absolute;left:86px;top:74px;font-family:NB;font-size:50px;color:#fff;background:#e8483f;padding:6px 26px 10px;border-radius:12px;letter-spacing:3px;box-shadow:0 8px 24px rgba(232,72,63,.35)}
+.t1{position:absolute;left:78px;top:170px;font-family:NB;font-size:200px;line-height:1;color:#ffc83d;letter-spacing:-2px;text-shadow:0 6px 0 #7a4a00,0 16px 44px rgba(0,0,0,.65)}
+.t2{position:absolute;left:84px;top:396px;font-family:NB;font-size:124px;line-height:1.05;color:#fff;text-shadow:0 5px 0 #3a3f4a,0 12px 34px rgba(0,0,0,.6)}
+.t2 em{font-style:normal;color:#ffc83d}
+.sub{position:absolute;left:88px;top:570px;font-family:NB;font-size:54px;color:#5fd3ff;letter-spacing:2px}
+.badge{position:absolute;left:88px;top:668px;display:flex;gap:18px}
+.badge span{font-family:NB;font-size:36px;color:#ffc83d;border:3px solid #ffc83d;border-radius:14px;padding:8px 20px;background:rgba(255,200,61,.08)}
+.acts{position:absolute;left:70px;right:70px;bottom:226px;display:grid;grid-template-columns:repeat(6,1fr);column-gap:48px;font-family:NB;font-size:28px;letter-spacing:6px}
+.acts div{border-top:4px solid;padding-top:6px;text-align:center}.s2{grid-column:span 2}
+.chain{position:absolute;left:70px;right:70px;bottom:70px;display:grid;grid-template-columns:repeat(6,1fr);column-gap:48px}
+.chip{position:relative;text-align:center;padding:20px 6px;border-radius:18px;font-family:NB;font-size:42px;color:#0d0f14;box-shadow:0 8px 24px rgba(0,0,0,.45);white-space:nowrap}.chip+.chip::before{content:'▶';position:absolute;left:-40px;top:50%;transform:translateY(-50%);font-size:32px;color:#ffc83d}
+.chip small{display:block;font-family:NM;font-size:24px;opacity:.78;margin-top:4px;letter-spacing:1px}
+.arr{flex:none;font-family:NB;font-size:40px;color:#ffc83d}
+.c1{background:#f4f1ea}.c2{background:#ffe08a}.c3{background:#ffc83d}.c4{background:#ff9f43}.c5{background:#ff6b4f}.c6{background:#ff4f6d;color:#fff}
+</style></head><body>
+<div class="grid"></div><div class="glow"></div>
+<div class="code">struct task_struct *next = pick_next_task(rq);
+context_switch(rq, prev, next, &amp;rf);
+  switch_mm_irqs_off(prev-&gt;active_mm, next-&gt;mm);
+  switch_to(prev, next, prev);
+retval = load_elf_binary(bprm);
+  elf_map(bprm-&gt;file, load_bias + vaddr, ...);
+  start_thread(regs, elf_entry, bprm-&gt;p);
+vm_fault_t do_wp_page(struct vm_fault *vmf)
+  return wp_page_copy(vmf);
+do_exit(code) -&gt; exit_notify(tsk, group_dead);
+release_task(p);   /* wait4 reaps zombie */</div>
+<div class="photo"></div><div class="vign"></div><div class="logo"></div>
+<div class="ribbon">DURATION 分钟大电影 · 源码级硬核</div>
+<div class="t1">Linux 进程</div>
+<div class="t2">从 <em>execve</em> 到 <em>exit</em></div>
+<div class="sub">深度解读 · 装载 → 调度 → 缺页 → 回收 全链路</div>
+<div class="badge"><span>Linux 6.12 源码</span><span>7 集 · 一次讲透</span></div>
+<div class="acts">
+ <div class="s2" style="color:#ffe08a;border-color:#ffe08a">出生</div>
+ <div class="s2" style="color:#ff9f43;border-color:#ff9f43">活着</div>
+ <div style="color:#ff6b4f;border-color:#ff6b4f">死亡</div>
+ <div style="color:#ff4f6d;border-color:#ff4f6d">回收</div>
+</div>
+<div class="chain">
+ <div class="chip c1">ELF<small>盘上的剧本</small></div>
+ <div class="chip c2">execve<small>只建地图</small></div>
+ <div class="chip c3">调度切换<small>EEVDF</small></div>
+ <div class="chip c4">缺页 <span style="font-size:36px">COW</span><small>写时才拷</small></div>
+ <div class="chip c5">exit<small>变僵尸</small></div>
+ <div class="chip c6">wait<small>收尸</small></div>
+</div>
+</body></html>

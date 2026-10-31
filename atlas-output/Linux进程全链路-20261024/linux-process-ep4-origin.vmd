@@ -1,0 +1,550 @@
+# 第 4 集 Origin 阶段 — fork 只有 27 行汇编，凭什么让后人还了五十年的债？
+
+[intro-line] 今天回到来路，看 fork、任务切换、线程和 copy on write，分别是谁在哪一年、被哪条约束逼出来的。
+
+## 1 Origin 阶段开场
+
+[visual: spotlight]
+现在我们回到 Origin 阶段
+这一切是从哪儿来的？
+
+[narration]
+上一集看清了内核今天怎么管一个进程。现在回到 Origin 阶段，看这些形状各自的出生证。
+
+---
+
+## 2 复制一遍再扔掉
+
+[visual: title]
+27 行汇编
+欠了半个世纪的债
+
+[narration]
+你敲一个 ls，bash 先 fork 出一份自己，紧接着 execve 把这份拷贝整个换掉。复制一遍再扔掉，怎么看都浪费。这个形状，是 1969 年一个人图省事定下的。这一集找四个人，看每个形状被哪条约束逼出来，又欠下了什么债。
+
+---
+
+## 3 四个故事，三个形状
+
+[visual: layers title=四个故事里反复出现的三个形状]
+小改动赢过大设计：fork 27 行，切换一条 ljmp
+底层承诺一变，上层就得重做：软件切换、NPTL
+便宜的共享欠下正确性的债：copy on write 修了五轮
+
+[narration]
+先把结论摆出来。当年机器小、人手少，谁改动最小谁活下来；选择本身没错，是它依赖的前提后来消失了；先共享、写时再分，便宜到没法拒绝，账却迟早要还。
+
+---
+
+## 4 四个人在时间线上
+
+[visual: html_slide image="pics/04-overview.png" title=四个人，四个选择]
+
+[step: auto]
+scroll auto
+
+[narration]
+横轴是年份，四行是四个人。彩框是他们自己的选择，灰框是别人的接力，红框是后来暴露的债。后三个选择都踩在前一个的地基上：Linus 的 task 继承了 Thompson 的进程，Drepper 的线程就是 Linus 的 task。最长的一行是 Arcangeli，到今天还没结束。
+
+---
+
+## 5 Ken Thompson
+
+[visual: facetime title="Ken Thompson"]
+name: Ken Thompson
+role: Unix 的创造者之一
+org: 贝尔实验室，1969 年在 PDP-7 上写出第一版 Unix
+photo: file:///Users/jin.xiao/workshop/deeparch-atlas/atlas-output/Linux%E8%BF%9B%E7%A8%8B%E5%85%A8%E9%93%BE%E8%B7%AF-20261024/pics/person-ken-thompson.jpg
+- 1969 年夏，PDP-7 上只有两个进程，一个终端一个
+- 在 Berkeley 的 Project Genie 见过 fork 与 exec 分开
+- 想要 Multics 的每条命令一个进程，又付不起它的代价
+- 不要内建命令层：命令就是文件系统里的程序
+
+[narration]
+1969 年夏天，Ken Thompson 的 Unix 有了文件系统和 shell，可整台 PDP-7 只有两个进程，一个终端一个。他想要 Multics 那种每条命令一个进程的模型，又付不起 Multics 创建进程的代价。
+
+---
+
+## 6 没有 fork 的 shell
+
+[visual: text title="没有 fork 的 shell 怎么跑一条命令"]
+命令直接覆盖掉 shell 自己
+exit 的意思是：把 shell 重新读回来
+shell 跨命令什么都记不住
+
+[sidebar]
+没有 fork、wait、exec
+exit -> 重装 shell
+每个目录放一个 tty 文件
+
+[narration]
+那时运行一条命令，是让命令把 shell 直接盖掉；命令退出，系统再把 shell 从盘上读回来。shell 每次都是新的，什么都记不住，后台任务和管道就更别提了。
+
+---
+
+## 7 两条路的改动清单
+
+[visual: ascii title="1969 年的两条路：改动清单"]
+┌───────── 合成一步 　　─────────┐  ┌────── 只加一个 fork 　　───────┐
+│ exec 还不在内核里  　　　　　　　│  │ 进程表：扩大一点       　　　　　│
+│ 先把 exec 搬进内核 　　　　　　　│  │ 复制：借现成的 swap  　　　　　　│
+│ 再新写一套装载代码       　　　　│  │ 把自己整份写进交换区       　　　│
+│ shell 也要跟着改 　　　　　　　　│  │ PDP-7 上 27 行汇编  　　　　　　│
+└──────────────────────────────┘  └──────────────────────────────┘
+ 　　　　　　　▼ 1969 年选了右边：先有 27 行，后有职责清晰
+
+[sidebar]
+系统已会整份换出进程
+exec 当时由 shell 自己做
+fork -> 27 行汇编
+
+[narration]
+要让 shell 活下来，有两条路。合成一步，得先把 exec 搬进内核，再写装载代码。只加 fork 就简单得多：系统本来就会把整个进程换到磁盘上，fork 扩一下进程表，借现成的换出代码给自己存一份。PDP-7 上，它只有 27 行汇编。
+
+---
+
+## 8 先便宜，后聪明
+
+[visual: spotlight]
+fork 和 exec 分成两步
+主要因为 fork 最好写
+
+[narration]
+Ritchie 自己的判断是：分成两步，主要因为 fork 不用改别处就能实现。先是便宜，后来才显得聪明。
+
+---
+
+## 9 一上线就撞了两堵墙
+
+[visual: text title=两步模型一上线就撞了两堵墙]
+cd 不生效：改的是子进程自己的目录
+输出互相覆盖：文件偏移被复制了一份
+解法：cd 做成内建，偏移搬进独立的表
+
+[sidebar]
+cd -> shell 内建
+偏移 -> struct file
+父子共享同一个偏移
+
+[narration]
+刚上线就撞了两堵墙。cd 不灵了，子进程改完自己的目录就退出，父 shell 纹丝不动，所以 cd 至今是内建命令。ls 和 who 的输出互相覆盖，因为文件偏移被复制了一份，于是偏移搬进独立的表，这就是今天的 struct file。fork 复制了全部，可哪些该共享，当时没人想过。
+
+---
+
+## 10 两步之间的窗口
+
+[visual: text title=两步之间的窗口，是后来长出的好处]
+fork 之后、exec 之前，子进程自己布置自己
+dup2、close、chdir、setuid 都是普通系统调用
+重定向不用内核懂，shell 自己换掉 0 和 1
+
+[sidebar]
+CreateProcess：十个参数
+posix_spawn：一堆属性
+fork：一段普通代码
+
+[narration]
+你可能会说，分开是为了职责清晰。没错，但这是 fork 活下来的原因，不是它出生的原因。两步之间，子进程用 dup2、close 这些普通调用布置自己，shell 的重定向就是这么做的，内核根本不知道。代价是起点是一份完整拷贝，多线程程序里还只复制调用者那一个线程。
+
+---
+
+## 11 半个世纪后的判词
+
+[visual: spotlight]
+2019 年：1304 个包调 fork
+只有 41 个用 posix_spawn
+
+[narration]
+半个世纪后，HotOS 2019 的论文 A fork in the road 说，fork 早该退场。它数了 Ubuntu 的软件包：1304 个调 fork，只有 41 个用 posix_spawn。二十 GB 的堆，1969 年没人能预见。
+
+---
+
+## 12 Linus Torvalds
+
+[visual: facetime title="Linus Torvalds"]
+name: Linus Torvalds
+role: Linux 内核作者与维护者
+org: 赫尔辛基大学，1991 年 9 月发布 Linux 0.01
+photo: file:///Users/jin.xiao/workshop/deeparch-atlas/atlas-output/Linux%E8%BF%9B%E7%A8%8B%E5%85%A8%E9%93%BE%E8%B7%AF-20261024/pics/person-linus-torvalds.jpg
+- 1991 年 1 月买下一台 386，4 MB 内存
+- 第一个程序：两个任务，一个打 A，一个打 B
+- 0.01：所有任务信息只放进一个结构
+- 1998 年把硬件切换改成软件切换
+
+[narration]
+第二个人，1991 年的 Linus。他买了台 386，4 MB 内存，第一个程序是两个任务，一个打 A，一个打 B，用时钟中断来回换。他说那一刻骄傲极了。Linux 是从换任务长出来的。
+
+---
+
+## 13 386 的硬件任务切换
+
+[visual: text title="386 的硬件任务切换：一条跳转，CPU 自己搬现场"]
+每个任务一块 TSS，存着全部寄存器
+跳到另一个 TSS，CPU 自动存旧的、装新的
+连页表根 CR3 和栈一起换
+
+[sidebar]
+TSS -> 任务状态段
+ljmp -> 一次全换
+0.01 -> 照手册用
+
+[narration]
+先讲原理。386 支持硬件任务切换：每个任务一块任务状态段，存着全部寄存器，连页表根和栈都在。内核只要跳过去，CPU 自己存旧现场、装新现场。硬件给了，Linus 的 0.01 就照着用。
+
+---
+
+## 14 0.01 的 switch_to
+
+[visual: code_explain lang=c title="Linux 0.01 的 switch_to：整个切换就是一条 ljmp（include/linux/sched.h）"]
+/*
+ *	switch_to(n) should switch tasks to task nr n, first
+ * checking that n isn't the current task, in which case it does nothing.
+ * This also clears the TS-flag if the task we switched to has used
+ * tha math co-processor latest.
+ */
+#define switch_to(n) {\
+struct {long a,b;} __tmp; \
+__asm__("cmpl %%ecx,_current\n\t" \
+	"je 1f\n\t" \
+	"xchgl %%ecx,_current\n\t" \
+	"movw %%dx,%1\n\t" \
+	"ljmp %0\n\t" \
+	"cmpl %%ecx,%2\n\t" \
+	"jne 1f\n\t" \
+	"clts\n" \
+	"1:" \
+	::"m" (*&__tmp.a),"m" (*&__tmp.b), \
+	"m" (last_task_used_math),"d" _TSS(n),"c" ((long) task[n])); \
+}
+===HIGHLIGHT===
+lines=1-6
+作用：切到第 n 号任务
+n 就是当前任务：什么都不做
+顺带处理协处理器的 TS 位
+整段是一个宏，没有函数调用
+===HIGHLIGHT===
+lines=9-12
+cmpl：目标就是自己，跳到 1
+xchgl：current 换成目标任务
+movw：TSS 选择子写进 __tmp
+dx 里是 _TSS(n) 算出的选择子
+===HIGHLIGHT===
+lines=13-13
+ljmp：跳到目标任务的 TSS
+CPU 存下当前全部寄存器
+再装回目标任务的寄存器、CR3、栈
+保存现场的代码一行都不用写
+===HIGHLIGHT===
+lines=14-17
+本任务被换回来后才执行这里
+上次用浮点的是不是自己
+是就 clts，清掉 TS 位
+浮点状态延迟保存
+
+[narration]
+第一段注释说，切到第 n 号任务，是自己就什么都不做。第二段先比较，再把 current 换成目标。第三段只有一条 ljmp，保存和恢复 CPU 全包了。最后一段要等本任务被换回来才执行，只在需要时清掉浮点的 TS 位。
+
+---
+
+## 15 同一个 bug，两种下场
+
+[visual: ascii title="1998 年：同一个 bug，两个版本两种下场"]
+┌────── 2.0.x：只是 oops  ──────┐  ┌────── 2.1.x：整机死掉 　───────┐
+│ 线程不共享 LDT   　　　　　　　　│  │ 线程共享 LDT   　　　　　　　　　│
+│ 坏段值很难出现       　　　　　　│  │ Wine 改表，别的线程中招  　　　　│
+│ 切换时不持自旋锁       　　　　　│  │ 切换时持调度器自旋锁       　　　│
+│ 出错：一个进程挂掉       　　　　│  │ 出错：锁永远不放       　　　　　│
+└──────────────────────────────┘  └──────────────────────────────┘
+   　　　　　　　　▼ 硬件切换出错无处兜底：改成软件切换
+
+[sidebar]
+Wine、DOSEMU 改 LDT
+段寄存器值失效
+C7·核各自为政
+
+[narration]
+1998 年 9 月，开发版突然改成软件切换。Linus 解释：Wine 会改 LDT，一个线程改完，另一个线程 TSS 里的段值就失效了，硬件切换装到一半出异常，没法收拾。2.0 里顶多一个 oops；2.1 切换时持着调度器自旋锁，就成了整机卡死。
+
+---
+
+## 16 修 bug 优先
+
+[visual: spotlight]
+我是性能狂
+但修 bug 优先
+
+[narration]
+这是 Linus 当时的原话。软件切换一个寄存器一个寄存器地装，遇到坏段值能换成安全值继续。至于变慢，是浮点保存写错了，修好之后和硬件切换差不多快。
+
+---
+
+## 17 任务和地址空间拆成两本账
+
+[visual: text title="1999 年：任务和地址空间，拆成两本账"]
+内核线程没有用户地址空间，mm 是 NULL
+它借用上一个任务的地址空间，记在 active_mm
+TSS 没有死：进内核仍要从它取栈指针
+
+[sidebar]
+mm -> 真正拥有的
+active_mm -> 当前借用的
+TSS.sp0 -> 每次切换都要改
+
+[narration]
+拆开之后新问题来了：内核线程没有用户地址空间，换到它时 CR3 写什么？1999 年 Linus 的答案是两本账：mm 记真正拥有的，内核线程为空；active_mm 记借来的。TSS 也没死，进内核还要从它取栈指针。调度器从 O(1) 到 CFS 再到 EEVDF 的接力，本集不展开。
+
+---
+
+## 18 一个线程就是一个进程
+
+[visual: text title="1996 年 LinuxThreads：一个线程就是一个进程"]
+clone 共享地址空间，调度交给内核
+ps 里一个程序显示一排 pid
+信号按 pid 送给某个线程，而不是整个进程
+
+[sidebar]
+Xavier Leroy -> 1996
+管理线程兜底
+32 位上约 1000 个线程
+
+[narration]
+第三个故事。1996 年，Xavier Leroy 的 LinuxThreads 让一个线程就是一个内核任务。ps 里一个程序显示一排 pid，kill 只杀掉一个线程，32 位上最多约 1000 个线程，致命信号要靠一个管理线程兜底。那时内核没有线程组，他已经做到最好。
+
+---
+
+## 19 Ulrich Drepper
+
+[visual: facetime title="Ulrich Drepper"]
+name: Ulrich Drepper
+role: glibc 长期维护者，NPTL 作者之一
+org: Red Hat，2002 年与 Ingo Molnar 发布 NPTL
+photo: file:///Users/jin.xiao/workshop/deeparch-atlas/atlas-output/Linux%E8%BF%9B%E7%A8%8B%E5%85%A8%E9%93%BE%E8%B7%AF-20261024/pics/person-ulrich-drepper.jpg
+- 2002 年：Java 和数据库动辄几千个线程
+- 管理线程一死，进程剩下的部分只能手工收拾
+- 与 Molnar 写下设计目标：去掉管理线程
+- 双 450 MHz 机器上，10 万线程 2.3 秒建完销毁完
+
+[narration]
+到 2002 年，Java 和数据库动辄几千个线程，问题从不合标准变成跑不动。管理线程一死，进程只能手工收拾；创建和回收全经它手，它就是瓶颈。Drepper 和 Ingo Molnar 决定重写。
+
+---
+
+## 20 M 对 N，还是一对一
+
+[visual: ascii title="2002 年两条路：M:N 还是 1:1"]
+┌────── M:N（IBM NGPT） 　──────┐  ┌──────── 1:1（NPTL） 　────────┐
+│ 用户态再做一个调度器       　　　│  │ 一个线程就是一个 task  　　　　　│
+│ 线程在内核里睡了它不知道       　│  │ 调度全交给内核       　　　　　　│
+│ POSIX 信号在用户态重做 　　　　　│  │ 信号语义留在内核       　　　　　│
+│ 内核几乎不用改       　　　　　　│  │ 内核要加一批新能力       　　　　│
+└──────────────────────────────┘  └──────────────────────────────┘
+       　　　▼ O(1) 调度器上线，线程多不再是问题：1:1 胜出
+
+[sidebar]
+C5·改流必经打断
+C2·霸台不可预知
+TLS 走 LDT：上限 8192
+
+[narration]
+当时有两条路。IBM 的 NGPT 走 M 对 N，用户态再做一个调度器，内核几乎不改，可两个调度器互相看不见。M 对 N 的理由之一是线程多了内核调度慢，偏偏这一年 O(1) 调度器进了 2.5。剩下的坎是线程局部存储走 LDT，上限 8192，内核为此加了新系统调用。
+
+---
+
+## 21 管理线程的活塞回内核
+
+[visual: layers title=把管理线程干的每件事，塞回内核]
+致命信号杀全组 -> CLONE_THREAD 线程组 + exit_group
+回收死线程的栈 -> CLONE_CHILD_CLEARTID + futex 唤醒
+用信号做同步 -> futex，内核看得见所有等待者
+一个线程一个 pid -> 全组 getpid 相同
+线程局部存储 -> 新系统调用写 GDT 条目
+
+[narration]
+设计目标只有一句：去掉管理线程。逐条问它为什么存在，再换成一个内核特性。比如线程拆不了自己脚下的栈，那就让内核在它退出时清掉一个约定的地址，再用 futex 叫醒等它的人。
+
+---
+
+## 22 从 15 分钟到 2 秒
+
+[visual: spotlight]
+起停 10 万个线程
+从 15 分钟到 2 秒
+
+[narration]
+起停 10 万个线程，从 15 分钟变成 2 秒，线程就是 task 成了定论。账也留了下来：每个线程 16 KiB 内核栈，十万线程就是 1.6 GB。所以 Go 和 Java 的虚拟线程，又在用户态把 M 对 N 做了回来。
+
+---
+
+## 23 copy on write 的第三个主人
+
+[visual: text title="2009 年：一页纸有了第三个主人"]
+copy on write 默认一页只有父子两个主人
+get_user_pages 让第三方直接拿到物理页
+O_DIRECT、RDMA、vmsplice、驱动，都是第三个主人
+
+[sidebar]
+GUP -> 绕开页表读写
+DMA 直接写物理页
+复制与否只看页表
+
+[narration]
+第四个故事最长。copy on write 默认一页只有父子两个主人，可 get user pages 能把用户页交给磁盘或网卡，绕开页表直接读写，这就是第三个主人。2009 年 2 月，Andrea Arcangeli 描述了一个三线程场景。
+
+---
+
+## 24 一次读是怎么丢的
+
+[visual: timeline title="2009 年的三线程场景：一次读是怎么丢的"]
+T=1 [线程 A] O_DIRECT 读开始，磁盘 DMA 往页 P 写
+T=2 [线程 C] 毫不相干地 fork，P 被标成只读
+T=3 [线程 B] 写 P 的末尾 512 字节，触发复制
+T=4 [内核] 复制出新页，父进程页表改指新页
+T=5 [磁盘] DMA 仍写进旧页 P，父进程这次读丢了
+
+[narration]
+线程 A 用 O_DIRECT 读，磁盘正往页 P 写；线程 B 反复写这页的末尾；线程 C 毫不相干地 fork。页变成只读，B 一写就触发复制，父进程换到新页，磁盘却还在写旧页。这一次读，就丢了。
+
+---
+
+## 25 十几年里的五轮修补
+
+[visual: statemap title=十几年里的五轮修补]
+2005 Linus 修 get_user_pages 竞争，后被撤销
+2009 Arcangeli 补丁：fork 时直接给子进程拷一页
+2016 脏牛漏洞：只读映射能被写
+2020-05 vmsplice 漏洞：子进程读到父进程的新写
+2020-08 复用判据改成 page_count
+
+[narration]
+每次修都要三选：子进程不能看到父进程后写的内容，第三个主人不能被甩掉，还不能让每次缺页都变慢。脏牛漏洞、vmsplice 漏洞，都是同一个问题换了马甲。2020 年 8 月，Linus 干脆换了判据。
+
+---
+
+## 26 只有我一个人，才复用
+
+[visual: code_explain lang=c title="2020 年 commit 09854ba 变更后的 do_wp_page：只有我一个人才复用（mm/memory.c）"]
+if (PageAnon(vmf->page)) {
+	struct page *page = vmf->page;
+
+	/* PageKsm() doesn't necessarily raise the page refcount */
+	if (PageKsm(page) || page_count(page) != 1)
+		goto copy;
+	if (!trylock_page(page))
+		goto copy;
+	if (PageKsm(page) || page_mapcount(page) != 1 || page_count(page) != 1) {
+		unlock_page(page);
+		goto copy;
+	}
+	/*
+	 * Ok, we've got the only map reference, and the only
+	 * page count reference, and the page is locked,
+	 * it's dark out, and we're wearing sunglasses. Hit it.
+	 */
+	wp_page_reuse(vmf);
+	unlock_page(page);
+	return VM_FAULT_WRITE;
+===HIGHLIGHT===
+lines=5-6
+先看引用计数 page_count
+不等于 1：还有别人拿着，复制
+get_user_pages 的引用也算在内
+不加锁的快速判断
+===HIGHLIGHT===
+lines=7-12
+拿不到页锁：直接复制
+加锁后再核一遍
+映射数和引用数都必须是 1
+任何一项不满足就复制
+===HIGHLIGHT===
+lines=13-20
+注释：天黑了，我们戴着墨镜
+确认只有我：原地复用这一页
+wp_page_reuse 把页表项改回可写
+补丁删 42 行，加 17 行
+
+[narration]
+新判据只有一句话：复用之前，先确认我是唯一可能的使用者。第一段看引用计数，get user pages 的引用也算，不是 1 就复制。第二段加锁之后，再核映射数和引用数。第三段那句天黑了、戴着墨镜的注释，6.12 里还在。补丁删 42 行，加 17 行。
+
+---
+
+## 27 判据之争
+
+[visual: ascii title="2021 年 1 月：判据之争没有和解"]
+┌─── Arcangeli：mapcount 　　───┐  ┌──── Linus：page_count 　　────┐
+│ 数有几个页表映射它       　　　　│  │ COW 问的是：只有我吗   　　　　　│
+│ 只为堵 vmsplice 的洞  　　　　　│  │ GUP 拿着页却不在页表里   　　　　│
+│ 却让每次 COW 都变贵  　　　　　　│  │ 映射次数答不了这个问题       　　│
+│ 不值，应该另外堵       　　　　　│  │ 所以必须数引用       　　　　　　│
+└──────────────────────────────┘  └──────────────────────────────┘
+         　▼ 2022 年 Hildenbrand：给页记一位「我是独占的」
+
+[sidebar]
+2009：fork 后父进程的写被复制走
+2021：多一个引用，又被复制走
+两次都是 DMA 写进旧页
+
+[narration]
+2021 年 1 月，Arcangeli 要撤回这次简化：一次 O_DIRECT 读让计数变成 2，父进程再写就被错误复制，数据又丢了，正是 2009 年那个 bug 的镜像。Linus 当晚回复：mapcount 对 copy on write 毫无意义，拿着页的人不一定在任何页表里。
+
+---
+
+## 28 不再推断，直接记下来
+
+[visual: text title="2022 年：独占不再推断，直接记下来"]
+漏复制：该复制却复用了，安全漏洞
+错复制：不该复制却复制了，数据损坏
+多复制：白白复制，性能损失
+
+[sidebar]
+PageAnonExclusive
+只有独占页才允许被钉住
+6.12 写时缺页先问这一位
+
+[narration]
+2022 年，David Hildenbrand 把问题分成三种失败，给出新做法：在页上显式记一位，我是独占的，只有独占页才允许被钉住。6.12 的写时缺页就先问这一位。他自己说，这只是朝正确方向的一步。四个故事里，只有这一个的结尾还开着。
+
+---
+
+## 29 每个人都在缺失的约束上留了债
+
+[visual: ascii title=每个人都在缺失的那条约束上留了债]
+人与年份           当年还没有的     　　　　　　后来谁替它还债
+────────────────────────────────────────────────────────────────
+Thompson 1969   　copy on write、多核    　　后来的 copy on write
+Linus 1991      　改 LDT 的 Wine、多核锁　　　1998 软件切换
+Leroy 1996      　线程组、futex、TLS         2002 年 NPTL
+Arcangeli 2009  　一页只有两个主人？　　　　　　独占位，还在修
+
+[sidebar]
+Thompson -> copy on write 还
+Leroy -> Drepper 还
+Linus -> 自己还
+COW 判据 -> 轮流还
+
+[narration]
+把四个人放回各自的年份：每个人都处理好了当年存在的约束，债总留在当时还没有的那一条上。而且债大多不是原作者还的，只有 Linus 自己还了自己的。
+
+---
+
+## 30 本集总结
+
+[visual: html_slide image="pics/ep4-summary-card.png" title=四个人，四笔债]
+
+[step: auto]
+scroll auto
+
+[narration]
+收住这一集。fork 因便宜而生；硬件切换被 Wine 和多核逼成软件切换；线程就是 task，管理线程的活塞回了内核；copy on write 的判据从数映射到数引用，再到记一位独占。读历史，别问谁更聪明，问哪条约束在哪一年变得忍不了。
+
+---
+
+## 31 下集预告
+
+[visual: spotlight]
+本集就到这里
+下集：钻进 6.12 源码，三条主线逐行走
+
+[narration]
+本集就到这里，下集见。下一集钻进 6.12 源码，把 execve、调度与切换、缺页与 copy on write 三条主线逐行走一遍。
+
+---

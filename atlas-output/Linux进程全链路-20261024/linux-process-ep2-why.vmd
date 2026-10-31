@@ -1,0 +1,712 @@
+# 第 2 集 Why 阶段 — 从一台裸机砍七刀，Linux 进程为什么非得长成这样？
+
+[intro-line] 今天从一台只跑一个程序的裸机出发，砍七刀，看 Linux 进程为什么非得是地址空间加执行流加一本账。
+
+## 1 Why 阶段开场
+
+[visual: spotlight]
+现在我们走进 Why 阶段
+Linux 进程为什么必须长成这样？
+
+[narration]
+上一集认全了进程一辈子的四幕。这一集追问：凭什么是这个形状？我们从一台什么都没有的裸机开始，一刀一刀把它逼出来。
+
+---
+
+## 2 一台裸机只有一个程序
+
+[visual: title]
+一台裸机
+只有一个程序
+
+[narration]
+机器上电，固件把盘上第一个扇区搬进内存，跳过去执行。从这一刻起，你的代码就是机器上唯一在跑的东西。没有人会打断它，也没有任何人替它记账。这样的世界，缺了什么？
+
+---
+
+## 3 独占一切，也就不需要进程
+
+[visual: text title="裸机上的程序独占一切"]
+独占 CPU：它不让出，CPU 就一直是它的
+独占物理内存：地址 0x1000 就是第 4096 字节
+独占设备：直接写网卡、磁盘控制器寄存器
+没有账本：没有 pid，没有状态，没有"谁"
+
+[sidebar]
+CPU -> 只有一个人用
+内存 -> 物理地址直写
+设备 -> 直接发命令
+账本 -> 根本不需要
+
+[example]
+这不是假想。单片机上的 Arduino 程序、GRUB 这种引导程序，都是这么跑的。
+
+[narration]
+在这个世界里，进程这个词没有意义，只有一个东西时无需区分。所以接下来每一刀都在回答：机器上同时有不止一个东西时，内核必须替它们记住什么、隔开什么、裁决什么。
+
+---
+
+## 4 七刀的路线
+
+[visual: layers title="七刀七条约束，一刀一条"]
+第一刀 CPU 等 IO 空转 -> C1 CPU快IO慢
+第二刀 程序霸台不下 -> C2 霸台不可预知
+第三刀 程序互相伤害 -> C3 互不信任
+第四刀 文件变成地址空间 -> C4 文件不等于内存
+第五刀 内核插不上手 -> C5 改流必经打断
+第六刀 死了要还资源 -> C6 资源有限须归还
+第七刀 机器有 64 个核 -> C7 核各自为政
+
+[narration]
+玩法是这样：每砍一刀，只解决眼前一个痛点，解决完看露出什么新问题。七刀砍完，会落下七条拿不掉的约束，后面六集所有讨论，都向这七条收敛。先看第一刀。
+
+---
+
+## 5 第一刀：CPU 在等盘
+
+[visual: text title="第一刀：一次等盘，空转一万到一千万条指令"]
+一条指令约 0.3 ns（3 GHz）
+NVMe 读一次 10 ~ 100 μs，机械盘 5 ~ 10 ms
+一次等待 = 空转 10^4 ~ 10^7 条指令
+
+[sidebar]
+指令 -> 0.3 纳秒
+NVMe -> 几十微秒
+机械盘 -> 几毫秒
+差距 -> 物理上消不掉
+
+[example]
+一个报表作业，算一秒、读盘四秒，循环十万次。只跑它一个，CPU 利用率只有百分之二十，五台机器的钱只买到一台的算力。
+
+一九六零年，一套 IBM 7090 售价两百九十万美元，配的读卡机每分钟只读两百五十张卡。
+
+[narration]
+裸机上的程序要读一段磁盘，就只能原地干等。CPU 和设备的速度差是物理事实，等待是常态。怎么让 CPU 别闲着？
+
+---
+
+## 6 多道程序：A 等盘时跑 B
+
+[visual: ascii title="单道 vs 多道：同样四秒，CPU 干了多少活"]
+┌───────────────────────────┐ ┌───────────────────────────┐
+│ 单道：只装一个任务        │ │ 多道：同时装 A 和 B       │
+├───────────────────────────┤ ├───────────────────────────┤
+│ A 算 ─┐                   │ │ A 算 ─┐                   │
+│       ▼                   │ │       ▼ A 发起读盘        │
+│ A 等盘（CPU 空转 4 秒）   │ │ 存 A 的寄存器，装 B 的    │
+│       ▼                   │ │       ▼                   │
+│ A 接着算                  │ │ B 算（A 在等盘）          │
+│                           │ │       ▼ 盘完成，中断      │
+│ 利用率 20%                │ │ 存 B，装回 A，A 接着算    │
+└───────────────────────────┘ └───────────────────────────┘
+
+[sidebar]
+C1·CPU快IO慢
+等就换人
+现场必须能存能取
+完成要能打断
+
+[narration]
+办法是把几个任务同时装进内存，A 等盘时跑 B，这叫多道程序。但它有个前提：A 停下时的全部状态能存起来，以后原样取回。还有一件事，盘读完了谁知道？CPU 正在跑 B，所以设备完成时必须能打断它，中断第一次登场。
+
+---
+
+## 7 现场到底是什么
+
+[visual: code_explain lang=c title="切换时存进内核栈的现场（Linux 6.12 arch/x86/include/asm/switch_to.h）"]
+struct inactive_task_frame {
+#ifdef CONFIG_X86_64
+	unsigned long r15;
+	unsigned long r14;
+	unsigned long r13;
+	unsigned long r12;
+#else
+	unsigned long flags;
+	unsigned long si;
+	unsigned long di;
+#endif
+	unsigned long bx;
+
+	/*
+	 * These two fields must be together.  They form a stack frame header,
+	 * needed by get_frame_pointer().
+	 */
+	unsigned long bp;
+	unsigned long ret_addr;
+};
+
+struct fork_frame {
+	struct inactive_task_frame frame;
+	struct pt_regs regs;
+};
+===HIGHLIGHT===
+lines=1-12
+inactive_task_frame：被换下时的帧
+x86-64 存 r12~r15 和 bx
+都是被调用者保存的寄存器
+其余寄存器调用前由编译器处理
+===HIGHLIGHT===
+lines=18-19
+bp + ret_addr：栈帧头和返回地址
+ret_addr 决定换回来从哪接着跑
+整份现场只有七个 8 字节
+===HIGHLIGHT===
+lines=22-25
+fork_frame：新任务的第一帧
+内核侧帧 + pt_regs
+pt_regs = 进内核时存下的用户态寄存器
+用户现场和内核现场分两段存
+
+[narration]
+如果轮流可行，内核里应该有一块很小的结构，专门放被换下那条流的寄存器。翻开六点一二的源码，它真的很小。第一段，x86-64 存 r12 到 r15 和 bx，都是被调用者保存的寄存器，其余的按调用约定，调用前就由编译器安排好了。第二段，栈帧指针加返回地址，返回地址决定换回来从哪接着跑，整份现场只有七个八字节。第三段，用户态的全部寄存器早在进内核那一刻存进了 pt_regs。现场在指令边界上就是一组有限的寄存器，所以可存可取，这是第一条约束 C1 的另一半。
+
+---
+
+## 8 第二刀：程序不肯下台
+
+[visual: text title="第二刀：不让台，全机陪着卡"]
+协作式多任务：程序自己决定何时交还 CPU
+一个程序死循环，全机跟着卡死
+人能感觉到的延迟阈值约 100 ms
+
+[sidebar]
+Windows 3.x -> 协作式
+Mac OS 9 -> 协作式
+CTSS -> 几十毫秒换人
+100 ms -> 是目标，不是约束
+
+[example]
+Windows 3.x 和 Mac OS 9 就是这么做的，一个程序卡死，鼠标都不动了。
+
+一九六一年 MIT 的 CTSS 要让几十个人同时用一台机器，就必须每隔几十毫秒换一个人上台，不能等程序自愿。
+
+[narration]
+多道程序依赖任务主动停下来。可如果 B 是个死循环，或者一个要算三小时的作业，它永远不做 IO，A 就永远回不来。谁来把 B 拉下来？
+
+---
+
+## 9 闹钟加排班
+
+[visual: spotlight]
+到点硬换
+换谁只能靠猜
+
+[narration]
+拉下来靠硬件闹钟，定时器到点打中断，中断不受程序控制。可拉下来之后跑谁？内核不知道一个任务下一毫秒要算还是要等，是要快响应还是要高吞吐，任务自己也说不准。所以调度器只能用过去的行为猜未来，从多级反馈队列到 CFS 再到 EEVDF，都从这里出发。这就是第二条约束，霸台不可预知。
+
+---
+
+## 10 第三刀：三种伤害
+
+[visual: text title="第三刀：住在同一片内存里，能怎么伤害别人"]
+读别人的：扫一遍物理内存
+写坏别人的：一个野指针
+拖死别人的：cli 关中断、out 直接写设备
+
+[sidebar]
+读 -> 偷看数据
+写 -> 改坏数据
+拖死 -> 闹钟哑了
+共同点 -> 一人做全机受害
+
+[example]
+多用户机器上，学生的程序扫一遍物理内存，就能读到教授正在编辑的成绩。
+
+DOS 时代，一个野指针能写坏别的程序甚至 DOS 本身，整机重启。
+
+更狠的是一条 cli 指令关掉中断，第二刀的闹钟就哑了。
+
+[narration]
+A 和 B 现在轮流上台了，可它们住在同一片物理内存里。一份代码能对另一份造成的伤害，只有三种：读它的、写它的、拖死它。
+
+---
+
+## 11 三道闸，各堵一面
+
+[visual: ascii title="三种伤害，三道闸，不多不少"]
+┌──────────────┬────────┬──────────────┬──────────┐
+│ 伤害         │ 资源   │ 闸           │ 硬件开关 │
+├──────────────┼────────┼──────────────┼──────────┤
+│ 读写别人内存 │ 内存   │ 每任务页表   │ MMU      │
+│ 霸占 CPU     │ CPU    │ 时钟 + 抢占  │ APIC     │
+│ 关中断/动设备│ 整机   │ ring 0 / 3   │ 特权级   │
+└──────────────┴────────┴──────────────┴──────────┘
+                     ▼
+     想办事？只能走系统调用这扇正门
+     A、B 都用 0x1000，页表翻到不同物理页
+
+[sidebar]
+C3·互不信任
+页表 -> 看不见别人
+ring 3 -> 特权指令即异常
+系统调用 -> 请求而非动手
+
+[narration]
+三道闸各堵一面。每个任务一张自己的页表，A 的页表里根本没有 B 的页，想读也读不到。关中断、改页表根这些波及整机的操作，只给跑在 ring 0 的内核。任务还想读盘怎么办？只能从系统调用这扇正门请求。注意，每道闸都不是禁止，而是必须经内核之手。这就是第三条约束 C3 互不信任。
+
+---
+
+## 12 每道闸都要花钱
+
+[visual: text title="闸不是免费的"]
+地址空间：每任务一套页表；切换写 CR3，TLB 变冷
+特权级：每次系统调用跨一次态，百纳秒量级
+闹钟：每个 tick 一次中断，抢占打断缓存
+
+[sidebar]
+页表代价 -> PCID、线程共享
+跨态代价 -> vDSO、io_uring
+tick 代价 -> tickless
+贵的是 TLB
+
+[example]
+一个二十 GB 的堆，按四 KB 一页、每项八字节算，光页表就要大约四十 MB。
+
+Linux 5.10 上实测一次空系统调用，没开页表隔离约八十纳秒，开了约两百纳秒，多出来的就是每次进出换一张页表。
+
+[narration]
+三道闸都有代价，代价的形状又决定了后面一大串设计。记住一点，切换本身不贵，贵的是切完之后 TLB 和缓存都是冷的。
+
+---
+
+## 13 隔离级别就是一组开关
+
+[visual: code_explain lang=c title="clone 的共享开关（Linux 6.12 include/uapi/linux/sched.h）"]
+#define CLONE_VM	0x00000100	/* set if VM shared between processes */
+#define CLONE_FS	0x00000200	/* set if fs info shared between processes */
+#define CLONE_FILES	0x00000400	/* set if open files shared between processes */
+#define CLONE_SIGHAND	0x00000800	/* set if signal handlers and blocked signals shared */
+#define CLONE_PIDFD	0x00001000	/* set if a pidfd should be placed in parent */
+#define CLONE_PTRACE	0x00002000	/* set if we want to let tracing continue on the child too */
+#define CLONE_VFORK	0x00004000	/* set if the parent wants the child to wake it up on mm_release */
+#define CLONE_PARENT	0x00008000	/* set if we want to have the same parent as the cloner */
+#define CLONE_THREAD	0x00010000	/* Same thread group? */
+===HIGHLIGHT===
+lines=1-3
+CLONE_VM：共享整个地址空间
+CLONE_FS：共享根目录和当前目录
+CLONE_FILES：共享打开文件表
+一个位放开一样共享
+===HIGHLIGHT===
+lines=4-4
+CLONE_SIGHAND：共享信号处理函数
+线程之间信号处理必须一致
+===HIGHLIGHT===
+lines=9-9
+CLONE_THREAD：进同一个线程组
+fork：这些位全不带，什么都不共享
+pthread_create：VM FS FILES
+SIGHAND THREAD 全带上
+
+[narration]
+隔离要多彻底，Linux 没有写死。新任务都由 clone 造出来，一个标志位放开一样共享。fork 一个位都不带，得到全隔离的进程；创建线程把共享内存、文件、信号处理这几位全带上，得到共享一切的线程。所以进程和线程不是两种东西，是同一种任务的两个隔离级别。
+
+---
+
+## 14 跟数据库的事务隔离像在哪
+
+[visual: ascii title="事务隔离 vs 进程隔离"]
+┌──────────────────────┐   ┌──────────────────────┐
+│ 数据库               │   │ 内核                 │
+├──────────────────────┤   ├──────────────────────┤
+│ 一个事务             │   │ 一个 task            │
+│ MVCC 私有快照        │   │ 私有地址空间         │
+│ 隔离级别             │   │ clone 的标志位       │
+│ 一个事务 abort       │   │ 一个进程段错误       │
+│ 别人不受污染         │   │ 只死它自己           │
+└──────────────────────┘   └──────────────────────┘
+  两处本质不同：
+  1 数据库隔离语义，内核只隔离地址
+  2 事务会 commit，进程隔离一直生效
+
+[sidebar]
+C3·互不信任
+PostgreSQL -> 每连接一进程
+MySQL -> 每连接一线程
+隔离越彻底越贵
+
+[narration]
+你熟的数据库也在解同一道题：多份互不信任的工作共用一份资源。PostgreSQL 每个连接一个进程，一个后端段错误只死它自己；MySQL 每个连接一个线程，选的是另一端。但有两处本质不同：内核只保证你碰不到别人的字节，对数据语义一无所知；进程也没有 commit 这一步，要共享就得一开始共享，或者显式开口。
+
+---
+
+## 15 第四刀：文件怎么变成地址空间
+
+[visual: text title="第四刀：盘上是文件，任务要的是页表"]
+文件得写清楚：哪段放哪、什么权限、从哪开始跑
+内存装不下也不该装：一次运行只碰一小部分
+复制要便宜：先 fork 复制，再 execve 换剧本
+
+[sidebar]
+写文件的 -> 编译器
+读文件的 -> 内核
+程序总量 -> 远大于内存
+fork -> 不能真复制
+
+[example]
+写这个文件的是编译器，读它的是内核，新编译器编出的文件要能被几年前的内核装载。
+
+浏览器的二进制几百 MB，启动时根本不会跑到打印模块。
+
+Redis 的堆有二十 GB，如果 fork 真的复制内容，谁也用不起。
+
+[narration]
+每个任务有了私有地址空间，那它从哪来？程序在盘上是一个文件，任务需要的是一张页表，中间隔着三个问题。
+
+---
+
+## 16 三个问题，三样东西
+
+[visual: ascii title="一条约束的三个面，各逼出一样东西"]
+┌─────────────────┬─────────────────┬─────────────────┐
+│ 编译与运行分离  │ 内存小程序大    │ 复制必须便宜    │
+├─────────────────┼─────────────────┼─────────────────┤
+│ ELF 格式        │ 只建地图        │ fork 只抄页表   │
+│ 段表给内核读    │ 不搬内容        │ 物理页共享      │
+│ 节表给链接器读  │ 碰到才缺页搬    │ 全部标成只读    │
+│ 入口写在文件头  │ 只读页十份共用  │ 谁写谁复制      │
+└─────────────────┴─────────────────┴─────────────────┘
+
+[sidebar]
+C4·文件不等于内存
+ELF -> 双方的约定
+VMA -> 只记地图
+COW -> copy on write
+
+[narration]
+工具链和内核是不同方，文件是它们唯一的渠道，于是有了 ELF：段表告诉内核哪段放哪，节表留给链接器。内存装不下，于是 execve 只建地图不搬内容，真碰到才由缺页搬一页进来，只读的代码页十个 bash 共用一份。复制要便宜，于是有了 copy on write。这就是第四条约束 C4 文件不等于内存。
+
+---
+
+## 17 copy on write 的真实触发链
+
+[visual: timeline title="Redis bgsave：一次 fork 之后谁先写谁复制"]
+T=1 [fork] 只复制页表，20 GB 堆约 100 ~ 260 ms
+T=2 [fork] 父子共享全部物理页，都标成只读
+T=3 [子进程] 只读不写，把整份快照写进 RDB 文件
+T=4 [父进程] 处理一条 SET，写某一页
+T=5 [MMU] 写只读页，触发缺页异常
+T=6 [缺页处理] 给父进程分一页新物理页，拷贝 4 KB
+T=7 [缺页处理] 改父进程这一项映射为可写，返回重做
+
+[narration]
+看 Redis 的后台快照。fork 只复制页表，按机器不同，二十 GB 的堆要一百到两百六十毫秒。父子共享全部物理页，都标成只读。子进程只读不写。父进程一写，MMU 报缺页，内核在缺页处理里给它分一页新的、拷四 KB、改映射，一次大约两微秒多。缺页从此不再是错误，而是内核最常用的工具：按需装载是缺页，共享库是缺页，copy on write 也是缺页。
+
+---
+
+## 18 第五刀：内核插不上手
+
+[visual: ascii title="三扇门进来，一扇出口出去"]
+   系统调用          中断              异常
+ 任务主动请求     设备完成、闹钟    碰了没映射的页
+      ▼                ▼                 ▼
+┌──────────────────────────────────────────────┐
+│ ring 0：内核代码跑在这条流自己的 CPU 上      │
+└──────────────────────────────────────────────┘
+                       ▼
+┌──────────────────────────────────────────────┐
+│ 唯一出口：返回 ring 3 之前查一遍             │
+│ 该换人了吗？有没有人留了纸条（signal）？     │
+└──────────────────────────────────────────────┘
+
+[sidebar]
+C5·改流必经打断
+系统调用 -> C3 逼出
+中断 -> C1 逼出
+异常 -> C4 逼出
+
+[narration]
+可你按下 ctrl C，或者它的子进程死了，内核怎么插手？内核没有自己的 CPU，只能在某条流进内核的瞬间跑。进来的门只有三扇：系统调用是任务主动请求，中断是设备完成，异常是碰了没映射的页。出去却只有一条路，内核把所有要对任务做的事，全挂在这条路上。这是第五条约束 C5 改流必经打断。
+
+---
+
+## 19 出口上挂了什么
+
+[visual: code_explain lang=c title="返回用户态前的最后一道检查（Linux 6.12 kernel/entry/common.c）"]
+__always_inline unsigned long exit_to_user_mode_loop(struct pt_regs *regs,
+						     unsigned long ti_work)
+{
+	/*
+	 * Before returning to user space ensure that all pending work
+	 * items have been completed.
+	 */
+	while (ti_work & EXIT_TO_USER_MODE_WORK) {
+
+		local_irq_enable_exit_to_user(ti_work);
+
+		if (ti_work & _TIF_NEED_RESCHED)
+			schedule();
+
+		if (ti_work & _TIF_UPROBE)
+			uprobe_notify_resume(regs);
+
+		if (ti_work & _TIF_PATCH_PENDING)
+			klp_update_patch_state(current);
+
+		if (ti_work & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL))
+			arch_do_signal_or_restart(regs);
+
+		if (ti_work & _TIF_NOTIFY_RESUME)
+			resume_user_mode_work(regs);
+
+		/* Architecture specific TIF work */
+		arch_exit_to_user_mode_work(regs, ti_work);
+
+		/*
+		 * Disable interrupts and reevaluate the work flags as they
+		 * might have changed while interrupts and preemption was
+		 * enabled above.
+		 */
+		local_irq_disable_exit_to_user();
+
+		/* Check if any of the above work has queued a deferred wakeup */
+		tick_nohz_user_enter_prepare();
+
+		ti_work = read_thread_flags();
+	}
+
+	/* Return the latest work state for arch_exit_to_user_mode() */
+	return ti_work;
+}
+===HIGHLIGHT===
+lines=8-13
+while：还有待办就不放行
+NEED_RESCHED：该换人了
+直接调 schedule() 让出 CPU
+抢占就落在这里
+===HIGHLIGHT===
+lines=21-22
+SIGPENDING：有人留了纸条
+arch_do_signal_or_restart
+改造用户栈，回去先跑 handler
+===HIGHLIGHT===
+lines=35-41
+关中断，重新读一遍标志位
+处理期间可能又来了新活
+清空了才真正回到 ring 3
+
+[narration]
+如果一切都挂在出口上，出口代码里应该能看到查换人和查信号。翻开六点一二，返回用户态前就是这样一个循环。第一段，标了该换人，就当场调 schedule。第二段，有待处理的信号，就改造用户栈，让它回去先跑 handler。第三段，关中断重新读一遍标志，清干净了才放行。
+
+---
+
+## 20 signal 为什么从不插在两条指令中间
+
+[visual: spotlight]
+signal 看起来异步
+投递却总落在某次进出之后
+
+[narration]
+发信号的一方只在目标的账本上记一个待处理位，目标在睡就顺手叫醒。真正投递，发生在目标下一次经过出口时。所以 handler 从不会凭空插进你两条指令中间。同样道理，要换下一个从不进内核的死循环，就得有人把它打进来，闹钟就是那个人。
+
+---
+
+## 21 第六刀：自己没法收拾自己
+
+[visual: text title="第六刀：资源有限，又没有垃圾回收"]
+pid 默认上限 32768，可调到 4194304
+内存、fd 表都有限，内核没有 GC
+任务不能释放自己脚下的内核栈和账本
+退出码还得交给父进程
+
+[sidebar]
+pid -> 有限
+fd 表 -> 有限
+内核栈 -> 自己拆不了
+退出码 -> 要有人来取
+
+[example]
+一个 fork 炸弹，几秒钟就能把 pid 用光，之后谁也起不了新进程。
+
+任务调 exit 时，正跑在自己的内核栈上，用着自己的账本。这两样只能由别人在它彻底停下之后释放。
+
+[narration]
+任务会结束，它占的内存、文件、pid 都得还回去，漏一样就是泄漏。可有两件事，它自己做不到。
+
+---
+
+## 22 两段式退出
+
+[visual: statemap title="exit 两段式：大头自己还，收尾靠别人"]
+运行中
+exit：释放内存、文件，子进程托付给 init
+僵尸：只剩账本和退出码
+父进程 wait：取走退出码
+账本销毁，pid 归还
+
+[narration]
+所以 exit 分两段。第一段自己还大头：释放地址空间、关文件、把孩子托付给 init。然后变成僵尸，只剩账本和退出码，发一个 SIGCHLD 纸条给父进程。第二段由父进程 wait 收走最后一截。父进程先死，就由 init 收养，保证每具僵尸总有人收。这就是第六条约束，资源有限须归还。
+
+---
+
+## 23 僵尸是解法，不是约束
+
+[visual: code_explain lang=c title="退出时决定留不留僵尸（Linux 6.12 kernel/exit.c exit_notify）"]
+	write_lock_irq(&tasklist_lock);
+	forget_original_parent(tsk, &dead);
+
+	if (group_dead)
+		kill_orphaned_pgrp(tsk->group_leader, NULL);
+
+	tsk->exit_state = EXIT_ZOMBIE;
+	/*
+	 * sub-thread or delay_group_leader(), wake up the
+	 * PIDFD_THREAD waiters.
+	 */
+	if (!thread_group_empty(tsk))
+		do_notify_pidfd(tsk);
+
+	if (unlikely(tsk->ptrace)) {
+		int sig = thread_group_leader(tsk) &&
+				thread_group_empty(tsk) &&
+				!ptrace_reparented(tsk) ?
+			tsk->exit_signal : SIGCHLD;
+		autoreap = do_notify_parent(tsk, sig);
+	} else if (thread_group_leader(tsk)) {
+		autoreap = thread_group_empty(tsk) &&
+			do_notify_parent(tsk, tsk->exit_signal);
+	} else {
+		autoreap = true;
+	}
+
+	if (autoreap) {
+		tsk->exit_state = EXIT_DEAD;
+		list_add(&tsk->ptrace_entry, &dead);
+	}
+
+	/* mt-exec, de_thread() is waiting for group leader */
+	if (unlikely(tsk->signal->notify_count < 0))
+		wake_up_process(tsk->signal->group_exec_task);
+	write_unlock_irq(&tasklist_lock);
+
+	list_for_each_entry_safe(p, n, &dead, ptrace_entry) {
+		list_del_init(&p->ptrace_entry);
+		release_task(p);
+	}
+===HIGHLIGHT===
+lines=7-7
+默认先标成 EXIT_ZOMBIE
+账本留着，等父进程来取
+===HIGHLIGHT===
+lines=21-26
+线程组领头：通知父进程
+do_notify_parent 发 SIGCHLD
+父进程把 SIGCHLD 设成忽略
+它就返回 true，表示自动回收
+===HIGHLIGHT===
+lines=28-41
+autoreap：直接标 EXIT_DEAD
+挂进 dead 链表
+当场 release_task，不留僵尸
+
+[narration]
+僵尸是不是必须的？看源码。退出时先标成僵尸；但通知父进程时，如果父进程事先声明不关心退出码，把 SIGCHLD 设成忽略，函数就返回真，内核直接标成已死、当场回收，一具僵尸都不留。约束是资源必须有归还点，僵尸只是其中一种解法。
+
+---
+
+## 24 第七刀：机器有 64 个核
+
+[visual: ascii title="一张全局队列 vs 每核一张队列"]
+┌──────────────────────────┐   ┌──────────────────────────┐
+│ 全局一条就绪队列         │   │ 每核一条就绪队列         │
+├──────────────────────────┤   ├──────────────────────────┤
+│ 64 个核抢一把锁          │   │ 各挑各的，不抢锁         │
+│ 任务随便换核             │   │ 尽量留在热缓存的核上     │
+│ 缓存一换就冷             │   │ 周期性负载均衡           │
+│ 2.4 内核死在这把锁上     │   │ 跨核踢人：发 IPI         │
+└──────────────────────────┘   └──────────────────────────┘
+  同插槽核间约 60 ns，跨插槽约 150 ns
+
+[sidebar]
+C7·核各自为政
+C2·霸台不可预知
+搬不搬 -> 只能猜
+IPI -> 核间中断
+
+[narration]
+一个核上的一辈子齐了，可机器有 64 个核，三件事变了。排班表成了共享数据，64 个核抢一把锁，2.4 内核的全局队列就是这么死的。核各有各的缓存，任务挪个核等于冷启动，搬不搬划算只能猜，C2 又出场了。核之间也没有共享的闹钟，核零想让核一换人，只能发一个核间中断。这就是第七条约束 C7 核各自为政。
+
+---
+
+## 25 七条约束对上四幕
+
+[visual: layers title="七刀七条，对上一辈子四幕"]
+出生：C4 文件不等于内存、C3 互不信任
+活着：C1 C2 C3 C5 C7
+死亡：C6 资源有限须归还、C5 改流必经打断
+旁观：不被约束逼出，账本本来就在
+
+[narration]
+七刀砍完，四幕到齐。旁观不是逼出来的，ps 和 top 只是给本来就在的账本开了扇窗。原始痛点有二十一条，合并同一事实的不同面压成十一条，再按刀压成七条；再往下压，就离机制太远，定位不了任何东西了。
+
+---
+
+## 26 这些常被当成约束，其实不是
+
+[visual: text title="先问一句：是约束，还是选择？"]
+fork + execve 两步 -> 历史选择
+100 ms 内响应 -> 目标
+调度要公平 -> 策略
+必须是 ELF -> 约定
+必须有僵尸、必须抢占 -> 解法
+
+[sidebar]
+约束 -> 改不了
+目标 -> 不逼出形状
+策略 -> 可以换
+解法 -> 可以绕开
+
+[example]
+Windows 的 CreateProcess 一步就造出新进程，posix_spawn 也是一步。两步走是 Unix 七十年代的选择，靠 copy on write 才变得便宜。
+
+实时调度 SCHED_FIFO 就不公平，可它照样是合法的调度策略。
+
+[narration]
+用这把尺子筛一遍，很多看起来天经地义的东西都不是约束。以后讲到任何一个设计，先问它是被哪条约束逼出来的，还是某个选择。前者改不了，后者可以换。
+
+---
+
+## 27 三个洞察
+
+[visual: text title="把七条约束化解掉的三个洞察"]
+一本账把一台机器虚拟成 N 台
+内核是被动的：只在门口介入
+用缺页换拷贝
+
+[sidebar]
+洞察一 -> 切换要付 TLB
+洞察二 -> 抢占精度等于 tick
+洞察三 -> 首次触碰慢一下
+
+[example]
+一次保存恢复，换来一个专属 CPU 的假象；一张页表，换来一台专属机器的假象。线程是只要 CPU 假象、不要内存假象的任务。
+
+execve 和 fork 快到可以随手用，是因为它们都没干活，活被切成四 KB 一份，留给以后的缺页去干。
+
+[narration]
+三个洞察，缺一不可。没有第三个，fork 用不起，第一个的 N 台只能是很小的 N；没有第二个，隔离就有漏洞，假象就是假的；没有第一个，后两个无从谈起。
+
+---
+
+## 28 本集总结
+
+[visual: html_slide image="pics/ep2-summary-card.png" title=进程为什么长成这样]
+
+[step: auto]
+scroll auto
+
+[narration]
+收一下这一集。一，CPU 快 IO 慢，逼出轮流和可存取的现场。二，程序霸台又猜不透，逼出闹钟和靠历史猜的调度。三，互不信任，逼出页表、特权级和系统调用。四，文件不等于内存，逼出只建地图和 copy on write。五，内核只能在门口介入。六，资源要有归还点，僵尸只是解法之一。七，每核一张表，跨核靠核间中断。
+
+---
+
+## 29 下集预告
+
+[visual: spotlight title=下集预告]
+本集就到这里，下集见
+下集：hello 的一辈子，每一站怎么走
+
+[narration]
+本集就到这里，下集见。七条约束只说了必须解决什么，没说内核用哪几样东西、按什么顺序解决。下一集，我们跟着一个 hello 程序，从 execve 走到 exit，看每一站到底怎么做。
+
+---

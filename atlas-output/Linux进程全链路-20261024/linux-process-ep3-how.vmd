@@ -1,0 +1,910 @@
+# 第 3 集 How 阶段 — 敲下 ./hello 之后，内核只动了三本账
+
+[intro-line] 今天跟着一个 hello 程序走完出生、活着、死亡三幕，看 Linux 内核到底只动了哪三本账。
+
+## 1 How 阶段开场
+
+[visual: spotlight]
+现在我们来拆解 How 阶段
+一个进程内部到底怎么工作？
+
+[narration]
+你在终端敲下点杠 hello，回车。不到一毫秒，屏幕打出 hi 7。这一毫秒里，内核建了什么、改了什么、又还了什么？这一集，我们跟着这个程序走完它的一辈子。
+
+---
+
+## 2 贯穿全集的 hello
+
+[visual: code lang=c title="贯穿本集的 hello.c（非 PIE 编译，地址稳定好对账）"]
+#include <stdio.h>
+int   counter = 7;          /* .data：文件里真有 4 字节 */
+static int buf[1024];       /* .bss：文件里没有，只记 4 KiB 清零 */
+const char *msg = "hi";     /* "hi" 在 .rodata */
+int main(void) {
+    buf[0] = counter;
+    printf("%s %d\n", msg, buf[0]);
+    return 0;
+}
+===HIGHLIGHT===
+lines=2-4
+三个变量，三种来源
+counter：文件里真有一个 7
+buf：文件里只记长度，要用时清零
+"hi"：只读区，写它就段错误
+后面每一种缺页都会碰到它们
+
+[narration]
+整集只用这一个小程序。三个变量各有来头：counter 在文件里真有个 7，buf 在文件里只记了一句要 4 KiB 的零，hi 放在只读区。记住它们，后面每一种缺页，都会落在其中一个身上。
+
+---
+
+## 3 内核手里只有三本账
+
+[visual: layers title=三本账：一个进程在内核里的全部]
+账本一 mm_struct + 页表：地址空间，应该有什么、真有什么
+账本二 task_struct + 内核栈：执行流，走到哪了、在等什么
+账本三 每核就绪队列 + 出口检查点：谁上台、在哪换人
+
+[sidebar]
+账本一：C3 + C4 逼出
+账本二：C1 逼出
+账本三：C2 + C5 + C7 逼出
+线程：共享账本一
+
+[narration]
+上一集说，进程就是用一本账把一台机器虚拟成很多台。落到内核里，这本账拆成三样：地址空间、执行流、就绪队列加出口检查点。线程，就是共享同一个地址空间的多个执行流。
+
+---
+
+## 4 一张图看四幕
+
+[visual: html_slide image="pics/03-overview.png" title="三本账 x 四幕：内核只在三扇门后面干活"]
+
+[step: auto]
+scroll auto
+
+[narration]
+横着看是四幕：出生、活着、死亡、旁观；竖着看是用户态、内核、硬件三层。盯住橙色箭头：execve、写文件、碰到没映射的页、被闹钟打断，全都从三扇门之一进内核，没有第四条路。三本账全在中间的内核带里。
+
+---
+
+## 5 页表怎么翻译一个地址
+
+[visual: ascii title="x86-64 四级页表：一个地址切五段"]
+ 47      39 38      30 29      21 20      12 11        0
+ ┌─────────┬─────────┬─────────┬─────────┬────────────┐
+ │ PGD idx │ PUD idx │ PMD idx │ PTE idx │  页内偏移  │
+ │  9 位   │  9 位   │  9 位   │  9 位   │   12 位    │
+ └─────────┴─────────┴─────────┴─────────┴────────────┘
+
+ main = 0x401136
+ ┌──────┐   ┌──────┐   ┌──────┐   ┌──────┐   ┌─────────┐
+ │ CR3  │──>│PGD[0]│──>│PUD[0]│──>│PMD[2]│──>│ PTE[1]  │
+ └──────┘   └──────┘   └──────┘   └──────┘   └────┬────┘
+                                                  ▼
+                                    物理页号 + 0x136 = 物理地址
+
+ 每级 512 项 x 8 字节 = 一页 4 KiB
+ 四次访存才翻译一个地址，所以要有 TLB
+
+[sidebar]
+CR3：页表根
+PTE 低位：P / RW / US / NX
+P=0：缺页异常
+TLB：翻译结果缓存
+
+[narration]
+硬件那一半先讲清。地址被切成五段，前四段各是一级表的下标。拿 main 的地址 0x401136 对账：CR3 指到第一级，下标依次是 0、0、2、1，最后加偏移 0x136。四次访存才翻译一个地址，所以才有 TLB 缓存翻译结果。
+
+---
+
+## 6 页表项里的五个开关
+
+[visual: text title="后面每个机制都靠 PTE 里的这几位"]
+P：页在不在物理内存，0 就触发缺页
+R/W：能不能写，0 时写入触发缺页，copy on write 全靠它
+U/S：用户态能不能碰，高 128 TiB 的内核半区全是 0
+NX：不可执行，栈和堆靠它
+
+[sidebar]
+用户半区：0 到 128 TiB
+内核半区：所有进程共享
+切进程：写 CR3
+线程切换：不写 CR3
+
+[example]
+比如你在用户态读一个 0xffff8000 开头的内核地址：映射明明在，可 U/S 位是 0，CPU 直接拒绝，你收到一个段错误。不是内核藏起来了，是 CPU 不让看。
+
+[narration]
+记住这五位就够了。切到另一个进程，就是往 CR3 写一个新的页表根，代价不在这条指令，在 TLB：旧条目全部作废，新任务头几次访存都得重新查四级表。同一进程的线程切换跳过这一步，这就是线程切换便宜的全部原因。
+
+---
+
+## 7 hello 的地址空间
+
+[visual: html_slide image="pics/03-layout.png" title="hello 的地址空间：左边是布局，右边是内核的账"]
+
+[step: auto]
+scroll auto
+
+[narration]
+左边从下往上，地址由低到高：最底下不映射，空指针在这里炸；往上是代码、只读数据、数据加 bss，再往上是向上长的堆；隔着大片空洞，是向下长的 mmap 区，libc 住这儿；最上面是栈和内核半区。中间方框是 mm struct，右边每一条，都是一条 VMA，也就是 maps 里的一行。
+
+---
+
+## 8 为什么要两本账
+
+[visual: text title="VMA 记应该有什么，页表记真有什么"]
+只有页表：缺页时不知道这地址该不该有、从哪拿
+只有 VMA：MMU 不认识，硬件只走四级表
+合成一本：20 GB 堆要 524 万条带文件信息的记录
+
+[sidebar]
+VMA：按段记，几十字节一条
+页表：按页记，只记已有的
+差值：缺页要填的东西
+execve 后：VMA 约 20 条
+
+[example]
+hello 刚 execve 完，页表几乎全空。第一条指令一取就缺页，内核查 VMA：这地址属于代码段、来自 hello 文件第 1 页，于是供页、填表、回去重来。
+
+[narration]
+为什么要两本？VMA 是地图的说明书：哪段合法、什么权限、内容从哪来；页表是硬件能读的那一本，只记已经到位的页。两本账的差，正好就是缺页异常要补的东西。一个 20 GB 的堆，在 VMA 里也只是一条记录。
+
+---
+
+## 9 出生幕：fork 先走
+
+[visual: spotlight]
+出生第一步不是 execve
+是 bash 先 fork 一份自己
+
+[narration]
+你敲下回车，第一个动手的不是 hello，而是 bash。它先 fork 出一个孩子，孩子再去 execve。可 fork 到底复制了什么？
+
+---
+
+## 10 fork 复制账本，不复制内容
+
+[visual: ascii title="fork 之后：两本账，一份物理页"]
+   父进程 bash                     子进程 bash
+ ┌──────────────────┐           ┌──────────────────┐
+ │ task_struct      │ 复制一份  │ task_struct      │
+ │ pt_regs.rax = pid│ ────────> │ pt_regs.rax = 0  │
+ ├──────────────────┤           ├──────────────────┤
+ │ VMA 串           │ 逐条复制  │ VMA 串           │
+ ├──────────────────┤           ├──────────────────┤
+ │ 页表 RW=0        │ 逐项复制  │ 页表 RW=0        │
+ └────────┬─────────┘           └────────┬─────────┘
+          │                              │
+          └──────────────┬───────────────┘
+                         ▼
+               ┌───────────────────┐
+               │ 同一批物理页      │
+               │ 引用计数 +1       │
+               └───────────────────┘
+ fd 表：复制一份；struct file：共享，引用计数 +1
+
+[sidebar]
+复制：VMA 和页表项
+不复制：物理页
+写保护：父子两边都清
+子进程 fork 返回 0
+
+[narration]
+原理先讲清。fork 只复制 VMA 和页表项，物理页一页不拷，只把父子两边的可写位都清掉，引用计数加一。fd 表也复制一份，表里指向的打开文件却是共享的，靠引用计数。孩子的寄存器现场拷自父亲，只把返回值改成 0。代价只剩复制页表，Redis 每 GB 堆大约十毫秒，就花在这里。
+
+---
+
+## 11 四种出生方式，只差几个旗标
+
+[visual: layers title="fork / vfork / 线程 / posix_spawn：差在共享什么"]
+fork：什么都不带旗标，全复制，靠 copy on write
+vfork：CLONE_VM + CLONE_VFORK，共享地址空间，父进程挂起
+pthread_create：CLONE_VM + FILES + SIGHAND + THREAD，只新建执行流
+posix_spawn：glibc 用 CLONE_VM + CLONE_VFORK，实际是 vfork 加 exec
+
+[narration]
+同一个内核入口，靠旗标决定复制还是共享。fork 全复制；vfork 连页表都不抄，父进程挂起等孩子 exec；线程什么都共享，只新建执行流。posix spawn 在 glibc 里就是 vfork 加 exec。现在，孩子要执行 hello 了。
+
+---
+
+## 12 execve 一张图
+
+[visual: html_slide image="pics/03-execve.png" title="execve：从盘上的 ELF 到第一条用户指令"]
+
+[step: auto]
+scroll auto
+
+[narration]
+左边是盘上的 hello。内核只看蓝色那块段表：放哪、放什么、什么权限、入口在哪、找谁做剩下的事。橙色那些节留给 ld.so 和调试器。中间是内核走的七步，右边是回到用户态之后的事。右下角写着内核没做的事：没读代码，没做重定位，没装 libc。
+
+---
+
+## 13 execve 的七步
+
+[visual: timeline title="load_elf_binary 七步（Linux 6.12 fs/binfmt_elf.c）"]
+T=1 [begin_new_exec] 不可回头点：杀其他线程，换一本全新 mm
+T=2 [setup_arg_pages] argv 和 envp 挪到最终栈位置，建栈 VMA
+T=3 [elf_load] 每个 PT_LOAD 建一条私有文件映射，一字节不读
+T=4 [start_brk] 在最后一段之后定堆的起点，加随机偏移
+T=5 [load_elf_interp] 有 INTERP 就把 ld.so 也映射进来
+T=6 [create_elf_tables] 栈上摆 argc、argv、envp、auxv
+T=7 [start_thread] 改 pt_regs 的 ip 和 sp，入口是 ld.so
+
+[narration]
+七步里，前六步都在建地图，没有一步搬内容。第三步给每个段建一条私有文件映射，bss 超出文件的那截补一条匿名映射。第六步摆的 auxv，是内核留给 ld.so 的纸条。fork 抄来的那本旧账本，在第一步就丢了，只活了几微秒。
+
+---
+
+## 14 改两个寄存器，就算出生
+
+[visual: code_explain lang=c title="start_thread_common：只改内核栈顶的 pt_regs（Linux 6.12 arch/x86/kernel/process_64.c）"]
+static void
+start_thread_common(struct pt_regs *regs, unsigned long new_ip,
+		    unsigned long new_sp,
+		    u16 _cs, u16 _ss, u16 _ds)
+{
+	WARN_ON_ONCE(regs != current_pt_regs());
+
+	if (static_cpu_has(X86_BUG_NULL_SEG)) {
+		/* Loading zero below won't clear the base. */
+		loadsegment(fs, __USER_DS);
+		load_gs_index(__USER_DS);
+	}
+
+	reset_thread_features();
+
+	loadsegment(fs, 0);
+	loadsegment(es, _ds);
+	loadsegment(ds, _ds);
+	load_gs_index(0);
+
+	regs->ip	= new_ip;
+	regs->sp	= new_sp;
+	regs->csx	= _cs;
+	regs->ssx	= _ss;
+===HIGHLIGHT===
+lines=2-6
+作用：给新程序伪造用户态现场
+参数 regs：当前任务内核栈顶的 pt_regs
+参数 new_ip：入口，有 INTERP 时是 ld.so
+参数 new_sp：create_elf_tables 摆好的栈顶
+断言：只能改自己的现场
+===HIGHLIGHT===
+lines=16-19
+清掉旧程序留下的段寄存器
+fs 清零：TLS 由 ld.so 稍后重设
+其余通用寄存器此前已由 ELF_PLAT_INIT 清零
+新程序不会继承旧程序的任何值
+===HIGHLIGHT===
+lines=21-24
+真正的出生就是这四行
+ip：回用户态后取的第一条指令
+sp：用户栈顶，argc 就在这里
+cs / ss：用户态段，回到 ring 3
+
+[narration]
+新程序怎么开始跑？答案很朴素：不跳转，不调用，只改内核栈顶那份现场。第一段确认改的是自己；第二段清掉旧程序的段寄存器；第三段写入新的 ip 和 sp。execve 返回时，CPU 把这份现场装回去，就落在 ld.so 的第一条指令上。
+
+---
+
+## 15 为什么先换账本，再建地图
+
+[visual: text title="不可回头点：之前返回错误码，之后只能杀掉"]
+读 ELF 头、验格式、打开 ld.so：全在换账本之前
+建 VMA 的机制只认当前账本，所以换完再建
+杀掉其他线程本来就不可逆，干脆放在同一个点
+
+[sidebar]
+之前失败：返回错误码
+之后失败：只能 SIGSEGV
+ld.so 不存在：ENOENT
+罕见：文件损坏或内存耗尽
+
+[example]
+比如 hello 依赖的 ld.so 被误删了。内核在换账本之前就去打开它，打不开，execve 返回 ENOENT，bash 还活着，打出 No such file or directory。
+
+[narration]
+为什么不先在旁边建好新账本，成功了再换？因为建映射、清 bss、处理缺页这整套代码，默认操作的都是当前任务的地址空间。所以内核的办法是：能提前验的全部提前验完，再一次性跨过不可回头点。之前失败返回错误码，之后失败只能杀掉，规则只有一条。
+
+---
+
+## 16 第一条指令不是 main
+
+[visual: timeline title="从 ld.so 到 main：全在用户态，内核只供缺页"]
+T=1 [ld.so _start] 先给自己重定位，再读 auxv 找到 hello
+T=2 [装 libc] open 加 mmap 四次，按 libc 的段表建映射
+T=3 [填 GOT] 外部符号地址写进 hello 的 GOT，第一次写数据页
+T=4 [初始化] 跑 libc 构造函数，arch_prctl 设好 TLS
+T=5 [hello _start] 从栈上取 argc、argv，调 __libc_start_main
+T=6 [main] 读 counter、写 buf，printf 最后落到 write
+
+[narration]
+回到用户态，第一条指令在 ld.so。它读那张纸条找到 hello，自己 mmap 装 libc，动作跟内核装 hello 一样，只是在用户态做，所以 LD PRELOAD 能插队。往 GOT 填地址，是 hello 第一次写数据页，触发一次 copy on write。走完这些，才轮到 main。
+
+---
+
+## 17 在 Linux 上怎么验证
+
+[visual: text title="实验设计：数一数 hello 一辈子缺了多少页"]
+用 strace -T 看 execve 自己花了多久
+用 /usr/bin/time -v 看主缺页和次缺页各几次
+让 hello 停在 main 里，数 /proc/<pid>/maps 的行数
+
+[sidebar]
+execve：微秒级
+次缺页：几十次
+主缺页：通常 0
+maps：约 20 行
+
+[example]
+在 Linux 上跑 /usr/bin/time -v ./hello，预期 Major page faults 是 0，因为三个文件早在 page cache 里；Minor page faults 是几十次。strace -T 里 execve 是微秒级，和程序大小无关。
+
+[narration]
+推理先摆在这：既然 execve 只建地图，它的耗时就不该随程序变大；既然内容都在缓存里，缺页就该全是不等盘的次缺页；地图本身，大约 20 条 VMA。实验以 Linux 为准，三条命令分别去验这三个推断。
+
+---
+
+## 18 活着幕：三扇门一扇出口
+
+[visual: spotlight]
+三扇门进内核
+只有一扇出口
+
+[narration]
+hello 跑起来了。它要打印、要访存、还可能一直算个不停。内核什么时候能插手？
+
+---
+
+## 19 三扇门一张图
+
+[visual: html_slide image="pics/03-gates.png" title="三扇门一扇出口：调度和 signal 都只发生在出口"]
+
+[step: auto]
+scroll auto
+
+[narration]
+最上面三格是三种进门方式：系统调用、定时器中断、缺页异常。进门时做同一件事：换到本任务的内核栈，把用户态寄存器压成一份 pt regs。中间三格各自干活，最后全部汇进绿色框，出口检查点。换人、投递 signal，都在这里。
+
+---
+
+## 20 系统调用与时钟中断：两条进门路
+
+[visual: ascii title="门一 系统调用 vs 门二 时钟中断"]
+  门一：write 系统调用         门二：APIC 定时器到点
+ ┌─────────────────────┐      ┌─────────────────────┐
+ │ syscall 指令        │      │ CPU 查 IDT          │
+ │ rip 存 rcx 不压栈   │      │ 硬件换栈、压五个值  │
+ └──────────┬──────────┘      └──────────┬──────────┘
+            ▼                            ▼
+ ┌─────────────────────┐      ┌─────────────────────┐
+ │ entry_SYSCALL_64    │      │ scheduler_tick      │
+ │ 手工凑出 pt_regs    │      │ 给当前任务记账      │
+ └──────────┬──────────┘      └──────────┬──────────┘
+            ▼                            ▼
+ ┌─────────────────────┐      ┌─────────────────────┐
+ │ sys_call_table[1]   │      │ 到期了？只打标记    │
+ │ 结果写回 pt_regs.ax │      │ TIF_NEED_RESCHED    │
+ └──────────┬──────────┘      └──────────┬──────────┘
+            └─────────────┬──────────────┘
+                          ▼
+               ┌─────────────────────┐
+               │ 出口检查点          │
+               │ sysret 或 iretq     │
+               └─────────────────────┘
+
+[sidebar]
+门一：任务自己进来
+门二：任务拒绝不了
+门三：缺页等异常
+汇合：同一个出口
+
+[narration]
+两条路对比着看。系统调用是任务自己走进来，syscall 指令连栈都不压，所以快。时钟中断是硬件强行打断，CPU 换栈、压现场，然后调度器给当前任务记账；就算它时间片到了，这里也只打一个标记，不换人。两条路最后汇到同一个出口。
+
+---
+
+## 21 出口检查点的真身
+
+[visual: code_explain lang=c title="exit_to_user_mode_loop：回用户态前的最后一道关（Linux 6.12 kernel/entry/common.c）"]
+__always_inline unsigned long exit_to_user_mode_loop(struct pt_regs *regs,
+						     unsigned long ti_work)
+{
+	/*
+	 * Before returning to user space ensure that all pending work
+	 * items have been completed.
+	 */
+	while (ti_work & EXIT_TO_USER_MODE_WORK) {
+
+		local_irq_enable_exit_to_user(ti_work);
+
+		if (ti_work & _TIF_NEED_RESCHED)
+			schedule();
+
+		if (ti_work & _TIF_UPROBE)
+			uprobe_notify_resume(regs);
+
+		if (ti_work & _TIF_PATCH_PENDING)
+			klp_update_patch_state(current);
+
+		if (ti_work & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL))
+			arch_do_signal_or_restart(regs);
+
+		if (ti_work & _TIF_NOTIFY_RESUME)
+			resume_user_mode_work(regs);
+
+		/* Architecture specific TIF work */
+		arch_exit_to_user_mode_work(regs, ti_work);
+
+		/*
+		 * Disable interrupts and reevaluate the work flags as they
+		 * might have changed while interrupts and preemption was
+		 * enabled above.
+		 */
+		local_irq_disable_exit_to_user();
+
+		/* Check if any of the above work has queued a deferred wakeup */
+		tick_nohz_user_enter_prepare();
+
+		ti_work = read_thread_flags();
+	}
+
+	/* Return the latest work state for arch_exit_to_user_mode() */
+	return ti_work;
+}
+===HIGHLIGHT===
+lines=1-8
+作用：回 ring 3 前把待办全部办完
+参数 regs：本任务内核栈顶的 pt_regs
+参数 ti_work：thread_info 上的标记位
+有任何待办就进循环
+===HIGHLIGHT===
+lines=12-13
+NEED_RESCHED：时钟中断或唤醒留下的标记
+schedule：唯一的换人函数
+回来时可能已过去几毫秒，任务自己不知道
+===HIGHLIGHT===
+lines=21-22
+SIGPENDING：有人发了 signal
+默认动作：终止或 core dump
+有 handler：改 pt_regs 让它去跑 handler
+===HIGHLIGHT===
+lines=35-41
+关中断后重读标记
+换人回来可能又来了新 signal
+循环到干净为止才放行
+
+[narration]
+带着预测看源码：内核只能在任务进内核时动手，那换人和 signal 都该挂在同一个回程点上。果然，第二段见到重新调度标记就调 schedule；第三段见到 signal 就投递。最后一段办完一轮再重读标记，因为换人回来，可能又有新 signal 到了。
+
+---
+
+## 22 三处标记，一处换人
+
+[visual: text title="换人的三个触发点，真正换人只有 schedule 一处"]
+时钟中断：记账到期，打标记，在出口换
+自己睡：等盘、等锁，直接调 schedule
+唤醒抢占：叫醒的人更该跑，打标记，下次出口换
+
+[sidebar]
+标记：TIF_NEED_RESCHED
+换人：只有 schedule
+中断里：从不换人
+内核态：preempt_count 为 0 才换
+
+[example]
+比如 hello 调 read 等盘，内核把它挂到等待队列上，当场调 schedule。几毫秒后盘的中断把它叫醒，它从当初那个 schedule 里返回，顺着 read 走回出口。schedule 永远回到调它的那一行。
+
+[narration]
+为什么不在时钟中断里直接换？换人要换栈，中断处理的半路上换栈不安全，持锁时换还会死锁；而且该不该换，是调度器的判断，不是定时器的。所以三处只打标记，真正换人只在 schedule 一处。时钟中断的价值在于：它是唯一一扇任务拒绝不了的门。
+
+---
+
+## 23 挑谁上台：调度类与 EEVDF
+
+[visual: layers title="每核一个 rq，按调度类从高到低问"]
+stop：迁移、热插拔用的内核任务，有就它
+deadline：带运行时间和周期的实时任务，最早截止优先
+rt：FIFO 与 RR，优先级 1 到 99
+fair：几乎所有进程，6.6 起用 EEVDF
+idle：没人可跑时进低功耗
+
+[narration]
+schedule 按调度类从高往低问：你有人要跑吗？几乎所有程序都在 fair 类。6.6 起它用 EEVDF：每个任务记一个虚拟运行时间，先筛出没超前的，再挑截止时间最早的。睡得多的任务一醒就落后，很快上台。用过去跑了多少，决定现在该不该跑。
+
+---
+
+## 24 一次时钟中断到换人
+
+[visual: timeline title="hello 被换下的 3 微秒（CONFIG_HZ=250，每 4 ms 一个 tick）"]
+T=0us [门二] APIC 到点，hello 停在两条指令中间
+T=0.1us [件二] 换到 hello 的内核栈，压好 pt_regs
+T=1us [tick] 记账：hello 到期，B 更该跑，打标记
+T=1.5us [出口] 中断处理完，看到标记，调 schedule
+T=2us [pick] fair 类挑中 B
+T=2.2us [switch_mm] 不同进程，写 CR3
+T=2.5us [switch_to] 存 hello 六个寄存器，换到 B 的栈
+T=3us [ring 3] B 从上次被打断的指令继续
+
+[narration]
+看一次完整的换人。hello 在纯算，B 在队列里等。定时器到点，hello 停下；记账发现它到期了，只打个标记。中断处理完，出口看到标记才调 schedule，挑中 B，写 CR3，换栈。直接代价一到三微秒；真正贵的在后面，B 的缓存和 TLB 全是冷的，间接代价从几十到上千微秒。
+
+---
+
+## 25 换栈就是换流
+
+[visual: code_explain lang=asm title="__switch_to_asm：只存六个寄存器，然后换栈（Linux 6.12 arch/x86/entry/entry_64.S）"]
+SYM_FUNC_START(__switch_to_asm)
+	/*
+	 * Save callee-saved registers
+	 * This must match the order in inactive_task_frame
+	 */
+	pushq	%rbp
+	pushq	%rbx
+	pushq	%r12
+	pushq	%r13
+	pushq	%r14
+	pushq	%r15
+
+	/* switch stack */
+	movq	%rsp, TASK_threadsp(%rdi)
+	movq	TASK_threadsp(%rsi), %rsp
+
+#ifdef CONFIG_STACKPROTECTOR
+	movq	TASK_stack_canary(%rsi), %rbx
+	movq	%rbx, PER_CPU_VAR(fixed_percpu_data + FIXED_stack_canary)
+#endif
+
+	/*
+	 * When switching from a shallower to a deeper call stack
+	 * the RSB may either underflow or use entries populated
+	 * with userspace addresses. On CPUs where those concerns
+	 * exist, overwrite the RSB with entries which capture
+	 * speculative execution to prevent attack.
+	 */
+	FILL_RETURN_BUFFER %r12, RSB_CLEAR_LOOPS, X86_FEATURE_RSB_CTXSW
+
+	/* restore callee-saved registers */
+	popq	%r15
+	popq	%r14
+	popq	%r13
+	popq	%r12
+	popq	%rbx
+	popq	%rbp
+
+	jmp	__switch_to
+SYM_FUNC_END(__switch_to_asm)
+===HIGHLIGHT===
+lines=6-11
+作用：把旧任务的内核态现场压到它自己的栈
+参数 rdi：prev 任务；rsi：next 任务
+只压六个：被调用者保存的寄存器
+用户态现场早在 pt_regs 里
+===HIGHLIGHT===
+lines=14-15
+全函数最关键的两行
+旧栈顶记进 prev->thread.sp
+rsp 换成 next->thread.sp
+这一刻起，CPU 跑的是另一条流
+===HIGHLIGHT===
+lines=32-39
+从 next 的栈上弹出它的六个寄存器
+pop 的是 next 上次切走时压的值
+jmp __switch_to：换 TLS 和 TSS 的栈顶
+返回地址也属于 next
+
+[narration]
+第一段，把六个寄存器压到旧任务自己的栈上；第二段只有两行，存下旧栈指针、换成新任务的，这一刻起 CPU 跑的已是另一条流；第三段从新任务栈上弹出它当初压下的六个值。所以 switch to 从一个任务的栈进去，从另一个任务的栈出来。
+
+---
+
+## 26 为什么只存六个
+
+[visual: text title="两段现场：pt_regs 保用户态，switch_to 保内核态"]
+进门时：全部用户态寄存器压成 pt_regs
+换人时：只存 rbp、rbx、r12 到 r15 和 rsp
+其余九个：调用 schedule 前编译器已按 ABI 处理
+
+[sidebar]
+调用者保存：rax rcx rdx 等九个
+被调用者保存：六个
+约定方：System V ABI
+ARM 架构：同理
+
+[example]
+在编译器眼里，schedule 只是一次普通函数调用：调用之后 rax、rcx 这类寄存器本来就算被破坏，而 rbp、rbx、r12 到 r15 必须原样返回。switch to 要伪装成正常返回，所以只保这六个。
+
+[narration]
+为什么不把所有寄存器都存一遍？因为用户态的值早在进门时压进了 pt regs，一个不丢；而内核态这一段，切换只是一次普通的函数调用，调用约定替它省掉了九个。这个约定不是 CPU 定的，是 ABI 定的，由编译器生成的代码遵守。
+
+---
+
+## 27 线程切换与多核
+
+[visual: ascii title="线程切换 vs 进程切换：只差第二步"]
+        进程切换                      线程切换
+ ┌──────────────────────┐    ┌──────────────────────┐
+ │ 1 pt_regs 早已存好   │    │ 1 pt_regs 早已存好   │
+ ├──────────────────────┤    ├──────────────────────┤
+ │ 2 写 CR3，TLB 变冷   │    │ 2 同一个 mm，跳过    │
+ ├──────────────────────┤    ├──────────────────────┤
+ │ 3 换内核栈 + 6 寄存器│    │ 3 换内核栈 + 6 寄存器│
+ ├──────────────────────┤    ├──────────────────────┤
+ │ 4 回 next 的出口     │    │ 4 回 next 的出口     │
+ └──────────────────────┘    └──────────────────────┘
+
+ 多核：每核一个 rq
+ ┌────────┐  resched_curr 打标记  ┌────────┐
+ │  核 0  │ ────────────────────> │  核 1  │
+ │ 唤醒 T │  RESCHEDULE IPI       │出口换人│
+ └────────┘                       └────────┘
+
+[sidebar]
+PCID：4.14 起
+内核线程：借 active_mm
+负载均衡：sched_balance_rq
+跨核：IPI 打断那个核
+
+[narration]
+进程和线程切换只差第二步：同一个地址空间就不写 CR3，TLB 原样保留。4.14 起的 PCID 给 TLB 条目打上标签，进程切换也不必全冲。多核上每核一张队列，挑人不抢全局锁；核 0 想让核 1 换人，就打标记再发一个 IPI，把核 1 打进中断，让它自己在出口换。
+
+---
+
+## 28 缺页进来，分四路
+
+[visual: ascii title="缺页处理：先查 VMA 判合法，再按来源供页"]
+ #PF：CR2 = 出事地址，错误码 = 读写 / P 位
+                   │
+                   ▼
+          ┌─────────────────┐  不在任何 VMA
+          │ find_vma 判合法 │ ────────────> SIGSEGV
+          └────────┬────────┘
+                   ▼
+ ┌─────────────────────────────────────────────┐
+ │ PTE 空 + 匿名 VMA                           │
+ │   读：映射全局零页        次缺页            │
+ │   写：分新页清零          次缺页            │
+ ├─────────────────────────────────────────────┤
+ │ PTE 空 + 文件 VMA：filemap_fault            │
+ │   page cache 有：直接映射 次缺页            │
+ │   page cache 没有：读盘   主缺页            │
+ ├─────────────────────────────────────────────┤
+ │ PTE 只读 + VMA 可写：copy on write  次缺页  │
+ └─────────────────────────────────────────────┘
+
+[sidebar]
+主缺页：要等 IO
+次缺页：不等 IO
+计数：min_flt / maj_flt
+读到 /proc/pid/stat
+
+[narration]
+缺页从第三扇门进来，先查 VMA 判合法，不合法就是段错误。合法再分路：匿名页读给零页、写分新页；文件页去 page cache 找，有就映射，没有就读盘。主次只看一件事：要不要等 IO。hello 写 buf 是匿名写，读 counter 是缓存命中。
+
+---
+
+## 29 copy on write 的真实触发链
+
+[visual: statemap title="一页私有内存在 fork 之后的命运"]
+父进程独占可写
+fork：父子共享，两边写保护，引用计数 2
+谁先写，谁触发缺页
+do_wp_page 查引用计数
+计数为 2：分新页，拷 4 KiB，改映射
+计数为 1：直接恢复可写，不拷
+
+[narration]
+copy on write 按真实顺序走一遍。fork 后父子共享这页，两边都写保护。谁先写，谁就在自己的缺页处理里分一张新页、拷四 KiB、把自己的映射改指新页，另一方不动。要是孩子早已 exec 掉，计数回到 1，父进程再写就直接恢复可写，一页不拷。
+
+---
+
+## 30 signal：发送记一笔，投递在出口
+
+[visual: timeline title="终端按下 ctrl-C：hello 怎么死"]
+T=1 [门二 键盘中断] 终端驱动看到 ^C，对前台进程组发 SIGINT
+T=2 [send_signal_locked] hello 的 pending 位置位，标 TIF_SIGPENDING
+T=3 [IPI] hello 正在核 1 上纯算，发 IPI 打进内核
+T=4 [核 1 出口] get_signal 取出 SIGINT，没装 handler
+T=5 [默认动作] do_group_exit，进入死亡幕
+T=6 [装了 handler] 用户栈压一帧，ip 改成 handler，跑完 rt_sigreturn 回原处
+
+[narration]
+发 signal，只是在目标账本上记一笔、打个标记；投递要等目标自己走到出口。装了 handler，内核也不替它执行用户代码，只在用户栈上压一帧、改掉 ip，让它自己跳过去。所以 handler 里不能随便调 printf：它打断的，可能正是 printf 持锁的中间。
+
+---
+
+## 31 D 状态为什么 kill -9 杀不掉
+
+[visual: ascii title="同样收到 SIGKILL：唤不唤得醒是分岔点"]
+  S 态 / KILLABLE                  纯 D 态 UNINTERRUPTIBLE
+ ┌───────────────────────┐      ┌───────────────────────┐
+ │ 置 pending + 标记     │      │ 置 pending + 标记     │
+ └──────────┬────────────┘      └──────────┬────────────┘
+            ▼                              ▼
+ ┌───────────────────────┐      ┌───────────────────────┐
+ │ try_to_wake_up：匹配  │      │ try_to_wake_up：不匹配│
+ │ 放回 rq               │      │ 继续躺在等待队列      │
+ └──────────┬────────────┘      └──────────┬────────────┘
+            ▼                              ▼
+ ┌───────────────────────┐      ┌───────────────────────┐
+ │ 走到出口 get_signal   │      │ 走不到出口            │
+ │ 立刻死                │      │ 等 IO 完成才死        │
+ └───────────────────────┘      └───────────────────────┘
+
+[sidebar]
+KILLABLE：2.6.25 起
+NFS 多数等待用它
+SIGKILL：不可捕获
+僵尸：也不吃 kill
+
+[narration]
+同样一发 kill 9，分岔点不在 signal 够不够狠，而在要不要唤醒。普通睡眠，和 2.6.25 起加入的 killable 睡眠，都会被叫醒，走到出口取出 SIGKILL，立刻死。纯 D 态拒绝唤醒，标记明明打好了，却没有 CPU 去跑它，永远走不到出口。它唯一的死法，是它等的那块盘终于回了话。
+
+---
+
+## 32 死亡幕：自己还大头，别人收尾
+
+[visual: spotlight]
+自己拆不了脚下的栈
+最后一截只能别人收
+
+[narration]
+hello 的 main 返回了。可一个任务，怎么释放自己此刻正踩着的内核栈？
+
+---
+
+## 33 do_exit 的顺序
+
+[visual: timeline title="do_exit：按顺序还账（Linux 6.12 kernel/exit.c）"]
+T=1 [exit_signals] 标 PF_EXITING，之后的 signal 不再投递
+T=2 [exit_mm] 地址空间还掉，task 的 mm 置空
+T=3 [exit_files] 关 fd，引用计数归零才真关
+T=4 [exit_notify] 孩子托孤给 init，给父进程发 SIGCHLD，变僵尸
+T=5 [do_task_dead] 最后一次 schedule，永不返回
+T=6 [finish_task_switch] 下一个任务在自己的栈上释放 hello 的栈
+
+[narration]
+退出按顺序还账。地址空间是大头，自己先还；fd 关掉；孩子托付给 init；给父进程发 SIGCHLD，自己变僵尸；最后一次调 schedule，再也不回来。那块内核栈谁来还？换上台的下一个任务，在它自己的栈上，替 hello 释放。这就是在别人的栈上拆我的栈。
+
+---
+
+## 34 僵尸与 wait
+
+[visual: text title="僵尸只剩几 KB：一个 task_struct 加一个 pid"]
+地址空间、fd、内核栈：都已经还掉
+剩下：pid、退出码、CPU 时间和缺页统计
+父进程 wait4 取走，pid 才释放
+
+[sidebar]
+ps 显示：Z defunct
+kill -9：无效
+父先死：init 收养
+容器 pid 1：必须会 wait
+
+[example]
+bash 收到 SIGCHLD，调 wait4 取走退出码，内核才释放 pid。父进程要是从不 wait，僵尸就一直占着 pid，所以容器里的 pid 1 必须会收尸，tini 就为这个存在。
+
+[narration]
+僵尸常被误解成占内存的怪物。其实它的内存、文件、内核栈早都还了，只剩一张几 KB 的账单等父进程签收。kill 9 对它无效，它不会再经过任何出口。真正该担心的，是那个从不 wait 的父进程。
+
+---
+
+## 35 旁观幕：工具全是读账本
+
+[visual: layers title="每个工具读的都是三本账里的字段"]
+ps / top：/proc/pid/stat，状态、CPU 时间、缺页计数
+top 的 VIRT / RES：VMA 总页数、真映射的页数
+maps：遍历 VMA 树，一条一行
+smaps：再走一遍页表，所以慢
+status 的切换计数：自愿睡和被抢各记一笔
+strace / gdb：ptrace 在出口停住，读 pt_regs
+wchan：顺着 thread.sp 找它睡在哪
+
+[narration]
+最后一幕是旁观。ps、top、maps、strace、perf，没有一个工具有自己的数据源，全是在读三本账里的字段。strace 让程序变慢几倍，就因为它让目标在每个出口停下来等它读。账本本来就在，工具只是把它翻开。
+
+---
+
+## 36 60 行示意伪代码
+
+[visual: code_explain lang=python title="示意伪代码：一个 60 行的进程内核（不是 Linux 源码）"]
+rq = []
+def exit_to_user(t):
+    while t.need_resched or t.pending:
+        if t.need_resched: t.need_resched = False; schedule()
+        if t.pending:      deliver_signal(t)
+    cpu.load(t.pt_regs)
+
+def tick():
+    cur.vruntime += TICK
+    if cur.vruntime > min(x.vruntime for x in rq): cur.need_resched = True
+
+def schedule():
+    nxt = min(rq, key=lambda x: x.vruntime); rq.remove(nxt); rq.append(cur)
+    if nxt.mm is not cur.mm and nxt.mm: cpu.cr3 = nxt.mm.pgd
+    cur.thread_sp = cpu.rsp; cpu.rsp = nxt.thread_sp
+    cur = nxt
+
+def fork():
+    c = Task(); c.mm = MM(); c.mm.vmas = [copy(v) for v in cur.mm.vmas]
+    for vpn, (page, _) in cur.mm.pgd.items():
+        cur.mm.pgd[vpn] = c.mm.pgd[vpn] = (page, False); page.refs += 1
+    c.pt_regs = copy(cur.pt_regs); c.pt_regs.rax = 0; rq.append(c); return c.pid
+
+def page_fault(addr, is_write):
+    v = find_vma(cur.mm, addr) or die("SIGSEGV")
+    vpn = addr >> 12; ent = cur.mm.pgd.get(vpn)
+    if ent is None:
+        page = page_cache.get(v.file, v.pgoff + vpn - (v.start>>12)) if v.file else zero_page()
+        cur.mm.pgd[vpn] = (page, is_write and v.file is None)
+    elif is_write and not ent[1]:
+        page, _ = ent
+        if page.refs == 1: cur.mm.pgd[vpn] = (page, True)
+        else: page.refs -= 1; cur.mm.pgd[vpn] = (page.copy(), True)
+===HIGHLIGHT===
+lines=2-10
+出口是唯一的检查点
+tick 只打标记，不换人
+对应 C5 改流必经打断
+===HIGHLIGHT===
+lines=12-16
+schedule：唯一换人处
+同一个 mm 就不写 CR3
+换栈就是换流
+===HIGHLIGHT===
+lines=18-22
+fork：复制地图，不复制页
+清写位就是 copy on write 的借条
+孩子的返回值改成 0
+===HIGHLIGHT===
+lines=24-33
+缺页：先判合法，再按来源供页
+引用计数为 1：直接恢复可写
+否则：拷一页给自己
+
+[narration]
+把这一集压成一段示意伪代码，它不是内核源码，只为手感。出口检查点、只打标记的 tick、唯一换人的 schedule、清写位的 fork、按来源供页的缺页处理，每一行都能指着说对应哪本账、哪条约束。
+
+---
+
+## 37 三个常见误解
+
+[visual: text title="三句常听到的话，都不对"]
+execve 把程序加载进内存：它一个字节的代码都没读
+时钟中断到了就换进程：它只打一个标记
+kill -9 能清掉僵尸：僵尸不会再经过出口
+
+[sidebar]
+内容：缺页时才来
+换人：出口里的 schedule
+僵尸：只能父进程 wait
+共同点：都在出口
+
+[narration]
+三句常听到的话，都差一步。execve 只读了段表、建了地图；时钟中断只打标记，换人在出口；僵尸早已不占内存，也不会再经过出口，只能等父进程来 wait。你会发现，三个误解都栽在同一个地方：没看到那个出口。
+
+---
+
+## 38 本集总结
+
+[visual: html_slide image="pics/ep3-summary-card.png" title="三本账 x 四幕"]
+
+[step: auto]
+scroll auto
+
+[narration]
+收一下。出生只建地图、只改两个寄存器；活着靠三扇门一扇出口，换人和 signal 全挂在出口上；死亡分两段，自己还大头，别人收尾；旁观的工具全在读账本。带走一个读系统的办法：先找它的账本，再找它的检查点。
+
+---
+
+## 39 下集预告
+
+[visual: spotlight]
+本集就到这里，下集见
+这些设计，是谁在什么年代定下的？
+
+[narration]
+fork 为什么和 exec 分成两步？任务切换为什么从硬件指令改成一个 C 函数？线程为什么就是一个 task？copy on write 那一位写保护，为什么到今天还在打官司？下一集回到 Origin 阶段，听四个人讲四个完整的故事。下集见。
+
+---

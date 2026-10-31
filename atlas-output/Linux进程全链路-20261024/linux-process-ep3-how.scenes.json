@@ -1,0 +1,282 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 12.5
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 How 阶段开场",
+  "start": 12.5,
+  "end": 27.07
+ },
+ {
+  "idx": 3,
+  "type": "code",
+  "title": "\"贯穿本集的 hello.c（非 PIE 编译，地址稳定好对账）\"",
+  "start": 27.07,
+  "end": 41.97
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "三本账：一个进程在内核里的全部",
+  "start": 41.97,
+  "end": 58.13
+ },
+ {
+  "idx": 5,
+  "type": "html_slide",
+  "title": "\"三本账 x 四幕：内核只在三扇门后面干活\"",
+  "start": 58.13,
+  "end": 78.73
+ },
+ {
+  "idx": 6,
+  "type": "ascii",
+  "title": "\"x86-64 四级页表：一个地址切五段\"",
+  "start": 78.73,
+  "end": 101.43
+ },
+ {
+  "idx": 7,
+  "type": "text",
+  "title": "\"后面每个机制都靠 PTE 里的这几位\"",
+  "start": 101.43,
+  "end": 135.87
+ },
+ {
+  "idx": 8,
+  "type": "html_slide",
+  "title": "\"hello 的地址空间：左边是布局，右边是内核的账\"",
+  "start": 135.87,
+  "end": 158.93
+ },
+ {
+  "idx": 9,
+  "type": "text",
+  "title": "\"VMA 记应该有什么，页表记真有什么\"",
+  "start": 158.93,
+  "end": 191.53
+ },
+ {
+  "idx": 10,
+  "type": "spotlight",
+  "title": "9 出生幕：fork 先走",
+  "start": 191.53,
+  "end": 201.77
+ },
+ {
+  "idx": 11,
+  "type": "ascii",
+  "title": "\"fork 之后：两本账，一份物理页\"",
+  "start": 201.77,
+  "end": 227.57
+ },
+ {
+  "idx": 12,
+  "type": "layers",
+  "title": "\"fork / vfork / 线程 / posix_spawn：差在共享什么\"",
+  "start": 227.57,
+  "end": 247.1
+ },
+ {
+  "idx": 13,
+  "type": "html_slide",
+  "title": "\"execve：从盘上的 ELF 到第一条用户指令\"",
+  "start": 247.1,
+  "end": 270.57
+ },
+ {
+  "idx": 14,
+  "type": "timeline",
+  "title": "\"load_elf_binary 七步（Linux 6.12 fs/binfmt_elf.c）\"",
+  "start": 270.57,
+  "end": 290.2
+ },
+ {
+  "idx": 15,
+  "type": "code",
+  "title": "\"start_thread_common：只改内核栈顶的 pt_regs（Linux 6.12 arch/x86/ker",
+  "start": 290.2,
+  "end": 310.67
+ },
+ {
+  "idx": 16,
+  "type": "text",
+  "title": "\"不可回头点：之前返回错误码，之后只能杀掉\"",
+  "start": 310.67,
+  "end": 348.27
+ },
+ {
+  "idx": 17,
+  "type": "timeline",
+  "title": "\"从 ld.so 到 main：全在用户态，内核只供缺页\"",
+  "start": 348.27,
+  "end": 369.6
+ },
+ {
+  "idx": 18,
+  "type": "text",
+  "title": "\"实验设计：数一数 hello 一辈子缺了多少页\"",
+  "start": 369.6,
+  "end": 403.13
+ },
+ {
+  "idx": 19,
+  "type": "spotlight",
+  "title": "18 活着幕：三扇门一扇出口",
+  "start": 403.13,
+  "end": 410.93
+ },
+ {
+  "idx": 20,
+  "type": "html_slide",
+  "title": "\"三扇门一扇出口：调度和 signal 都只发生在出口\"",
+  "start": 410.93,
+  "end": 432.47
+ },
+ {
+  "idx": 21,
+  "type": "ascii",
+  "title": "\"门一 系统调用 vs 门二 时钟中断\"",
+  "start": 432.47,
+  "end": 453.07
+ },
+ {
+  "idx": 22,
+  "type": "code",
+  "title": "\"exit_to_user_mode_loop：回用户态前的最后一道关（Linux 6.12 kernel/entry/",
+  "start": 453.07,
+  "end": 472.27
+ },
+ {
+  "idx": 23,
+  "type": "text",
+  "title": "\"换人的三个触发点，真正换人只有 schedule 一处\"",
+  "start": 472.27,
+  "end": 510.47
+ },
+ {
+  "idx": 24,
+  "type": "layers",
+  "title": "\"每核一个 rq，按调度类从高到低问\"",
+  "start": 510.47,
+  "end": 531.07
+ },
+ {
+  "idx": 25,
+  "type": "timeline",
+  "title": "\"hello 被换下的 3 微秒（CONFIG_HZ=250，每 4 ms 一个 tick）\"",
+  "start": 531.07,
+  "end": 555.9
+ },
+ {
+  "idx": 26,
+  "type": "code",
+  "title": "\"__switch_to_asm：只存六个寄存器，然后换栈（Linux 6.12 arch/x86/entry/entr",
+  "start": 555.9,
+  "end": 574.73
+ },
+ {
+  "idx": 27,
+  "type": "text",
+  "title": "\"两段现场：pt_regs 保用户态，switch_to 保内核态\"",
+  "start": 574.73,
+  "end": 612.53
+ },
+ {
+  "idx": 28,
+  "type": "ascii",
+  "title": "\"线程切换 vs 进程切换：只差第二步\"",
+  "start": 612.53,
+  "end": 635.3
+ },
+ {
+  "idx": 29,
+  "type": "ascii",
+  "title": "\"缺页处理：先查 VMA 判合法，再按来源供页\"",
+  "start": 635.3,
+  "end": 655.97
+ },
+ {
+  "idx": 30,
+  "type": "statemap",
+  "title": "\"一页私有内存在 fork 之后的命运\"",
+  "start": 655.97,
+  "end": 677.33
+ },
+ {
+  "idx": 31,
+  "type": "timeline",
+  "title": "\"终端按下 ctrl-C：hello 怎么死\"",
+  "start": 677.33,
+  "end": 697.47
+ },
+ {
+  "idx": 32,
+  "type": "ascii",
+  "title": "\"同样收到 SIGKILL：唤不唤得醒是分岔点\"",
+  "start": 697.47,
+  "end": 720.77
+ },
+ {
+  "idx": 33,
+  "type": "spotlight",
+  "title": "32 死亡幕：自己还大头，别人收尾",
+  "start": 720.77,
+  "end": 726.93
+ },
+ {
+  "idx": 34,
+  "type": "timeline",
+  "title": "\"do_exit：按顺序还账（Linux 6.12 kernel/exit.c）\"",
+  "start": 726.93,
+  "end": 749.2
+ },
+ {
+  "idx": 35,
+  "type": "text",
+  "title": "\"僵尸只剩几 KB：一个 task_struct 加一个 pid\"",
+  "start": 749.2,
+  "end": 782.7
+ },
+ {
+  "idx": 36,
+  "type": "layers",
+  "title": "\"每个工具读的都是三本账里的字段\"",
+  "start": 782.7,
+  "end": 801.17
+ },
+ {
+  "idx": 37,
+  "type": "code",
+  "title": "\"示意伪代码：一个 60 行的进程内核（不是 Linux 源码）\"",
+  "start": 801.17,
+  "end": 816.5
+ },
+ {
+  "idx": 38,
+  "type": "text",
+  "title": "\"三句常听到的话，都不对\"",
+  "start": 816.5,
+  "end": 834.5
+ },
+ {
+  "idx": 39,
+  "type": "html_slide",
+  "title": "\"三本账 x 四幕\"",
+  "start": 834.5,
+  "end": 852.73
+ },
+ {
+  "idx": 40,
+  "type": "spotlight",
+  "title": "39 下集预告",
+  "start": 852.73,
+  "end": 875.83
+ }
+]

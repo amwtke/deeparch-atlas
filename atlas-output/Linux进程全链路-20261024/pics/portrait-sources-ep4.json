@@ -1,0 +1,43 @@
+{
+  "episode": 4,
+  "people": [
+    {
+      "name": "Ken Thompson",
+      "file": "pics/person-ken-thompson.jpg",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/d/dd/Ken_Thompson%2C_2019.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Ken_Thompson,_2019.jpg",
+      "verified": true,
+      "note": "en.wikipedia Ken_Thompson 条目主图（pageimages API 返回）；2019 年 iPhone 拍摄，329x349，目检为本人（白胡须、眼镜）"
+    },
+    {
+      "name": "Linus Torvalds",
+      "file": "pics/person-linus-torvalds.jpg",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/0/01/LinuxCon_Europe_Linus_Torvalds_03_%28cropped%29.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:LinuxCon_Europe_Linus_Torvalds_03_(cropped).jpg",
+      "verified": true,
+      "note": "复用上一部 Linux 文件 IO 大电影已目检的同一张（en.wikipedia 条目主图，LinuxCon Europe 2014）"
+    },
+    {
+      "name": "Ulrich Drepper",
+      "file": "pics/person-ulrich-drepper.jpg",
+      "source_url": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Ulrich_Drepper.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Ulrich_Drepper.jpg",
+      "verified": true,
+      "note": "en.wikipedia 无条目；de/fr.wikipedia Ulrich_Drepper 条目主图均为此文件。原图 2448x3264，按 EXIF 校正后缩到 1000 宽并裁成半身（580x770）；目检为会场讲台旁男子，Cygnus 外套（Drepper 在 Cygnus/Red Hat 任职），与条目一致"
+    }
+  ],
+  "text_only": [
+    {
+      "name": "Andrea Arcangeli",
+      "reason": "en.wikipedia 同名条目是 1993 年生的意大利演员，Commons 搜不到内核开发者本人的照片；改由文字场景介绍"
+    },
+    {
+      "name": "Xavier Leroy",
+      "reason": "有 Wikipedia 主图，但本集只在文字场景中带过 LinuxThreads，不单独做人物场景"
+    },
+    {
+      "name": "David Hildenbrand",
+      "reason": "无 Wikipedia 条目；只在旁白中提及"
+    }
+  ]
+}

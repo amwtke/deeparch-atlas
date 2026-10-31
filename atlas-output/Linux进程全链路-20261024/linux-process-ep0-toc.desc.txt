@@ -1,0 +1,26 @@
+Linux 进程全链路大电影 — 7 条不可再分约束 C1~C7：
+[C1] CPU快IO慢 — CPU 比设备快 10⁴~10⁷ 倍，等待是常态；现场是一组寄存器，可存可取（等就换人，现场必须能存）
+[C2] 霸台不可预知 — 程序不会主动让台，内核猜不到它要算还是要等（到点硬换，换谁只能靠猜）
+[C3] 互不信任 — 程序可能有 bug 或恶意，又都假定独占一套地址（三道闸，跨任务的事全经内核之手）
+[C4] 文件≠内存 — 程序在盘上是文件，任务要的是页表；内存小、有局部性、复制必须便宜（只建地图不搬内容，缺页才搬）
+[C5] 改流必经打断 — 内核没有自己的 CPU，只能在流进内核的瞬间介入（三扇门一扇出口，一切挂出口上）
+[C6] 资源有限须归还 — pid、内存、fd 有限，任务不能释放自己脚下的栈和账本（自己还大头，别人收尾）
+[C7] 核各自为政 — 每核独立 cache、执行、时钟，跨核协调贵一到两个数量级（每核一张表，跨核靠 IPI）
+
+──────────────────
+
+你敲下 ./hello 回车，到它打印完退出不到一毫秒，内核替它装了地图、排了队、换了人、补了页、收了尸。这部七集大电影只回答一个问题：一个进程从磁盘上的 ELF 文件到被 wait 回收，内核每一站做了什么，为什么非这么做不可。
+
+P0 目录：七集路线、致敬人物与看完能做到的六件事。
+P1 What：一个进程的一辈子分四幕；地址空间加执行流两本账；CPU 给进程管理的五个开关；PostgreSQL 每连接一进程与 Redis bgsave 两个钩子。
+P2 Why：从一台裸机起七刀，一刀一条，逼出 C1~C7。
+P3 How：页表与 VMA、execve 七步、三扇门一扇出口、调度与切换、主次缺页与 copy on write、signal、exit 与僵尸、旁观工具全是读账本。
+P4 Origin：Ken Thompson 与 fork、Linus Torvalds 与任务切换、Ulrich Drepper 与 NPTL、Andrea Arcangeli 与 copy on write，四次取舍各在什么约束下做出。
+P5 Deep：Linux 6.12 源码三条主线——execve 从文件到第一条指令、tick 到换人的调度与切换、缺页与 copy on write 的判据。
+P6 Comparison：Windows NT 的 CreateProcess、32 级优先级抢占、section 对象，对照 fork+execve、EEVDF 与写时拷，差异一路追到有没有 fork。
+P7 Synthesis：五元组 14 行过筛、十一条洞察、五步法，再拿 MVCC 对两阶段锁从头走一遍。
+
+人物：Ken Thompson、Linus Torvalds、Ulrich Drepper、Andrea Arcangeli、Dave Cutler。
+适合人群：想把 ELF 装载、调度、上下文切换、缺页与 copy on write 连成一条线的 Linux 开发者，准备操作系统面试的同学，以及想学会用约束推导系统设计的技术读者。
+源码基准：Linux 6.12（x86-64）；所有源码片段标注文件与行号，可自行核对。
+关键词：Linux,进程,execve,ELF,fork,调度器,EEVDF,上下文切换,缺页中断,写时复制,内核源码,操作系统

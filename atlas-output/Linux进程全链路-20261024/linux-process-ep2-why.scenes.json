@@ -1,0 +1,212 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 13.0
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Why 阶段开场",
+  "start": 13.0,
+  "end": 24.63
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "一台裸机",
+  "start": 24.63,
+  "end": 40.33
+ },
+ {
+  "idx": 4,
+  "type": "text",
+  "title": "\"裸机上的程序独占一切\"",
+  "start": 40.33,
+  "end": 63.43
+ },
+ {
+  "idx": 5,
+  "type": "layers",
+  "title": "\"七刀七条约束，一刀一条\"",
+  "start": 63.43,
+  "end": 78.07
+ },
+ {
+  "idx": 6,
+  "type": "text",
+  "title": "\"第一刀：一次等盘，空转一万到一千万条指令\"",
+  "start": 78.07,
+  "end": 109.6
+ },
+ {
+  "idx": 7,
+  "type": "ascii",
+  "title": "\"单道 vs 多道：同样四秒，CPU 干了多少活\"",
+  "start": 109.6,
+  "end": 129.83
+ },
+ {
+  "idx": 8,
+  "type": "code",
+  "title": "\"切换时存进内核栈的现场（Linux 6.12 arch/x86/include/asm/switch_to.h）\"",
+  "start": 129.83,
+  "end": 171.07
+ },
+ {
+  "idx": 9,
+  "type": "text",
+  "title": "\"第二刀：不让台，全机陪着卡\"",
+  "start": 171.07,
+  "end": 199.67
+ },
+ {
+  "idx": 10,
+  "type": "spotlight",
+  "title": "9 闹钟加排班",
+  "start": 199.67,
+  "end": 225.97
+ },
+ {
+  "idx": 11,
+  "type": "text",
+  "title": "\"第三刀：住在同一片内存里，能怎么伤害别人\"",
+  "start": 225.97,
+  "end": 256.67
+ },
+ {
+  "idx": 12,
+  "type": "ascii",
+  "title": "\"三种伤害，三道闸，不多不少\"",
+  "start": 256.67,
+  "end": 282.13
+ },
+ {
+  "idx": 13,
+  "type": "text",
+  "title": "\"闸不是免费的\"",
+  "start": 282.13,
+  "end": 310.4
+ },
+ {
+  "idx": 14,
+  "type": "code",
+  "title": "\"clone 的共享开关（Linux 6.12 include/uapi/linux/sched.h）\"",
+  "start": 310.4,
+  "end": 333.83
+ },
+ {
+  "idx": 15,
+  "type": "ascii",
+  "title": "\"事务隔离 vs 进程隔离\"",
+  "start": 333.83,
+  "end": 358.93
+ },
+ {
+  "idx": 16,
+  "type": "text",
+  "title": "\"第四刀：盘上是文件，任务要的是页表\"",
+  "start": 358.93,
+  "end": 385.67
+ },
+ {
+  "idx": 17,
+  "type": "ascii",
+  "title": "\"一条约束的三个面，各逼出一样东西\"",
+  "start": 385.67,
+  "end": 409.97
+ },
+ {
+  "idx": 18,
+  "type": "timeline",
+  "title": "\"Redis bgsave：一次 fork 之后谁先写谁复制\"",
+  "start": 409.97,
+  "end": 440.13
+ },
+ {
+  "idx": 19,
+  "type": "ascii",
+  "title": "\"三扇门进来，一扇出口出去\"",
+  "start": 440.13,
+  "end": 464.97
+ },
+ {
+  "idx": 20,
+  "type": "code",
+  "title": "\"返回用户态前的最后一道检查（Linux 6.12 kernel/entry/common.c）\"",
+  "start": 464.97,
+  "end": 488.6
+ },
+ {
+  "idx": 21,
+  "type": "spotlight",
+  "title": "20 signal 为什么从不插在两条指令中间",
+  "start": 488.6,
+  "end": 509.4
+ },
+ {
+  "idx": 22,
+  "type": "text",
+  "title": "\"第六刀：资源有限，又没有垃圾回收\"",
+  "start": 509.4,
+  "end": 534.6
+ },
+ {
+  "idx": 23,
+  "type": "statemap",
+  "title": "\"exit 两段式：大头自己还，收尾靠别人\"",
+  "start": 534.6,
+  "end": 560.5
+ },
+ {
+  "idx": 24,
+  "type": "code",
+  "title": "\"退出时决定留不留僵尸（Linux 6.12 kernel/exit.c exit_notify）\"",
+  "start": 560.5,
+  "end": 581.23
+ },
+ {
+  "idx": 25,
+  "type": "ascii",
+  "title": "\"一张全局队列 vs 每核一张队列\"",
+  "start": 581.23,
+  "end": 609.2
+ },
+ {
+  "idx": 26,
+  "type": "layers",
+  "title": "\"七刀七条，对上一辈子四幕\"",
+  "start": 609.2,
+  "end": 627.47
+ },
+ {
+  "idx": 27,
+  "type": "text",
+  "title": "\"先问一句：是约束，还是选择？\"",
+  "start": 627.47,
+  "end": 658.07
+ },
+ {
+  "idx": 28,
+  "type": "text",
+  "title": "\"把七条约束化解掉的三个洞察\"",
+  "start": 658.07,
+  "end": 690.97
+ },
+ {
+  "idx": 29,
+  "type": "html_slide",
+  "title": "进程为什么长成这样",
+  "start": 690.97,
+  "end": 723.03
+ },
+ {
+  "idx": 30,
+  "type": "spotlight",
+  "title": "下集预告",
+  "start": 723.03,
+  "end": 741.77
+ }
+]

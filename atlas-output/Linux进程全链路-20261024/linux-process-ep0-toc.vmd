@@ -1,0 +1,89 @@
+# Linux 进程全链路大电影 — 七集深度解读目录
+
+[intro-line] 今天开一部七集大电影，从磁盘上的一个 ELF 文件追到它被 wait 回收，把 Linux 进程的一辈子彻底讲透。
+
+## 1 大电影封面
+
+[visual: title]
+Linux 进程全链路
+大电影
+
+[narration]
+你敲下 ./hello 回车，到它打印完退出，前后不到一毫秒。可这一毫秒里，内核替它装了地图、排了队、换了人、补了页、收了尸。这部七集大电影，就回答一个问题：一个进程从磁盘上的文件到被销毁，内核每一站做了什么，为什么非这么做不可。
+
+---
+
+## 2 六个问题，一条链
+
+[visual: spotlight]
+从 execve 到 wait
+内核每一站做了什么？
+
+[narration]
+怎么从文件装进内存，ELF 怎么解析、怎么重定位；怎么调度上 CPU，怎么切换；系统调用、中断、主次缺页、copy on write、signal 怎么响应；进程怎么销毁；ps 和 top 又凭什么看得见这一切。六个问题，其实是一条链。
+
+---
+
+## 3 七集的路线
+
+[visual: layers title=七集路线：从现象走到方法]
+第 1 集 What：一个进程的一辈子分四幕
+第 2 集 Why：从裸机起七刀，逼出七条约束
+第 3 集 How：页表、execve、三扇门、调度、缺页
+第 4 集 Origin：1969 到 2022，四个人四次取舍
+第 5 集 Deep：6.12 源码里的三条主线
+第 6 集 Comparison：对照 Windows NT
+第 7 集 Synthesis：五元组与五步法
+
+[narration]
+第 1 集先画地图：出生、活着、死亡、旁观四幕，加上 CPU 给的五个开关。第 2 集从一台裸机出发，一刀一刀砍出七条约束。第 3 集逐站拆开：页表、地址空间、execve 七步、三扇门一扇出口、调度切换、缺页和 copy on write。第 4 集回到历史，看四个人当年在什么约束下做的取舍。第 5 集钻进 6.12 源码，把三条主线钉到行号。第 6 集换 Windows NT 答同一道题。第 7 集把推导压成一套能带走的方法。
+
+---
+
+## 4 设计背后的人
+
+[visual: layers title=这些设计是谁做的]
+Ken Thompson：fork，一刀两断，因为省事
+Linus Torvalds：从一条 ljmp 到一个 C 函数
+Ulrich Drepper：NPTL，线程就是一个 task
+Andrea Arcangeli：copy on write 十几年的拉锯
+Dave Cutler：Windows NT 的另一条路
+
+[narration]
+这条链不是一天长出来的。Thompson 在一台只有 8K 字内存的机器上，用二十几行汇编写出了 fork；Linus 在 386 上先用硬件任务切换，后来又亲手换成一个 C 函数；Drepper 重写线程库，证明线程就是共享地址空间的 task；Arcangeli 和 copy on write 那一位权限拉锯了十几年。第 6 集还会请出 Dave Cutler，看 Windows NT 为什么从一开始就不要 fork。
+
+---
+
+## 5 九张图，一张不跳
+
+[visual: spotlight]
+九张架构图
+每张都完整展示
+
+[narration]
+一辈子全景、三件事乘四幕、hello 的地址空间、execve 七步、三扇门一扇出口、四个人的时间线、三条源码主线、两套系统并排、五步法流水线。每张图都会在视频里完整展示，逐区解说。
+
+---
+
+## 6 看完你能做到什么
+
+[visual: html_slide image="pics/ep0-summary-card.png" title=七集路线图]
+
+[step: auto]
+scroll auto
+
+[narration]
+看完这七集，你应该能做到六件事。一，说清进程就是被记账的地址空间加执行流。二，为每一个设计说出它被哪条约束逼出来。三，沿着 6.12 源码走完 execve、一次切换和一次 copy on write 缺页。四，看懂 fork、任务切换、线程库为什么在那一年重写。五，拿 Windows NT 做对照，分清哪些是必然、哪些是血统。六，把五步法带到下一个你要拆的系统。
+
+---
+
+## 7 进入第 1 集
+
+[visual: title]
+进入第 1 集
+一个进程的一辈子，分哪四幕
+
+[narration]
+如果你第一次接触这条链，从第 1 集顺着看。读过内核源码的，建议先看第 2 集的约束，再去第 5 集核对自己的预测。只想拿方法论的，直接看第 7 集。现在，把 ./hello 这一行留在脑子里，第 1 集从这里把地图打开。
+
+---

@@ -1,0 +1,268 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 12.73
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Deep 阶段开场",
+  "start": 12.73,
+  "end": 21.8
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "三个决定",
+  "start": 21.8,
+  "end": 43.47
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "三条主线，三个判据",
+  "start": 43.47,
+  "end": 62.43
+ },
+ {
+  "idx": 5,
+  "type": "html_slide",
+  "title": "三条主线钉到 Linux 6.12",
+  "start": 62.43,
+  "end": 86.67
+ },
+ {
+  "idx": 6,
+  "type": "spotlight",
+  "title": "5 报幕：主线一",
+  "start": 86.67,
+  "end": 97.2
+ },
+ {
+  "idx": 7,
+  "type": "ascii",
+  "title": "execve 的分水岭：前面只读，后面只写",
+  "start": 97.2,
+  "end": 119.5
+ },
+ {
+  "idx": 8,
+  "type": "code",
+  "title": "\"load_elf_binary：第 996 行的分水岭（Linux 6.12 fs/binfmt_elf.c）\"",
+  "start": 119.5,
+  "end": 146.57
+ },
+ {
+  "idx": 9,
+  "type": "text",
+  "title": "bss 为什么要分两段建",
+  "start": 146.57,
+  "end": 179.03
+ },
+ {
+  "idx": 10,
+  "type": "code",
+  "title": "\"elf_load：.bss 的精确答案（Linux 6.12 fs/binfmt_elf.c）\"",
+  "start": 179.03,
+  "end": 204.03
+ },
+ {
+  "idx": 11,
+  "type": "timeline",
+  "title": "从回车到 main：微秒级时间账（量级）",
+  "start": 204.03,
+  "end": 224.83
+ },
+ {
+  "idx": 12,
+  "type": "text",
+  "title": "反事实：execve 能不能换个做法",
+  "start": 224.83,
+  "end": 262.27
+ },
+ {
+  "idx": 13,
+  "type": "spotlight",
+  "title": "12 报幕：主线二",
+  "start": 262.27,
+  "end": 272.1
+ },
+ {
+  "idx": 14,
+  "type": "text",
+  "title": "EEVDF 只看两个数",
+  "start": 272.1,
+  "end": 308.13
+ },
+ {
+  "idx": 15,
+  "type": "code",
+  "title": "\"update_curr：每个 tick 记一笔账（Linux 6.12 kernel/sched/fair.c）\"",
+  "start": 308.13,
+  "end": 330.13
+ },
+ {
+  "idx": 16,
+  "type": "code",
+  "title": "\"update_deadline：时间片只是请求长度（Linux 6.12 kernel/sched/fair.c）\"",
+  "start": 330.13,
+  "end": 352.93
+ },
+ {
+  "idx": 17,
+  "type": "code",
+  "title": "\"entity_lag 与 vruntime_eligible：欠多少，有没有资格（Linux 6.12 kernel/",
+  "start": 352.93,
+  "end": 375.7
+ },
+ {
+  "idx": 18,
+  "type": "code",
+  "title": "\"pick_eevdf：有资格的人里挑 deadline 最早的（Linux 6.12 kernel/sched/fai",
+  "start": 375.7,
+  "end": 400.53
+ },
+ {
+  "idx": 19,
+  "type": "spotlight",
+  "title": "18 换不换人，不是 tick 决定的",
+  "start": 400.53,
+  "end": 415.57
+ },
+ {
+  "idx": 20,
+  "type": "code",
+  "title": "\"place_entity：醒来的人放在哪（Linux 6.12 kernel/sched/fair.c）\"",
+  "start": 415.57,
+  "end": 440.23
+ },
+ {
+  "idx": 21,
+  "type": "code",
+  "title": "\"check_preempt_wakeup_fair：醒来立刻问一次（Linux 6.12 kernel/sched/f",
+  "start": 440.23,
+  "end": 463.53
+ },
+ {
+  "idx": 22,
+  "type": "ascii",
+  "title": "同一个判据，B 的账一正一负",
+  "start": 463.53,
+  "end": 489.83
+ },
+ {
+  "idx": 23,
+  "type": "timeline",
+  "title": "从 tick 到另一条流：纳秒时间线（3 GHz，量级）",
+  "start": 489.83,
+  "end": 512.63
+ },
+ {
+  "idx": 24,
+  "type": "code",
+  "title": "\"context_switch：换地址空间，再换栈（Linux 6.12 kernel/sched/core.c）\"",
+  "start": 512.63,
+  "end": 537.43
+ },
+ {
+  "idx": 25,
+  "type": "code",
+  "title": "\"__switch_to_asm：两条 movq 之间换了一条流（Linux 6.12 arch/x86/entry/e",
+  "start": 537.43,
+  "end": 562.5
+ },
+ {
+  "idx": 26,
+  "type": "spotlight",
+  "title": "25 报幕：主线三",
+  "start": 562.5,
+  "end": 570.57
+ },
+ {
+  "idx": 27,
+  "type": "ascii",
+  "title": "copy on write 的真实触发链",
+  "start": 570.57,
+  "end": 599.23
+ },
+ {
+  "idx": 28,
+  "type": "code",
+  "title": "\"__copy_present_ptes：fork 只写保护，不拷页（Linux 6.12 mm/memory.c）\"",
+  "start": 599.23,
+  "end": 623.77
+ },
+ {
+  "idx": 29,
+  "type": "code",
+  "title": "\"handle_pte_fault：一次缺页的五个岔口（Linux 6.12 mm/memory.c）\"",
+  "start": 623.77,
+  "end": 647.33
+ },
+ {
+  "idx": 30,
+  "type": "code",
+  "title": "\"do_wp_page：第 3724 行决定拷不拷（Linux 6.12 mm/memory.c）\"",
+  "start": 647.33,
+  "end": 673.83
+ },
+ {
+  "idx": 31,
+  "type": "code",
+  "title": "\"wp_can_reuse_anon_folio：锁下验引用计数（Linux 6.12 mm/memory.c）\"",
+  "start": 673.83,
+  "end": 700.97
+ },
+ {
+  "idx": 32,
+  "type": "code",
+  "title": "\"wp_page_copy：分新页、拷 4KB、换页表项（Linux 6.12 mm/memory.c）\"",
+  "start": 700.97,
+  "end": 727.23
+ },
+ {
+  "idx": 33,
+  "type": "timeline",
+  "title": "判独占的三轮演进",
+  "start": 727.23,
+  "end": 753.0
+ },
+ {
+  "idx": 34,
+  "type": "text",
+  "title": "谁先动谁 copy？只对一半",
+  "start": 753.0,
+  "end": 798.93
+ },
+ {
+  "idx": 35,
+  "type": "code",
+  "title": "\"do_huge_pmd_wp_page：大页不独占就先拆（Linux 6.12 mm/huge_memory.c）\"",
+  "start": 798.93,
+  "end": 825.67
+ },
+ {
+  "idx": 36,
+  "type": "layers",
+  "title": "三行源码，钉回约束",
+  "start": 825.67,
+  "end": 851.33
+ },
+ {
+  "idx": 37,
+  "type": "html_slide",
+  "title": "本集总结",
+  "start": 851.33,
+  "end": 880.5
+ },
+ {
+  "idx": 38,
+  "type": "spotlight",
+  "title": "37 下集预告",
+  "start": 880.5,
+  "end": 897.7
+ }
+]

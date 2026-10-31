@@ -1,0 +1,211 @@
+{
+  "status": "complete",
+  "generated_at": "2026-10-31T16:31:31+08:00",
+  "source": "Linux进程全链路-atlas.md",
+  "source_sha256": "55d5be1d545bdced8ace79dadaf221ba00c060ce4652dc27a26cad6dc147f96e",
+  "kernel_version": "v6.12",
+  "theme": "anthropic",
+  "total_minutes": 88.16,
+  "episodes": [
+    {
+      "file": "linux-process-ep0-toc.mp4",
+      "render_rc": 0,
+      "vmd_sha256": "90f8285d6f39382b935694bbd1b46243832afc0e518a3303c4c25eceae2edc21",
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "srt_present": true,
+        "scenes_sidecar": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "duration_seconds": 186.8,
+      "bytes": 12363543,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "mp4_sha256": "1524da0b503101debf871e5a876d46815c12cb6e6a08b0fd576cda043a26053c",
+      "status": "PASS",
+      "part_title": "P0 目录：七集路线图"
+    },
+    {
+      "file": "linux-process-ep1-what.mp4",
+      "render_rc": 0,
+      "vmd_sha256": "cdd45c982fdb6e527e3084ac5953be5583363a975c09823331be1a4aed83c673",
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "srt_present": true,
+        "scenes_sidecar": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "duration_seconds": 656.17,
+      "bytes": 41640134,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "mp4_sha256": "8b84d81bdd955c8d314901d6a549e8a4335dd7266a156244c633e6a873c05798",
+      "status": "PASS",
+      "part_title": "P1 What：敲下 hello，一个进程的一辈子要走几站"
+    },
+    {
+      "file": "linux-process-ep2-why.mp4",
+      "render_rc": 0,
+      "vmd_sha256": "a07de239d48461a688ec8ae887bceef4060a6f19e878c333fd80f8cd38335cb9",
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "srt_present": true,
+        "scenes_sidecar": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "duration_seconds": 741.77,
+      "bytes": 47343150,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "mp4_sha256": "89d36e6ee22c93172039c2af2c1ae389ff94c2808b91d3753180411b8f424f1a",
+      "status": "PASS",
+      "part_title": "P2 Why：从一台裸机砍七刀，进程为什么非得长成这样"
+    },
+    {
+      "file": "linux-process-ep3-how.mp4",
+      "render_rc": 0,
+      "vmd_sha256": "fb6a5e0d5419690b2032f44443719864101640d5e25641f04305c7e843bf0abf",
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "srt_present": true,
+        "scenes_sidecar": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "duration_seconds": 875.83,
+      "bytes": 60523990,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "mp4_sha256": "57db1f0518c119e4c9659dc772deab9cdbc5005a119d4cfdfb901f169e8cc869",
+      "status": "PASS",
+      "part_title": "P3 How：敲下 hello 之后，内核只动了三本账"
+    },
+    {
+      "file": "linux-process-ep4-origin.mp4",
+      "render_rc": 0,
+      "vmd_sha256": "fb1cc9f2fd2093a0859258ce31a223666965d12c5bfcdc024b592a8fd2ebaac9",
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "srt_present": true,
+        "scenes_sidecar": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "duration_seconds": 559.03,
+      "bytes": 35966113,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "mp4_sha256": "bedb3e93fa91664c74b157a3c65643350285613808d57d8900de0d9d23a6566a",
+      "status": "PASS",
+      "part_title": "P4 Origin：fork 只有 27 行汇编，四个人替它还了五十年的债"
+    },
+    {
+      "file": "linux-process-ep5-deep.mp4",
+      "render_rc": 0,
+      "vmd_sha256": "22d9d6c90ab30d899dab93784a80266ef5789bb3c6fd6d469bd42df018b3fa15",
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "srt_present": true,
+        "scenes_sidecar": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "duration_seconds": 897.7,
+      "bytes": 68224605,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "mp4_sha256": "671b4727cc35175586bd413b12bc1eb170d68df25f9a7d2a0c3b0994b4ce5ea4",
+      "status": "PASS",
+      "part_title": "P5 Deep：996、907、3724，三行源码定下进程的三个生死决定"
+    },
+    {
+      "file": "linux-process-ep6-comparison.mp4",
+      "render_rc": 0,
+      "vmd_sha256": "4f05b90e0fc0a475168dd600805920e34e2c112329bbbaf3b09233b1f4410113",
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "srt_present": true,
+        "scenes_sidecar": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "duration_seconds": 649.27,
+      "bytes": 41363866,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "mp4_sha256": "c0fa7336b1c3d544ba45914dfd62aaeba2d2f8f2fa7726ce3099991dde4db9e4",
+      "status": "PASS",
+      "part_title": "P6 Comparison：Windows 没有 fork，创建、调度、写时拷贝各差在哪"
+    },
+    {
+      "file": "linux-process-ep7-synthesis.mp4",
+      "render_rc": 0,
+      "vmd_sha256": "50d6d547c5c59b0c7deede98c85aad557a916f38fbe1cb4933b5176f8fb2fb9c",
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "srt_present": true,
+        "scenes_sidecar": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "duration_seconds": 723.23,
+      "bytes": 47147046,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "mp4_sha256": "db33d9128ebbe79f9e6cb7a2126685afe0b776232ef0fcefd2cc8dcb14e37578",
+      "status": "PASS",
+      "part_title": "P7 Synthesis：不是最聪明的设计，是七条约束筛剩下的"
+    }
+  ]
+}

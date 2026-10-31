@@ -1,0 +1,1409 @@
+# 第 5 集 Deep 阶段 — execve、调度、copy on write：三个决定各在源码哪一行拍板？
+
+[intro-line] 今天钻进 Linux 六点一二源码，看 execve、调度和 copy on write 这三个决定，各在哪一行拍板。
+
+## 1 Deep 阶段开场
+
+[visual: spotlight]
+现在我们钻进 Deep 阶段
+真实源码到底长什么样？
+
+[narration]
+骨架前面几集已经搭好。这一集直接翻 Linux 六点一二的源码，把三条主线钉到具体的函数和行号上。
+
+---
+
+## 2 一次回车里的三个决定
+
+[visual: title]
+三个决定
+三行源码
+
+[narration]
+你在 bash 里敲下 hello 回车。bash 先 fork 出一个子进程，子进程调 execve 换成 hello，调度器把它排上 CPU，它写下第一个全局变量。这一路上，内核要做三个决定：失败了还能不能回头，下一个该谁上台，这一页拷还是不拷。每个决定，都落在一行源码上。
+
+---
+
+## 3 三条主线三个判据
+
+[visual: layers title=三条主线，三个判据]
+主线一 execve：不可回头点之前只读不写 · binfmt_elf.c 第 996 行
+主线二 调度：有资格，且截止时间最早 · fair.c 第 907 行
+主线三 缺页：复用当且仅当独占 · memory.c 第 3724 行
+
+[narration]
+三条主线各有一个判据。execve 在第 996 行之前只读不写；挑人只挑没超额、且截止时间最早的那个；写一个只读页时，只有确认这页归你独占，才原地复用。下面一条一条看，每条都先讲为什么这样设计，再进源码。
+
+---
+
+## 4 三条主线钉到源码
+
+[visual: html_slide image="pics/05-overview.png" title=三条主线钉到 Linux 6.12]
+
+[step: auto]
+scroll auto
+
+[narration]
+这张图三列，就是三条调用链，从上往下读。左列红框是主线一的分水岭 begin new exec；中列绿框是主线二的记账和挑人；右列紫框是主线三的复用判据。注意两处交汇：主线一的终点就是主线三的起点，新程序第一条指令就缺页；换人之后缓存和 TLB 变冷，又和缺页一样要重走页表。
+
+---
+
+## 5 报幕：主线一
+
+[visual: spotlight]
+主线一 execve
+失败时，bash 还得活着
+
+[narration]
+先看 execve。它有个苛刻的要求：如果装载失败，比如文件格式不对，调用它的 bash 必须原样活着，拿到负一和错误码。
+
+---
+
+## 6 先验后换再建
+
+[visual: ascii title=execve 的分水岭：前面只读，后面只写]
+ 第 996 行之前：只读              第 996 行之后：写新账本
+┌────────────────────────────┐   ┌────────────────────────────┐
+│ A 验：ELF 魔数、架构       │   │ C 换：杀掉同组线程         │
+│ 读段表进内核内存           │   │ exec_mmap 换上新 mm        │
+│ B 找：PT_INTERP            │   │ 旧 mm 交回，不复存在       │
+│ 打开 ld.so，验它的头       │   │ D 建：elf_load 建 VMA      │
+│ 一个 VMA 都不碰            │   │ 摆栈，改 pt_regs           │
+└────────────────────────────┘   └────────────────────────────┘
+               │                                │
+               ▼                                ▼
+ 出错：返回 -1，bash 活着         出错：SIGSEGV，进程死
+
+[sidebar]
+分水岭：begin_new_exec
+之前：只读，可回头
+之后：写新账本，不可回头
+C4·文件不等于内存
+C6·资源有限须归还
+
+[narration]
+为什么这样切？因为旧账本一旦交回就找不回来，内核没有地方回滚，这是 C6。好在要验的东西不多，内核只认段表那几样，这是 C4。所以结构只能是先验、后换、再建：能提前验的全部提前验，连解释器 ld.so 都先打开验好。分水岭，就是第 996 行。
+
+---
+
+## 7 第 996 行的分水岭
+
+[visual: code_explain lang=c title="load_elf_binary：第 996 行的分水岭（Linux 6.12 fs/binfmt_elf.c）"]
+	retval = arch_check_elf(elf_ex,
+				!!interpreter, interp_elf_ex,
+				&arch_state);
+	if (retval)
+		goto out_free_dentry;
+
+	/* Flush all traces of the currently running executable */
+	retval = begin_new_exec(bprm);
+	if (retval)
+		goto out_free_dentry;
+
+	/* Do this immediately, since STACK_TOP as used in setup_arg_pages
+	   may depend on the personality.  */
+	SET_PERSONALITY2(*elf_ex, &arch_state);
+	if (elf_read_implies_exec(*elf_ex, executable_stack))
+		current->personality |= READ_IMPLIES_EXEC;
+
+	const int snapshot_randomize_va_space = READ_ONCE(randomize_va_space);
+	if (!(current->personality & ADDR_NO_RANDOMIZE) && snapshot_randomize_va_space)
+		current->flags |= PF_RANDOMIZE;
+
+	setup_new_exec(bprm);
+
+	/* Do this so that we can load the interpreter, if need be.  We will
+	   change some of these later */
+	retval = setup_arg_pages(bprm, randomize_stack_top(STACK_TOP),
+				 executable_stack);
+	if (retval < 0)
+		goto out_free_dentry;
+===HIGHLIGHT===
+lines=1-5
+作用：最后一道架构检查
+此时还在旧账本上
+失败：goto 清理，返回 -1
+bash 拿到 errno，照常活着
+===HIGHLIGHT===
+lines=7-10
+begin_new_exec：不可回头点
+内部先置 point_of_no_return
+de_thread：杀掉同组其他线程
+exec_mmap：换上新 mm，旧的交回
+此后出错：bprm_execve 发 SIGSEGV
+===HIGHLIGHT===
+lines=14-22
+SET_PERSONALITY2：新程序的个性
+PF_RANDOMIZE：地址随机化开关
+setarch -R 关掉的就是这一位
+setup_new_exec：改名、重置信号处理
+===HIGHLIGHT===
+lines=26-29
+setup_arg_pages：挪参数栈
+argv、envp 先拷在临时栈页
+现在搬到随机化后的栈顶
+建出 [stack] 这条 VMA
+
+[narration]
+第一段还在旧账本上，失败就清理返回，bash 拿到错误码。第二段就是第 996 行，begin new exec。它先把不可回头的标志置上，再杀同组线程、换上新的 mm。过了这一行，任何错误都会让 bprm execve 直接发 SIGSEGV。第三段定个性和地址随机化，setarch 减 R 关的就是这里。第四段把参数栈挪到随机位置。
+
+---
+
+## 8 bss 为什么分两段
+
+[visual: text title=bss 为什么要分两段建]
+文件里有字节的部分：私有映射文件，不读内容
+memsz 比 filesz 长出的尾巴，就是 .bss
+同页的尾巴清零，整页的尾巴补一段匿名映射
+
+[sidebar]
+filesz：文件里的字节数
+memsz：内存里要的大小
+差值：.bss，全是零
+只建地图，不搬内容
+C4·文件不等于内存
+
+[example]
+比如 hello 的数据段，文件里只有五百多字节，内存里却要四千多字节。
+
+前五百多字节来自文件；和它同在一页的剩余部分要清零；超出这一页的部分，补一段匿名映射，碰到才给零页。
+
+[narration]
+为什么 bss 要这么麻烦？因为文件最后一页的后半截，装的是文件里下一节的字节，不清零就会读到别的东西；而整页的 bss 根本不该占文件空间。所以要分两段：同页的尾巴清零，整页的尾巴补匿名映射。
+
+---
+
+## 9 elf_load：bss 的精确答案
+
+[visual: code_explain lang=c title="elf_load：.bss 的精确答案（Linux 6.12 fs/binfmt_elf.c）"]
+static unsigned long elf_load(struct file *filep, unsigned long addr,
+		const struct elf_phdr *eppnt, int prot, int type,
+		unsigned long total_size)
+{
+	unsigned long zero_start, zero_end;
+	unsigned long map_addr;
+
+	if (eppnt->p_filesz) {
+		map_addr = elf_map(filep, addr, eppnt, prot, type, total_size);
+		if (BAD_ADDR(map_addr))
+			return map_addr;
+		if (eppnt->p_memsz > eppnt->p_filesz) {
+			zero_start = map_addr + ELF_PAGEOFFSET(eppnt->p_vaddr) +
+				eppnt->p_filesz;
+			zero_end = map_addr + ELF_PAGEOFFSET(eppnt->p_vaddr) +
+				eppnt->p_memsz;
+
+			/*
+			 * Zero the end of the last mapped page but ignore
+			 * any errors if the segment isn't writable.
+			 */
+			if (padzero(zero_start) && (prot & PROT_WRITE))
+				return -EFAULT;
+		}
+	} else {
+		map_addr = zero_start = ELF_PAGESTART(addr);
+		zero_end = zero_start + ELF_PAGEOFFSET(eppnt->p_vaddr) +
+			eppnt->p_memsz;
+	}
+	if (eppnt->p_memsz > eppnt->p_filesz) {
+		/*
+		 * Map the last of the segment.
+		 * If the header is requesting these pages to be
+		 * executable, honour that (ppc32 needs this).
+		 */
+		int error;
+
+		zero_start = ELF_PAGEALIGN(zero_start);
+		zero_end = ELF_PAGEALIGN(zero_end);
+
+		error = vm_brk_flags(zero_start, zero_end - zero_start,
+				     prot & PROT_EXEC ? VM_EXEC : 0);
+		if (error)
+			map_addr = error;
+	}
+	return map_addr;
+===HIGHLIGHT===
+lines=8-11
+作用：映射文件里真有字节的段
+elf_map 最终调 vm_mmap
+参数：文件、地址、权限、MAP_PRIVATE
+只建 VMA，一个字节都不读
+===HIGHLIGHT===
+lines=12-23
+zero_start：文件内容的结束点
+zero_end：bss 的结束点
+padzero：同一页剩余部分清零
+这是往私有文件页里写
+按语义会触发一次缺页并拷出一页
+===HIGHLIGHT===
+lines=25-29
+filesz 为 0：整段都是 bss
+起点向下对齐到页边界
+===HIGHLIGHT===
+lines=30-45
+页对齐后剩下的整页
+vm_brk_flags 补一条匿名 VMA
+这就是 maps 里紧跟数据段的那块
+碰到才分配零页
+
+[narration]
+第一段，文件里有字节，elf map 只建映射，不读内容。第二段，内存大小比文件大小长，算出两个结束点，padzero 把同一页的尾巴清零。注意，这是往私有文件映射里写，按代码语义，execve 里就会触发一次缺页，从文件页拷出一份。最后一段，剩下的整页交给 vm brk flags，补一条匿名映射。
+
+---
+
+## 10 从回车到 main
+
+[visual: timeline title=从回车到 main：微秒级时间账（量级）]
+T=0 [fork] bash 复制自己的页表，约 50 到 100 微秒
+T=100 [调度] 子进程上台，从 fork 的返回点回到 bash
+T=120 [execve 验] 读 hello 与 ld.so 的头和段表，约 20 微秒
+T=150 [execve 换] de_thread 与 exec_mmap 交回旧 mm，约 50 微秒
+T=250 [execve 建] 建 VMA，摆栈，改 pt_regs，sysret 返回
+T=300 [ld.so] 装 libc、填 GOT，约 40 次次缺页
+T=500 [main] 第一行代码，写全局变量又一次缺页
+
+[narration]
+把主线一放回整条链上。execve 本身在一百到三百微秒量级，和程序大小无关，因为它只建地图不搬内容，大头在交回旧账本和挪栈。之后由 ld.so 在用户态装库、填符号，期间几十次缺页。动态链接的 hello，从回车到 main 大约半毫秒。
+
+---
+
+## 11 execve 能不能换个做法
+
+[visual: text title=反事实：execve 能不能换个做法]
+把内容全读进内存：启动时间跟程序大小成正比
+把链接搬进内核：在最高特权级解析不可信文件
+先建好新账本再原子替换：要养两本账，线程仍救不回
+
+[sidebar]
+全读：违反 C4
+内核链接：违反 C3
+可回滚：违反 C6
+能改的只剩 fork 那一步
+
+[example]
+Linux 的 posix spawn 由 glibc 用 clone 加上 vfork 标志实现，子进程借父进程的地址空间直接 execve，跳过的正是 fork 那本只活几微秒的页表副本。
+
+[narration]
+换几种做法试试。全读进内存，几百兆的浏览器要先读完才能启动，违反 C4。让内核做链接，等于在最高特权级解析不可信的符号表，违反 C3。先建好整本新账再原子替换，要同时养两本账，杀掉的线程也救不回来，违反 C6。三条约束一夹，先验后换再建就是最优解。
+
+---
+
+## 12 报幕：主线二
+
+[visual: spotlight]
+主线二 调度
+猜不到未来，凭什么挑人？
+
+[narration]
+hello 装好了，接下来要抢 CPU。内核猜不到一个任务下一步要算还是要等，这是 C2。那它凭什么决定下一个谁上台？
+
+---
+
+## 13 EEVDF 只看两个数
+
+[visual: text title=EEVDF 只看两个数]
+vruntime：已经拿到的服务，按权重折算
+有资格：拿到的不比加权平均多
+deadline：vruntime 加一个时间片的折算，资格相同比谁早
+
+[sidebar]
+不猜未来，只看过去欠不欠
+权重表：nice 越低越重
+每差一级，CPU 份额差约一成
+C2·霸台不可预知
+
+[example]
+同样跑 3 毫秒真实时间，nice 5 的任务，vruntime 涨大约 9.2 毫秒；nice 负 5 的任务，只涨大约 1 毫秒。
+
+权重大的，虚拟时间走得慢，所以能多拿真实时间。
+
+[narration]
+原理先讲清。既然猜不到未来，就只看过去：每个任务记一笔已经拿到的服务，叫 vruntime。拿到的不比平均多，才有资格上台；有资格的人里，截止时间最早的先上。截止时间等于 vruntime 加一个时间片，所以请求越短，越早被服务。这就是 EEVDF 的全部规则。
+
+---
+
+## 14 update_curr：每拍记一笔账
+
+[visual: code_explain lang=c title="update_curr：每个 tick 记一笔账（Linux 6.12 kernel/sched/fair.c）"]
+static void update_curr(struct cfs_rq *cfs_rq)
+{
+	struct sched_entity *curr = cfs_rq->curr;
+	struct rq *rq = rq_of(cfs_rq);
+	s64 delta_exec;
+	bool resched;
+
+	if (unlikely(!curr))
+		return;
+
+	delta_exec = update_curr_se(rq, curr);
+	if (unlikely(delta_exec <= 0))
+		return;
+
+	curr->vruntime += calc_delta_fair(delta_exec, curr);
+	resched = update_deadline(cfs_rq, curr);
+	update_min_vruntime(cfs_rq);
+
+	if (entity_is_task(curr)) {
+		struct task_struct *p = task_of(curr);
+
+		update_curr_task(p, delta_exec);
+
+		/*
+		 * Any fair task that runs outside of fair_server should
+		 * account against fair_server such that it can account for
+		 * this time and possibly avoid running this period.
+		 */
+		if (p->dl_server != &rq->fair_server)
+			dl_server_update(&rq->fair_server, delta_exec);
+	}
+
+	account_cfs_rq_runtime(cfs_rq, delta_exec);
+
+	if (cfs_rq->nr_running == 1)
+		return;
+
+	if (resched || did_preempt_short(cfs_rq, curr)) {
+		resched_curr(rq);
+		clear_buddies(cfs_rq, curr);
+	}
+}
+===HIGHLIGHT===
+lines=11-13
+作用：算出上次记账到现在跑了多久
+单位纳秒，用 rq 的任务时钟
+不大于 0 就直接返回
+===HIGHLIGHT===
+lines=15-17
+calc_delta_fair：乘 1024 再除以权重
+nice 0 原样累加
+update_deadline：这次请求用完没有
+update_min_vruntime：维护平均线
+===HIGHLIGHT===
+lines=35-41
+只有一个任务：不用换
+请求用完，或被更短的请求抢：
+resched_curr 只打一个标记
+真正换人，等出口再做
+
+[narration]
+时钟中断每来一拍，就走到 update curr。第一段算出这段时间跑了多少纳秒。第二段按权重折算，累加到 vruntime 上，再问 update deadline：这次请求用完了吗。第三段，队列里不止一个人，请求又用完了，就调 resched curr。注意，它只打一个标记，不当场换人。
+
+---
+
+## 15 时间片只是请求长度
+
+[visual: code_explain lang=c title="update_deadline：时间片只是请求长度（Linux 6.12 kernel/sched/fair.c）"]
+static bool update_deadline(struct cfs_rq *cfs_rq, struct sched_entity *se)
+{
+	if ((s64)(se->vruntime - se->deadline) < 0)
+		return false;
+
+	/*
+	 * For EEVDF the virtual time slope is determined by w_i (iow.
+	 * nice) while the request time r_i is determined by
+	 * sysctl_sched_base_slice.
+	 */
+	if (!se->custom_slice)
+		se->slice = sysctl_sched_base_slice;
+
+	/*
+	 * EEVDF: vd_i = ve_i + r_i / w_i
+	 */
+	se->deadline = se->vruntime + calc_delta_fair(se->slice, se);
+
+	/*
+	 * The task has consumed its request, reschedule.
+	 */
+	return true;
+}
+===HIGHLIGHT===
+lines=3-4
+还没跑到 deadline：返回 false
+什么都不做
+===HIGHLIGHT===
+lines=11-12
+默认请求长度 sysctl_sched_base_slice
+0.75 毫秒乘以 1 加 log2 核数
+8 核及以上：3 毫秒
+6.12 起可用 sched_setattr 自定义
+===HIGHLIGHT===
+lines=17-22
+vd = ve + r / w
+新 deadline：现在加一个 slice 的折算
+返回 true：请求用完，重新挑人
+
+[narration]
+这里有个容易误解的地方。时间片在 EEVDF 里不是下台线，而是请求长度。没跑到截止时间，什么都不做；跑到了，就按 vd 等于 ve 加 r 除以 w，给它一个新的截止时间，再返回真，让调度器重新挑一次。八核机器上，默认请求长度是 3 毫秒。下不下台，要看重新挑的结果。
+
+---
+
+## 16 欠多少、有没有资格
+
+[visual: code_explain lang=c title="entity_lag 与 vruntime_eligible：欠多少，有没有资格（Linux 6.12 kernel/sched/fair.c）"]
+static s64 entity_lag(u64 avruntime, struct sched_entity *se)
+{
+	s64 vlag, limit;
+
+	vlag = avruntime - se->vruntime;
+	limit = calc_delta_fair(max_t(u64, 2*se->slice, TICK_NSEC), se);
+
+	return clamp(vlag, -limit, limit);
+}
+
+static void update_entity_lag(struct cfs_rq *cfs_rq, struct sched_entity *se)
+{
+	SCHED_WARN_ON(!se->on_rq);
+
+	se->vlag = entity_lag(avg_vruntime(cfs_rq), se);
+}
+
+/*
+ * Entity is eligible once it received less service than it ought to have,
+ * eg. lag >= 0.
+ *
+ * lag_i = S - s_i = w_i*(V - v_i)
+ *
+ * lag_i >= 0 -> V >= v_i
+ *
+ *     \Sum (v_i - v)*w_i
+ * V = ------------------ + v
+ *          \Sum w_i
+ *
+ * lag_i >= 0 -> \Sum (v_i - v)*w_i >= (v_i - v)*(\Sum w_i)
+ *
+ * Note: using 'avg_vruntime() > se->vruntime' is inaccurate due
+ *       to the loss in precision caused by the division.
+ */
+static int vruntime_eligible(struct cfs_rq *cfs_rq, u64 vruntime)
+{
+	struct sched_entity *curr = cfs_rq->curr;
+	s64 avg = cfs_rq->avg_vruntime;
+	long load = cfs_rq->avg_load;
+
+	if (curr && curr->on_rq) {
+		unsigned long weight = scale_load_down(curr->load.weight);
+
+		avg += entity_key(cfs_rq, curr) * weight;
+		load += weight;
+	}
+
+	return avg >= (s64)(vruntime - cfs_rq->min_vruntime) * load;
+}
+===HIGHLIGHT===
+lines=1-9
+lag = 平均线减自己的 vruntime
+正：系统欠它；负：它多拿了
+limit：两个 slice 与一拍取大者
+3 毫秒 slice：最多记 6 毫秒的账
+===HIGHLIGHT===
+lines=22-24
+lag 大于等于 0
+等价于平均线 V 不小于自己
+V 是加权平均虚拟时间
+===HIGHLIGHT===
+lines=35-49
+avg：各任务相对 min_vruntime 的加权和
+当前任务不在树里，手工加上
+不等式两边同乘总权重
+不做除法，避免丢精度
+
+[narration]
+有没有资格，看 lag，也就是平均线减去自己。正的说明系统欠它，负的说明它多拿了。第一段把 lag 夹在两个时间片之内：睡了几小时的任务，醒来最多补 6 毫秒，不会独占 CPU。第三段判断资格：不直接算平均值，而是把不等式两边同乘总权重，避免除法丢精度。
+
+---
+
+## 17 第 907 行：挑人
+
+[visual: code_explain lang=c title="pick_eevdf：有资格的人里挑 deadline 最早的（Linux 6.12 kernel/sched/fair.c）"]
+static struct sched_entity *pick_eevdf(struct cfs_rq *cfs_rq)
+{
+	struct rb_node *node = cfs_rq->tasks_timeline.rb_root.rb_node;
+	struct sched_entity *se = __pick_first_entity(cfs_rq);
+	struct sched_entity *curr = cfs_rq->curr;
+	struct sched_entity *best = NULL;
+
+	/*
+	 * We can safely skip eligibility check if there is only one entity
+	 * in this cfs_rq, saving some cycles.
+	 */
+	if (cfs_rq->nr_running == 1)
+		return curr && curr->on_rq ? curr : se;
+
+	if (curr && (!curr->on_rq || !entity_eligible(cfs_rq, curr)))
+		curr = NULL;
+
+	/*
+	 * Once selected, run a task until it either becomes non-eligible or
+	 * until it gets a new slice. See the HACK in set_next_entity().
+	 */
+	if (sched_feat(RUN_TO_PARITY) && curr && curr->vlag == curr->deadline)
+		return curr;
+
+	/* Pick the leftmost entity if it's eligible */
+	if (se && entity_eligible(cfs_rq, se)) {
+		best = se;
+		goto found;
+	}
+
+	/* Heap search for the EEVD entity */
+	while (node) {
+		struct rb_node *left = node->rb_left;
+
+		/*
+		 * Eligible entities in left subtree are always better
+		 * choices, since they have earlier deadlines.
+		 */
+		if (left && vruntime_eligible(cfs_rq,
+					__node_2_se(left)->min_vruntime)) {
+			node = left;
+			continue;
+		}
+
+		se = __node_2_se(node);
+
+		/*
+		 * The left subtree either is empty or has no eligible
+		 * entity, so check the current node since it is the one
+		 * with earliest deadline that might be eligible.
+		 */
+		if (entity_eligible(cfs_rq, se)) {
+			best = se;
+			break;
+		}
+
+		node = node->rb_right;
+	}
+found:
+	if (!best || (curr && entity_before(curr, best)))
+		best = curr;
+
+	return best;
+===HIGHLIGHT===
+lines=12-16
+只有一个任务：免检直接返回
+当前任务超额：不再考虑它
+这一句排在 RUN_TO_PARITY 前面
+===HIGHLIGHT===
+lines=22-23
+vlag 等于 deadline：刚拿到新 slice 的标记
+只保护仍有资格的当前任务
+跑到追平平均线，或 slice 到期
+===HIGHLIGHT===
+lines=26-29
+红黑树按 deadline 排序
+最左 = deadline 最早
+它正好有资格：走快路径
+===HIGHLIGHT===
+lines=39-57
+节点记着子树里最小的 vruntime
+左子树有合格的人就往左
+O(log n) 找到答案
+===HIGHLIGHT===
+lines=59-61
+当前任务 deadline 更早：继续跑它
+少换一次人
+
+[narration]
+挑人就在第 907 行。注意当前任务的资格检查排在最前：一旦超额，直接出局。然后才轮到 RUN TO PARITY，它只保护还有资格的当前任务。红黑树按截止时间排序，最左边那个如果有资格，直接选它；否则沿树往下找，每个节点记着子树里最小的 vruntime，一次比较就知道左边有没有合格的人。
+
+---
+
+## 18 换不换人，不是 tick 决定的
+
+[visual: spotlight]
+换不换人
+不是 tick 决定的
+
+[narration]
+来做个推演。同一个核上两个 nice 0 任务，A 正在跑、刚拿到新时间片；B 刚睡醒，落后平均线 6 毫秒。时钟中断到了，换不换？答案是：决定在 B 醒来的那一刻就做完了。
+
+---
+
+## 19 醒来的人放在哪
+
+[visual: code_explain lang=c title="place_entity：醒来的人放在哪（Linux 6.12 kernel/sched/fair.c）"]
+		load = cfs_rq->avg_load;
+		if (curr && curr->on_rq)
+			load += scale_load_down(curr->load.weight);
+
+		lag *= load + scale_load_down(se->load.weight);
+		if (WARN_ON_ONCE(!load))
+			load = 1;
+		lag = div_s64(lag, load);
+	}
+
+	se->vruntime = vruntime - lag;
+
+	if (sched_feat(PLACE_REL_DEADLINE) && se->rel_deadline) {
+		se->deadline += se->vruntime;
+		se->rel_deadline = 0;
+		return;
+	}
+
+	/*
+	 * When joining the competition; the existing tasks will be,
+	 * on average, halfway through their slice, as such start tasks
+	 * off with half a slice to ease into the competition.
+	 */
+	if (sched_feat(PLACE_DEADLINE_INITIAL) && (flags & ENQUEUE_INITIAL))
+		vslice /= 2;
+
+	/*
+	 * EEVDF: vd_i = ve_i + r_i/w_i
+	 */
+	se->deadline = se->vruntime + vslice;
+===HIGHLIGHT===
+lines=1-8
+load：树里总权重，加上正在跑的 A
+lag 乘以加入后的总权重
+再除以加入前的总权重
+两个等权任务：放大 2 倍
+===HIGHLIGHT===
+lines=11-11
+B 放到平均线减 12 毫秒
+入队后平均线自己下移 6 毫秒
+B 相对新平均正好还欠 6 毫秒
+睡觉不会洗掉这笔账
+===HIGHLIGHT===
+lines=27-30
+deadline = vruntime + 一个 slice
+B 的截止时间也跟着提前
+
+[narration]
+B 醒来入队，走 place entity。它不是把 B 放到平均线减 6，而是先把欠账放大：乘以加入后的总权重，再除以加入前的，两个等权任务就是放大两倍。因为 B 一进来，平均线自己会往下挪。放大之后，B 相对新平均线正好还欠 6 毫秒。副作用是：A 什么都没做，就变成了超前 6 毫秒。
+
+---
+
+## 20 醒来立刻问一次
+
+[visual: code_explain lang=c title="check_preempt_wakeup_fair：醒来立刻问一次（Linux 6.12 kernel/sched/fair.c）"]
+	cfs_rq = cfs_rq_of(se);
+	update_curr(cfs_rq);
+	/*
+	 * If @p has a shorter slice than current and @p is eligible, override
+	 * current's slice protection in order to allow preemption.
+	 *
+	 * Note that even if @p does not turn out to be the most eligible
+	 * task at this moment, current's slice protection will be lost.
+	 */
+	if (do_preempt_short(cfs_rq, pse, se) && se->vlag == se->deadline)
+		se->vlag = se->deadline + 1;
+
+	/*
+	 * If @p has become the most eligible task, force preemption.
+	 */
+	if (pick_eevdf(cfs_rq) == pse)
+		goto preempt;
+
+	return;
+
+preempt:
+	resched_curr(rq);
+}
+===HIGHLIGHT===
+lines=1-2
+先给正在跑的 A 记一笔账
+===HIGHLIGHT===
+lines=10-11
+B 的请求比 A 短，才撕掉 A 的保护
+这里两人都是 3 毫秒：不撕
+===HIGHLIGHT===
+lines=16-22
+直接调 pick_eevdf
+A 超前、没资格；B 有资格
+选中 B：给 A 打重新调度标记
+
+[narration]
+入队的同一条路径里，紧接着就问一次：现在该谁跑。先给 A 记账。第二段只在 B 要了更短的时间片时，才撕掉 A 的保护，这里两人都是 3 毫秒，不撕。第三段直接调 pick eevdf：A 已经超前、没资格，RUN TO PARITY 根本轮不到它发言；B 有资格，选中 B，给 A 打上标记。
+
+---
+
+## 21 B 的账一正一负
+
+[visual: ascii title=同一个判据，B 的账一正一负]
+ B 落后平均线 6 毫秒                B 超前平均线 6 毫秒
+┌──────────────────────────────┐   ┌──────────────────────────────┐
+│ 入队：B 放到 V 减 12         │   │ 入队：B 放到 V 加 12         │
+│ 新平均下移 6，A 变超前       │   │ 新平均上移 6，A 变落后       │
+│ A 没资格，B 有资格           │   │ A 有资格，B 没资格           │
+│ pick_eevdf 选中 B            │   │ 开不开 RUN_TO_PARITY 都选 A  │
+└──────────────────────────────┘   └──────────────────────────────┘
+                │                                  │
+                ▼                                  ▼
+ 结果：立刻抢占 A                   结果：B 等 A 再跑 12 毫秒
+
+[sidebar]
+有资格：在平均线下方
+deadline：只在线下方排先后
+RUN_TO_PARITY 只动后者
+短睡眠刷不了优先级
+C2·霸台不可预知
+
+[narration]
+把 B 的账翻成负的：B 睡前多拿了 6 毫秒。放大后 B 落在平均线上方 12，新平均上移 6。这次 A 有资格，B 没有，开不开 RUN TO PARITY 都选 A。B 要等 A 再跑 12 毫秒，平均线才追上它。这 12 毫秒里公平份额一人 6，B 拿零，正好还清睡前多拿的。睡觉不洗账，短睡眠就刷不了优先级。
+
+---
+
+## 22 从 tick 到另一条流
+
+[visual: timeline title=从 tick 到另一条流：纳秒时间线（3 GHz，量级）]
+T=0 [硬件] APIC 定时器到期，查中断描述符表
+T=50 [入口] 切到内核栈，压出 pt_regs
+T=500 [sched_tick] update_curr 记账，打 TIF_NEED_RESCHED
+T=900 [出口] 中断返回前看到标记，调 schedule
+T=1200 [__schedule] pick_eevdf 选出 B
+T=1600 [context_switch] 写 CR3，PCID 命中不冲 TLB
+T=1800 [__switch_to_asm] 压 6 个寄存器，换 rsp，弹 6 个
+T=1850 [__switch_to] 存 FPU 状态，换 TLS 和 current
+T=2800 [用户态] B 从 futex 返回，跑第一条指令
+
+[narration]
+标记打下，谁来真换人？中断处理完、准备返回用户态时，出口检查看到这个标记，才调 schedule。从定时器到点，到 B 跑上第一条用户指令，大约两到三微秒，这是直接代价。B 的缓存多半被 A 冲掉了，重新热起来要几十微秒甚至更多，这是间接代价，往往更贵。
+
+---
+
+## 23 换地址空间，再换栈
+
+[visual: code_explain lang=c title="context_switch：换地址空间，再换栈（Linux 6.12 kernel/sched/core.c）"]
+	if (!next->mm) {                                // to kernel
+		enter_lazy_tlb(prev->active_mm, next);
+
+		next->active_mm = prev->active_mm;
+		if (prev->mm)                           // from user
+			mmgrab_lazy_tlb(prev->active_mm);
+		else
+			prev->active_mm = NULL;
+	} else {                                        // to user
+		membarrier_switch_mm(rq, prev->active_mm, next->mm);
+		/*
+		 * sys_membarrier() requires an smp_mb() between setting
+		 * rq->curr / membarrier_switch_mm() and returning to userspace.
+		 *
+		 * The below provides this either through switch_mm(), or in
+		 * case 'prev->active_mm == next->mm' through
+		 * finish_task_switch()'s mmdrop().
+		 */
+		switch_mm_irqs_off(prev->active_mm, next->mm, next);
+		lru_gen_use_mm(next->mm);
+
+		if (!prev->mm) {                        // from kernel
+			/* will mmdrop_lazy_tlb() in finish_task_switch(). */
+			rq->prev_mm = prev->active_mm;
+			prev->active_mm = NULL;
+		}
+	}
+
+	/* switch_mm_cid() requires the memory barriers above. */
+	switch_mm_cid(rq, prev, next);
+
+	prepare_lock_switch(rq, next, rf);
+
+	/* Here we just switch the register state and the stack. */
+	switch_to(prev, next, prev);
+	barrier();
+
+	return finish_task_switch(prev);
+===HIGHLIGHT===
+lines=1-8
+下一个是内核线程：没有自己的 mm
+借上一个的 active_mm 来用
+不写 CR3，TLB 原样保留
+===HIGHLIGHT===
+lines=9-20
+下一个是用户进程
+switch_mm_irqs_off：写 CR3
+开了 PCID：带 NOFLUSH，不冲 TLB
+每核最多记 6 个地址空间
+===HIGHLIGHT===
+lines=34-35
+switch_to：换寄存器和栈
+下一行起，跑的已经是 next
+===HIGHLIGHT===
+lines=38-38
+finish_task_switch 跑在 next 的栈上
+prev 若已 TASK_DEAD
+在这里替它拆内核栈（core.c 5230）
+
+[narration]
+换人分两步。第一段，下一个是内核线程，没有自己的地址空间，就借上一个的用，连 CR3 都不写。第二段，换到用户进程，写 CR3；开了 PCID，上次的 TLB 条目还能留着。第三段换寄存器和栈。最后一行已经跑在新任务的栈上，如果上一个任务已经死了，就在这里替它拆掉内核栈。
+
+---
+
+## 24 两条 movq 换了一条流
+
+[visual: code_explain lang=asm title="__switch_to_asm：两条 movq 之间换了一条流（Linux 6.12 arch/x86/entry/entry_64.S）"]
+SYM_FUNC_START(__switch_to_asm)
+	/*
+	 * Save callee-saved registers
+	 * This must match the order in inactive_task_frame
+	 */
+	pushq	%rbp
+	pushq	%rbx
+	pushq	%r12
+	pushq	%r13
+	pushq	%r14
+	pushq	%r15
+
+	/* switch stack */
+	movq	%rsp, TASK_threadsp(%rdi)
+	movq	TASK_threadsp(%rsi), %rsp
+
+#ifdef CONFIG_STACKPROTECTOR
+	movq	TASK_stack_canary(%rsi), %rbx
+	movq	%rbx, PER_CPU_VAR(fixed_percpu_data + FIXED_stack_canary)
+#endif
+
+	/*
+	 * When switching from a shallower to a deeper call stack
+	 * the RSB may either underflow or use entries populated
+	 * with userspace addresses. On CPUs where those concerns
+	 * exist, overwrite the RSB with entries which capture
+	 * speculative execution to prevent attack.
+	 */
+	FILL_RETURN_BUFFER %r12, RSB_CLEAR_LOOPS, X86_FEATURE_RSB_CTXSW
+
+	/* restore callee-saved registers */
+	popq	%r15
+	popq	%r14
+	popq	%r13
+	popq	%r12
+	popq	%rbx
+	popq	%rbp
+
+	jmp	__switch_to
+SYM_FUNC_END(__switch_to_asm)
+===HIGHLIGHT===
+lines=6-11
+压入 6 个被调用者保存寄存器
+rbp、rbx、r12 到 r15
+压在 prev 的内核栈上
+其余寄存器调用约定已替它存好
+===HIGHLIGHT===
+lines=14-15
+第一条：prev 的栈指针存进它的账本
+第二条：从 next 的账本取出栈指针
+这两行之间，就是换流的瞬间
+===HIGHLIGHT===
+lines=29-29
+清空返回地址预测栈
+防推测执行攻击
+===HIGHLIGHT===
+lines=32-39
+弹出 next 上次压的 6 个寄存器
+jmp 进 __switch_to 收尾
+它返回时，回到 next 上次停下的地方
+新 fork 的任务回到 ret_from_fork_asm
+
+[narration]
+真正换流的只有两条指令。先把六个被调用者保存的寄存器压到 A 的内核栈上，其余寄存器，调用约定早就替它存好了，所以六个就是下限。第一条 movq 把栈指针存进 A 的账本，第二条从 B 的账本取出 B 的栈指针。这一行之前是 A，之后就是 B。再弹出 B 的六个寄存器，跳进 switch to 收尾。
+
+---
+
+## 25 报幕：主线三
+
+[visual: spotlight]
+主线三 缺页与 COW
+写一个只读页，拷还是不拷？
+
+[narration]
+hello 跑起来了。最后一条主线，回到最开始的 fork：父子共享的那些页，谁先写，谁付钱？
+
+---
+
+## 26 copy on write 的真实触发链
+
+[visual: ascii title=copy on write 的真实触发链]
+┌─────────────────────────────────────┐
+│ fork：复制页表，不复制物理页        │
+│ 私有可写页：父子两边 PTE 都改只读   │
+│ 物理页引用计数加 1                  │
+└─────────────────────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────┐
+│ 谁先写，谁的 CPU 触发缺页           │
+│ 写一个只读 PTE                      │
+└─────────────────────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────┐
+│ do_wp_page：这页现在归我独占吗？    │
+│ 独占：原地改可写，不拷              │
+│ 不独占：wp_page_copy 分新页、拷 4KB │
+└─────────────────────────────────────┘
+
+[sidebar]
+fork：只写保护，不拷
+先写的：自己触发缺页
+判据：复用当且仅当独占
+后写的：常常不用拷
+C3 C4
+
+[narration]
+原理先讲。fork 不拷物理页，只复制页表，并把父子两边的可写页都改成只读。之后谁先往这一页写，谁的 CPU 就触发一次缺页。内核在缺页处理里问一句：这页现在是不是只归我？是，就原地改回可写；不是，就为这个写的进程分一张新页，拷 4K，改它自己的页表项。为什么划算？因为大多数页 fork 之后根本没人写。
+
+---
+
+## 27 fork 只写保护不拷页
+
+[visual: code_explain lang=c title="__copy_present_ptes：fork 只写保护，不拷页（Linux 6.12 mm/memory.c）"]
+static __always_inline void __copy_present_ptes(struct vm_area_struct *dst_vma,
+		struct vm_area_struct *src_vma, pte_t *dst_pte, pte_t *src_pte,
+		pte_t pte, unsigned long addr, int nr)
+{
+	struct mm_struct *src_mm = src_vma->vm_mm;
+
+	/* If it's a COW mapping, write protect it both processes. */
+	if (is_cow_mapping(src_vma->vm_flags) && pte_write(pte)) {
+		wrprotect_ptes(src_mm, addr, src_pte, nr);
+		pte = pte_wrprotect(pte);
+	}
+
+	/* If it's a shared mapping, mark it clean in the child. */
+	if (src_vma->vm_flags & VM_SHARED)
+		pte = pte_mkclean(pte);
+	pte = pte_mkold(pte);
+
+	if (!userfaultfd_wp(dst_vma))
+		pte = pte_clear_uffd_wp(pte);
+
+	set_ptes(dst_vma->vm_mm, addr, dst_pte, pte, nr);
+}
+===HIGHLIGHT===
+lines=7-11
+私有可写映射：两边都写保护
+wrprotect_ptes：父进程这边去掉写位
+pte_wrprotect：给子进程的那份也去掉
+从此谁写谁缺页
+===HIGHLIGHT===
+lines=13-16
+共享映射：子进程那份标成干净
+所有页标成未访问
+===HIGHLIGHT===
+lines=21-21
+set_ptes：填进子进程页表
+指向同一张物理页，一字节没拷
+调用方 copy_present_ptes 还有个例外
+页被 DMA 钉住：fork 当场给子进程拷一页
+
+[narration]
+这是 fork 复制页表的最底层。第一段，私有可写映射，把父进程这边的页表项写保护，给子进程的那一份也去掉写位，两边从此都只读。第二段处理共享映射和访问位。第三段把页表项填进子进程，指向同一张物理页，一个字节都没拷。唯一的例外是页正被 DMA 钉住，那就在 fork 里当场拷。
+
+---
+
+## 28 一次缺页的五个岔口
+
+[visual: code_explain lang=c title="handle_pte_fault：一次缺页的五个岔口（Linux 6.12 mm/memory.c）"]
+	if (!vmf->pte)
+		return do_pte_missing(vmf);
+
+	if (!pte_present(vmf->orig_pte))
+		return do_swap_page(vmf);
+
+	if (pte_protnone(vmf->orig_pte) && vma_is_accessible(vmf->vma))
+		return do_numa_page(vmf);
+
+	spin_lock(vmf->ptl);
+	entry = vmf->orig_pte;
+	if (unlikely(!pte_same(ptep_get(vmf->pte), entry))) {
+		update_mmu_tlb(vmf->vma, vmf->address, vmf->pte);
+		goto unlock;
+	}
+	if (vmf->flags & (FAULT_FLAG_WRITE|FAULT_FLAG_UNSHARE)) {
+		if (!pte_write(entry))
+			return do_wp_page(vmf);
+		else if (likely(vmf->flags & FAULT_FLAG_WRITE))
+			entry = pte_mkdirty(entry);
+	}
+	entry = pte_mkyoung(entry);
+===HIGHLIGHT===
+lines=1-2
+页表项为空：首次访问
+匿名页：do_anonymous_page
+文件页：do_fault
+===HIGHLIGHT===
+lines=4-5
+页表项在但不 present：在 swap 里
+do_swap_page：要读盘，记主缺页
+===HIGHLIGHT===
+lines=7-8
+NUMA 平衡故意清掉的访问权
+走迁移判断
+===HIGHLIGHT===
+lines=10-15
+拿页表锁，再看一眼
+已被别的线程处理：直接返回
+===HIGHLIGHT===
+lines=16-22
+写一个不可写的页表项
+do_wp_page：copy on write 入口
+否则只是补上访问位、脏位
+
+[narration]
+写只读页的那次缺页，进到 handle pte fault 的五个岔口。页表项是空的，走首次分配；不在内存，从 swap 读回来，这才是主缺页；NUMA 平衡故意清掉的，走迁移。剩下的拿锁再看一眼，别的线程已经处理过就返回。最后，写一个不可写的页表项，走 do wp page，这就是 copy on write 的入口。
+
+---
+
+## 29 第 3724 行：拷不拷
+
+[visual: code_explain lang=c title="do_wp_page：第 3724 行决定拷不拷（Linux 6.12 mm/memory.c）"]
+	if (vma->vm_flags & (VM_SHARED | VM_MAYSHARE)) {
+		/*
+		 * VM_MIXEDMAP !pfn_valid() case, or VM_SOFTDIRTY clear on a
+		 * VM_PFNMAP VMA.
+		 *
+		 * We should not cow pages in a shared writeable mapping.
+		 * Just mark the pages writable and/or call ops->pfn_mkwrite.
+		 */
+		if (!vmf->page)
+			return wp_pfn_shared(vmf);
+		return wp_page_shared(vmf, folio);
+	}
+
+	/*
+	 * Private mapping: create an exclusive anonymous page copy if reuse
+	 * is impossible. We might miss VM_WRITE for FOLL_FORCE handling.
+	 *
+	 * If we encounter a page that is marked exclusive, we must reuse
+	 * the page without further checks.
+	 */
+	if (folio && folio_test_anon(folio) &&
+	    (PageAnonExclusive(vmf->page) || wp_can_reuse_anon_folio(folio, vma))) {
+		if (!PageAnonExclusive(vmf->page))
+			SetPageAnonExclusive(vmf->page);
+		if (unlikely(unshare)) {
+			pte_unmap_unlock(vmf->pte, vmf->ptl);
+			return 0;
+		}
+		wp_page_reuse(vmf, folio);
+		return 0;
+	}
+	/*
+	 * Ok, we need to copy. Oh, well..
+	 */
+	if (folio)
+		folio_get(folio);
+
+	pte_unmap_unlock(vmf->pte, vmf->ptl);
+#ifdef CONFIG_KSM
+	if (folio && folio_test_ksm(folio))
+		count_vm_event(COW_KSM);
+#endif
+	return wp_page_copy(vmf);
+===HIGHLIGHT===
+lines=1-12
+共享映射：大家本该看同一份
+不拷，只标脏、改可写
+===HIGHLIGHT===
+lines=21-24
+判据：匿名页，并且
+带独占位，或锁下验出只有我
+验出来就置上独占位，下次免验
+===HIGHLIGHT===
+lines=29-30
+wp_page_reuse：原地改可写
+置脏位，刷 TLB，不拷
+===HIGHLIGHT===
+lines=35-43
+不满足：拿一个引用，解锁
+交给 wp_page_copy 真拷
+文件私有页第一次写，永远走这里
+
+[narration]
+第一段，共享映射本来就该大家看同一份，不拷，只标脏、改可写。第二段就是第 3724 行：匿名页，并且带着独占位，或者在锁下验出只有我一个引用，就复用，顺手置上独占位，下次免验。第三段原地改可写。第四段才真拷。注意，文件私有页，比如 hello 的数据段，第一次写永远走拷贝。
+
+---
+
+## 30 锁下验引用计数
+
+[visual: code_explain lang=c title="wp_can_reuse_anon_folio：锁下验引用计数（Linux 6.12 mm/memory.c）"]
+	if (folio_test_large(folio))
+		return false;
+
+	/*
+	 * We have to verify under folio lock: these early checks are
+	 * just an optimization to avoid locking the folio and freeing
+	 * the swapcache if there is little hope that we can reuse.
+	 *
+	 * KSM doesn't necessarily raise the folio refcount.
+	 */
+	if (folio_test_ksm(folio) || folio_ref_count(folio) > 3)
+		return false;
+	if (!folio_test_lru(folio))
+		/*
+		 * We cannot easily detect+handle references from
+		 * remote LRU caches or references to LRU folios.
+		 */
+		lru_add_drain();
+	if (folio_ref_count(folio) > 1 + folio_test_swapcache(folio))
+		return false;
+	if (!folio_trylock(folio))
+		return false;
+	if (folio_test_swapcache(folio))
+		folio_free_swap(folio);
+	if (folio_test_ksm(folio) || folio_ref_count(folio) != 1) {
+		folio_unlock(folio);
+		return false;
+	}
+	/*
+	 * Ok, we've got the only folio reference from our mapping
+	 * and the folio is locked, it's dark out, and we're wearing
+	 * sunglasses. Hit it.
+	 */
+	folio_move_anon_rmap(folio, vma);
+	folio_unlock(folio);
+	return true;
+===HIGHLIGHT===
+lines=1-2
+大页的子页：一律不复用
+===HIGHLIGHT===
+lines=11-20
+快速排除：引用太多直接放弃
+每核 LRU 批处理缓存可能捏着引用
+不在 LRU 上就先排空
+引用超过 1：有别人在用
+===HIGHLIGHT===
+lines=21-28
+拿到页锁再验一次
+必须恰好等于 1
+拿不到锁：宁可去拷
+===HIGHLIGHT===
+lines=34-36
+确认独占：反向映射归到本 VMA
+返回 true：复用
+
+[narration]
+怎么验独占？看引用计数，不看映射计数。第一段，大页的子页一律不复用。第二段是快速排除：引用太多直接放弃，每个核的批处理缓存可能还捏着一个引用，先排空。第三段拿到页锁再验，必须恰好等于 1。为什么不用映射计数？因为 DMA 钉住页时不进任何页表，只看映射计数，会把别人正在用的页错当成独占。
+
+---
+
+## 31 真拷的四步
+
+[visual: code_explain lang=c title="wp_page_copy：分新页、拷 4KB、换页表项（Linux 6.12 mm/memory.c）"]
+	pfn_is_zero = is_zero_pfn(pte_pfn(vmf->orig_pte));
+	new_folio = folio_prealloc(mm, vma, vmf->address, pfn_is_zero);
+	if (!new_folio)
+		goto oom;
+
+	if (!pfn_is_zero) {
+		int err;
+
+		err = __wp_page_copy_user(&new_folio->page, vmf->page, vmf);
+		if (err) {
+			/*
+			 * COW failed, if the fault was solved by other,
+			 * it's fine. If not, userspace would re-fault on
+			 * the same address and we will handle the fault
+			 * from the second attempt.
+			 * The -EHWPOISON case will not be retried.
+			 */
+			folio_put(new_folio);
+			if (old_folio)
+				folio_put(old_folio);
+
+			delayacct_wpcopy_end();
+			return err == -EHWPOISON ? VM_FAULT_HWPOISON : 0;
+		}
+		kmsan_copy_page_meta(&new_folio->page, vmf->page);
+	}
+
+	__folio_mark_uptodate(new_folio);
+
+	mmu_notifier_range_init(&range, MMU_NOTIFY_CLEAR, 0, mm,
+				vmf->address & PAGE_MASK,
+				(vmf->address & PAGE_MASK) + PAGE_SIZE);
+	mmu_notifier_invalidate_range_start(&range);
+
+	/*
+	 * Re-check the pte - we dropped the lock
+	 */
+	vmf->pte = pte_offset_map_lock(mm, vmf->pmd, vmf->address, &vmf->ptl);
+	if (likely(vmf->pte && pte_same(ptep_get(vmf->pte), vmf->orig_pte))) {
+		if (old_folio) {
+			if (!folio_test_anon(old_folio)) {
+				dec_mm_counter(mm, mm_counter_file(old_folio));
+				inc_mm_counter(mm, MM_ANONPAGES);
+			}
+		} else {
+			ksm_might_unmap_zero_page(mm, vmf->orig_pte);
+			inc_mm_counter(mm, MM_ANONPAGES);
+		}
+		flush_cache_page(vma, vmf->address, pte_pfn(vmf->orig_pte));
+		entry = mk_pte(&new_folio->page, vma->vm_page_prot);
+		entry = pte_sw_mkyoung(entry);
+		if (unlikely(unshare)) {
+			if (pte_soft_dirty(vmf->orig_pte))
+				entry = pte_mksoft_dirty(entry);
+			if (pte_uffd_wp(vmf->orig_pte))
+				entry = pte_mkuffd_wp(entry);
+		} else {
+			entry = maybe_mkwrite(pte_mkdirty(entry), vma);
+		}
+
+		/*
+		 * Clear the pte entry and flush it first, before updating the
+		 * pte with the new entry, to keep TLBs on different CPUs in
+		 * sync. This code used to set the new PTE then flush TLBs, but
+		 * that left a window where the new PTE could be loaded into
+		 * some TLBs while the old PTE remains in others.
+		 */
+		ptep_clear_flush(vma, vmf->address, vmf->pte);
+		folio_add_new_anon_rmap(new_folio, vma, vmf->address, RMAP_EXCLUSIVE);
+		folio_add_lru_vma(new_folio, vma);
+		BUG_ON(unshare && pte_write(entry));
+		set_pte_at(mm, vmf->address, vmf->pte, entry);
+		update_mmu_cache_range(vmf, vma, vmf->address, vmf->pte, 1);
+===HIGHLIGHT===
+lines=1-4
+分一张新页
+原来是零页：直接要一张清零页
+===HIGHLIGHT===
+lines=6-9
+__wp_page_copy_user
+把旧页 4KB 内容拷到新页
+===HIGHLIGHT===
+lines=38-39
+重新拿页表锁
+pte_same：确认期间没被别人改过
+===HIGHLIGHT===
+lines=50-59
+mk_pte：造指向新页的页表项
+置脏位，按 VMA 权限置可写
+===HIGHLIGHT===
+lines=68-73
+先冲掉旧的 TLB 条目
+新页加入反向映射，标成独占
+set_pte_at：装上新页表项
+
+[narration]
+真拷分四步。先分一张新页，原来是零页就直接要一张清零的。再把旧页的 4K 内容拷过去。然后重新拿页表锁，确认这段时间页表项没被别人改过。最后造一个指向新页、可写、已脏的页表项，先冲掉旧的 TLB 条目，再装上，新页一出生就标成独占。旧页引用减一。整套下来，一到两微秒。
+
+---
+
+## 32 判独占改过三轮
+
+[visual: timeline title=判独占的三轮演进]
+T=2020前 [映射计数] 按映射计数判独占，用了约 15 年
+T=2020 [漏洞] 子进程借 vmsplice 拿住页，读到父进程之后的写
+T=2020 [引用计数] Linus：copy on write 改看引用计数
+T=2021 [误伤] Arcangeli：O_DIRECT 钉住的页被迫拷走，读丢数据
+T=2022 [独占位] Hildenbrand 加 PageAnonExclusive，fork 时钉住的页当场拷
+T=6.12 [现状] 独占位免验，引用计数在锁下验
+
+[narration]
+这个判据改过三轮。最早看映射计数，2020 年被一个漏洞击穿：子进程用 vmsplice 拿住页再解除映射，父进程以为独占、原地写，子进程就读到了父进程之后的数据。Linus 改成看引用计数，又误伤了被 DMA 钉住的页。2022 年加上独占位，fork 时钉住的页当场就拷，三个口子才各自堵上。
+
+---
+
+## 33 谁先动谁 copy？
+
+[visual: text title=谁先动谁 copy？只对一半]
+父子都活着，父先写：父拷一份，原页留给子
+接着子再写：引用只剩 1，子直接复用，不拷
+子已退出，父再写：也不拷，计数自己说话
+
+[sidebar]
+先动的：拷
+后动的：常常不拷
+没别人了：不拷
+宁可多拷，不可错复用
+C3 C4
+
+[example]
+Redis 做后台快照：20 GB 的堆，fork 只复制页表，也要一百到两百多毫秒。
+
+快照期间，主进程每首写一页就拷一页，每次一到两微秒；写过的页越多，内存峰值越高。快照子进程一退出，主进程再写就不用拷了。
+
+[narration]
+常听到一句话：谁先动谁 copy。它只对一半。父子都活着时，先写的那个拷，原页留给另一个；后写的那个，引用计数已经降到 1，直接复用。子进程退出后父进程再写，也不拷。独占是个瞬时状态，没人需要通知谁，计数自己说话。偶尔计数被临时引用撑大，也会多拷一页，这是宁可多拷、不可错复用。
+
+---
+
+## 34 大页不独占就先拆
+
+[visual: code_explain lang=c title="do_huge_pmd_wp_page：大页不独占就先拆（Linux 6.12 mm/huge_memory.c）"]
+	if (folio_ref_count(folio) >
+			1 + folio_test_swapcache(folio) * folio_nr_pages(folio))
+		goto unlock_fallback;
+	if (folio_test_swapcache(folio))
+		folio_free_swap(folio);
+	if (folio_ref_count(folio) == 1) {
+		pmd_t entry;
+
+		folio_move_anon_rmap(folio, vma);
+		SetPageAnonExclusive(page);
+		folio_unlock(folio);
+reuse:
+		if (unlikely(unshare)) {
+			spin_unlock(vmf->ptl);
+			return 0;
+		}
+		entry = pmd_mkyoung(orig_pmd);
+		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
+		if (pmdp_set_access_flags(vma, haddr, vmf->pmd, entry, 1))
+			update_mmu_cache_pmd(vma, vmf->address, vmf->pmd);
+		spin_unlock(vmf->ptl);
+		return 0;
+	}
+
+unlock_fallback:
+	folio_unlock(folio);
+	spin_unlock(vmf->ptl);
+fallback:
+	__split_huge_pmd(vma, vmf->pmd, vmf->address, false, NULL);
+	return VM_FAULT_FALLBACK;
+===HIGHLIGHT===
+lines=1-3
+还有别人引用：不拷 2MB 大页
+跳去 fallback
+===HIGHLIGHT===
+lines=6-11
+锁下验出只剩自己
+置独占位，整张 2MB 原地改可写
+===HIGHLIGHT===
+lines=25-30
+__split_huge_pmd：一条大页映射
+拆成 512 条普通页表项
+返回 FALLBACK：按 4KB 重走缺页
+只拷被写的那 4KB
+
+[narration]
+大页呢？Redis 文档曾经叫你关掉透明大页，理由是 fork 之后写几千次，几乎整个内存都被拷一遍，因为当年写一个 2MB 大页要整张拷走。从 5.8 版本起改成这样：不独占就不拷大页，先把一条大页映射拆成 512 条普通页表项，按 4K 重走缺页，只拷被写的那 4K。今天剩下的代价，只是拆页表和后台合并时的毛刺。
+
+---
+
+## 35 三行源码钉回约束
+
+[visual: layers title=三行源码，钉回约束]
+binfmt_elf.c 996：能不能回头 · C4 与 C6
+fair.c 907：换谁上台 · C2，换人时机受 C5
+memory.c 3724：拷不拷 · C4 与 C3
+代价：de_thread 不可逆 · 抢占有延迟 · 多一个页标志
+
+[narration]
+三条主线，各回答一个在哪一行做决定的问题。第 996 行决定能不能回头，背后是 C4 和 C6；第 907 行决定换谁，背后是 C2，而换人只能等出口，是 C5；第 3724 行决定拷不拷，背后是 C4 和 C3。每一行背后，都是两三条约束在互相拉扯，每个决定也都有它付出的代价。
+
+---
+
+## 36 本集总结
+
+[visual: html_slide image="pics/ep5-summary-card.png" title=本集总结]
+
+[step: auto]
+scroll auto
+
+[narration]
+这一集带走六件事。一，execve 先验后换再建，第 996 行之后出错就是 SIGSEGV。二，bss 分两段建，只建地图不搬内容。三，时间片是请求长度，不是下台线。四，资格看平均线，睡觉不洗账。五，换流只换六个寄存器和一个栈指针。六，copy on write 复用当且仅当独占，后写的常常不用拷。
+
+---
+
+## 37 下集预告
+
+[visual: spotlight]
+本集就到这里
+下集：没有 fork，Windows NT 怎么答
+
+[narration]
+本集就到这里。同样七条约束，1988 年 Cutler 在 Windows NT 里从头做了一遍。没有 fork，创建、调度和 copy on write 会长成什么样？下集见。
+
+---

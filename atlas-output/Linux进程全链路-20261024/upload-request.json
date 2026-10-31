@@ -1,0 +1,67 @@
+{
+  "platform": "bilibili",
+  "title": "Linux 进程从 execve 到 exit 深度解读（88 分钟大电影）",
+  "tags": [
+    "Linux",
+    "进程",
+    "execve",
+    "fork",
+    "调度器",
+    "EEVDF",
+    "上下文切换",
+    "缺页中断",
+    "写时复制",
+    "内核源码",
+    "操作系统",
+    "系统设计"
+  ],
+  "cover": "cover-atlas.png",
+  "desc_file": "linux-process-ep0-toc.desc.txt",
+  "parts": [
+    {
+      "file": "P0 目录：七集路线图.mp4",
+      "bytes": 12363543,
+      "sha256": "1524da0b503101debf871e5a876d46815c12cb6e6a08b0fd576cda043a26053c"
+    },
+    {
+      "file": "P1 What：敲下 hello，一个进程的一辈子要走几站.mp4",
+      "bytes": 41640134,
+      "sha256": "8b84d81bdd955c8d314901d6a549e8a4335dd7266a156244c633e6a873c05798"
+    },
+    {
+      "file": "P2 Why：从一台裸机砍七刀，进程为什么非得长成这样.mp4",
+      "bytes": 47343150,
+      "sha256": "89d36e6ee22c93172039c2af2c1ae389ff94c2808b91d3753180411b8f424f1a"
+    },
+    {
+      "file": "P3 How：敲下 hello 之后，内核只动了三本账.mp4",
+      "bytes": 60523990,
+      "sha256": "57db1f0518c119e4c9659dc772deab9cdbc5005a119d4cfdfb901f169e8cc869"
+    },
+    {
+      "file": "P4 Origin：fork 只有 27 行汇编，四个人替它还了五十年的债.mp4",
+      "bytes": 35966113,
+      "sha256": "bedb3e93fa91664c74b157a3c65643350285613808d57d8900de0d9d23a6566a"
+    },
+    {
+      "file": "P5 Deep：996、907、3724，三行源码定下进程的三个生死决定.mp4",
+      "bytes": 68224605,
+      "sha256": "671b4727cc35175586bd413b12bc1eb170d68df25f9a7d2a0c3b0994b4ce5ea4"
+    },
+    {
+      "file": "P6 Comparison：Windows 没有 fork，创建、调度、写时拷贝各差在哪.mp4",
+      "bytes": 41363866,
+      "sha256": "c0fa7336b1c3d544ba45914dfd62aaeba2d2f8f2fa7726ce3099991dde4db9e4"
+    },
+    {
+      "file": "P7 Synthesis：不是最聪明的设计，是七条约束筛剩下的.mp4",
+      "bytes": 47147046,
+      "sha256": "db33d9128ebbe79f9e6cb7a2126685afe0b776232ef0fcefd2cc8dcb14e37578"
+    }
+  ],
+  "multipart": true,
+  "season": null,
+  "charging": false,
+  "scheduled": false,
+  "authorized_at": "2026-10-31T16:30:10+08:00"
+}

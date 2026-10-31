@@ -1,0 +1,58 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 13.0
+ },
+ {
+  "idx": 2,
+  "type": "title",
+  "title": "Linux 进程全链路",
+  "start": 13.0,
+  "end": 32.97
+ },
+ {
+  "idx": 3,
+  "type": "spotlight",
+  "title": "2 六个问题，一条链",
+  "start": 32.97,
+  "end": 51.47
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "七集路线：从现象走到方法",
+  "start": 51.47,
+  "end": 87.63
+ },
+ {
+  "idx": 5,
+  "type": "layers",
+  "title": "这些设计是谁做的",
+  "start": 87.63,
+  "end": 116.0
+ },
+ {
+  "idx": 6,
+  "type": "spotlight",
+  "title": "5 九张图，一张不跳",
+  "start": 116.0,
+  "end": 132.3
+ },
+ {
+  "idx": 7,
+  "type": "html_slide",
+  "title": "七集路线图",
+  "start": 132.3,
+  "end": 164.87
+ },
+ {
+  "idx": 8,
+  "type": "title",
+  "title": "进入第 1 集",
+  "start": 164.87,
+  "end": 186.8
+ }
+]

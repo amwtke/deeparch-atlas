@@ -1,0 +1,568 @@
+# 第 6 集 Comparison 阶段 — Windows 没有 fork，进程照样活得好好的？
+
+[intro-line] 今天把 Linux 的进程放到 Windows NT 旁边，看没有 fork 的那套内核，创建、调度和 copy on write 各长成什么样。
+
+## 1 Comparison 阶段开场
+
+[visual: spotlight]
+现在我们跳到 Comparison 阶段
+除了 Linux 还有谁？
+
+[narration]
+现在进入第六集，Comparison 阶段。前五集一直待在 Linux 里面，这一集换一套从头设计的内核，来答同一道题。
+
+---
+
+## 2 同一个 hello，两种出生方式
+
+[visual: title]
+Windows 没有 fork
+进程照样活得好好的？
+
+[narration]
+还是那个 hello。在 Linux 上，shell 先 fork 一份自己，再 execve 换成 hello；在 Windows 上，cmd 调一次 CreateProcess 就跑起来了，中间没有复制品。少了 fork 这一个系统调用，创建、调度、copy on write 会差出多少？哪些是约束逼的，哪些只是碰巧？
+
+---
+
+## 3 三条主线并排
+
+[visual: html_slide image="pics/06-overview.png" title=三条主线并排：Linux 对 Windows NT]
+
+[step: auto]
+scroll auto
+
+[narration]
+左边 Linux 6.12，右边 Windows NT，中间一列写着差多少、差从哪来。创建差得最大，两步对一步；调度是两种世界观，看账还是看级；copy on write 一半相同、一半没有。图里每核队列标在 Windows 7，准确说队列 2003 年就有，2009 年拆的是一把全局锁。底下一行是线索：差异都追得到有没有 fork。
+
+---
+
+## 4 右边这套内核的源头
+
+[visual: facetime title="Dave Cutler"]
+name: Dave Cutler
+role: Windows NT 内核总设计师
+org: Microsoft，1988 年 10 月从 DEC 加入
+photo: file:///Users/jin.xiao/workshop/deeparch-atlas/atlas-output/Linux%E8%BF%9B%E7%A8%8B%E5%85%A8%E9%93%BE%E8%B7%AF-20261024/pics/person-dave-cutler.jpg
+- 在 DEC 主导 VMS：创建进程是一次带参数的调用
+- 从第一天起：进程是资源容器，线程是调度单位
+- 要同时托起 OS/2、POSIX、Win32 三种子系统
+- NT 3.1 于 1993 年 7 月 27 日公开发布
+
+[narration]
+右边这套内核的源头是一个人。1988 年，微软请来 DEC 的 Dave Cutler 从头设计新内核。他带着 VMS 的习惯：创建进程就是一次带一长串参数的调用，从来没有 fork。1993 年 NT 3.1 发布，进程是装资源的容器，线程才是调度单位，这条分界从第一天就写定了。
+
+---
+
+## 5 NT 的出发点
+
+[visual: text title="NT 的出发点：内核造壳，子系统填内容"]
+子进程长什么样由子系统决定，内核只能先造一个空壳
+线程是一等公民，复制进程这件事没有第二个用户
+
+[sidebar]
+擅长：多线程服务
+擅长：参数表配置子进程
+不擅长：复制自己
+不擅长：创建本身贵
+
+[example]
+比如 SQL Server，一个进程里服务成千上万个连接；Chrome 给每个渲染器开一个进程，再用进程池摊掉启动开销。
+
+[narration]
+要同时托起三种子系统，子进程长什么样由子系统说了算，内核只能先造一个空壳。线程又是一等公民，用不着拿复制进程去冒充线程。所以 NT 的强项是多线程服务，弱项恰好是 Linux 的强项：复制自己。
+
+---
+
+## 6 第一条对照
+
+[visual: spotlight]
+第一条对照
+复制再改，还是一次造好？
+
+[narration]
+先比创建。两边受的是同一对约束：新程序要一个干净的地址空间，可执行文件又只是盘上的一个文件。
+
+---
+
+## 7 两步加一扇窗，对一步
+
+[visual: ascii title="创建：两步加一扇窗，对一步加一张参数表"]
+┌─ Linux 第一步 ────────────┐   ┌─ NT 唯一一步 ─────────────┐
+│ fork：复制 mm、页表、fd 表│   │ CreateProcess 填好参数表  │
+└───────────────────────────┘   └───────────────────────────┘
+              ▼                               ▼
+┌─ 窗口 ────────────────────┐   ┌─ 内核一次做完 ────────────┐
+│ dup2、chdir、setrlimit    │   │ 造壳、映射镜像、ntdll     │
+│ 普通系统调用改子进程      │   │ 造首线程，通知 CSRSS      │
+└───────────────────────────┘   └───────────────────────────┘
+              ▼                               ▼
+┌─ Linux 第二步 ────────────┐   ┌─ 新进程自己 ──────────────┐
+│ execve：扔旧 mm 装新程序  │   │ ntdll 加载 DLL 后跳入口   │
+│ begin_new_exec 不可回头   │   │ 没有旧地址空间要扔        │
+└───────────────────────────┘   └───────────────────────────┘
+
+[sidebar]
+C3·互不信任
+C4·文件非内存
+窗口：普通系统调用
+NT：没有不可回头点
+
+[narration]
+C3 互不信任、C4 文件不是内存，两边一样。Linux 分两步：fork 复制一份，在中间那扇窗里用 dup2、chdir 改子进程，再 execve 扔掉旧地址空间。NT 一个系统调用连着走完：造壳、映射镜像、造首线程。没有旧地址空间要扔，也就没有不可回头点，失败了销毁半成品就行。
+
+---
+
+## 8 CreateProcess 的七个阶段
+
+[visual: timeline title="一次 CreateProcess 的七个阶段"]
+T=1 [调用方 kernel32] 转换参数，定优先级类，备好属性列表
+T=2 [内核] 打开 hello.exe，造镜像 section，校验 PE 头
+T=3 [内核] 造进程对象：地址空间、句柄表、令牌、PEB，映射 ntdll
+T=4 [内核] 造第一个线程，先挂起
+T=5 [调用方 kernel32] 把新进程登记给 CSRSS
+T=6 [内核] 放行第一个线程
+T=7 [新进程] ntdll 加载导入的 DLL，跳到 PE 入口
+
+[narration]
+七个阶段，在三个地方执行。第 2 到第 4 阶段加上第 6 阶段，都在 NtCreateUserProcess 这一个系统调用里。对照 Linux，第 2 阶段像 execve 先验 ELF 头，第 4 阶段像 start_thread 填寄存器，第 7 阶段的 ntdll 坐的是 ld.so 的位置。第 5 阶段 Linux 没有，它没有子系统进程。
+
+---
+
+## 9 窗口变成了参数
+
+[visual: code_explain lang=c title="窗口变成参数：CreateProcessW 原型（Microsoft Learn 文档）"]
+BOOL CreateProcessW(
+  [in, optional]      LPCWSTR               lpApplicationName,
+  [in, out, optional] LPWSTR                lpCommandLine,
+  [in, optional]      LPSECURITY_ATTRIBUTES lpProcessAttributes,
+  [in, optional]      LPSECURITY_ATTRIBUTES lpThreadAttributes,
+  [in]                BOOL                  bInheritHandles,
+  [in]                DWORD                 dwCreationFlags,
+  [in, optional]      LPVOID                lpEnvironment,
+  [in, optional]      LPCWSTR               lpCurrentDirectory,
+  [in]                LPSTARTUPINFOW        lpStartupInfo,
+  [out]               LPPROCESS_INFORMATION lpProcessInformation
+);
+===HIGHLIGHT===
+lines=2-3
+作用：说清跑哪个程序
+lpApplicationName：可执行文件
+lpCommandLine：命令行
+对上 execve 的路径和 argv
+===HIGHLIGHT===
+lines=6-6
+bInheritHandles：句柄继承总开关
+单个句柄还得标成可继承
+默认不继承，和 fork 正相反
+===HIGHLIGHT===
+lines=7-10
+dwCreationFlags：优先级类、挂起
+lpEnvironment：环境变量
+lpCurrentDirectory：对上 chdir
+lpStartupInfo：标准流，对上 dup2
+===HIGHLIGHT===
+lines=11-11
+lpProcessInformation：输出参数
+拿回新进程句柄和首线程句柄
+进程与线程，出生就是两个对象
+
+[narration]
+那 fork 和 exec 之间的那扇窗去哪了？看原型就知道。第一段，程序名和命令行，说清跑什么。第二段，句柄继承的总开关，默认不继承，和 fork 正相反。第三段，创建标志、环境、当前目录、启动信息，Linux 在窗口里用系统调用做的事，全变成了参数。最后一个是输出，拿回进程和第一个线程两个句柄。
+
+---
+
+## 10 窗口的代价
+
+[visual: text title="窗口的代价：父进程的一切默认都漏给子进程"]
+Linux：窗口里跑普通系统调用，父进程的一切默认继承
+NT：一张参数表一次说完，句柄默认不继承
+
+[sidebar]
+Vista：精确句柄列表
+posix_spawn：同一个想法
+窗口的代价：多线程半残
+
+[example]
+fork 只复制调用它的那一个线程。别的线程如果正握着 malloc 的锁，子进程里这把锁就永远没人释放，子进程在 exec 之前一调 malloc 就卡死。NT 不复制，这个问题根本不存在。
+
+[narration]
+Vista 起还能挂一张属性列表，精确点名哪几个句柄给子进程。posix_spawn 想做的就是这件事，NT 从 1993 年起就这么做。
+
+---
+
+## 11 NT 内核里其实有 fork
+
+[visual: text title="不是做不到，是不想给 Win32"]
+NtCreateProcess 的 SectionHandle 传空，就复制调用者的地址空间
+只给 POSIX 子系统和后来的 WSL1，从不暴露给 Win32
+
+[sidebar]
+不是做不到
+是不想给 Win32
+WSL1：2016 年补强
+VMS：本来就没有 fork
+
+[example]
+WSL 团队 2016 年的博客原话：Windows 内核很早就支持 fork，只是没有暴露在 Win32 编程模型里。
+
+[narration]
+说 NT 做不了 fork，不对。内核里一直藏着一个，只是不给 Win32。子进程长什么样由子系统决定，线程用不着复制进程来冒充，VMS 本来也没有 fork。HotOS 2019 年那篇论文说 posix_spawn 才是对的，在 NT 看来，这是 1993 年的旧决定。
+
+---
+
+## 12 两种创建，各付各的账
+
+[visual: text title="两种创建，各付各的账"]
+CreateProcess：比 fork 加 exec 慢一个量级以上，不随父进程变大
+fork：随父进程变大，20 GB 的堆光复制页表就要 100 到 260 毫秒
+
+[sidebar]
+NT：缺复制自己的原语
+Linux：父进程越大越贵
+Cygwin：慢几倍到几十倍
+
+[example]
+Redis 的 bgsave 靠 fork 拍快照。移植到 Windows 时，微软的分支把整个堆放进一块内存映射文件，全部页标成 copy on write，让子进程拿句柄去写快照。
+
+[narration]
+代价各在一边。Windows 程序偏爱少进程多线程；Cygwin 逐段拷数据来模拟 fork，比原生慢几倍到几十倍。Linux 这边，复制自己几乎白送，账记在父进程的大小上。
+
+---
+
+## 第二条对照
+
+[visual: spotlight]
+第二条对照
+看级，还是看账？
+
+[narration]
+再比调度。两边要回答同一个问题：不能让一条流霸住 CPU，又要让等 IO 回来的线程尽快跑上。
+
+---
+
+## 14 NT 的 32 级优先级
+
+[visual: layers title="NT 的 32 级优先级：先看你是谁"]
+16 到 31 实时区：不加分，可以真霸台
+1 到 15 动态区：基础值等于优先级类加线程相对级
+REALTIME 24 · HIGH 13 · ABOVE_NORMAL 10
+NORMAL 8 · BELOW_NORMAL 6 · IDLE 4
+0 级：只给把空闲页清零的系统线程
+
+[narration]
+NT 把优先级切成 32 级。1 到 15 是动态区，16 到 31 是实时区，基础值由进程的优先级类加线程相对级决定，默认 NORMAL 是 8。微软文档写得很直白：同级平等，轮转分片；更高级的一就绪，低级线程立刻让出，剩下的时间片都不给用完。
+
+---
+
+## 15 一次加分的来回
+
+[visual: timeline title="一个编辑器线程的一次加分"]
+T=0 [等待] 编辑器线程基础值 8，睡着等键盘
+T=1 [加分] 按键到达，键盘完成加 6，升到 14
+T=2 [抢占] 同核上 8 级的编译线程立刻让出
+T=3 [衰减] 每跑完一个时间片，减 1 级
+T=4 [回落] 降回 8 为止，永不低于基础值
+T=5 [兜底] 编译线程饿了约 4 秒，被抬到 15 跑一片
+
+[narration]
+加分只在动态区。等待结束时按设备加：盘加 1，网络加 2，键盘鼠标加 6，声卡加 8。加完每跑一片减 1 级，直到回到基础值。还有兜底：平衡集管理器每秒扫一次，就绪了约 4 秒还没跑上的线程，直接抬到 15 跑一片。
+
+---
+
+## 16 为什么 NT 看级
+
+[visual: text title="为什么 NT 看级：桌面优先加 VMS 血统"]
+桌面优先：用户在点谁，谁就先跑
+VMS 血统：32 级优先级加 boost，原样带过来
+决定权交给开发者：哪条线程重要，应用自己说
+
+[sidebar]
+客户端片长：约 31 毫秒
+服务器片长：约 187 毫秒
+Linux slice：3 毫秒
+代价：优先级反转
+
+[narration]
+桌面要前台跟手，用户在点谁谁先跑，最直接。片也长：客户端约 31 毫秒，服务器约 187 毫秒，Linux 在 8 核上默认 3 毫秒。代价是优先级反转：低级线程拿着锁，高级等锁，中级霸台。那 Linux 不看级，凭什么选人？它得自己记账，每个任务该拿多少、实拿多少。
+
+---
+
+## 17 Linux 的账
+
+[visual: code_explain lang=c title="Linux 的账：vruntime_eligible（Linux 6.12 kernel/sched/fair.c）"]
+/*
+ * Entity is eligible once it received less service than it ought to have,
+ * eg. lag >= 0.
+ *
+ * lag_i = S - s_i = w_i*(V - v_i)
+ *
+ * lag_i >= 0 -> V >= v_i
+ *
+ *     \Sum (v_i - v)*w_i
+ * V = ------------------ + v
+ *          \Sum w_i
+ *
+ * lag_i >= 0 -> \Sum (v_i - v)*w_i >= (v_i - v)*(\Sum w_i)
+ *
+ * Note: using 'avg_vruntime() > se->vruntime' is inaccurate due
+ *       to the loss in precision caused by the division.
+ */
+static int vruntime_eligible(struct cfs_rq *cfs_rq, u64 vruntime)
+{
+	struct sched_entity *curr = cfs_rq->curr;
+	s64 avg = cfs_rq->avg_vruntime;
+	long load = cfs_rq->avg_load;
+
+	if (curr && curr->on_rq) {
+		unsigned long weight = scale_load_down(curr->load.weight);
+
+		avg += entity_key(cfs_rq, curr) * weight;
+		load += weight;
+	}
+
+	return avg >= (s64)(vruntime - cfs_rq->min_vruntime) * load;
+}
+===HIGHLIGHT===
+lines=1-3
+作用：定义什么叫有资格
+拿到的服务少于应得
+也就是 lag 不小于 0
+没有级，只有账
+===HIGHLIGHT===
+lines=5-7
+lag：应得减实得
+等于权重乘以 V 减自己的 vruntime
+V 是全队的加权平均线
+lag 不小于 0，等价于 V 不小于 v
+===HIGHLIGHT===
+lines=18-29
+平均线把正在跑的 curr 也算进去
+avg：加权的 vruntime 偏移之和
+load：权重之和
+===HIGHLIGHT===
+lines=31-31
+两边同乘 load，不做除法
+省掉除法丢的精度
+不看设备，不看前台后台
+
+[narration]
+注释第一句就是定义：拿到的服务少于应得，才有资格。第二段写成算式，应得减实得，等价于全队的加权平均线不低于自己的 vruntime。第三段把正在跑的那个也算进平均线。最后一行两边同乘总权重，省掉除法。整段没有设备类型，没有前台后台，只有账。
+
+---
+
+## 18 级对账
+
+[visual: ascii title="同一条约束，两种回答：级对账"]
+┌─ Windows NT：看级 ────────┐   ┌─ Linux 6.12：看账 ────────┐
+│ 输入：优先级类加相对级    │   │ 输入：权重加 vruntime     │
+│ 规则：级最高的先跑        │   │ 规则：只在 eligible 里挑  │
+│ 同级之间轮转              │   │ deadline 最早的那个       │
+│ IO 完成：盘加 1 键盘加 6  │   │ IO 完成：按欠账放回       │
+│ 代价：优先级反转          │   │ 代价：急要靠短 slice      │
+└───────────────────────────┘   └───────────────────────────┘
+              ▼                               ▼
+┌─ 同一条 C2·霸台不可预知 ──────────────────────────────────┐
+│ 不能让一条流霸住 CPU，两边都靠时钟中断兜底                │
+└───────────────────────────────────────────────────────────┘
+
+[sidebar]
+NT：经验值
+Linux：守恒量
+C1·CPU快IO慢
+C2·霸台不可预知
+
+[narration]
+同一条 C2 霸台不可预知，NT 用级回答，加分规则是经验值；Linux 用账回答，lag 是守恒量。对 C1 CPU 快 IO 慢也一样：NT 看你等的是什么设备，键盘加 6 分；Linux 不看设备，只看你欠了多少，睡醒按欠账放回去。NT 的代价是开发者得懂调度，Linux 想要急，只能把 slice 设短来模拟。
+
+---
+
+## 19 SQL Server 绕开的是什么
+
+[visual: text title="SQL Server 绕开的不是加分，是抢占"]
+SQL Server 在 NT 之上，自己在进程里再做一层调度
+病根不是加分，是抢占不知道线程在干什么
+
+[sidebar]
+每核一个调度器
+worker 协作式让出
+配额最多 4 毫秒
+不受控调用先声明
+
+[example]
+一个 worker 握着 latch 被换下去，等锁的线程醒来发现锁还在，再睡回去，白转一圈。SQLOS 让每核同时只跑一个 worker，到点自己让出。
+
+[narration]
+它敢这么做，是因为 worker 全是自己写的，C2 在进程内部不成立，配额最多 4 毫秒，到点自己让。代价是一个 worker 忘了让出，同核全饿着，所以调用不受控的代码前，得先声明切成抢占模式。
+
+---
+
+## 20 第三条对照
+
+[visual: spotlight]
+第三条对照
+这一页，归谁？
+
+[narration]
+最后比 copy on write。复制必须便宜，父子又必须互不可见，两边都选了写时拷贝。差别藏在一个更细的问题里：一页被多方映射时，它归谁。
+
+---
+
+## 21 NT 内存管理器的四个概念
+
+[visual: layers title="NT 内存管理器的四个概念，各对一个 Linux 的东西"]
+section 对象：文件或匿名内存做成内核对象，对应 address_space 加 mmap
+prototype PTE：section 每页一条原型项，对应 page cache 里的 folio
+working set：按进程记驻留页、按进程修剪，Linux 是全局 LRU
+commit charge：分配时就预扣名额，对应 overcommit，但不超售
+
+[narration]
+NT 的内存管理器围着 section 对象建：可执行文件、文件映射、共享内存，全是 section。每一页有一条原型页表项，记着它现在在哪，进程的页表项只是指过去看一眼。缺页分类两边几乎一字不差，微软叫硬缺页和软缺页，Linux 叫 major 和 minor。不同的是回收：NT 先按进程修剪，Linux 走全局 LRU。
+
+---
+
+## 22 Linux 必须多问一句
+
+[visual: code_explain lang=c title="独占才复用：do_wp_page 尾段（Linux 6.12 mm/memory.c 第 3723 行起）"]
+	if (folio && folio_test_anon(folio) &&
+	    (PageAnonExclusive(vmf->page) || wp_can_reuse_anon_folio(folio, vma))) {
+		if (!PageAnonExclusive(vmf->page))
+			SetPageAnonExclusive(vmf->page);
+		if (unlikely(unshare)) {
+			pte_unmap_unlock(vmf->pte, vmf->ptl);
+			return 0;
+		}
+		wp_page_reuse(vmf, folio);
+		return 0;
+	}
+	/*
+	 * Ok, we need to copy. Oh, well..
+	 */
+	if (folio)
+		folio_get(folio);
+
+	pte_unmap_unlock(vmf->pte, vmf->ptl);
+#ifdef CONFIG_KSM
+	if (folio && folio_test_ksm(folio))
+		count_vm_event(COW_KSM);
+#endif
+	return wp_page_copy(vmf);
+===HIGHLIGHT===
+lines=1-2
+作用：写一张只读的私有页时的判决
+只有匿名页能申请复用
+条件：带独占位，或锁下验出只剩自己
+锁下验证在第 3585 行的 wp_can_reuse_anon_folio
+===HIGHLIGHT===
+lines=3-10
+确认没人共享，补上独占位
+页表项就地改成可写
+不分配，不拷贝
+===HIGHLIGHT===
+lines=12-23
+其余情况一律拷：wp_page_copy
+文件私有页永远走到这里
+NT 的 WRITECOPY 页同样首写必拷
+
+[narration]
+fork 让匿名页也会被两个进程共享，所以 Linux 写之前得多问一句：这页还有别人吗？第一段，只有匿名页能申请复用，要么带独占位，要么锁下验出只剩自己。第二段，没人共享，就地改可写，一个字节不拷。第三段，其余全部拷一份，文件私有页永远走这里，这一半 NT 一模一样。
+
+---
+
+## 23 写时拷贝：一半相同，一半没有
+
+[visual: ascii title="写时拷贝：文件页一半相同，匿名页一半只有 Linux 有"]
+┌─ Linux 6.12 ──────────────┐   ┌─ Windows NT ──────────────┐
+│ 文件私有页首写：拷一份    │   │ WRITECOPY 页首写：拷一份  │
+│ 匿名页 fork 后共享        │   │ 私有页从不共享            │
+│ 独占才复用，否则拷        │   │ 没有复用这道题            │
+│ 记账：超售，fork 不预扣   │   │ 记账：commit 预扣整个视图 │
+└───────────────────────────┘   └───────────────────────────┘
+              ▼                               ▼
+┌─ 差异的根 ────────────────────────────────────────────────┐
+│ 文件页一半两边一样；匿名页一半只看有没有 fork             │
+└───────────────────────────────────────────────────────────┘
+
+[sidebar]
+C4·文件非内存
+Linux：判据改了三轮
+NT：没有这场争论
+WSL1：问题又回来了
+
+[narration]
+文件页那一半，两边都首写必拷，是 C4 文件不是内存逼出来的。匿名页那一半只有 Linux 有，因为只有它的公共接口里有 fork。这个判据从 mapcount 改到 page_count 再加独占位，前后三轮，根源全在 fork。NT 砍掉 fork，顺手砍掉了这场争论；WSL1 把 fork 加回内核，问题又回来了。
+
+---
+
+## 24 记账也跟着 fork 走
+
+[visual: text title="记账也跟着 fork 走：预扣对超售"]
+NT：分配时预扣 commit 名额，上限是物理内存加页文件
+Linux：默认允许超售，fork 不预扣
+
+[sidebar]
+NT：没有 OOM killer
+Linux：overcommit_memory
+Redis：设成 1
+C6·资源有限须归还
+
+[example]
+fork 一个 20 GB 的 Redis，严格记账要再占 20 GB，实际只碰一小部分。所以 Redis 文档让你把 overcommit_memory 设成 1。
+
+[narration]
+NT 不超售：用写时拷贝映射一个视图，整个视图的名额先扣掉。代价是做不了借 20 GB 只碰 200 MB，收益是没有 OOM killer。这是 C6 资源有限须归还的另一种读法：先保证还得起，再给。
+
+---
+
+## 25 一样的，和不一样的
+
+[visual: text title="一样的是约束逼的，不一样的追到 fork"]
+同：C4 的形状、三扇门、引用计数归零才释放、每核队列
+异：创建、调度、写时拷贝判据、记账
+
+[sidebar]
+C5·改流必经打断
+C6·资源有限须归还
+C7·核各自为政
+异的根：fork 加 VMS
+
+[example]
+每核就绪队列，NT 和 Linux 都在 2003 年有了，没人商量，核各自为政逼出同一个答案。
+
+[narration]
+回到约束清单。一样的那几行，C5 改流必经打断、C6 的引用计数、C7 的每核队列，是约束逼出来的。不一样的那几行，全追到一个二元选择：有没有 fork，再加一条 VMS 的血统。七条约束里，没有一条写着必须有 fork。
+
+---
+
+## 26 带走一个判别法
+
+[visual: spotlight]
+判断一个设计是不是必须
+就找另一套从头设计的系统
+
+[narration]
+这就是这一集的判别法：同一条约束下，另一套从头设计的系统也这么做，就是必须；长得不一样，差异一定追得到血统。
+
+---
+
+## 27 本集总结
+
+[visual: html_slide image="pics/ep6-summary-card.png" title=本集总结]
+
+[step: auto]
+scroll auto
+
+[narration]
+这一集五件事。一，创建：两步加一扇窗，对一步加一张参数表。二，NT 内核藏着 fork，只是不给 Win32。三，调度：Linux 看账，NT 看级，一个守恒量，一个经验值。四，copy on write 的文件页一半两边一样，匿名页一半是 fork 的衍生物。五，记账：NT 预扣不超售，Linux 为了 fork 选择超售。
+
+---
+
+## 28 下集预告
+
+[visual: spotlight title=下集预告]
+本集就到这里
+下集：Synthesis 阶段
+
+[narration]
+本集就到这里，下集见。最后一集，我们把前六集的推导收成一张表、一套五步法，再拿去拆数据库的 MVCC，看这套问法能不能带走。
+
+---
