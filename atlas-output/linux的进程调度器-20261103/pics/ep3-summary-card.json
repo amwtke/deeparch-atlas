@@ -1,0 +1,26 @@
+{
+  "title": "账、标记、搬人",
+  "subtitle": "Linux 进程调度器 · How",
+  "tagline": "内核手里只有三样东西：每核一本账、打断点上的一面小旗子、三条搬人的路；八条约束各挂在其中一件上。",
+  "pillars": [
+    {"icon": "db", "t": "每核一本账", "d": "rq 与六层类栈"},
+    {"icon": "chart", "t": "四个数", "d": "权重 vruntime slice lag"},
+    {"icon": "shield", "t": "小旗子", "d": "打断点插旗出口换"},
+    {"icon": "route", "t": "三种搬人", "d": "唤醒 均衡 新建"}
+  ],
+  "items": [
+    {"icon": "stack", "t": "高类非空，低类不跑", "d": "stop、dl、rt、fair、ext、idle 六层；全是 fair 时走快路径不扫栈。"},
+    {"icon": "target", "t": "权重管份额，slice 管延迟，lag 管资格", "d": "nice 查表得权重；V 是加权平均；有资格里挑 deadline 最早。"},
+    {"icon": "link", "t": "欠账有界且守恒", "d": "睡下去夹在两个 slice 内，醒来放大后放回，V 下移 lag 不变。"},
+    {"icon": "gear", "t": "打断点只插旗", "d": "tick、唤醒、均衡只打标记；回用户态和内核抢占点才真换人。"},
+    {"icon": "compass", "t": "搬人卡在热门槛上", "d": "0.5 ms 内跑过不搬；差距超 17% 才动，只拉一半，按算力比。"},
+    {"icon": "box", "t": "配额是时间不是核", "d": "cpu.max 每周期一池，每核借 5 ms，借不到整组停到下个周期。"}
+  ],
+  "gains_title": "看完你能",
+  "gains": [
+    {"icon": "check", "t": "指着账说出任何一刻该挑谁", "d": "四个数走五拍"},
+    {"icon": "bulb", "t": "解释 nice、taskset、limits 为什么没用", "d": "三个旋钮各管一头"},
+    {"icon": "eye", "t": "读懂 cpu.stat 里的 throttled", "d": "周期、借片、整组停"}
+  ],
+  "takeaway": "规则只看 **账**，不看人；份额、延迟、位置是 **三个独立的旋钮**。"
+}

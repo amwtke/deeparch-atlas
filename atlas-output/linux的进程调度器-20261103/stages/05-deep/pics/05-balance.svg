@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" width="1200" height="660" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="660" fill="#0a0c10"/>
+  <text x="600" y="28" text-anchor="middle" fill="#e6edf3" font-size="18">主线② 一次 newidle 均衡:rq3 空了,先在 MC 层(同 L3 四核)算,算不到再上 PKG 层(两组 L3)</text>
+  <text x="600" y="48" text-anchor="middle" fill="#8b949e" font-size="11">sched_balance_newidle fair.c:12726 → sched_balance_rq :11669 → find_src_group :11250 → calculate_imbalance :11048 → find_src_rq :11388 → detach_tasks :9501</text>
+
+  <!-- MC level -->
+  <rect x="40" y="66" width="1120" height="250" rx="6" fill="#0f141a" stroke="#30363d"/>
+  <text x="52" y="84" fill="#c088ff" font-size="13">MC 层(域 = {rq0..rq3},每核一个 sched_group;SD_SHARE_LLC,imbalance_pct 117,cache_nice_tries 1)</text>
+
+  <!-- group stat boxes -->
+  <g font-size="10">
+    <rect x="52" y="96" width="250" height="118" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="62" y="112" fill="#88c0ff" font-size="11">组 rq0  sg_lb_stats(update_sg_lb_stats :10309)</text>
+    <text x="62" y="128" fill="#88c0ff">sum_h_nr_running 3  idle_cpus 0</text>
+    <text x="62" y="142" fill="#88c0ff">group_load ≈ 2400  group_util ≈ 1024</text>
+    <text x="62" y="156" fill="#88c0ff">group_capacity 1024  group_weight 1</text>
+    <text x="62" y="172" fill="#88c0ff">group_classify :10137 →</text>
+    <text x="62" y="188" fill="#ffaa55">group_overloaded(nr&gt;1 且 util×117 &gt; cap×100)</text>
+    <text x="62" y="204" fill="#8b949e">avg_load = load×1024/cap ≈ 2400</text>
+
+    <rect x="312" y="96" width="250" height="118" rx="4" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+    <text x="322" y="112" fill="#ff8888" font-size="11">组 rq1(最忙,update_sd_pick_busiest :10403)</text>
+    <text x="322" y="128" fill="#ff8888">sum_h_nr_running 5  idle_cpus 0</text>
+    <text x="322" y="142" fill="#ff8888">group_load ≈ 4100  group_util ≈ 1024</text>
+    <text x="322" y="156" fill="#ff8888">group_capacity 1024  group_weight 1</text>
+    <text x="322" y="172" fill="#ff8888">group_type = group_overloaded</text>
+    <text x="322" y="188" fill="#ff8888">avg_load ≈ 4100(最高)</text>
+    <text x="322" y="204" fill="#8b949e">同为 overloaded 时按 avg_load 比谁更忙</text>
+
+    <rect x="572" y="96" width="250" height="118" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="582" y="112" fill="#88c0ff" font-size="11">组 rq2</text>
+    <text x="582" y="128" fill="#88c0ff">sum_h_nr_running 1  idle_cpus 0</text>
+    <text x="582" y="142" fill="#88c0ff">group_load ≈ 15(xz,权重 15)</text>
+    <text x="582" y="156" fill="#88c0ff">group_util ≈ 1024</text>
+    <text x="582" y="172" fill="#88c0ff">group_type = group_fully_busy</text>
+    <text x="582" y="188" fill="#8b949e">没人排队 → 不算 overloaded</text>
+
+    <rect x="832" y="96" width="316" height="118" rx="4" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+    <text x="842" y="112" fill="#88ff88" font-size="11">组 rq3 = local(this_cpu,刚空)</text>
+    <text x="842" y="128" fill="#88ff88">sum_h_nr_running 0  idle_cpus 1</text>
+    <text x="842" y="142" fill="#88ff88">group_type = group_has_spare</text>
+    <text x="842" y="158" fill="#88ff88">should_we_balance :11599:本核空 → 由它来拉</text>
+    <text x="842" y="174" fill="#88ff88">avg_idle(≈ 10 ms)&gt; max_newidle_lb_cost(≈ 20 μs)→ 值得做</text>
+    <text x="842" y="190" fill="#88ff88">this_rq-&gt;ttwu_pending == 0 → 继续</text>
+    <text x="842" y="206" fill="#8b949e">决策矩阵:local has_spare × busiest overloaded → force</text>
+  </g>
+
+  <!-- imbalance calc -->
+  <rect x="52" y="222" width="1096" height="86" rx="4" fill="#11161d" stroke="#8b949e"/>
+  <g font-size="11">
+    <text x="62" y="240" fill="#e6edf3">calculate_imbalance :11048:local has_spare;busiest &gt; fully_busy 但本域 SD_SHARE_LLC 置位 → 不走 migrate_util;busiest group_weight == 1 →</text>
+    <text x="62" y="258" fill="#ffaa55">migration_type = migrate_task;imbalance = sibling_imbalance :10252 = 5 − 0 = 5;然后 imbalance &gt;&gt;= 1 → 2(只搬差距的一半)</text>
+    <text x="62" y="276" fill="#e6edf3">find_src_rq :11388:组里只有 rq1 → rq1;detach_tasks :9501 从 cfs_tasks 尾部起:跳过 curr(task_on_cpu)、跳过 cpus_ptr 不含 3 的、跳过 task_hot(exec_start 距今 &lt; 500 μs)</text>
+    <text x="62" y="294" fill="#88ff88">挑到第一个 PG 后端 → detach_task;CONFIG_PREEMPTION 下 newidle 只搬 1 个就 break(:9589)→ attach_tasks → wakeup_preempt → rq3 有活了</text>
+  </g>
+
+  <!-- PKG level -->
+  <rect x="40" y="330" width="1120" height="230" rx="6" fill="#0f141a" stroke="#30363d"/>
+  <text x="52" y="348" fill="#c088ff" font-size="13">PKG 层(域 = 8 核,两个 sched_group 各 4 核;无 SD_SHARE_LLC,imbalance_pct 117)—— 只在 MC 层没搬到(例如 rq1 全是热的 / 绑核的)时才到这里</text>
+  <g font-size="10">
+    <rect x="52" y="360" width="520" height="100" rx="4" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="62" y="376" fill="#88ff88" font-size="11">组 L3-0 = local(含 rq3)</text>
+    <text x="62" y="392" fill="#88ff88">sum_h_nr_running 9  idle_cpus 1  group_weight 4  cores 4</text>
+    <text x="62" y="408" fill="#88ff88">group_util ≈ 3072(3 核忙)  group_capacity 4096</text>
+    <text x="62" y="424" fill="#88ff88">group_type = group_has_spare(有空核)</text>
+    <text x="62" y="440" fill="#8b949e">prefer_sibling:子域(MC)带 SD_PREFER_SIBLING → sds.prefer_sibling = 1</text>
+
+    <rect x="592" y="360" width="556" height="100" rx="4" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+    <text x="602" y="376" fill="#ff8888" font-size="11">组 L3-1 = busiest</text>
+    <text x="602" y="392" fill="#ff8888">sum_h_nr_running 13  idle_cpus 0  group_weight 4  cores 4</text>
+    <text x="602" y="408" fill="#ff8888">group_util ≈ 4096  group_capacity 4096  → group_overloaded</text>
+    <text x="602" y="424" fill="#ff8888">13 / 9 = 144% &gt; 117%:够格;sibling_imbalance = 13 − 9 = 4 &gt; 1 → force_balance</text>
+    <text x="602" y="440" fill="#8b949e">calculate_imbalance:local has_spare,busiest overloaded,!SD_SHARE_LLC →</text>
+  </g>
+  <rect x="52" y="468" width="1096" height="84" rx="4" fill="#11161d" stroke="#8b949e"/>
+  <g font-size="11">
+    <text x="62" y="486" fill="#ffaa55">migration_type = migrate_util;imbalance = max(local cap, local util) − local util = 4096 − 3072 = 1024(= 一颗空核的算力)</text>
+    <text x="62" y="504" fill="#e6edf3">find_src_rq :11388 按 util 找最忙的核 → rq4(6 个任务);detach_tasks 按 task_util_est 扣 imbalance:一个 util ≈ 1024 的 PG 后端就填平 → 搬 1 个,跨 L3</text>
+    <text x="62" y="522" fill="#e6edf3">代价:它的 L2 / L3 工作集在 L3-1,到 rq3 后要重填(What 硬件入门③ 的几十 μs);cache_nice_tries 1:MC 层连续失败 1 次后下次忽略 task_hot</text>
+    <text x="62" y="540" fill="#8b949e">周期均衡走同一条链,只是入口是 sched_balance_trigger :12879 → SCHED_SOFTIRQ → sched_balance_domains :12119,间隔 get_sd_balance_interval :11945(忙 ×16,上限 HZ/10)</text>
+  </g>
+
+  <!-- legend -->
+  <g font-size="10">
+    <rect x="52" y="580" width="12" height="10" fill="#1e5f3a" stroke="#40c060"/><text x="68" y="589" fill="#8b949e">local(拉人的一方)</text>
+    <rect x="200" y="580" width="12" height="10" fill="#5f1e1e" stroke="#c04040"/><text x="216" y="589" fill="#8b949e">busiest(被拉的一方)</text>
+    <rect x="360" y="580" width="12" height="10" fill="#1e3a5f" stroke="#4080c0"/><text x="376" y="589" fill="#8b949e">其他组</text>
+    <text x="52" y="612" fill="#8b949e">数字说明:group_load / group_util 为 PELT 量级示意(util 1024 = 一颗核满);任务数来自 How §5.5 的状态;行号为 v6.12 fair.c</text>
+  </g>
+</svg>

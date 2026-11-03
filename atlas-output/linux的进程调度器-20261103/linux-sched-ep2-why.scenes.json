@@ -1,0 +1,170 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 12.53
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Why 阶段开场",
+  "start": 12.53,
+  "end": 29.07
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "一颗核",
+  "start": 29.07,
+  "end": 42.5
+ },
+ {
+  "idx": 4,
+  "type": "ascii",
+  "title": "先来先跑：队头的 xz 要压二十分钟",
+  "start": 42.5,
+  "end": 68.47
+ },
+ {
+  "idx": 5,
+  "type": "text",
+  "title": "第一刀：内核没有自己的 CPU",
+  "start": 68.47,
+  "end": 119.03
+ },
+ {
+  "idx": 6,
+  "type": "spotlight",
+  "title": "5 第二刀：换谁？内核不知道未来",
+  "start": 119.03,
+  "end": 142.43
+ },
+ {
+  "idx": 7,
+  "type": "text",
+  "title": "第二刀：猜意图会被骗，记账不会",
+  "start": 142.43,
+  "end": 196.73
+ },
+ {
+  "idx": 8,
+  "type": "spotlight",
+  "title": "7 第三刀：份额与延迟是两个量",
+  "start": 196.73,
+  "end": 215.2
+ },
+ {
+  "idx": 9,
+  "type": "ascii",
+  "title": "只用一个数：三种方案各在哪里坏",
+  "start": 215.2,
+  "end": 246.6
+ },
+ {
+  "idx": 10,
+  "type": "text",
+  "title": "第三刀的解：把两个量拆开，再用第三个数缝回去",
+  "start": 246.6,
+  "end": 315.4
+ },
+ {
+  "idx": 11,
+  "type": "layers",
+  "title": "调度器的三个数，就是数据库\"吞吐 vs 尾延迟\"那道题",
+  "start": 315.4,
+  "end": 338.87
+ },
+ {
+  "idx": 12,
+  "type": "spotlight",
+  "title": "11 第三条约束",
+  "start": 338.87,
+  "end": 358.57
+ },
+ {
+  "idx": 13,
+  "type": "text",
+  "title": "第四刀：挑人的预算不到 1 微秒",
+  "start": 358.57,
+  "end": 402.53
+ },
+ {
+  "idx": 14,
+  "type": "ascii",
+  "title": "八核共用一棵树 vs 每核一本账",
+  "start": 402.53,
+  "end": 440.3
+ },
+ {
+  "idx": 15,
+  "type": "text",
+  "title": "第六刀：分配单位是容器，内核只看见线程",
+  "start": 440.3,
+  "end": 510.13
+ },
+ {
+  "idx": 16,
+  "type": "text",
+  "title": "第七刀：绝对保证推不出于相对公平",
+  "start": 510.13,
+  "end": 572.63
+ },
+ {
+  "idx": 17,
+  "type": "text",
+  "title": "第八刀：按真实算力，不按核数",
+  "start": 572.63,
+  "end": 623.77
+ },
+ {
+  "idx": 18,
+  "type": "html_slide",
+  "title": "八刀：一个痛点、一条约束、一样机制",
+  "start": 623.77,
+  "end": 660.73
+ },
+ {
+  "idx": 19,
+  "type": "layers",
+  "title": "约束清单 C1 ~ C8，一刀一条",
+  "start": 660.73,
+  "end": 682.23
+ },
+ {
+  "idx": 20,
+  "type": "text",
+  "title": "先问一句：是约束，还是目标、解法、参数？",
+  "start": 682.23,
+  "end": 720.03
+ },
+ {
+  "idx": 21,
+  "type": "layers",
+  "title": "把八条约束化解掉的四条洞察",
+  "start": 720.03,
+  "end": 750.03
+ },
+ {
+  "idx": 22,
+  "type": "timeline",
+  "title": "三次换代：被改写的约束",
+  "start": 750.03,
+  "end": 772.4
+ },
+ {
+  "idx": 23,
+  "type": "html_slide",
+  "title": "八刀八约束",
+  "start": 772.4,
+  "end": 801.9
+ },
+ {
+  "idx": 24,
+  "type": "spotlight",
+  "title": "下集预告",
+  "start": 801.9,
+  "end": 824.87
+ }
+]

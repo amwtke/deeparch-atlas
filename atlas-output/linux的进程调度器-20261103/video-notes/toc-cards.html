@@ -1,0 +1,121 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:NB;src:url(file:///Users/jin.xiao/Library/Fonts/NotoSansCJKsc-Black.otf)}
+@font-face{font-family:NR;src:url(file:///Users/jin.xiao/Library/Fonts/NotoSansCJKsc-Regular.otf)}
+@font-face{font-family:JB;src:url(file:///Users/jin.xiao/Library/Fonts/JetBrainsMonoNerdFont-Bold.ttf)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#07070d;font-family:NR;color:#fff}
+.card{width:1920px;height:1080px;position:relative;overflow:hidden;background:#07070d;page-break-after:always}
+.band{position:absolute;left:-200px;top:-140px;width:2400px;height:420px;transform:rotate(-7deg);background:linear-gradient(90deg,#6d28d9,#c026d3 40%,#f43f5e 70%,#f59e0b);opacity:.9}
+.band.alt{background:linear-gradient(90deg,#0ea5e9,#6366f1 50%,#a21caf);opacity:.8}
+.band.alt2{background:linear-gradient(90deg,#f59e0b,#f43f5e 45%,#c026d3 80%,#6d28d9);opacity:.9}
+.band.alt3{background:linear-gradient(90deg,#10b981,#0ea5e9 50%,#6366f1);opacity:.85}
+.dark{position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,7,13,.1) 0%,rgba(7,7,13,.7) 34%,rgba(7,7,13,.94) 100%)}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:64px 64px;mask-image:linear-gradient(180deg,transparent 0,#000 30%)}
+.kicker{position:absolute;left:80px;top:60px;font-family:JB;font-size:30px;letter-spacing:8px;color:#fff;opacity:.92}
+.h{position:absolute;left:78px;top:104px;font-family:NB;font-size:104px;line-height:1.05;color:#fff;text-shadow:0 8px 0 rgba(0,0,0,.35),0 20px 50px rgba(0,0,0,.5)}
+.h em{font-style:normal;background:linear-gradient(90deg,#fde68a,#fb7185 55%,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pill{position:absolute;right:80px;top:70px;font-family:NB;font-size:28px;padding:10px 26px;border-radius:999px;background:#fff;color:#111}
+/* route card */
+.route{position:absolute;left:80px;right:80px;top:290px;display:grid;grid-template-columns:repeat(4,1fr);gap:26px}
+.ep{border-radius:26px;padding:26px 28px;background:rgba(255,255,255,.08);backdrop-filter:blur(14px);border:2px solid rgba(255,255,255,.22);min-height:320px;position:relative}
+.ep .n{font-family:JB;font-size:26px;letter-spacing:4px;color:#fde68a}
+.ep .t{font-family:NB;font-size:44px;margin:8px 0 10px;line-height:1.1}
+.ep .d{font-family:NR;font-size:27px;line-height:1.45;color:rgba(255,255,255,.88)}
+.ep .tag{position:absolute;right:22px;top:22px;font-family:JB;font-size:22px;padding:6px 14px;border-radius:999px;color:#0b0b12}
+.k1{background:#f8fafc}.k2{background:#fde68a}.k3{background:#fbbf24}.k4{background:#fb923c}.k5{background:#fb7185}.k6{background:#e879f9}.k7{background:#a78bfa}
+.ep.wide{grid-column:span 2;min-height:250px}
+/* people card */
+.people{position:absolute;left:80px;right:80px;top:290px;display:grid;grid-template-columns:repeat(4,1fr);gap:30px}
+.p{border-radius:26px;padding:24px;background:rgba(255,255,255,.08);backdrop-filter:blur(14px);border:2px solid rgba(255,255,255,.22);display:flex;gap:20px;align-items:center;min-height:170px}
+.p .ph{width:120px;height:120px;border-radius:50%;flex:none;background-size:cover;background-position:center 20%;box-shadow:0 0 0 4px #07070d,0 0 0 7px #fde68a}
+.p .ph.none{background:linear-gradient(135deg,#334155,#0f172a);display:flex;align-items:center;justify-content:center;font-family:JB;font-size:40px;color:#fde68a}
+.p .nm{font-family:NB;font-size:36px;line-height:1.1}
+.p .rl{font-family:NR;font-size:24px;color:rgba(255,255,255,.85);margin-top:6px;line-height:1.35}
+/* constraints card */
+.cons{position:absolute;left:80px;right:80px;top:290px;display:grid;grid-template-columns:repeat(2,1fr);gap:18px 30px}
+.c{border-radius:22px;padding:18px 24px;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.2);display:grid;grid-template-columns:150px 1fr;align-items:center;gap:18px}
+.c .id{font-family:JB;font-size:40px;color:#fde68a}
+.c .nm{font-family:NB;font-size:34px}
+.c .ex{font-family:NR;font-size:24px;color:rgba(255,255,255,.85);line-height:1.35}
+/* gains card */
+.gains{position:absolute;left:80px;right:80px;top:290px;display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.g{border-radius:26px;padding:28px 30px;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.22);min-height:300px}
+.g .num{font-family:JB;font-size:64px;line-height:1;color:#fde68a}
+.g .t{font-family:NB;font-size:40px;margin:14px 0 10px;line-height:1.15}
+.g .d{font-family:NR;font-size:27px;color:rgba(255,255,255,.88);line-height:1.45}
+.foot{position:absolute;left:80px;bottom:52px;font-family:JB;font-size:24px;letter-spacing:3px;color:rgba(255,255,255,.7)}
+</style></head><body>
+
+<!-- card 1: route -->
+<div class="card" id="route">
+ <div class="band"></div><div class="dark"></div><div class="grid"></div>
+ <div class="kicker">ROADMAP · 七集路线</div>
+ <div class="h">从 <em>nice</em> 到 <em>EEVDF</em>,再到多核与 cgroup</div>
+ <div class="pill">Linux 6.12 · 源码级</div>
+ <div class="route">
+  <div class="ep"><span class="tag k1">EP 1</span><div class="n">WHAT</div><div class="t">四问骨架</div><div class="d">何时换 · 换谁 · 各多少 · 在哪换;规则只看账不看人;两个数据库口味的钩子</div></div>
+  <div class="ep"><span class="tag k2">EP 2</span><div class="n">WHY</div><div class="t">八刀八约束</div><div class="d">从一核一队列先来先跑开始,一刀一个痛点,逼出 C1 ~ C8</div></div>
+  <div class="ep"><span class="tag k3">EP 3</span><div class="n">HOW</div><div class="t">账 · 标记 · 搬人</div><div class="d">每核一本账、四个数怎么涨怎么比、标记怎么变真换、三种搬人、容器配额怎么落到线程</div></div>
+  <div class="ep"><span class="tag k4">EP 4</span><div class="n">ORIGIN</div><div class="t">五个转折点</div><div class="d">O(1) → CFS → 带宽与 PELT → EEVDF → sched_ext,和做出选择的人</div></div>
+  <div class="ep"><span class="tag k5">EP 5</span><div class="n">DEEP</div><div class="t">6.12 行号</div><div class="d">挑人、均衡、throttle 三条主线钉到源码;一个能在 macOS 上跑的 EEVDF 模拟器核对手算</div></div>
+  <div class="ep"><span class="tag k6">EP 6</span><div class="n">COMPARISON</div><div class="t">Windows NT</div><div class="d">32 级优先级 + 提升 对 账 + lag;四问逐问比;哪些是约束,哪些是血统</div></div>
+  <div class="ep wide"><span class="tag k7">EP 7</span><div class="n">SYNTHESIS</div><div class="t">五元组 · 五步法 · MySQL 线程池</div><div class="d">十四个决策过筛,十一条必保洞察,三个同构,再把五步法搬到数据库线程池上走一遍;最后押一个十年赌注</div></div>
+ </div>
+ <div class="foot">DEEPARCH · 七集一次讲透 · 先看第 1 集再决定走多深</div>
+</div>
+
+<!-- card 2: people -->
+<div class="card" id="people">
+ <div class="band alt"></div><div class="dark"></div><div class="grid"></div>
+ <div class="kicker">PEOPLE · 做出选择的人</div>
+ <div class="h">这些规则是<em>谁</em>在什么约束下定的</div>
+ <div class="pill">第 4 集 · 一手资料</div>
+ <div class="people">
+  <div class="p"><div class="ph" style="background-image:url(file:///Users/jin.xiao/workshop/deeparch-atlas/atlas-output/linux的进程调度器-20261103/pics/person-ingo-molnar.jpg)"></div><div><div class="nm">Ingo Molnár</div><div class="rl">O(1) 2002 · CFS 2007<br>"no heuristics whatsoever"</div></div></div>
+  <div class="p"><div class="ph none">CK</div><div><div class="nm">Con Kolivas</div><div class="rl">staircase / RSDL / SD<br>"absolute fairness, at all costs"</div></div></div>
+  <div class="p"><div class="ph" style="background-image:url(file:///Users/jin.xiao/workshop/deeparch-atlas/atlas-output/linux的进程调度器-20261103/pics/person-ion-stoica.jpg)"></div><div><div class="nm">Ion Stoica</div><div class="rl">EEVDF 论文 1995<br>eligible time 从哪来</div></div></div>
+  <div class="p"><div class="ph" style="background-image:url(file:///Users/jin.xiao/workshop/deeparch-atlas/atlas-output/linux的进程调度器-20261103/pics/person-carl-waldspurger.jpg)"></div><div><div class="nm">Carl Waldspurger</div><div class="rl">Lottery / Stride 1994<br>按股份分 CPU 的源头</div></div></div>
+  <div class="p"><div class="ph none">PT</div><div><div class="nm">Paul Turner</div><div class="rl">带宽控制 2011 · PELT 2012<br>容器时代的两块基石</div></div></div>
+  <div class="p"><div class="ph none">PZ</div><div><div class="nm">Peter Zijlstra</div><div class="rl">EEVDF 2023<br>"delete icky heuristics"</div></div></div>
+  <div class="p"><div class="ph" style="background-image:url(file:///Users/jin.xiao/workshop/deeparch-atlas/atlas-output/linux的进程调度器-20261103/pics/person-tejun-heo.jpg);background-position:center 35%"></div><div><div class="nm">Tejun Heo</div><div class="rl">sched_ext 2024<br>把挑人规则交给 BPF</div></div></div>
+  <div class="p"><div class="ph" style="background-image:url(file:///Users/jin.xiao/workshop/deeparch-atlas/atlas-output/linux的进程调度器-20261103/pics/person-linus-torvalds.jpg)"></div><div><div class="nm">Linus Torvalds</div><div class="rl">2007 / 2010 / 2024 三次裁决<br>"work on those concerns in-tree"</div></div></div>
+ </div>
+ <div class="foot">照片来源:Wikimedia Commons · 个人主页 · GitHub;无可验证照片者以文字出场</div>
+</div>
+
+<!-- card 3: constraints -->
+<div class="card" id="cons">
+ <div class="band alt2"></div><div class="dark"></div><div class="grid"></div>
+ <div class="kicker">CONSTRAINTS · 八条不可再分约束</div>
+ <div class="h">整部电影只向<em>这八条</em>收敛</div>
+ <div class="pill">第 2 集建立 · 后五集引用</div>
+ <div class="cons">
+  <div class="c"><div class="id">C1</div><div><div class="nm">只在打断点换</div><div class="ex">内核没有自己的 CPU,只能在 tick / 系统调用 / 中断 / 阻塞时介入</div></div></div>
+  <div class="c"><div class="id">C2</div><div><div class="nm">未来不可知</div><div class="ex">猜意图的启发式会被骗,依据只能是可测的过去</div></div></div>
+  <div class="c"><div class="id">C3</div><div><div class="nm">份额与延迟两头要</div><div class="ex">按权重分和醒来多久上台是两个量,插队额度须有界</div></div></div>
+  <div class="c"><div class="id">C4</div><div><div class="nm">挑人须便宜</div><div class="ex">每秒万次决定,每次不到 1 μs,不随任务数线性增长</div></div></div>
+  <div class="c"><div class="id">C5</div><div><div class="nm">核各自为政</div><div class="ex">cache / TLB 各自独立,跨核贵一到两个数量级,核有远近</div></div></div>
+  <div class="c"><div class="id">C6</div><div><div class="nm">份额按组算</div><div class="ex">分配单位是容器不是线程;组要嵌套、要能封顶</div></div></div>
+  <div class="c"><div class="id">C7</div><div><div class="nm">有人要硬保证</div><div class="ex">公平推不出绝对时限;凌驾要配阀、准入与继承</div></div></div>
+  <div class="c"><div class="id">C8</div><div><div class="nm">核不等速且耗电</div><div class="ex">SMT / 频率 / 大小核让算力随时变;能耗是独立目标</div></div></div>
+ </div>
+ <div class="foot">口播一律"C 几 · 短名";画面出现编号时请对照本卡</div>
+</div>
+
+<!-- card 4: gains -->
+<div class="card" id="gains">
+ <div class="band alt3"></div><div class="dark"></div><div class="grid"></div>
+ <div class="kicker">TAKEAWAYS · 看完你能做到</div>
+ <div class="h">六件事,带着走</div>
+ <div class="pill">适合:Linux 开发者 · 数据库 / 后端工程师</div>
+ <div class="gains">
+  <div class="g"><div class="num">01</div><div class="t">说清挑人规则</div><div class="d">在有资格的任务里挑截止期最早的;权重管份额,slice 管延迟,lag 管资格</div></div>
+  <div class="g"><div class="num">02</div><div class="t">把三个旋钮分开</div><div class="d">nice 不治延迟,taskset 绑一边更糟,cpu.max 抖在周期 —— 份额、延迟、位置各一个旋钮</div></div>
+  <div class="g"><div class="num">03</div><div class="t">读懂三代换代</div><div class="d">2002 为了便宜和多核,2007 为了不猜意图,2023 为了把份额和延迟拆开</div></div>
+  <div class="g"><div class="num">04</div><div class="t">顺着 6.12 源码走</div><div class="d">pick_eevdf、place_entity、sched_balance_rq、throttle_cfs_rq,每个决定落在哪一行</div></div>
+  <div class="g"><div class="num">05</div><div class="t">分清必然与血统</div><div class="d">拿 Windows NT 对照:有界插队是约束,猜不猜意图是血统</div></div>
+  <div class="g"><div class="num">06</div><div class="t">把五步法搬走</div><div class="d">识别约束 → 列候选 → 算代价 → 看现实 → 证局部最优;用 MySQL 线程池演练一遍</div></div>
+ </div>
+ <div class="foot">源码基准 Linux 6.12(x86-64),所有片段标注文件与行号</div>
+</div>
+</body></html>

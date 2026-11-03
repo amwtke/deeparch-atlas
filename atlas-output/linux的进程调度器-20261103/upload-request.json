@@ -1,0 +1,68 @@
+{
+  "platform": "bilibili",
+  "title": "Linux 进程调度器深度解读：从 nice 到 EEVDF、多核与 cgroup（98 分钟大电影）",
+  "tags": [
+    "Linux",
+    "调度器",
+    "EEVDF",
+    "CFS",
+    "nice",
+    "cgroup",
+    "CPU限额",
+    "负载均衡",
+    "内核源码",
+    "操作系统",
+    "Windows NT",
+    "MySQL线程池"
+  ],
+  "cover": "cover-atlas.png",
+  "desc_file": "linux-sched-ep0-toc.desc.txt",
+  "parts": [
+    {
+      "file": "P0 目录：七集路线图.mp4",
+      "bytes": 18394026,
+      "sha256": "4fddc2dfd392983a0e8c95102ee53fdd476dc33fa5164b67538fda1bfd7a17b6"
+    },
+    {
+      "file": "P1 What：谁上台、跑多久、在哪颗核，调度器的四问骨架.mp4",
+      "bytes": 44375261,
+      "sha256": "741a7b3ea4d825696c4fd0b676e5438e60075e15dda6da6338fbaf941ebb6f75"
+    },
+    {
+      "file": "P2 Why：从一核一队列砍八刀，逼出八条约束.mp4",
+      "bytes": 54167003,
+      "sha256": "826fc8ba5ac2f0b55a940b61dd8c74a6d7b68024c00e14c3a25f7aed0c72ed14"
+    },
+    {
+      "file": "P3 How：账、标记、搬人，内核用什么把八条约束化解掉.mp4",
+      "bytes": 59144770,
+      "sha256": "e14ca3711aa88a7132e0c3eb6a7fe850ab49336fbdc7d8a17caa84f1f024106e"
+    },
+    {
+      "file": "P4 Origin：O(1)、CFS、EEVDF、sched_ext，五个转折点和他们的人.mp4",
+      "bytes": 50277360,
+      "sha256": "1163ae604f6080cdc16b40a8c0688d46c91e85984ff3d75bc7e4b8b51394a289"
+    },
+    {
+      "file": "P5 Deep：钻进 6.12，挑人、均衡、throttle 各在源码哪一行.mp4",
+      "bytes": 60560322,
+      "sha256": "9792aeb990da28d085dfd448a28dbcbe3c2ae8aca3bee36c1c073ba7fbe16518"
+    },
+    {
+      "file": "P6 Comparison：Windows NT 的 32 级优先级对 Linux 的账，哪些是约束哪些是血统.mp4",
+      "bytes": 42486206,
+      "sha256": "0804ee3f9214982c24bb0fb8be9e7d99dd6613eb8822f6bfca39d62cab365bc9"
+    },
+    {
+      "file": "P7 Synthesis：五元组、五步法，再拿 MySQL 线程池走一遍.mp4",
+      "bytes": 59314076,
+      "sha256": "799da3543ff3db83b1a72c255268c53ec4b6dbde0faf036c558231d83538840e"
+    }
+  ],
+  "multipart": true,
+  "season": null,
+  "charging": false,
+  "scheduled": false,
+  "authorized_at": "2026-11-03T13:13:19+08:00",
+  "authorization": "用户 2026-11-03 对话中一次性授权:生成大电影后提交 B 站并推送 main"
+}

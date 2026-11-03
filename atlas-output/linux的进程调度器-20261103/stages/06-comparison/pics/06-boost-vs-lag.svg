@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" width="1200" height="560" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="560" fill="#0a0c10"/>
+  <text x="600" y="30" text-anchor="middle" fill="#e6edf3" font-size="19">同一个睡醒的 redis:NT 的「提升 − 衰减」 vs Linux 的「lag 放回 − 归零」</text>
+  <text x="600" y="52" text-anchor="middle" fill="#8b949e" font-size="11">16 个 mysqld 在算;redis 睡着;t = 0 网卡数据到。上车道 NT(Server,片 ≈ 187 ms);下车道 Linux(slice 3 ms,tick 4 ms)。横轴不等比。</text>
+
+  <!-- NT lane -->
+  <text x="30" y="110" fill="#ffaa55" font-size="13">NT</text>
+  <text x="30" y="126" fill="#8b949e" font-size="10">动态优先级</text>
+  <line x1="140" y1="200" x2="1160" y2="200" stroke="#30363d"/>
+  <g fill="#8b949e" font-size="9">
+    <text x="130" y="96" text-anchor="end">12</text>
+    <text x="130" y="128" text-anchor="end">10</text>
+    <text x="130" y="160" text-anchor="end">9</text>
+    <text x="130" y="192" text-anchor="end">8 基线</text>
+  </g>
+  <line x1="140" y1="188" x2="1160" y2="188" stroke="#8040c0" stroke-dasharray="4,4"/>
+  <text x="1160" y="184" text-anchor="end" fill="#c088ff" font-size="9">mysqld 都在 8 级</text>
+  <!-- redis asleep then boosted -->
+  <rect x="140" y="176" width="100" height="24" fill="#11161d" stroke="#30363d"/>
+  <text x="190" y="192" text-anchor="middle" fill="#8b949e" font-size="9">睡(8)</text>
+  <path d="M 240 188 L 240 124" stroke="#40c060" stroke-width="2"/>
+  <text x="246" y="100" fill="#88ff88" font-size="10">网 I/O 完成 +2 → 10,立刻抢占,拿一整片</text>
+  <rect x="240" y="112" width="300" height="24" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="390" y="128" text-anchor="middle" fill="#ffaa55" font-size="10">redis 在 10 级跑(片 187 ms)</text>
+  <path d="M 540 124 L 540 156" stroke="#c04040" stroke-width="2"/>
+  <text x="548" y="150" fill="#ff8888" font-size="10">片完 −1 → 9</text>
+  <rect x="540" y="144" width="300" height="24" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="690" y="160" text-anchor="middle" fill="#ffaa55" font-size="10">仍高于 8,再跑一片</text>
+  <path d="M 840 156 L 840 188" stroke="#c04040" stroke-width="2"/>
+  <text x="848" y="182" fill="#ff8888" font-size="10">−1 → 8,回同级轮转</text>
+  <rect x="840" y="176" width="200" height="24" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="940" y="192" text-anchor="middle" fill="#c088ff" font-size="10">和 16 个 mysqld 轮转</text>
+  <text x="640" y="226" text-anchor="middle" fill="#8b949e" font-size="10">最坏约 2 片 ≈ 374 ms 的优先;如果它 50 μs 就睡,动态级留在 10,下次醒来还是 10;上限 15</text>
+  <text x="640" y="244" text-anchor="middle" fill="#8b949e" font-size="10">"急"的来源:事件类型(+2 与它过去跑了多少无关)</text>
+
+  <!-- Linux lane -->
+  <text x="30" y="320" fill="#88c0ff" font-size="13">Linux</text>
+  <text x="30" y="336" fill="#8b949e" font-size="10">vruntime vs V</text>
+  <line x1="140" y1="400" x2="1160" y2="400" stroke="#4080c0"/>
+  <text x="1160" y="396" text-anchor="end" fill="#88c0ff" font-size="9">V(加权平均线)</text>
+  <g fill="#8b949e" font-size="9">
+    <text x="130" y="372" text-anchor="end">lag &gt; 0</text>
+    <text x="130" y="404" text-anchor="end">lag = 0</text>
+    <text x="130" y="436" text-anchor="end">lag &lt; 0</text>
+  </g>
+  <rect x="140" y="388" width="100" height="24" fill="#11161d" stroke="#30363d"/>
+  <text x="190" y="404" text-anchor="middle" fill="#8b949e" font-size="9">睡,存 vlag +0.50</text>
+  <path d="M 240 400 L 240 366" stroke="#40c060" stroke-width="2"/>
+  <text x="246" y="352" fill="#88ff88" font-size="10">place_entity:lag ×(W+w)/W 放大后放回;V 下移;mysqld 变没资格 → 抢</text>
+  <rect x="240" y="354" width="260" height="24" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="370" y="370" text-anchor="middle" fill="#88c0ff" font-size="10">redis 有资格且 deadline 最早(0.32 虚拟 ms)</text>
+  <path d="M 500 366 L 620 400" stroke="#88c0ff" stroke-width="2" stroke-dasharray="6,4"/>
+  <text x="560" y="420" text-anchor="middle" fill="#8b949e" font-size="9">每跑 1 ms 账涨 0.107;V 跟着它走</text>
+  <text x="620" y="440" text-anchor="middle" fill="#8b949e" font-size="10">lag 归零 ≤ 2 slice = 6 ms 真实时间(夹紧 ±0.643 虚拟)</text>
+  <rect x="620" y="388" width="200" height="24" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="720" y="404" text-anchor="middle" fill="#ff8888" font-size="10">lag &lt; 0:没资格,mysqld 回来</text>
+  <rect x="840" y="388" width="200" height="24" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="940" y="404" text-anchor="middle" fill="#c088ff" font-size="10">按权重 9548 : 1024 分份额</text>
+  <text x="640" y="470" text-anchor="middle" fill="#8b949e" font-size="10">如果它 50 μs 就睡:出队时 lag ≈ +0.49 存下,下次醒来按账放回;与它为什么睡无关</text>
+  <text x="640" y="488" text-anchor="middle" fill="#8b949e" font-size="10">"急"的来源:slice(请求多短)与 lag(欠多少);放大系数是守恒修正,不是奖励</text>
+
+  <!-- shared verdict -->
+  <rect x="140" y="506" width="1020" height="36" rx="5" fill="#11161d" stroke="#30363d"/>
+  <text x="650" y="529" text-anchor="middle" fill="#e6edf3" font-size="11">共同点 = C3·份额与延迟两头要 逼的"插队有界":NT 每片 −1 衰减回基线,Linux lag 夹在 ±2 slice;不同点 = 对 C2·未来不可知 的信仰:猜(事件)vs 不猜(账)</text>
+
+  <g font-size="10">
+    <rect x="40" y="548" width="14" height="10" fill="#5f3a1e" stroke="#c08040"/><text x="60" y="557" fill="#8b949e">提升中</text>
+    <rect x="130" y="548" width="14" height="10" fill="#1e3a5f" stroke="#4080c0"/><text x="150" y="557" fill="#8b949e">有资格</text>
+    <rect x="220" y="548" width="14" height="10" fill="#5f1e1e" stroke="#c04040"/><text x="240" y="557" fill="#8b949e">衰减 / 没资格</text>
+    <rect x="350" y="548" width="14" height="10" fill="#3a1e5f" stroke="#8040c0"/><text x="370" y="557" fill="#8b949e">同级轮转 / 按权重分</text>
+    <rect x="520" y="548" width="14" height="10" fill="#1e5f3a" stroke="#40c060"/><text x="540" y="557" fill="#8b949e">唤醒那一刻</text>
+  </g>
+</svg>

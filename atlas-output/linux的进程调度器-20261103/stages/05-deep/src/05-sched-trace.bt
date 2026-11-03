@@ -1,0 +1,74 @@
+#!/usr/bin/env bpftrace
+/*
+ * 05-sched-trace.bt — 用三个调度 tracepoint 把 Deep 三条主线的"事件"打出来(未在本机验证,需要 Linux + bpftrace ≥ 0.20)。
+ *
+ *   sched:sched_wakeup       — try_to_wake_up 成功把任务放回某本账(core.c ttwu_do_wakeup → trace_sched_wakeup)
+ *   sched:sched_switch       — __schedule 真换人(core.c:6690 trace_sched_switch)
+ *   sched:sched_migrate_task — 任务被搬到另一颗核(set_task_cpu;唤醒选核 / 均衡 / exec 都会经过)
+ *
+ * 输出:
+ *   ① 唤醒 → 上台 的延迟直方图(主线①:这就是 §2.3 时间线里从 ttwu 到 context_switch 的那几微秒,加上排队)
+ *   ② 每个任务被搬迁的次数,以及 "醒来时换核" 和 "被均衡拉走" 分别多少(主线②)
+ *   ③ 换人原因:prev_state == 0 表示被抢占(tick 或唤醒抢占),非 0 表示自己阻塞(主线①)
+ *
+ * 用法:sudo bpftrace 05-sched-trace.bt            (Ctrl-C 结束打印汇总)
+ *      sudo bpftrace -e '...' 也可只取其中一段
+ */
+
+BEGIN
+{
+    printf("tracing sched_wakeup / sched_switch / sched_migrate_task ... Ctrl-C to stop\n");
+}
+
+tracepoint:sched:sched_wakeup
+{
+    @woke[args.pid] = nsecs;                 /* 记下唤醒时刻(ttwu 已入账,还没上台) */
+    @wake_cpu[args.pid] = args.target_cpu;   /* select_task_rq_fair 选的核 */
+}
+
+tracepoint:sched:sched_switch
+{
+    /* 被换下的人:prev_state 0 = 还可跑,是被抢的(tick 到 slice / 唤醒抢占 / 均衡拉人后 wakeup_preempt) */
+    if (args.prev_state == 0) {
+        @preempted[args.prev_comm] = count();
+    } else {
+        @blocked[args.prev_comm] = count();
+    }
+
+    /* 上台的人:如果我们记过它的唤醒时刻,算延迟 */
+    if (@woke[args.next_pid]) {
+        $lat = nsecs - @woke[args.next_pid];
+        @wakeup_to_run_us = hist($lat / 1000);
+        if ($lat > 1000000) {                /* > 1 ms:§2.3 说的"核上 curr 在内核态不可抢占段"或排队 */
+            printf("%s[%d] waited %d us on cpu %d\n", args.next_comm, args.next_pid, $lat / 1000, cpu);
+        }
+        delete(@woke[args.next_pid]);
+    }
+}
+
+tracepoint:sched:sched_migrate_task
+{
+    @migrations[args.comm] = count();
+    /* 迁移发生在唤醒路径上(刚被 ttwu 记过,还没上台)= 唤醒选核跨核;否则多半是周期 / newidle 均衡的 detach/attach */
+    if (@woke[args.pid]) {
+        @migrate_on_wakeup[args.comm] = count();
+    } else {
+        @migrate_by_balance[args.comm] = count();
+    }
+}
+
+END
+{
+    clear(@woke);
+    clear(@wake_cpu);
+    printf("\n--- 唤醒到上台延迟(us)---\n");
+    print(@wakeup_to_run_us);
+    printf("\n--- 被抢占次数(prev_state == 0)---\n");
+    print(@preempted);
+    printf("\n--- 自己阻塞次数 ---\n");
+    print(@blocked);
+    printf("\n--- 迁移次数(总 / 唤醒时 / 均衡时)---\n");
+    print(@migrations);
+    print(@migrate_on_wakeup);
+    print(@migrate_by_balance);
+}

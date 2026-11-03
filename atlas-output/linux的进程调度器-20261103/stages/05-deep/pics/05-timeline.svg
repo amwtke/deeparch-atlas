@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 770" width="1200" height="770" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="770" fill="#0a0c10"/>
+  <text x="600" y="28" text-anchor="middle" fill="#e6edf3" font-size="18">主线① 唯一的 ns 时间线:网卡中断到 redis 第一条用户态指令(核 2 收中断,redis 回核 0 抢 mysqld)</text>
+  <text x="600" y="48" text-anchor="middle" fill="#8b949e" font-size="11">8 核 3 GHz,HZ 250,PCID 开,PREEMPT_DYNAMIC(preempt=full);全部是量级估计,换人动作那一段取上一轮 Deep §3.3 的实测量级</text>
+
+  <!-- lanes -->
+  <rect x="60" y="70" width="540" height="620" fill="#0f141a" stroke="#30363d"/>
+  <text x="330" y="88" text-anchor="middle" fill="#8b949e" font-size="12">核 2:收中断、唤醒、选核、发 IPI</text>
+  <rect x="620" y="70" width="540" height="620" fill="#0f141a" stroke="#30363d"/>
+  <text x="890" y="88" text-anchor="middle" fill="#8b949e" font-size="12">核 0:收 IPI、入账、标记、出口、换人</text>
+
+  <!-- time axis -->
+  <line x1="40" y1="100" x2="40" y2="690" stroke="#8b949e"/>
+  <g fill="#8b949e" font-size="10" text-anchor="end">
+    <text x="36" y="110">0 ns</text>
+    <text x="36" y="176">~0.3 μs</text>
+    <text x="36" y="276">~1.0 μs</text>
+    <text x="36" y="350">~1.8 μs</text>
+    <text x="36" y="434">~2.3 μs</text>
+    <text x="36" y="494">~2.6 μs</text>
+    <text x="36" y="554">~3.0 μs</text>
+    <text x="36" y="638">~3.4 μs</text>
+    <text x="36" y="712">~6.5 μs</text>
+  </g>
+
+  <!-- core 2 events -->
+  <g font-size="11">
+    <rect x="75" y="100" width="510" height="58" rx="3" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="85" y="117" fill="#ffaa55">① NIC MSI-X 中断打到核 2 —— 硬件;门②(上一轮)压 pt_regs</text>
+    <text x="85" y="133" fill="#ffaa55" font-size="10">进 irqentry → napi_poll → tcp_v4_rcv → sock_def_readable</text>
+    <text x="85" y="149" fill="#ffaa55" font-size="10">→ __wake_up → try_to_wake_up(core.c:4127)</text>
+
+    <rect x="75" y="166" width="510" height="92" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="85" y="183" fill="#88c0ff">② ttwu:state INTERRUPTIBLE → WAKING;select_task_rq_fair(fair.c:8589)</text>
+    <text x="85" y="199" fill="#88c0ff" font-size="10">wake_wide :7331 否 → wake_affine :7426:this=2 忙、prev=0 忙</text>
+    <text x="85" y="213" fill="#88c0ff" font-size="10">→ WA_IDLE 无果 → WA_WEIGHT 比负载,偏 prev 108.5% → prev 0</text>
+    <text x="85" y="227" fill="#88c0ff" font-size="10">select_idle_sibling :7843:0 忙、recent_used 忙</text>
+    <text x="85" y="241" fill="#88c0ff" font-size="10">→ select_idle_cpu :7708 扫 LLC0,nr_idle_scan 限额,无空核</text>
+    <text x="85" y="255" fill="#88c0ff" font-size="10">→ 目标核 0(排队,等抢占)</text>
+
+    <rect x="75" y="266" width="510" height="54" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="85" y="283" fill="#88c0ff">③ ttwu_queue(core.c:3943)→ ttwu_queue_wakelist :3923</text>
+    <text x="85" y="299" fill="#88c0ff" font-size="10">(TTWU_QUEUE 开,目标 ≠ 本核)→ __ttwu_queue_wakelist :3821</text>
+    <text x="85" y="313" fill="#88c0ff" font-size="10">挂 wake_list,__smp_call_single_queue → 发 IPI 给核 0</text>
+
+    <rect x="75" y="328" width="510" height="30" rx="3" fill="#11161d" stroke="#8b949e"/>
+    <text x="85" y="347" fill="#8b949e" font-size="10">核 2 的中断处理结束,回它自己的任务;后面的事全在核 0</text>
+  </g>
+
+  <!-- IPI arrow -->
+  <line x1="585" y1="300" x2="640" y2="352" stroke="#c08040" stroke-dasharray="6,4"/>
+  <text x="618" y="318" fill="#ffaa55" font-size="10" transform="rotate(43 618 318)">IPI ~1 μs</text>
+
+  <!-- core 0 events -->
+  <g font-size="11">
+    <rect x="635" y="100" width="510" height="220" rx="3" fill="#0f141a" stroke="#30363d" stroke-dasharray="4 4"/>
+    <text x="645" y="118" fill="#8b949e" font-size="10">核 0 此刻:mysqld#3 在 ring 3 算;v=1206.0,树上还有 xz</text>
+    <text x="645" y="134" fill="#8b949e" font-size="10">redis 睡前存的 vlag=+0.50;下面从 ~1.8 μs 起全在这颗核上</text>
+
+    <rect x="635" y="340" width="510" height="78" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="645" y="357" fill="#88c0ff">④ 核 0 收 IPI(mysqld 被打断)→ sched_ttwu_pending(core.c:3762)</text>
+    <text x="645" y="372" fill="#88c0ff" font-size="10">→ ttwu_do_activate :3658 → enqueue_task_fair :6955 → enqueue_entity :5382</text>
+    <text x="645" y="386" fill="#88c0ff" font-size="10">→ update_curr(mysqld) :1216 → place_entity :5266 → __enqueue_entity :852</text>
+    <text x="645" y="400" fill="#88c0ff" font-size="10">lag 0.50 × (1039+9548)/1039 = 5.09;v = 1209.86 − 5.09 = 1204.77</text>
+    <text x="645" y="414" fill="#88c0ff" font-size="10">V 从 1209.86 下移到 1205.26;mysqld 的 lag 变成 −0.74</text>
+
+    <rect x="635" y="424" width="510" height="54" rx="3" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+    <text x="645" y="441" fill="#88ff88">⑤ wakeup_preempt(core.c:2136)→ check_preempt_wakeup_fair(fair.c:8764)</text>
+    <text x="645" y="456" fill="#88ff88" font-size="10">do_preempt_short 否(slice 相同);pick_eevdf :907 == redis</text>
+    <text x="645" y="470" fill="#88ff88" font-size="10">→ resched_curr :1079:同核,只置 TIF_NEED_RESCHED,不发 IPI</text>
+
+    <rect x="635" y="484" width="510" height="54" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="645" y="501" fill="#88c0ff">⑥ IPI 处理结束 → irqentry_exit → 回用户态</text>
+    <text x="645" y="516" fill="#88c0ff" font-size="10">→ exit_to_user_mode_loop(entry/common.c:90):101 看到 _TIF_NEED_RESCHED</text>
+    <text x="645" y="530" fill="#88c0ff" font-size="10">→ schedule(core.c:6775)→ __schedule :6548</text>
+
+    <rect x="635" y="544" width="510" height="78" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="645" y="561" fill="#88c0ff">⑦ __schedule:rq_lock;mysqld 仍 RUNNING → nivcsw :6600</text>
+    <text x="645" y="576" fill="#88c0ff" font-size="10">pick_next_task :6647 → __pick_next_task :5952 快路径 → pick_task_fair :8848</text>
+    <text x="645" y="590" fill="#88c0ff" font-size="10">→ pick_next_entity :5613 → pick_eevdf :907:curr mysqld 没资格 → NULL</text>
+    <text x="645" y="604" fill="#88c0ff" font-size="10">最左 redis 有资格 → redis;put_prev_entity :5638 把 mysqld 放回树</text>
+    <text x="645" y="618" fill="#88c0ff" font-size="10">set_next_entity :5560:redis 出树,vlag = deadline(slice 保护)</text>
+
+    <rect x="635" y="628" width="510" height="54" rx="3" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="645" y="645" fill="#ffaa55">⑧ nr_switches++ :6656;trace_sched_switch;context_switch(core.c:5272)</text>
+    <text x="645" y="660" fill="#ffaa55" font-size="10">不同 mm → 写 CR3(PCID 命中不冲 TLB)、换栈、六个寄存器</text>
+    <text x="645" y="674" fill="#ffaa55" font-size="10">—— 上一轮 Deep §3.3 实测 2 ~ 3 μs</text>
+  </g>
+
+  <!-- bottom summary -->
+  <rect x="60" y="700" width="1100" height="60" rx="4" fill="#11161d" stroke="#8b949e"/>
+  <text x="70" y="718" fill="#e6edf3" font-size="11">⑨ ~6.5 μs:redis 从它上次 schedule() 返回(它在 epoll_wait 里睡的)→ ep_poll 返回 → syscall_exit_to_user_mode → sysretq → ring 3 第一条指令</text>
+  <text x="70" y="736" fill="#8b949e" font-size="10">合计 ≈ 6.5 ~ 7.5 μs(How #19 的 7 ~ 10 μs 取下限);之后 L1 / L2 / TLB 冷启动几十 μs</text>
+  <text x="70" y="752" fill="#8b949e" font-size="10">若核 0 此刻在内核态不可抢占段,⑥ 要等到 preempt_count 归零(core.c:7003 preempt_schedule_irq),再加那段长度</text>
+
+  <g font-size="10">
+    <rect x="900" y="56" width="12" height="10" fill="#5f3a1e" stroke="#c08040"/><text x="916" y="65" fill="#8b949e">硬件 / 换人</text>
+    <rect x="990" y="56" width="12" height="10" fill="#1e3a5f" stroke="#4080c0"/><text x="1006" y="65" fill="#8b949e">内核函数</text>
+    <rect x="1070" y="56" width="12" height="10" fill="#1e5f3a" stroke="#40c060"/><text x="1086" y="65" fill="#8b949e">判据</text>
+  </g>
+</svg>

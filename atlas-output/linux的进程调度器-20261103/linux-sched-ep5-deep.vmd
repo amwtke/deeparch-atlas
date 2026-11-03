@@ -1,0 +1,796 @@
+# 第 5 集 Deep 阶段 — 钻进 6.12：挑人、均衡、throttle 各在源码哪一行
+
+[intro-line] 今天钻进 Linux 6.12，看挑人、均衡、throttle 这三个决定各在源码哪一行，再用一个模拟器把账逐拍算给你看。
+
+## 1 Deep 阶段开场
+
+[visual: spotlight]
+现在我们钻进 Deep 阶段
+真实源码到底长什么样？
+
+[narration]
+骨架前几集已经搭好。这一集直接翻 Linux 六点一二的源码，把三条主线钉到具体的函数和行号上。
+
+---
+
+## 2 一万三千行里，只有三处在做决定
+
+[visual: title]
+三个判据
+三处行号
+
+[narration]
+调度器那个 fair 点 c 有一万三千多行。真正在做决定的只有三处：一处决定下一个该谁上台，一处决定一个任务该不该被搬去别的核，一处决定一整组任务此刻还能不能跑。其余一万多行，是记账、分类、锁和统计。这一集就盯着这三处。
+
+---
+
+## 3 三条主线，三个判据
+
+[visual: layers title=三条主线，三个判据]
+主线一 挑人：有资格，且截止期最早；欠账放回时守恒 · fair.c 907 与 5266
+主线二 搬人：差距过了百分之十七才搬，只搬一半；半毫秒内跑过的不搬 · fair.c 11048 与 9260
+主线三 停组：每核向池借五毫秒；借不到整组下树；定时器补池放回 · fair.c 5772 与 5915
+三者串联：一次 tick 里记账、扣账、抬均衡软中断，三件事同时触发
+
+[sidebar]
+C2 未来不可知
+C3 份额与延迟两头要
+C5 核各自为政
+C6 份额按组算
+
+[narration]
+三条主线各有一个判据。挑人，只看有没有资格和谁的截止期最早，背后是 C2 未来不可知和 C3 份额与延迟两头要。搬人，只在有利可图而且对方不热的时候动手，背后是 C5 核各自为政。停组，整组按周期借、借不到整组停，背后是 C6 份额按组算。三个判据在同一次时钟中断里都可能被触发：记账、扣账、再抬一个均衡的软中断。
+
+---
+
+## 4 三条调用链钉到行号
+
+[visual: html_slide image="pics/05-overview.png" title=三条主线钉到 Linux 6.12]
+
+[step: auto]
+scroll auto
+
+[narration]
+这张图三列就是三条调用链，从上往下读。注意三件事。第一，三列的顶端全是打断点：时钟中断、唤醒、核空闲、定时器，没有一条链是调度器自己醒来的。第二，左列的两个入口，时钟和唤醒，最后汇到同一个地方，回用户态的出口，它们都只打标记，真换人只有一处。第三，三个绿框都在 fair 点 c，九百零七行挑人，九千二百六十行附近搬人，五千七百七十二行附近停组。
+
+---
+
+## 5 报幕：主线一，挑人
+
+[visual: spotlight]
+主线一 挑人
+四个数各在哪一行涨、夹、放回、推
+
+[narration]
+先看挑人。账上四个数，权重、虚拟时间、欠账和截止期，各在哪一行被改。
+
+---
+
+## 6 update_deadline：时间片是请求长度，不是下台线
+
+[visual: code_explain lang=c title="update_deadline：跑满一个请求才推截止期（Linux 6.12 kernel/sched/fair.c:1007）"]
+static bool update_deadline(struct cfs_rq *cfs_rq, struct sched_entity *se)
+{
+	if ((s64)(se->vruntime - se->deadline) < 0)
+		return false;
+
+	/*
+	 * For EEVDF the virtual time slope is determined by w_i (iow.
+	 * nice) while the request time r_i is determined by
+	 * sysctl_sched_base_slice.
+	 */
+	if (!se->custom_slice)
+		se->slice = sysctl_sched_base_slice;
+
+	/*
+	 * EEVDF: vd_i = ve_i + r_i / w_i
+	 */
+	se->deadline = se->vruntime + calc_delta_fair(se->slice, se);
+
+	/*
+	 * The task has consumed its request, reschedule.
+	 */
+	return true;
+}
+===HIGHLIGHT===
+lines=3-4
+虚拟时间还没追上截止期
+什么也不做，直接返回
+被抢占不会重置这个请求
+===HIGHLIGHT===
+lines=11-12
+没有自定义就用默认片
+八 核机器上是 3 ms
+6.12 起可按任务设 0.1 到 100 ms
+===HIGHLIGHT===
+lines=17-17
+新截止期 = 虚拟时间 + 片长 / 权重
+redis 推 0.32 个虚拟毫秒
+xz 推 204.8 个虚拟毫秒
+===HIGHLIGHT===
+lines=22-22
+返回真只表示请求用完
+打不打标记由 update_curr 决定
+一个人跑时根本不打
+
+[narration]
+每个打断点，update curr 先把跑过的时间按权重折成虚拟时间加上去，然后调这个函数。它只在虚拟时间追上截止期的时候推一次，推的量是时间片除以权重。所以时间片不是下台线，是一次请求的长度：被抢占了，请求不重置，回来接着把剩下的跑完。这是 C3 份额与延迟两头要 里延迟那一头落到的行。
+
+---
+
+## 7 entity_lag：睡下去那一刻，欠账被夹在两个时间片内
+
+[visual: code_explain lang=c title="entity_lag 与 update_entity_lag：出队时存下并夹紧欠账（Linux 6.12 kernel/sched/fair.c:692）"]
+static s64 entity_lag(u64 avruntime, struct sched_entity *se)
+{
+	s64 vlag, limit;
+
+	vlag = avruntime - se->vruntime;
+	limit = calc_delta_fair(max_t(u64, 2*se->slice, TICK_NSEC), se);
+
+	return clamp(vlag, -limit, limit);
+}
+
+static void update_entity_lag(struct cfs_rq *cfs_rq, struct sched_entity *se)
+{
+	SCHED_WARN_ON(!se->on_rq);
+
+	se->vlag = entity_lag(avg_vruntime(cfs_rq), se);
+}
+===HIGHLIGHT===
+lines=5-5
+欠账 = 队列平均线 V 减去自己的虚拟时间
+正数表示队列欠它
+===HIGHLIGHT===
+lines=6-6
+上限 = 两个时间片与一个 tick 取大者
+再按权重折算
+8 核机器上就是正负 6 ms
+===HIGHLIGHT===
+lines=8-8
+夹紧
+睡多久不重要，最多只能欠两个片
+===HIGHLIGHT===
+lines=15-15
+出队那一刻存进 vlag
+醒来时 place_entity 从这里取
+
+[narration]
+一个任务睡下去的那一刻，内核算一次欠账：队列的加权平均线减去它自己的虚拟时间，再夹在正负两个时间片之内。八核机器上就是正负六毫秒。这就是上一轮卡住的地方：睡多久不重要，账上最多只能欠两个片。为什么要夹？因为那条平均线本身是近似的，树上有人进出它就会动，记一个太大的欠账会把别人的账弄乱。
+
+---
+
+## 8 place_entity：醒来放回，欠账按比例放大才守恒
+
+[visual: code_explain lang=c title="place_entity：放回时把欠账乘以 (W + w) / W（Linux 6.12 kernel/sched/fair.c:5266）"]
+		 *
+		 *   vl_i = (W + w_i)*vl'_i / W
+		 */
+		load = cfs_rq->avg_load;
+		if (curr && curr->on_rq)
+			load += scale_load_down(curr->load.weight);
+
+		lag *= load + scale_load_down(se->load.weight);
+		if (WARN_ON_ONCE(!load))
+			load = 1;
+		lag = div_s64(lag, load);
+	}
+
+	se->vruntime = vruntime - lag;
+
+	if (sched_feat(PLACE_REL_DEADLINE) && se->rel_deadline) {
+		se->deadline += se->vruntime;
+		se->rel_deadline = 0;
+		return;
+	}
+
+	/*
+	 * When joining the competition; the existing tasks will be,
+	 * on average, halfway through their slice, as such start tasks
+	 * off with half a slice to ease into the competition.
+	 */
+	if (sched_feat(PLACE_DEADLINE_INITIAL) && (flags & ENQUEUE_INITIAL))
+		vslice /= 2;
+
+	/*
+	 * EEVDF: vd_i = ve_i + r_i/w_i
+	 */
+	se->deadline = se->vruntime + vslice;
+===HIGHLIGHT===
+lines=1-3
+注释推了二十行的结论
+放大系数是 (W + w) / W
+W 是树上总权重，w 是自己的
+===HIGHLIGHT===
+lines=4-11
+W 要算上正在跑的 curr
+欠账先乘 (W + w) 再除以 W
+===HIGHLIGHT===
+lines=14-14
+放回点 = V 减去放大后的欠账
+放回后 V 下移，欠账读数恰好不变
+===HIGHLIGHT===
+lines=27-33
+新建的任务只给半个片
+因为别人平均都跑到一半了
+最后算出第一个截止期
+[narration]
+醒来放回时不能直接把欠账原样用上。加入一个被欠六毫秒的人，平均线本身会往下走，它实际的欠账会缩水一截。注释里推了二十行，结论是先把欠账乘以树上总权重加自己权重，再除以总权重，放回之后平均线下移，它的欠账读数恰好还是六。模拟器里 redis 那一拍就是这样：存下来零点五，放大成五点零九，放回后读数仍是零点五。守恒这一针，缝住了份额和延迟两头。
+
+---
+
+## 9 pick_eevdf：挑人只有这四十行
+
+[visual: code_explain lang=c title="pick_eevdf：有资格的里面挑截止期最早的（Linux 6.12 kernel/sched/fair.c:907）"]
+static struct sched_entity *pick_eevdf(struct cfs_rq *cfs_rq)
+{
+	struct rb_node *node = cfs_rq->tasks_timeline.rb_root.rb_node;
+	struct sched_entity *se = __pick_first_entity(cfs_rq);
+	struct sched_entity *curr = cfs_rq->curr;
+	struct sched_entity *best = NULL;
+
+	/*
+	 * We can safely skip eligibility check if there is only one entity
+	 * in this cfs_rq, saving some cycles.
+	 */
+	if (cfs_rq->nr_running == 1)
+		return curr && curr->on_rq ? curr : se;
+
+	if (curr && (!curr->on_rq || !entity_eligible(cfs_rq, curr)))
+		curr = NULL;
+
+	/*
+	 * Once selected, run a task until it either becomes non-eligible or
+	 * until it gets a new slice. See the HACK in set_next_entity().
+	 */
+	if (sched_feat(RUN_TO_PARITY) && curr && curr->vlag == curr->deadline)
+		return curr;
+
+	/* Pick the leftmost entity if it's eligible */
+	if (se && entity_eligible(cfs_rq, se)) {
+		best = se;
+		goto found;
+	}
+
+	/* Heap search for the EEVD entity */
+	while (node) {
+		struct rb_node *left = node->rb_left;
+
+		/*
+		 * Eligible entities in left subtree are always better
+		 * choices, since they have earlier deadlines.
+		 */
+		if (left && vruntime_eligible(cfs_rq,
+					__node_2_se(left)->min_vruntime)) {
+			node = left;
+			continue;
+		}
+
+		se = __node_2_se(node);
+
+		/*
+		 * The left subtree either is empty or has no eligible
+		 * entity, so check the current node since it is the one
+		 * with earliest deadline that might be eligible.
+		 */
+		if (entity_eligible(cfs_rq, se)) {
+			best = se;
+			break;
+		}
+
+		node = node->rb_right;
+	}
+found:
+	if (!best || (curr && entity_before(curr, best)))
+		best = curr;
+
+	return best;
+}
+===HIGHLIGHT===
+lines=12-13
+只有一个人时跳过资格判断
+省几个周期
+===HIGHLIGHT===
+lines=15-16
+超支的 curr 当不存在
+资格看它在不在平均线之下
+===HIGHLIGHT===
+lines=22-23
+片保护：被挑中后 vlag 暂存了截止期
+两者相等就继续跑它
+推过一次截止期保护自动失效
+===HIGHLIGHT===
+lines=26-29
+树按截止期排，最左最早
+最左有资格就是它
+===HIGHLIGHT===
+lines=32-56
+树上每个节点带子树最小虚拟时间
+左子树里有资格就往左
+否则看自己，再往右
+对数级就能找到答案
+===HIGHLIGHT===
+lines=59-61
+最后跟受保护的 curr 比一次截止期
+
+[narration]
+这四十行就是规则本身。没有一行判断任务的类型，只看两个数：有没有资格，谁的截止期最早。资格就是虚拟时间在平均线之下。树按截止期排，最左边有资格直接拿走；没有的话走一个增广搜索，每个节点记着子树里最小的虚拟时间，左边有资格就往左，对数时间找到答案。这是 C4 挑人须便宜 在挑人这一侧的样子。中间那句片保护也要记住：刚被挑中的人，没跑完这次请求之前别人抢不动它，除非它先失去资格。
+
+---
+
+## 10 唤醒抢占：放回之后再挑一次
+
+[visual: code_explain lang=c title="check_preempt_wakeup_fair 节选：新人放回后再调一次 pick_eevdf（Linux 6.12 kernel/sched/fair.c:8824）"]
+	cfs_rq = cfs_rq_of(se);
+	update_curr(cfs_rq);
+	/*
+	 * If @p has a shorter slice than current and @p is eligible, override
+	 * current's slice protection in order to allow preemption.
+	 *
+	 * Note that even if @p does not turn out to be the most eligible
+	 * task at this moment, current's slice protection will be lost.
+	 */
+	if (do_preempt_short(cfs_rq, pse, se) && se->vlag == se->deadline)
+		se->vlag = se->deadline + 1;
+
+	/*
+	 * If @p has become the most eligible task, force preemption.
+	 */
+	if (pick_eevdf(cfs_rq) == pse)
+		goto preempt;
+
+	return;
+===HIGHLIGHT===
+lines=1-2
+先把正在跑的人记账到此刻
+否则比较用的是旧数
+===HIGHLIGHT===
+lines=10-11
+新人的片更短又有资格
+撤掉 curr 的片保护
+===HIGHLIGHT===
+lines=16-17
+再挑一次，新人就是答案
+就打标记，真换人等出口
+
+[narration]
+唤醒抢占没有自己的规则。它把正在跑的人记账到此刻，看新人的片是不是更短，必要时撤掉片保护，然后再调一次刚才那个挑人函数。新人就是答案，就打一个该换人的标记。注意这里只打标记，真换人要等到回用户态的出口，这是 C1 只在打断点换。
+
+---
+
+## 11 模拟器跑五拍：每一列怎么变
+
+[visual: ascii title=三个任务同核五拍（模拟器按 6.12 规则跑，单位虚拟毫秒）]
+ t(ms)  在跑      V         mysqld lag   xz lag    redis
+ 0      mysqld    1200.000  +0.000       +0.000    睡 vlag +0.500
+ 4      xz        1203.942  -0.058       +3.942    睡
+ 8      mysqld    1207.885  +3.885       -265.182  睡
+ 10     redis     1205.261  -0.739       -267.806  醒来 lag +0.500
+ 10.05  mysqld    1209.856  +3.856       -263.211  睡 vlag +0.499
+ 12     mysqld    1211.777  +3.827       -261.289  睡
+
+ 三百毫秒对账：mysqld 96.9%   xz 2.6%   redis 0.5%
+
+[sidebar]
+C3 份额与延迟两头要
+C2 未来不可知
+
+[narration]
+按六点一二的代码写了个模拟器，把上一集手算的五拍表重跑一遍，数字对到小数点后两位。逐列看。虚拟时间只有正在跑的人在涨：mysqld 四毫秒涨四，权重十五的 xz 四毫秒涨两百七十三，跑完一拍欠账就是负两百六十五，权重不是靠少挑它，是靠它一跑账就飞。平均线贴着大权重的人走，redis 一加入就被拉下来四点六，它放回在线下方零点五，mysqld 被推到线上方没资格，换 redis。决定抢不抢的是唤醒那一刻的平均线，不是时钟。三百毫秒对账，redis 只用了它要的零点五，权重是上限不是配给。
+
+---
+
+## 12 从网卡中断到 redis 第一条指令：六点五微秒
+
+[visual: html_slide image="pics/05-timeline.png" title=网卡中断到 redis 第一条用户态指令]
+
+[step: auto]
+scroll auto
+
+[narration]
+整集唯一的一条纳秒时间线。核二收到网卡中断，零点三微秒开始唤醒 redis，零点五微秒选核：偏向它上次待的核零，核零忙，同组 L3 也没空核，就回核零排队，一微秒发一个核间中断。核零一点八微秒收到，把 redis 放回树上，欠账零点五放大成五点零九；两点三微秒抢占判定成立打标记；两点六微秒中断返回看到标记进调度；三微秒挑人，redis 上；换人两到三微秒。六点五到七点五微秒，redis 的第一条用户态指令，之后还有几十微秒的缓存冷启动。
+
+---
+
+## 13 反问一：睡了二十毫秒，醒来欠账记成多少
+
+[visual: text]
+两个 nice 0 的任务 A、B 同核
+B 睡下去时理论上被欠 20 个虚拟毫秒，睡了 20 ms
+B 醒来：欠账记成 +20、+6、+3 还是 0？能立刻抢吗？
+
+[sidebar]
+夹紧 上限两个片
+放大 乘 (W + w) / W
+守恒 放回后读数不变
+稳态 四毫秒一换
+
+[example]
+答案是正六。睡下去那一刻欠账就被夹在两个片之内，nice 零的虚拟单位等于真实单位，存下的是正六，不是二十。
+
+醒来放回：平均线此刻就是 A 的一千二百二十，六乘以二除以一放大成十二，B 放在一千二百零八。放回后平均线落到一千二百一十四，B 的读数正六，A 变成负六没资格，B 立刻把 A 换下。
+
+然后 B 连跑三个 tick 共十二毫秒，每拍欠账减二，归零时两人账相等，换 A。此后每四毫秒换一次人。
+
+[narration]
+拿一个反问收主线一。两个同权任务，B 睡二十毫秒，账上理论欠二十。四个选项：二十、六、三、零。看右边四个词：夹紧、放大、守恒、稳态。答案在例子里，先想一想再往下听。
+
+---
+
+## 14 报幕：主线二，搬人
+
+[visual: spotlight]
+主线二 搬人
+有利可图，且不热
+
+[narration]
+主线二，搬人。两道门：有利可图，而且对方不热。
+
+---
+
+## 15 task_hot：半毫秒内跑过的，不搬
+
+[visual: code_explain lang=c title="task_hot：exec_start 距今不足 500 μs 就算热（Linux 6.12 kernel/sched/fair.c:9260）"]
+static int task_hot(struct task_struct *p, struct lb_env *env)
+{
+	s64 delta;
+
+	lockdep_assert_rq_held(env->src_rq);
+
+	if (p->sched_class != &fair_sched_class)
+		return 0;
+
+	if (unlikely(task_has_idle_policy(p)))
+		return 0;
+
+	/* SMT siblings share cache */
+	if (env->sd->flags & SD_SHARE_CPUCAPACITY)
+		return 0;
+
+	/*
+	 * Buddy candidates are cache hot:
+	 */
+	if (sched_feat(CACHE_HOT_BUDDY) && env->dst_rq->nr_running &&
+	    (&p->se == cfs_rq_of(&p->se)->next))
+		return 1;
+
+	if (sysctl_sched_migration_cost == -1)
+		return 1;
+
+	/*
+	 * Don't migrate task if the task's cookie does not match
+	 * with the destination CPU's core cookie.
+	 */
+	if (!sched_core_cookie_match(cpu_rq(env->dst_cpu), p))
+		return 1;
+
+	if (sysctl_sched_migration_cost == 0)
+		return 0;
+
+	delta = rq_clock_task(env->src_rq) - p->se.exec_start;
+
+	return delta < (s64)sysctl_sched_migration_cost;
+}
+===HIGHLIGHT===
+lines=10-11
+SCHED_IDLE 的任务永远算冷
+谁都可以搬它
+===HIGHLIGHT===
+lines=14-15
+超线程兄弟共享缓存
+在它们之间搬不算热
+===HIGHLIGHT===
+lines=24-25
+门槛设成 -1：谁都是热的
+设成 0：谁都是冷的
+===HIGHLIGHT===
+lines=37-39
+距上次上台不到 500 μs 就是热
+L2 几十微秒才填满，刚填就搬等于白填
+
+[narration]
+第一道门，热不热。判据只有一行：这个任务上次上台到现在不到五百微秒，就算热，不搬。理由是 L2 缓存要几十微秒才填满，刚填满就搬走等于白填。这就是 C5 核各自为政 里搬人要付钱那一面。门槛是个 sysctl，设成负一谁都是热的，设成零谁都是冷的。超线程兄弟共享缓存，它们之间搬人不算热。
+
+---
+
+## 16 calculate_imbalance：跨 L3 按算力余量搬，同 L3 按个数搬，都只搬一半
+
+[visual: code_explain lang=c title="calculate_imbalance 节选：本组有余力时按个数拉平、再砍一半（Linux 6.12 kernel/sched/fair.c:11048）"]
+		if (busiest->group_weight == 1 || sds->prefer_sibling) {
+			/*
+			 * When prefer sibling, evenly spread running tasks on
+			 * groups.
+			 */
+			env->migration_type = migrate_task;
+			env->imbalance = sibling_imbalance(env, sds, busiest, local);
+		} else {
+
+			/*
+			 * If there is no overload, we just want to even the number of
+			 * idle CPUs.
+			 */
+			env->migration_type = migrate_task;
+			env->imbalance = max_t(long, 0,
+					       (local->idle_cpus - busiest->idle_cpus));
+		}
+
+#ifdef CONFIG_NUMA
+		/* Consider allowing a small imbalance between NUMA groups */
+		if (env->sd->flags & SD_NUMA) {
+			env->imbalance = adjust_numa_imbalance(env->imbalance,
+							       local->sum_nr_running + 1,
+							       env->sd->imb_numa_nr);
+		}
+#endif
+
+		/* Number of tasks to move to restore balance */
+		env->imbalance >>= 1;
+
+		return;
+	}
+===HIGHLIGHT===
+lines=1-7
+同一组 L3 里每核一组
+就按可跑的个数拉平
+两边可跑数之差
+===HIGHLIGHT===
+lines=8-16
+没人过载时
+只把空核数拉平
+===HIGHLIGHT===
+lines=27-30
+只搬差距的一半
+两边都在均衡，各搬一半不过冲
+永远只是近似相等
+[narration]
+第二道门，有利可图。这段先问两组共不共享 L3。不共享，说明跨组搬人贵，只填算力余量，差距等于本组算力减去已经用掉的，我们的例子里正好是一颗空核的一千零二十四。共享 L3 的话，同一组里搬人便宜，直接按可跑的个数拉平。最后一句最关键，差距除以二，只搬一半。两边都在做均衡，各搬一半刚好不会过冲，所以八本账永远只是近似相等。这是 C8 核不等速且耗电 要求的按算力比，和 C5 的近似均衡。
+
+---
+
+## 17 算例：rq3 空了，源码怎么走
+
+[visual: html_slide image="pics/05-balance.png" title=一次 newidle 均衡：MC 层与 PKG 层各算一遍]
+
+[step: auto]
+scroll auto
+
+[narration]
+核三的任务刚睡，核三空了，先在同一组 L3 的四核里找。核一排了五个，最忙；差距五减零，除以二等于二。但在可抢占内核下，空闲均衡搬到第一个就停，因为它同时持着两把运行队列的锁，不能久留。所以上一集写的搬两个，真正搬的是一个，剩下的留给下一次。要是这一层没搬到，才上到八核那一层：另一组 L3 十三个可跑对本组九个，忙了百分之四十四，超过百分之十七的门槛；两组不共享 L3，走算力余量那条分支，差距一千零二十四，从核四拉一个过来，代价是它的 L3 工作集要重填。
+
+---
+
+## 18 反问二：redis 绑了核，别人进得来吗
+
+[visual: text]
+redis 用 taskset 绑在核 7，PG 后端不动
+redis 处理完一个请求睡了，核 7 空
+空闲均衡会不会把 PG 拉到核 7？不会、会、取决于睡多久？
+
+[sidebar]
+绑核 只改 cpus_ptr
+两处检查 都看被搬的人
+avg_idle 一道真实的门
+isolcpus 才是独占
+
+[example]
+答案是会。绑核改的是任务自己的 cpus ptr，源码里只有两处看它：唤醒选核的掩码，和搬人时的 can migrate task，看的都是被搬的那个人，没有一行看目标核上住着谁。
+
+核七一空就做空闲均衡，三道门：没人正被唤醒到本核；域里确实有核过载；平均空闲时间大于一次均衡的代价。redis 每十毫秒醒一次，远大于二十微秒的代价，过。
+
+同一组 L3 里从核四拉：差距六砍半等于三，从队尾挑，跳过正在跑的、五百微秒内跑过的、绑核不含七的，第一个过门的 PG 就进了核七。redis 醒来只能回核七，欠账为正判定成立；PG 在用户态几微秒后换，PG 在内核态不可抢占区就得等它出来，钩子二的 p99 八毫秒来自后者。
+
+[narration]
+反问二，收主线二。redis 绑在核七，PG 没绑。redis 睡了核七空了，空闲均衡会不会把 PG 拉进来。三个选项，不会、会、取决于睡多久。右边四个词是线索。答案在例子里。顺便说一句，第三个选项不对，但它指出了一道真实的门，平均空闲时间。
+
+---
+
+## 19 报幕：主线三，停组
+
+[visual: spotlight]
+主线三 停组
+借不到，整组下树
+
+[narration]
+主线三，容器的上限怎么落到每个线程头上。一句话：借不到，整组下树。
+
+---
+
+## 20 __assign_cfs_rq_runtime：每核向池借五毫秒
+
+[visual: code_explain lang=c title="__assign_cfs_rq_runtime：一次借到 5 ms 为止，池空就有多少给多少（Linux 6.12 kernel/sched/fair.c:5772）"]
+static int __assign_cfs_rq_runtime(struct cfs_bandwidth *cfs_b,
+				   struct cfs_rq *cfs_rq, u64 target_runtime)
+{
+	u64 min_amount, amount = 0;
+
+	lockdep_assert_held(&cfs_b->lock);
+
+	/* note: this is a positive sum as runtime_remaining <= 0 */
+	min_amount = target_runtime - cfs_rq->runtime_remaining;
+
+	if (cfs_b->quota == RUNTIME_INF)
+		amount = min_amount;
+	else {
+		start_cfs_bandwidth(cfs_b);
+
+		if (cfs_b->runtime > 0) {
+			amount = min(cfs_b->runtime, min_amount);
+			cfs_b->runtime -= amount;
+			cfs_b->idle = 0;
+		}
+	}
+
+	cfs_rq->runtime_remaining += amount;
+
+	return cfs_rq->runtime_remaining > 0;
+}
+===HIGHLIGHT===
+lines=9-9
+要借的量 = 目标 5 ms 减去本核剩余
+欠的那部分也一起补
+===HIGHLIGHT===
+lines=11-12
+没设上限的组
+要多少给多少
+===HIGHLIGHT===
+lines=14-14
+第一次借时把周期定时器开起来
+===HIGHLIGHT===
+lines=16-20
+池里还有就给，不够 5 ms 就给剩下的
+===HIGHLIGHT===
+lines=23-25
+本核小账加上去
+返回假就是借不到
+
+[narration]
+配额不是按线程记的，是一个池。十六颗核不能每微秒都去碰同一把池锁，这是 C5 核各自为政，所以每颗核一次向池借五毫秒，记在本核的小账上，每个打断点从小账里扣。小账扣光再来借，池里不够五毫秒就有多少给多少，一点都没有，返回假，借不到。借不到会打一个该换人的标记，让出口去处理。
+
+---
+
+## 21 throttle_cfs_rq：再试一纳秒，不行就整组出队
+
+[visual: code_explain lang=c title="throttle_cfs_rq 开头：最后再试借 1 ns，失败就挂进被停链表（Linux 6.12 kernel/sched/fair.c:5915）"]
+static bool throttle_cfs_rq(struct cfs_rq *cfs_rq)
+{
+	struct rq *rq = rq_of(cfs_rq);
+	struct cfs_bandwidth *cfs_b = tg_cfs_bandwidth(cfs_rq->tg);
+	struct sched_entity *se;
+	long task_delta, idle_task_delta, dequeue = 1;
+	long rq_h_nr_running = rq->cfs.h_nr_running;
+
+	raw_spin_lock(&cfs_b->lock);
+	/* This will start the period timer if necessary */
+	if (__assign_cfs_rq_runtime(cfs_b, cfs_rq, 1)) {
+		/*
+		 * We have raced with bandwidth becoming available, and if we
+		 * actually throttled the timer might not unthrottle us for an
+		 * entire period. We additionally needed to make sure that any
+		 * subsequent check_cfs_rq_runtime calls agree not to throttle
+		 * us, as we may commit to do cfs put_prev+pick_next, so we ask
+		 * for 1ns of runtime rather than just check cfs_b.
+		 */
+		dequeue = 0;
+	} else {
+		list_add_tail_rcu(&cfs_rq->throttled_list,
+				  &cfs_b->throttled_cfs_rq);
+	}
+	raw_spin_unlock(&cfs_b->lock);
+
+===HIGHLIGHT===
+lines=9-11
+持池锁，最后再试借 1 ns
+如果池刚被定时器补过，就不停
+===HIGHLIGHT===
+lines=12-19
+注释解释为什么借 1 ns 而不是只看一眼
+一旦停了，定时器可能整整一个周期才放回
+===HIGHLIGHT===
+lines=21-24
+真借不到：挂进 cfs_b 的被停链表
+后面把这颗核上的组实体从父树出队
+组内所有线程一起消失
+
+[narration]
+出口处理的就是这个函数。它先持着池锁最后再试借一纳秒，因为池可能刚被定时器补过，白停一次要等整整一个周期才能放回。真借不到，就把这颗核上的组实体挂进被停链表，再从父树出队。配额是组的，没法定义哪个线程超额，所以是整组一起消失，刚收到请求的线程和空转的线程一起停。这就是 C6 份额按组算 的代价本体。周期定时器到点补池，再把各核的组实体放回去，远端核要发核间中断。
+
+---
+
+## 22 钩子一在 cpu.stat 里长什么样
+
+[visual: html_slide image="pics/05-bandwidth.png" title=cpu.max 一个周期：四种配置下跑与停的形状]
+
+[step: auto]
+scroll auto
+
+[narration]
+第一集那道题的数字。限两核就是每一百毫秒的周期池里两百毫秒。十六个线程各借五毫秒，四十片十二点五毫秒就把池烧光，然后十六颗核上的组一起消失八十七点五毫秒。一秒钟里 nr periods 十，nr throttled 十，throttled usec 大约一千四百万，因为停的时长按每颗核的队列各记一次，十六乘八十七点五。改成四核呢，只是把八十七点五变成七十五，所以答案是 C，另一种抖。周期改成十毫秒，每次停缩到八点七五毫秒但次数涨十倍。真正根治是第五行：把同时忙的线程压到两个，池永远烧不完，停的时长归零。
+
+---
+
+## 23 反问三：周期改成十毫秒，计数器怎么变
+
+[visual: text]
+把 period 从 100 ms 改成 10 ms，16 线程 1.25 ms 就烧光一个周期
+一秒之内 nr_throttled 从 10 变成：10、100、1000 还是 0？
+
+[sidebar]
+nr_throttled 记周期数
+每周期 1.25 ms 烧光
+停的总时长不变
+5 ms 片比应得还大
+
+[example]
+答案是一百。nr throttled 在周期定时器里累加，加的是发生过停的周期数，不是停的次数。池二十毫秒，十六线程一点二五毫秒烧光，每个周期都停，一秒一百个周期。
+
+throttled usec 每秒还是大约十四秒，停的总时长没变，只是切碎了。副作用在借片：每核每周期应得一点二五毫秒，一次却要借五毫秒，第四颗核来借时池已经空了。把 bandwidth slice 调到一毫秒可以缓解。
+
+[narration]
+反问三。周期从一百毫秒改成十毫秒，一秒之内 nr throttled 从十变成多少，四个选项。线索在右边：这个计数器记的是周期数。答案在例子里。再带走一句：nr throttled 高不等于更糟，看每周期平均停多久才是 p99 的代理。
+
+---
+
+## 24 三条主线放到同一条时间轴上
+
+[visual: timeline title=三条主线同轴：一百一十毫秒里发生了什么]
+T=0 [停组] 周期定时器到点，池补到 200 ms
+T=4 [挑人] tick，mysqld 跑满请求，推截止期，打标记，换 xz
+T=8 [挑人] tick，xz 欠账负 265，换回 mysqld
+T=10 [挑人] 网卡中断唤醒 redis，六点五微秒后上台
+T=12.5 [停组] 16 颗核借完 40 片，整组出队
+T=20 [搬人] 核 3 空闲均衡，从核 1 拉一个 PG
+T=64 [搬人] 同 L3 周期均衡到点，差距不够，不搬
+T=100 [停组] 定时器补池，15 个核间中断放回整组
+
+[narration]
+把三条主线放到同一条墙上时间轴看。停组是最粗的事件，一次停掉十六颗核上的整组，八十七点五毫秒；挑人最细，微秒级，每四毫秒一次；搬人介于中间，毫秒到百毫秒。三条主线的时间尺度差三个数量级，这是它们能各写各的代码、只靠两把锁衔接的原因。
+
+---
+
+## 25 附录：没展开的八个专题，各一行号
+
+[visual: text]
+rt 类：位图找第一个非空级，O(1)；RR 片 100 ms；95% 阀；优先级继承链
+dl 类：EDF 加 CBS，准入检查；6.12 的 fair_server 保 fair 至少 5%
+抢占模型五种；sched_ext 把挑人规则交给 BPF，默认片 20 ms
+
+[sidebar]
+C7 有人要硬保证
+C8 核不等速且耗电
+EAS 读同一个 util
+NUMA 搬页还是搬任务
+
+[example]
+rt 类的账是一百个链表加一张位图，挑人就是找第一个非空的位。实时任务封顶每秒九百五十毫秒，这是你还能 ssh 进去 kill 掉一个死循环的原因。优先级继承在 rt mutex 里沿着等锁链逐级抬。
+
+dl 类按最早截止期调度，准入检查用的是和 rt 封顶同一个百分之九十五的比值。六点一二新加的 fair server，把每颗核上整个 fair 类当成一个 deadline 实体，默认一秒里保五十毫秒，和百分之九十五的阀并存。
+
+sched ext 这一类排在 fair 之下，加载了 BPF 调度器之后普通任务整体切过去，挑人规则第一次变成每个负载自己选；BPF 出错或者有任务饿超时，内核把所有任务搬回 fair。EAS 和调频读的是同一个 util，手机的大小核靠它选核。NUMA 均衡定期把页表项改成不可访问，用缺页统计任务在哪个节点访存多，再决定搬页还是搬任务。
+
+[narration]
+八个预留专题这里只给机制和行号。实时类、deadline 类、抢占模型、BPF 可插拔的 sched ext、省电的 EAS、超线程的 core scheduling、NUMA 均衡、每个终端一个组的 autogroup。每一个都挂在 C7 有人要硬保证 或者 C8 核不等速且耗电 下面。要展开哪个，可以单独开一轮。
+
+---
+
+## 26 本集总结
+
+[visual: html_slide image="pics/ep5-summary-card.png" title=本集总结]
+
+[step: auto]
+scroll auto
+
+[narration]
+这一集带走六件事。一，挑人只有四十行，看资格和截止期，不看任务是谁。二，时间片是请求长度，被抢占不重置。三，欠账睡下去夹在两个片内，醒来按比例放大才守恒。四，搬人两道门，差距过百分之十七只搬一半，半毫秒内跑过的不搬。五，配额是时间不是核，每核借五毫秒，借不到整组下树。六，三个判据各一行号，其余一万多行是记账、分类、锁和统计。
+
+---
+
+## 27 下集预告
+
+[visual: spotlight]
+本集就到这里
+下集：Windows NT 的 32 级优先级，怎么答同一道题
+
+[narration]
+本集就到这里。同样八条约束，Cutler 在 Windows NT 里用三十二级优先级加临时提升做了一套，至今没有换成账。哪些是约束逼出来的，哪些只是血统？下集见。
+
+---

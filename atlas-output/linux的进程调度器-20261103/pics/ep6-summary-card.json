@@ -1,0 +1,26 @@
+{
+  "title": "约束与血统",
+  "subtitle": "Linux 进程调度器 · Comparison",
+  "tagline": "同一组约束，Windows NT 与 Linux 一样的是约束逼的，不一样的追到「猜事件还是记账」这一条血统。",
+  "pillars": [
+    {"icon": "gear", "t": "何时换", "d": "标记加出口，同形"},
+    {"icon": "chart", "t": "换谁", "d": "级对账，血统"},
+    {"icon": "db", "t": "各多少", "d": "封顶同，权重异"},
+    {"icon": "route", "t": "在哪换", "d": "每核队列同，均衡异"}
+  ],
+  "items": [
+    {"icon": "gear", "t": "标记与出口两边一样", "d": "NT 的 DeferredReady 到 Standby，IRQL 对 preempt_count。"},
+    {"icon": "chart", "t": "插队有界是约束", "d": "NT 每片减一回基线；Linux 的 lag 夹在两片内。"},
+    {"icon": "mask", "t": "级对账是血统", "d": "事件提升猜意图；lag 放回只是守恒修正。"},
+    {"icon": "db", "t": "封顶同形", "d": "周期给额度、扣光整组停；Job 千分数对 cpu.max 毫秒。"},
+    {"icon": "route", "t": "均衡是折中点", "d": "Linux 分层周期拉；NT 只在就绪时选核。"},
+    {"icon": "shield", "t": "凌驾要配阀", "d": "rt 95% 阀对 MMCSS 留 20%；PI 对 AutoBoost。"}
+  ],
+  "gains_title": "带走的判别法",
+  "gains": [
+    {"icon": "check", "t": "形状相同 → 约束", "d": "两套内核独立长成一样"},
+    {"icon": "compass", "t": "形状不同 → 血统", "d": "VMS 1988 对 CFS 2007"},
+    {"icon": "eye", "t": "SQLOS 是反证", "d": "取消 C2，C3 C6 的解不变"}
+  ],
+  "takeaway": "八条约束里，**何时换、每核队列、封顶、凌驾配阀、插队有界** 两边一样；**账还是级** 是血统，SQLOS 2016 年自己长出了欠账。"
+}

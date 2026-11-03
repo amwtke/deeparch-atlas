@@ -1,0 +1,177 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 15.73
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Origin 阶段开场",
+  "start": 15.73,
+  "end": 26.6
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "1995 年写在论文里",
+  "start": 26.6,
+  "end": 46.97
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "三次换代，各改写一条约束的权重",
+  "start": 46.97,
+  "end": 76.03
+ },
+ {
+  "idx": 5,
+  "type": "html_slide",
+  "title": "调度器接力：三次换代，七条旁线，一条学术线",
+  "start": 76.03,
+  "end": 99.17
+ },
+ {
+  "idx": 6,
+  "type": "timeline",
+  "title": "1979 到 2001：先来先跑之后的第一代“猜”",
+  "start": 99.17,
+  "end": 129.13
+ },
+ {
+  "idx": 7,
+  "type": "facetime",
+  "title": "\"Ingo Molnár\"",
+  "start": 129.13,
+  "end": 154.8
+ },
+ {
+  "idx": 8,
+  "type": "text",
+  "title": "O(1) 调度器：三句话说完的设计",
+  "start": 154.8,
+  "end": 189.33
+ },
+ {
+  "idx": 9,
+  "type": "spotlight",
+  "title": "8 能被骗的估计器",
+  "start": 189.33,
+  "end": 207.53
+ },
+ {
+  "idx": 10,
+  "type": "text",
+  "title": "\"Con Kolivas\"",
+  "start": 207.53,
+  "end": 238.9
+ },
+ {
+  "idx": 11,
+  "type": "text",
+  "title": "2007 年 4 月 13 日：Ingo 的 CFS 公告",
+  "start": 238.9,
+  "end": 282.5
+ },
+ {
+  "idx": 12,
+  "type": "ascii",
+  "title": "SD 和 CFS：公平的定义差一个词",
+  "start": 282.5,
+  "end": 313.63
+ },
+ {
+  "idx": 13,
+  "type": "spotlight",
+  "title": "12 一个人的离开",
+  "start": 313.63,
+  "end": 349.4
+ },
+ {
+  "idx": 14,
+  "type": "facetime",
+  "title": "\"Carl Waldspurger\"",
+  "start": 349.4,
+  "end": 376.67
+ },
+ {
+  "idx": 15,
+  "type": "facetime",
+  "title": "\"Ion Stoica\"",
+  "start": 376.67,
+  "end": 413.1
+ },
+ {
+  "idx": 16,
+  "type": "layers",
+  "title": "为什么 1995 年的算法等到 2023 年",
+  "start": 413.1,
+  "end": 440.63
+ },
+ {
+  "idx": 17,
+  "type": "text",
+  "title": "2010 到 2012，Google 的 Paul Turner 补上“组”这一层",
+  "start": 440.63,
+  "end": 510.03
+ },
+ {
+  "idx": 18,
+  "type": "text",
+  "title": "\"Peter Zijlstra\"",
+  "start": 510.03,
+  "end": 538.47
+ },
+ {
+  "idx": 19,
+  "type": "text",
+  "title": "2023 年 5 月 31 日第二版：补丁标题就是一张路线图",
+  "start": 538.47,
+  "end": 597.17
+ },
+ {
+  "idx": 20,
+  "type": "facetime",
+  "title": "\"Tejun Heo\"",
+  "start": 597.17,
+  "end": 624.57
+ },
+ {
+  "idx": 21,
+  "type": "spotlight",
+  "title": "20 Linus 的裁决不是技术的",
+  "start": 624.57,
+  "end": 656.93
+ },
+ {
+  "idx": 22,
+  "type": "text",
+  "title": "如果 2008 年 Peter 的 EEVDF 就进了树",
+  "start": 656.93,
+  "end": 695.63
+ },
+ {
+  "idx": 23,
+  "type": "layers",
+  "title": "每个转折点都在当年权重低的那条约束上留了债",
+  "start": 695.63,
+  "end": 725.8
+ },
+ {
+  "idx": 24,
+  "type": "html_slide",
+  "title": "三代换代，五个人",
+  "start": 725.8,
+  "end": 751.87
+ },
+ {
+  "idx": 25,
+  "type": "spotlight",
+  "title": "24 下集预告",
+  "start": 751.87,
+  "end": 770.1
+ }
+]

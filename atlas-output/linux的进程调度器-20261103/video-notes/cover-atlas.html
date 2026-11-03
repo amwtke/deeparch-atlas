@@ -1,0 +1,94 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:NB;src:url(file:///Users/jin.xiao/Library/Fonts/NotoSansCJKsc-Black.otf)}
+@font-face{font-family:NR;src:url(file:///Users/jin.xiao/Library/Fonts/NotoSansCJKsc-Regular.otf)}
+@font-face{font-family:JB;src:url(file:///Users/jin.xiao/Library/Fonts/JetBrainsMonoNerdFont-Bold.ttf)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1920px;height:1080px;overflow:hidden;position:relative;font-family:NB;color:#fff;
+ background:#07070d}
+/* fashion backdrop: diagonal gradient band + blobs + grain */
+.band{position:absolute;left:-200px;top:-120px;width:2400px;height:560px;transform:rotate(-9deg);
+ background:linear-gradient(90deg,#6d28d9 0%,#c026d3 38%,#f43f5e 68%,#f59e0b 100%);opacity:.92}
+.band2{position:absolute;left:-300px;top:760px;width:2600px;height:420px;transform:rotate(-9deg);
+ background:linear-gradient(90deg,#0ea5e9 0%,#6366f1 50%,#a21caf 100%);opacity:.55}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55}
+.b1{left:1180px;top:120px;width:620px;height:620px;background:#f472b6}
+.b2{left:-120px;top:520px;width:520px;height:520px;background:#38bdf8}
+.dark{position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,7,13,.15) 0%,rgba(7,7,13,.65) 48%,rgba(7,7,13,.92) 100%)}
+.grain{position:absolute;inset:0;opacity:.18;mix-blend-mode:overlay;
+ background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:64px 64px;mask-image:linear-gradient(180deg,transparent 0,#000 40%,#000 100%)}
+.code{position:absolute;left:1000px;top:150px;width:860px;font-family:JB;font-size:21px;line-height:1.5;color:rgba(255,255,255,.10);white-space:pre}
+/* top row */
+.pill{position:absolute;left:84px;top:58px;display:flex;gap:14px}
+.pill span{font-family:NB;font-size:30px;letter-spacing:2px;padding:10px 26px;border-radius:999px;background:rgba(255,255,255,.14);backdrop-filter:blur(10px);border:2px solid rgba(255,255,255,.55)}
+.pill span.hot{background:#fff;color:#111}
+.logo{position:absolute;right:64px;top:50px;width:120px;height:120px;border-radius:50%;background:url(file:///Users/jin.xiao/workshop/deeparch-video/assets/bilibili-avatar.jpg) center/cover;box-shadow:0 0 0 5px #07070d,0 0 0 9px #fff}
+/* title block */
+.kicker{position:absolute;left:86px;top:166px;font-family:JB;font-size:36px;letter-spacing:10px;color:#fff;opacity:.9}
+.t1{position:absolute;left:78px;top:206px;font-family:NB;font-size:206px;line-height:1;letter-spacing:-4px;color:#fff;
+ text-shadow:0 10px 0 rgba(0,0,0,.35),0 30px 60px rgba(0,0,0,.55)}
+.t2{position:absolute;left:86px;top:436px;font-family:NB;font-size:92px;line-height:1.05;letter-spacing:1px;white-space:nowrap;
+ background:linear-gradient(90deg,#fde68a,#fb7185 55%,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent;
+ filter:drop-shadow(0 8px 24px rgba(0,0,0,.6))}
+.sub{position:absolute;left:90px;top:566px;font-family:NB;font-size:40px;white-space:nowrap;color:#fff;letter-spacing:4px;opacity:.95}
+.sub b{color:#fde68a}
+/* glass ledger card */
+.card{position:absolute;right:76px;top:530px;width:660px;padding:20px 28px;border-radius:28px;
+ background:rgba(255,255,255,.10);backdrop-filter:blur(18px);border:2px solid rgba(255,255,255,.35);box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.card h3{font-family:JB;font-size:23px;letter-spacing:3px;color:#fde68a;margin-bottom:12px}
+.row{display:grid;grid-template-columns:170px 1fr 150px;align-items:center;gap:14px;margin:6px 0;font-family:NB;font-size:27px}
+.bar{height:26px;border-radius:13px;background:rgba(255,255,255,.12);position:relative;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:13px}
+.r1 i{width:62%;background:linear-gradient(90deg,#60a5fa,#a78bfa)}
+.r2 i{width:18%;background:linear-gradient(90deg,#34d399,#a3e635)}
+.r3 i{width:92%;background:linear-gradient(90deg,#fb7185,#f59e0b)}
+.row small{font-family:JB;font-size:22px;color:#fff;opacity:.85;text-align:right;white-space:nowrap}
+.pick{margin-top:12px;font-family:NB;font-size:30px;color:#fff}
+.pick em{font-style:normal;color:#a3e635}
+/* episode chips */
+.chips{position:absolute;left:70px;right:70px;bottom:44px;display:grid;grid-template-columns:repeat(7,1fr);column-gap:22px}
+.chip{position:relative;padding:18px 8px 14px;border-radius:20px;text-align:center;font-family:NB;font-size:38px;color:#0b0b12;white-space:nowrap;box-shadow:0 12px 30px rgba(0,0,0,.45)}
+.chip small{display:block;font-family:NR;font-size:23px;margin-top:4px;opacity:.78;letter-spacing:1px}
+.c1{background:#f8fafc}.c2{background:#fde68a}.c3{background:#fbbf24}.c4{background:#fb923c}.c5{background:#fb7185}.c6{background:#e879f9}.c7{background:#a78bfa;color:#0b0b12}
+.stats{position:absolute;left:92px;top:650px;display:flex;gap:44px;font-family:JB}
+.stats div{font-size:30px;color:#fff;opacity:.95}
+.stats div b{display:block;font-size:72px;line-height:1;color:#fff;letter-spacing:-2px}
+</style></head><body>
+<div class="band"></div><div class="band2"></div>
+<div class="blob b1"></div><div class="blob b2"></div>
+<div class="dark"></div><div class="grid"></div><div class="grain"></div>
+<div class="code">static struct sched_entity *pick_eevdf(struct cfs_rq *cfs_rq)
+  if (curr &amp;&amp; (!curr-&gt;on_rq || !entity_eligible(cfs_rq, curr)))
+      curr = NULL;
+  if (sched_feat(RUN_TO_PARITY) &amp;&amp; curr &amp;&amp; protect_slice(curr))
+      return curr;
+  /* heap search for the EEVD entity */
+  while (node) { ... if (!entity_eligible(cfs_rq, se)) ... }
+static void place_entity(struct cfs_rq *cfs_rq, struct sched_entity *se)
+  lag = se-&gt;vlag;  load = cfs_rq-&gt;avg_load;
+  lag *= load + scale_load_down(se-&gt;load.weight);
+  se-&gt;vruntime = vruntime - lag;
+static void throttle_cfs_rq(struct cfs_rq *cfs_rq)
+  cfs_rq-&gt;throttled = 1;  list_add_tail_rcu(&amp;cfs_rq-&gt;throttled_list, ...)</div>
+<div class="pill"><span class="hot">7 集大电影</span><span>DURATION 分钟</span><span>Linux 6.12 源码级</span></div>
+<div class="logo"></div>
+<div class="kicker">WHO RUNS NEXT · 谁上台 · 跑多久 · 在哪颗核</div>
+<div class="t1">Linux 调度器</div>
+<div class="t2">nice → EEVDF · 多核 · cgroup</div>
+<div class="sub">内核凭什么挑下一个跑的任务 —— <b>规则只看账，不看人</b></div>
+<div class="stats"><div><b>4</b>问骨架</div><div><b>8</b>条约束</div><div><b>3</b>条源码主线</div><div><b>5</b>个转折点</div></div>
+<div class="card"><h3>FAIR 账本 · 谁有资格 · 谁最急</h3>
+ <div class="row r1"><span>mysqld #3</span><div class="bar"><i></i></div><small>lag +0.6</small></div>
+ <div class="row r2"><span>redis</span><div class="bar"><i></i></div><small>lag +2.1</small></div>
+ <div class="row r3"><span>xz nice 19</span><div class="bar"><i></i></div><small>lag −6.0</small></div>
+ <div class="pick">pick → <em>eligible 且 deadline 最早</em></div></div>
+<div class="chips">
+ <div class="chip c1">What<small>四问骨架</small></div>
+ <div class="chip c2">Why<small>八刀八约束</small></div>
+ <div class="chip c3">How<small>账·标记·搬人</small></div>
+ <div class="chip c4">Origin<small>O(1)→CFS→EEVDF</small></div>
+ <div class="chip c5">Deep<small>6.12 行号</small></div>
+ <div class="chip c6">Compare<small>Windows NT</small></div>
+ <div class="chip c7">Method<small>五步法</small></div>
+</div>
+</body></html>

@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" width="1200" height="620" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="620" fill="#0a0c10"/>
+  <text x="600" y="28" text-anchor="middle" fill="#e6edf3" font-size="19">组是同形的一行(左:task_group 在一颗核上的嵌套树)+ 带宽封顶的一个周期(右:cpu.max = 200000 100000,16 线程突发)</text>
+
+  <!-- LEFT: nested tree on CPU 0 -->
+  <rect x="40" y="50" width="520" height="520" rx="8" fill="#0f141a" stroke="#30363d"/>
+  <text x="60" y="74" fill="#e6edf3" font-size="12">核 0 的 rq0->cfs(根 cfs_rq)</text>
+  <!-- root tree nodes -->
+  <circle cx="300" cy="120" r="18" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="300" y="124" text-anchor="middle" fill="#88c0ff" font-size="10">pg#17</text>
+  <text x="330" y="116" fill="#8b949e" font-size="9">w 1024</text>
+  <circle cx="200" cy="180" r="18" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="200" y="184" text-anchor="middle" fill="#88c0ff" font-size="10">redis</text>
+  <text x="120" y="176" fill="#8b949e" font-size="9">w 9548</text>
+  <rect x="380" y="162" width="56" height="36" rx="3" fill="#5f1e1e" stroke="#c04040" stroke-width="2"/>
+  <text x="408" y="177" text-anchor="middle" fill="#ff8888" font-size="9">k8s/mysql</text>
+  <text x="408" y="190" text-anchor="middle" fill="#ff8888" font-size="9">tg->se[0]</text>
+  <text x="446" y="172" fill="#8b949e" font-size="9">w ≈ 128</text>
+  <text x="446" y="184" fill="#8b949e" font-size="9">= 1024 × 本核负载</text>
+  <text x="446" y="196" fill="#8b949e" font-size="9">÷ 组总负载</text>
+  <line x1="300" y1="138" x2="200" y2="162" stroke="#4080c0"/>
+  <line x1="300" y1="138" x2="408" y2="162" stroke="#4080c0"/>
+  <text x="60" y="226" fill="#8b949e" font-size="10">pick_eevdf 在这棵树上挑到方节点 →</text>
+
+  <!-- group's own cfs_rq -->
+  <rect x="250" y="240" width="290" height="190" rx="6" fill="none" stroke="#c04040" stroke-dasharray="4,4"/>
+  <text x="265" y="258" fill="#ff8888" font-size="11">tg->cfs_rq[0](组在核 0 上自己的树)</text>
+  <text x="265" y="272" fill="#ff8888" font-size="9">runtime_remaining = 这颗核借到的额度小账</text>
+  <circle cx="395" cy="310" r="16" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="395" y="314" text-anchor="middle" fill="#88c0ff" font-size="9">my#3</text>
+  <circle cx="330" cy="370" r="16" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="330" y="374" text-anchor="middle" fill="#88c0ff" font-size="9">my#11</text>
+  <rect x="440" y="354" width="44" height="30" rx="3" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="462" y="367" text-anchor="middle" fill="#ff8888" font-size="8">子组</text>
+  <text x="462" y="378" text-anchor="middle" fill="#ff8888" font-size="8">(可再嵌)</text>
+  <line x1="395" y1="326" x2="330" y2="354" stroke="#4080c0"/>
+  <line x1="395" y1="326" x2="462" y2="354" stroke="#4080c0"/>
+  <line x1="408" y1="198" x2="395" y2="294" stroke="#c04040" stroke-dasharray="4,3"/>
+  <text x="265" y="412" fill="#8b949e" font-size="9">→ 再在这棵树上按同一条规则挑到叶子线程</text>
+
+  <!-- per-cpu note -->
+  <rect x="60" y="450" width="480" height="105" rx="6" fill="#11161d" stroke="#30363d"/>
+  <g font-size="10" fill="#8b949e">
+    <text x="75" y="470" fill="#e6edf3">每颗核各一份:tg->se[cpu] 挂父树,tg->cfs_rq[cpu] 挂自己的线程</text>
+    <text x="75" y="488">16 个线程散在 8 核 → 8 个方节点,每个 w ≈ 1024/8 = 128(calc_group_shares)</text>
+    <text x="75" y="506">cpu.weight 100 → tg->shares 1024;同核 nice 0 的 pg 后端 1024 → 1 : 8</text>
+    <text x="75" y="524">按组公平的代价:组内每个线程在它那颗核上的话语权变小</text>
+    <text x="75" y="542">update_cfs_group 每次入账 / 出账重算;throttle 时整个方节点出树</text>
+  </g>
+
+  <!-- RIGHT: bandwidth timeline -->
+  <rect x="600" y="50" width="560" height="520" rx="8" fill="#0f141a" stroke="#30363d"/>
+  <text x="620" y="74" fill="#e6edf3" font-size="12">cfs_bandwidth:period 100 ms · quota 200 ms · 每核借片 5 ms</text>
+
+  <!-- time axis 0..100ms: x from 640 to 1120 (4.8 px per ms) -->
+  <line x1="640" y1="300" x2="1130" y2="300" stroke="#8b949e" stroke-width="1.5"/>
+  <polygon points="1130,300 1120,295 1120,305" fill="#8b949e"/>
+  <g font-size="10" fill="#8b949e" stroke="#30363d">
+    <line x1="640" y1="295" x2="640" y2="305"/><text x="640" y="320" text-anchor="middle" stroke="none">0</text>
+    <line x1="700" y1="295" x2="700" y2="305"/><text x="700" y="320" text-anchor="middle" stroke="none">12.5</text>
+    <line x1="880" y1="295" x2="880" y2="305"/><text x="880" y="320" text-anchor="middle" stroke="none">50</text>
+    <line x1="1120" y1="295" x2="1120" y2="305"/><text x="1120" y="320" text-anchor="middle" stroke="none">100 ms</text>
+  </g>
+  <!-- pool bar: height proportional to remaining runtime, from 200 at t=0 to 0 at 12.5 -->
+  <text x="620" y="100" fill="#ffaa55" font-size="10">全局池 cfs_b->runtime</text>
+  <polygon points="640,110 640,290 700,290" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="655" y="150" fill="#ffaa55" font-size="10">200 ms</text>
+  <text x="646" y="206" fill="#ffaa55" font-size="9">16 核 × 5 ms</text>
+  <text x="646" y="218" fill="#ffaa55" font-size="9">每 5 ms 借 80</text>
+  <text x="705" y="285" fill="#ffaa55" font-size="10">池 = 0</text>
+  <!-- running band 0..12.5 -->
+  <rect x="640" y="240" width="60" height="18" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="670" y="253" text-anchor="middle" fill="#88c0ff" font-size="9">16 线程全忙</text>
+  <!-- throttled band 12.5..100 -->
+  <rect x="700" y="240" width="420" height="18" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="910" y="253" text-anchor="middle" fill="#ff8888" font-size="10">throttle_cfs_rq:16 个 cfs_rq 整组下树,停 87.5 ms</text>
+  <!-- period timer at 100 -->
+  <line x1="1120" y1="110" x2="1120" y2="290" stroke="#40c060" stroke-width="2" stroke-dasharray="6,4"/>
+  <text x="1118" y="104" text-anchor="end" fill="#88ff88" font-size="10">period_timer:池回 200 →</text>
+  <text x="1118" y="118" text-anchor="end" fill="#88ff88" font-size="10">distribute_cfs_runtime 放回</text>
+  <!-- p99 arrow -->
+  <line x1="700" y1="345" x2="1120" y2="345" stroke="#ff8888" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="910" y="340" text-anchor="middle" fill="#ff8888" font-size="10">p99 ≈ 87.5 ms(平均用量只有 2 核)</text>
+
+  <!-- options table -->
+  <g font-size="10" fill="#8b949e">
+    <text x="620" y="380" fill="#e6edf3" font-size="11">旋钮与结果</text>
+    <text x="620" y="400">limits 2 → 4(400 ms):16 线程 25 ms 烧光,停 75 ms —— 抖动没消失,只是晚来一点(选项 C)</text>
+    <text x="620" y="418">period 缩到 10 ms(20/10):1.25 ms 烧光,最多停 8.75 ms —— p99 ~9 ms,定时器 ×10</text>
+    <text x="620" y="436">cpu.max.burst 200 ms:空闲周期攒额度,一次 400 ms 突发不停 —— 短时用到 4 核</text>
+    <text x="620" y="454">并发压到 2 线程:2 × 100 ms = 200 ms 永远烧不完 —— 零 throttle,排队进线程池</text>
+    <text x="620" y="472">只用 cpu.weight:永不 throttle —— 空闲时可用满 64 核,计费模型没了</text>
+    <text x="620" y="500" fill="#e6edf3" font-size="11">借 / 停 / 放三个动作</text>
+    <text x="620" y="518">借:account_cfs_rq_runtime 扣到 ≤ 0 → __assign_cfs_rq_runtime 向池借 5 ms(锁 cfs_b->lock)</text>
+    <text x="620" y="536">停:借不到 → throttle_cfs_rq → 组实体出父树,记入 throttled_cfs_rq,nr_throttled++</text>
+    <text x="620" y="554">放:period_timer → __refill(+burst)→ distribute_cfs_runtime 补到 &gt; 0 并入树(远端核 IPI 异步)</text>
+  </g>
+
+  <!-- legend -->
+  <g font-size="10">
+    <rect x="700" y="590" width="14" height="12" fill="#1e3a5f" stroke="#4080c0"/><text x="720" y="600" fill="#8b949e">线程 / 在跑</text>
+    <rect x="810" y="590" width="14" height="12" fill="#5f1e1e" stroke="#c04040"/><text x="830" y="600" fill="#8b949e">组实体 / 被停</text>
+    <rect x="940" y="590" width="14" height="12" fill="#5f3a1e" stroke="#c08040"/><text x="960" y="600" fill="#8b949e">配额池</text>
+    <rect x="1030" y="590" width="14" height="12" fill="#1e5f3a" stroke="#40c060"/><text x="1050" y="600" fill="#8b949e">周期定时器</text>
+  </g>
+</svg>
