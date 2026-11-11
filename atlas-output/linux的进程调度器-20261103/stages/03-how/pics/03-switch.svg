@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 460" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="460" fill="#0a0c10"/>
+  <text x="600" y="32" text-anchor="middle" fill="#e0e6f0" font-size="20">悬念 1 揭晓:调度器没有自己的进程,换人的代码「前半在旧任务身上跑,后半在新任务身上醒」</text>
+  <text x="600" y="54" text-anchor="middle" fill="#8892a0" font-size="12">核 1 上:cc1 #4 被 chrome 渲染线程抢占。时间从左到右;两条泳道是两个任务各自的内核栈</text>
+
+  <!-- lanes -->
+  <text x="30" y="120" fill="#88c0ff" font-size="12">cc1 #4</text>
+  <text x="30" y="136" fill="#8892a0" font-size="10">内核栈 A</text>
+  <text x="30" y="300" fill="#88ff88" font-size="12">chrome</text>
+  <text x="30" y="316" fill="#8892a0" font-size="10">内核栈 B</text>
+  <line x1="120" y1="130" x2="1170" y2="130" stroke="#333a46"/>
+  <line x1="120" y1="310" x2="1170" y2="310" stroke="#333a46"/>
+
+  <!-- phase boxes lane A -->
+  <g font-size="11">
+    <rect x="120" y="100" width="150" height="60" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="195" y="124" text-anchor="middle" fill="#88c0ff">用户态在算</text>
+    <text x="195" y="142" text-anchor="middle" fill="#88c0ff">PC 在 cc1 的代码里</text>
+
+    <rect x="280" y="100" width="150" height="60" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="355" y="118" text-anchor="middle" fill="#ffaa55">中断进内核</text>
+    <text x="355" y="134" text-anchor="middle" fill="#ffaa55">显卡:下一帧 → 唤醒 chrome</text>
+    <text x="355" y="150" text-anchor="middle" fill="#ffaa55">比账:chrome 欠更多 → 打标记</text>
+
+    <rect x="440" y="100" width="150" height="60" rx="4" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="515" y="118" text-anchor="middle" fill="#88ff88">中断返回路口看见标记</text>
+    <text x="515" y="134" text-anchor="middle" fill="#88ff88">schedule() 在栈 A 上跑</text>
+    <text x="515" y="150" text-anchor="middle" fill="#88ff88">挑队头:chrome</text>
+
+    <rect x="600" y="100" width="150" height="60" rx="4" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="675" y="118" text-anchor="middle" fill="#88ff88">switch_to 前半</text>
+    <text x="675" y="134" text-anchor="middle" fill="#88ff88">把栈 A 的栈指针存进</text>
+    <text x="675" y="150" text-anchor="middle" fill="#88ff88">cc1 的 task_struct</text>
+  </g>
+
+  <!-- the jump -->
+  <path d="M750 130 L800 310" stroke="#40c060" stroke-width="2.5" fill="none" marker-end="url(#arrG)"/>
+  <text x="790" y="215" fill="#88ff88" font-size="12">换栈指针:一条 mov</text>
+  <text x="790" y="232" fill="#88ff88" font-size="11">rsp ← chrome 存过的栈指针</text>
+  <text x="790" y="249" fill="#8892a0" font-size="10">这一刻之后,CPU 的「我是谁」就变了</text>
+
+  <!-- lane B boxes -->
+  <g font-size="11">
+    <rect x="120" y="280" width="420" height="60" rx="4" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="330" y="304" text-anchor="middle" fill="#ff8888">睡眠:上次它自己在 switch_to 前半停下来</text>
+    <text x="330" y="322" text-anchor="middle" fill="#ff8888">栈 B 上冻着它当时的现场,栈指针存在 task_struct 里</text>
+
+    <rect x="800" y="280" width="170" height="60" rx="4" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="885" y="298" text-anchor="middle" fill="#88ff88">switch_to 后半</text>
+    <text x="885" y="314" text-anchor="middle" fill="#88ff88">在栈 B 上「醒来」</text>
+    <text x="885" y="330" text-anchor="middle" fill="#88ff88">接着上次停的地方往下走</text>
+
+    <rect x="980" y="280" width="190" height="60" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="1075" y="298" text-anchor="middle" fill="#88c0ff">收尾 → 回用户态</text>
+    <text x="1075" y="314" text-anchor="middle" fill="#88c0ff">PC 回到 chrome 的代码</text>
+    <text x="1075" y="330" text-anchor="middle" fill="#88c0ff">开始画这一帧</text>
+  </g>
+
+  <!-- A frozen -->
+  <rect x="760" y="100" width="410" height="60" rx="4" fill="#5f1e1e" stroke="#c04040" stroke-dasharray="6,4"/>
+  <text x="965" y="124" text-anchor="middle" fill="#ff8888" font-size="11">cc1 #4 冻在 switch_to 前半的中间,栈 A 原样保留</text>
+  <text x="965" y="142" text-anchor="middle" fill="#ff8888" font-size="11">下次有人 switch_to 到它,它从这一行「醒来」,毫无察觉</text>
+
+  <!-- notes -->
+  <g font-size="11">
+    <text x="30" y="380" fill="#e0e6f0" font-size="12">读图要点</text>
+    <text x="30" y="400" fill="#8892a0">· 绿色全是调度器的代码,它从头到尾没有自己的栈:前半借 cc1 的栈 A,后半借 chrome 的栈 B。</text>
+    <text x="30" y="418" fill="#8892a0">· 「换人」在硬件上只是换一个栈指针(加上换页表,若两任务不同进程);其余寄存器按 C 调用约定由两边的代码自己存取。</text>
+    <text x="30" y="436" fill="#8892a0">· 每个曾被换下去的任务都冻在同一行代码上;所以每个任务「醒来」的第一行也是同一行。机器上唯一不靠别人唤醒的,是每核一个的 idle 任务。</text>
+  </g>
+  <defs>
+    <marker id="arrG" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#40c060"/></marker>
+  </defs>
+</svg>

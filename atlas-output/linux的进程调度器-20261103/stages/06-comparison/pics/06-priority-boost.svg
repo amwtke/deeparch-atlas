@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 580" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="580" fill="#0a0c10"/>
+  <text x="600" y="32" text-anchor="middle" fill="#e6e6e6" font-size="18">Windows 的动态提升:等完键盘 +6,每跑完一个量子降 1 级</text>
+  <text x="600" y="53" text-anchor="middle" fill="#8a94a6" font-size="12">单核;A = 编译(一直算,基础等级 8);B = 编辑器线程(基础等级 8,平时在等键盘)</text>
+  <line x1="110" y1="400" x2="1120" y2="400" stroke="#1c2330" stroke-width="1"/>
+  <text x="98" y="404" text-anchor="end" fill="#8a94a6" font-size="12">8</text>
+  <line x1="110" y1="360" x2="1120" y2="360" stroke="#1c2330" stroke-width="1"/>
+  <text x="98" y="364" text-anchor="end" fill="#8a94a6" font-size="12">9</text>
+  <line x1="110" y1="320" x2="1120" y2="320" stroke="#1c2330" stroke-width="1"/>
+  <text x="98" y="324" text-anchor="end" fill="#8a94a6" font-size="12">10</text>
+  <line x1="110" y1="280" x2="1120" y2="280" stroke="#1c2330" stroke-width="1"/>
+  <text x="98" y="284" text-anchor="end" fill="#8a94a6" font-size="12">11</text>
+  <line x1="110" y1="240" x2="1120" y2="240" stroke="#1c2330" stroke-width="1"/>
+  <text x="98" y="244" text-anchor="end" fill="#8a94a6" font-size="12">12</text>
+  <line x1="110" y1="200" x2="1120" y2="200" stroke="#1c2330" stroke-width="1"/>
+  <text x="98" y="204" text-anchor="end" fill="#8a94a6" font-size="12">13</text>
+  <line x1="110" y1="160" x2="1120" y2="160" stroke="#1c2330" stroke-width="1"/>
+  <text x="98" y="164" text-anchor="end" fill="#8a94a6" font-size="12">14</text>
+  <line x1="110" y1="120" x2="1120" y2="120" stroke="#1c2330" stroke-width="1"/>
+  <text x="98" y="124" text-anchor="end" fill="#8a94a6" font-size="12">15</text>
+  <line x1="110" y1="80" x2="1120" y2="80" stroke="#c04040" stroke-width="1" stroke-dasharray="6,4"/>
+  <text x="98" y="84" text-anchor="end" fill="#8a94a6" font-size="12">16</text>
+  <text x="1125" y="84" fill="#ff8888" font-size="11">实时区下界</text>
+  <text x="1125" y="98" fill="#ff8888" font-size="10">提升不越过 15</text>
+  <text x="40" y="250" fill="#8a94a6" font-size="12" transform="rotate(-90 40 250)" text-anchor="middle">B 的动态等级</text>
+  <line x1="110" y1="400" x2="1120" y2="400" stroke="#4080c0" stroke-width="1" stroke-dasharray="3,5"/>
+  <text x="1125" y="404" fill="#88c0ff" font-size="11">基础等级 8</text>
+  <path d="M230 400 L230 160 L246 160 L246 400" fill="none" stroke="#c08040" stroke-width="2"/>
+  <line x1="230" y1="452" x2="230" y2="406" stroke="#40c060" stroke-width="1.5"/>
+  <path d="M226 412 L230 404 L234 412" fill="none" stroke="#40c060" stroke-width="1.5"/>
+  <path d="M400 400 L400 160 L416 160 L416 400" fill="none" stroke="#c08040" stroke-width="2"/>
+  <line x1="400" y1="452" x2="400" y2="406" stroke="#40c060" stroke-width="1.5"/>
+  <path d="M396 412 L400 404 L404 412" fill="none" stroke="#40c060" stroke-width="1.5"/>
+  <text x="238" y="150" text-anchor="middle" fill="#ffaa55" font-size="12">8 + 6 = 14</text>
+  <text x="238" y="468" text-anchor="middle" fill="#88ff88" font-size="11">按键 ①</text>
+  <text x="408" y="468" text-anchor="middle" fill="#88ff88" font-size="11">按键 ②</text>
+  <text x="408" y="150" text-anchor="middle" fill="#ffaa55" font-size="12">又是 14,不累加</text>
+  <text x="320" y="280" text-anchor="middle" fill="#8a94a6" font-size="11">处理完就回去等,</text>
+  <text x="320" y="296" text-anchor="middle" fill="#8a94a6" font-size="11">量子没用完,不降级</text>
+  <rect x="560" y="160" width="80" height="240" fill="#5f3a1e" opacity="0.35"/>
+  <text x="600.0" y="152" text-anchor="middle" fill="#ffaa55" font-size="12">14</text>
+  <rect x="640" y="200" width="80" height="200" fill="#5f3a1e" opacity="0.35"/>
+  <text x="680.0" y="192" text-anchor="middle" fill="#ffaa55" font-size="12">13</text>
+  <rect x="720" y="240" width="80" height="160" fill="#5f3a1e" opacity="0.35"/>
+  <text x="760.0" y="232" text-anchor="middle" fill="#ffaa55" font-size="12">12</text>
+  <rect x="800" y="280" width="80" height="120" fill="#5f3a1e" opacity="0.35"/>
+  <text x="840.0" y="272" text-anchor="middle" fill="#ffaa55" font-size="12">11</text>
+  <rect x="880" y="320" width="80" height="80" fill="#5f3a1e" opacity="0.35"/>
+  <text x="920.0" y="312" text-anchor="middle" fill="#ffaa55" font-size="12">10</text>
+  <rect x="960" y="360" width="80" height="40" fill="#5f3a1e" opacity="0.35"/>
+  <text x="1000.0" y="352" text-anchor="middle" fill="#ffaa55" font-size="12">9</text>
+  <path d="M560 400 L560 160 L640 160 L640 200 L720 200 L720 240 L800 240 L800 280 L880 280 L880 320 L960 320 L960 360 L1040 360 L1040 400 L1120 400" fill="none" stroke="#c08040" stroke-width="2.5"/>
+  <line x1="560" y1="452" x2="560" y2="406" stroke="#40c060" stroke-width="1.5"/>
+  <path d="M556 412 L560 404 L564 412" fill="none" stroke="#40c060" stroke-width="1.5"/>
+  <text x="566" y="468" text-anchor="middle" fill="#88ff88" font-size="11">按键 ③,然后 B 开始长时间计算</text>
+  <text x="800" y="118" text-anchor="middle" fill="#ffaa55" font-size="12">每用完一个量子降 1 级,6 个量子后回到 8</text>
+  <line x1="560" y1="396" x2="560" y2="404" stroke="#8a94a6"/>
+  <line x1="640" y1="396" x2="640" y2="404" stroke="#8a94a6"/>
+  <line x1="720" y1="396" x2="720" y2="404" stroke="#8a94a6"/>
+  <line x1="800" y1="396" x2="800" y2="404" stroke="#8a94a6"/>
+  <line x1="880" y1="396" x2="880" y2="404" stroke="#8a94a6"/>
+  <line x1="960" y1="396" x2="960" y2="404" stroke="#8a94a6"/>
+  <line x1="1040" y1="396" x2="1040" y2="404" stroke="#8a94a6"/>
+  <text x="600.0" y="392" text-anchor="middle" fill="#8a94a6" font-size="10">1 个量子</text>
+  <text x="98" y="520" text-anchor="end" fill="#8a94a6" font-size="12">CPU 上</text>
+  <rect x="110" y="504" width="120" height="24" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="170.0" y="521" text-anchor="middle" fill="#88c0ff" font-size="12">A</text>
+  <rect x="230" y="504" width="16" height="24" fill="#5f3a1e" stroke="#c08040"/>
+  <rect x="246" y="504" width="154" height="24" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="323.0" y="521" text-anchor="middle" fill="#88c0ff" font-size="12">A</text>
+  <rect x="400" y="504" width="16" height="24" fill="#5f3a1e" stroke="#c08040"/>
+  <rect x="416" y="504" width="144" height="24" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="488.0" y="521" text-anchor="middle" fill="#88c0ff" font-size="12">A</text>
+  <rect x="560" y="504" width="480" height="24" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="800.0" y="521" text-anchor="middle" fill="#ffaa55" font-size="12">B</text>
+  <rect x="1040" y="504" width="40" height="24" fill="#1e3a5f" stroke="#4080c0"/>
+  <rect x="1080" y="504" width="40" height="24" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="1100.0" y="521" text-anchor="middle" fill="#ffaa55" font-size="12">B</text>
+  <rect x="560" y="532" width="480" height="4" fill="#c04040"/>
+  <text x="800" y="552" text-anchor="middle" fill="#ff8888" font-size="12">这 6 个量子里 A 一片也拿不到:等级高的不让,等级低的就不跑</text>
+  <text x="1100" y="552" text-anchor="middle" fill="#8a94a6" font-size="11">同级轮转</text>
+  <text x="20" y="572" fill="#5a6373" font-size="10">依据:微软文档 Priority Boosts(降级规则、提升只作用于 1~15)+ WDK 常量 IO_KEYBOARD_INCREMENT = 6;前台进程另有最多 +2 的分离提升,未画</text>
+</svg>

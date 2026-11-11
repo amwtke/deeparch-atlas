@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="760" fill="#0a0c10"/>
+  <defs>
+    <marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#88c0ff"/></marker>
+    <marker id="arG" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#88ff88"/></marker>
+    <marker id="arO" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#ffaa55"/></marker>
+  </defs>
+
+  <text x="600" y="32" text-anchor="middle" font-size="19" fill="#e6e6e6">switch_to 的魔法:换 rsp 就是换进程 —— 一个进程在 CPU 眼里 = 一根内核栈 + 6 个寄存器 + 一个页表根</text>
+  <text x="600" y="54" text-anchor="middle" font-size="12" fill="#8a8f98">arch/x86/entry/entry_64.S:177 __switch_to_asm   ·   arch/x86/include/asm/switch_to.h:23 inactive_task_frame   ·   arch/x86/kernel/process.c:159 copy_thread(fork 伪造栈)</text>
+
+  <!-- left: timeline -->
+  <rect x="24" y="76" width="330" height="660" rx="8" fill="none" stroke="#4080c0" stroke-dasharray="4,4"/>
+  <text x="36" y="98" font-size="13" fill="#88c0ff">一次 tick 抢占换人,直接成本 ≈ 1~2 μs(待核 #24)</text>
+  <g font-size="10.5">
+    <text x="36" y="124" fill="#ffaa55">T+0</text><text x="110" y="124" fill="#e6e6e6">APIC 定时器中断进内核</text>
+    <text x="110" y="138" fill="#8a8f98">压 pt_regs、swapgs      ≈ 100~200 ns</text>
+
+    <text x="36" y="164" fill="#ffaa55">T+0.2μs</text><text x="110" y="164" fill="#e6e6e6">sched_tick core.c:5584</text>
+    <text x="110" y="178" fill="#8a8f98">rq_lock · update_rq_clock</text>
+    <text x="110" y="192" fill="#8a8f98">task_tick_fair → update_curr:1216</text>
+    <text x="110" y="206" fill="#8a8f98">vruntime += Δ·1024/w;deadline 到期</text>
+    <text x="110" y="220" fill="#8a8f98">resched_curr:1079 置 TIF_NEED_RESCHED</text>
+    <text x="110" y="234" fill="#8a8f98">                          ≈ 300~600 ns</text>
+
+    <text x="36" y="260" fill="#ffaa55">T+0.8μs</text><text x="110" y="260" fill="#e6e6e6">中断返回 → exit_to_user_mode_loop</text>
+    <text x="110" y="274" fill="#8a8f98">entry/common.c:101 看见标志 → schedule()</text>
+    <text x="110" y="288" fill="#8a8f98">__schedule:6548 rq_lock,prev 仍 RUNNING</text>
+    <text x="110" y="302" fill="#8a8f98">pick_next_task:6044 fast path</text>
+    <text x="110" y="316" fill="#8a8f98">→ pick_eevdf fair.c:907 红黑树 O(log n)</text>
+    <text x="110" y="330" fill="#8a8f98">                          ≈ 300~500 ns</text>
+
+    <text x="36" y="356" fill="#ffaa55">T+1.2μs</text><text x="110" y="356" fill="#e6e6e6">context_switch core.c:5272</text>
+    <text x="110" y="370" fill="#8a8f98">switch_mm_irqs_off:写 CR3(PCID 免刷 TLB)</text>
+    <text x="110" y="384" fill="#8a8f98">                          ≈ 100~300 ns</text>
+
+    <text x="36" y="410" fill="#88ff88">T+1.4μs</text><text x="110" y="410" fill="#88ff88">switch_to → __switch_to_asm</text>
+    <text x="110" y="424" fill="#8a8f98">push ×6 · movq rsp · pop ×6   ≈ 20 ns</text>
+    <text x="110" y="438" fill="#8a8f98">jmp __switch_to process_64.c:609</text>
+    <text x="110" y="452" fill="#8a8f98">FS/GS/TLS、FPU 惰性、pcpu_hot.current_task</text>
+    <text x="110" y="466" fill="#8a8f98">                          ≈ 100~300 ns</text>
+
+    <text x="36" y="492" fill="#ffaa55">T+1.7μs</text><text x="110" y="492" fill="#e6e6e6">finish_task_switch:5159(已在 next 的栈上)</text>
+    <text x="110" y="506" fill="#8a8f98">放 rq 锁 · prev->on_cpu = 0  ≈ 100 ns</text>
+
+    <text x="36" y="532" fill="#ffaa55">T+1.8μs</text><text x="110" y="532" fill="#e6e6e6">next 回到它自己当年停下的地方</text>
+    <text x="110" y="546" fill="#8a8f98">→ 它的 schedule() 返回 → 它的 sysret / iret</text>
+
+    <text x="36" y="580" fill="#ff8888">之后</text><text x="110" y="580" fill="#ff8888">间接成本:L1/L2 变冷、分支预测器洗牌</text>
+    <text x="110" y="594" fill="#8a8f98">几十 μs 内性能下降 —— C4 账单的大头</text>
+
+    <text x="36" y="630" fill="#8a8f98">总计直接 ≈ 1.5~2 μs;每秒 10⁴ 次换人</text>
+    <text x="36" y="644" fill="#8a8f98">就是 1.5~2% 的 CPU,这是 base_slice = 0.75 ms</text>
+    <text x="36" y="658" fill="#8a8f98">(fair.c:76)不敢再短的理由</text>
+    <text x="36" y="690" fill="#8a8f98">观察:bpftrace 05-sched-switch.bt 的 @switch_ns</text>
+    <text x="36" y="704" fill="#8a8f98">直方图量的是 sched_switch → __switch_to 返回</text>
+  </g>
+
+  <!-- middle: two stacks -->
+  <text x="690" y="98" text-anchor="middle" font-size="13" fill="#88ff88">__switch_to_asm 做的全部事情:6 push,1 movq 出,1 movq 进,6 pop</text>
+
+  <!-- prev stack -->
+  <text x="470" y="128" text-anchor="middle" font-size="12" fill="#88c0ff">prev 的内核栈(被换下)</text>
+  <rect x="390" y="136" width="160" height="300" fill="#11151c" stroke="#4080c0"/>
+  <g font-size="10.5" fill="#88c0ff">
+    <rect x="392" y="138" width="156" height="40" fill="#1e3a5f"/>
+    <text x="470" y="155" text-anchor="middle">pt_regs(用户态现场)</text>
+    <text x="470" y="170" text-anchor="middle">中断进来时压的</text>
+    <rect x="392" y="180" width="156" height="60" fill="#1e3a5f" opacity="0.7"/>
+    <text x="470" y="198" text-anchor="middle">…irq → sched_tick</text>
+    <text x="470" y="213" text-anchor="middle">→ schedule → __schedule</text>
+    <text x="470" y="228" text-anchor="middle">→ context_switch 的帧</text>
+    <rect x="392" y="242" width="156" height="118" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="470" y="258" text-anchor="middle" fill="#88ff88">inactive_task_frame</text>
+    <text x="470" y="273" text-anchor="middle" fill="#88ff88">ret_addr(回 context_switch)</text>
+    <text x="470" y="288" text-anchor="middle" fill="#88ff88">bp</text>
+    <text x="470" y="303" text-anchor="middle" fill="#88ff88">bx</text>
+    <text x="470" y="318" text-anchor="middle" fill="#88ff88">r12 r13 r14 r15</text>
+    <text x="470" y="340" text-anchor="middle" fill="#88ff88">← prev->thread.sp 指这里</text>
+    <text x="470" y="355" text-anchor="middle" fill="#8a8f98">(movq %rsp, TASK_threadsp(%rdi))</text>
+  </g>
+  <text x="470" y="452" text-anchor="middle" font-size="10" fill="#8a8f98">其余寄存器?caller-saved,ABI 规定</text>
+  <text x="470" y="466" text-anchor="middle" font-size="10" fill="#8a8f98">函数调用边界上本来就是死的,不必存</text>
+
+  <!-- next stack -->
+  <text x="890" y="128" text-anchor="middle" font-size="12" fill="#88c0ff">next 的内核栈(被换上;它上次也停在同一处)</text>
+  <rect x="810" y="136" width="160" height="300" fill="#11151c" stroke="#4080c0"/>
+  <g font-size="10.5" fill="#88c0ff">
+    <rect x="812" y="138" width="156" height="40" fill="#1e3a5f"/>
+    <text x="890" y="155" text-anchor="middle">pt_regs(它的用户态现场)</text>
+    <text x="890" y="170" text-anchor="middle">它上次 read() 进来时压的</text>
+    <rect x="812" y="180" width="156" height="60" fill="#1e3a5f" opacity="0.7"/>
+    <text x="890" y="198" text-anchor="middle">…pipe_read → schedule</text>
+    <text x="890" y="213" text-anchor="middle">→ __schedule</text>
+    <text x="890" y="228" text-anchor="middle">→ context_switch 的帧</text>
+    <rect x="812" y="242" width="156" height="118" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="890" y="258" text-anchor="middle" fill="#88ff88">inactive_task_frame</text>
+    <text x="890" y="273" text-anchor="middle" fill="#88ff88">ret_addr(回 context_switch)</text>
+    <text x="890" y="288" text-anchor="middle" fill="#88ff88">bp</text>
+    <text x="890" y="303" text-anchor="middle" fill="#88ff88">bx</text>
+    <text x="890" y="318" text-anchor="middle" fill="#88ff88">r12 r13 r14 r15</text>
+    <text x="890" y="340" text-anchor="middle" fill="#88ff88">← next->thread.sp 指这里</text>
+    <text x="890" y="355" text-anchor="middle" fill="#8a8f98">(movq TASK_threadsp(%rsi), %rsp)</text>
+  </g>
+
+  <!-- rsp arrow -->
+  <rect x="610" y="270" width="140" height="54" rx="6" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="680" y="291" text-anchor="middle" font-size="12" fill="#ffaa55">%rsp</text>
+  <text x="680" y="308" text-anchor="middle" font-size="10" fill="#ffaa55">entry_64.S:189~190</text>
+  <line x1="552" y1="330" x2="610" y2="300" stroke="#ffaa55" stroke-dasharray="6,4"/>
+  <line x1="750" y1="300" x2="808" y2="330" stroke="#ffaa55" marker-end="url(#arO)"/>
+  <text x="680" y="345" text-anchor="middle" font-size="10" fill="#8a8f98">一条 movq 之后,</text>
+  <text x="680" y="359" text-anchor="middle" font-size="10" fill="#8a8f98">current 就是另一个人</text>
+
+  <text x="680" y="400" text-anchor="middle" font-size="10.5" fill="#e6e6e6">换栈之后接着执行的 6 条 pop + __switch_to 的 ret</text>
+  <text x="680" y="415" text-anchor="middle" font-size="10.5" fill="#e6e6e6">弹的已经是 next 当年压的值 → 返回到 next 的 context_switch</text>
+  <text x="680" y="430" text-anchor="middle" font-size="10.5" fill="#e6e6e6">→ finish_task_switch(prev)   prev 从 rax 带过来(切栈后唯一的信使)</text>
+
+  <!-- fork frame -->
+  <rect x="390" y="488" width="786" height="248" rx="8" fill="none" stroke="#40c060" stroke-dasharray="4,4"/>
+  <text x="402" y="510" font-size="13" fill="#88ff88">fork 分支:一个从没跑过的进程,怎么从同一条 pop 路径「醒来」(copy_thread process.c:159)</text>
+
+  <rect x="410" y="526" width="190" height="190" fill="#11151c" stroke="#40c060"/>
+  <g font-size="10.5">
+    <rect x="412" y="528" width="186" height="78" fill="#1e3a5f"/>
+    <text x="505" y="546" text-anchor="middle" fill="#88c0ff">childregs = *current_pt_regs()</text>
+    <text x="505" y="561" text-anchor="middle" fill="#88c0ff">整份复制父进程的用户态现场</text>
+    <text x="505" y="576" text-anchor="middle" fill="#ffaa55">childregs->ax = 0   ← 子进程的返回值</text>
+    <text x="505" y="591" text-anchor="middle" fill="#88c0ff">(父进程的 ax 稍后写成子 pid)</text>
+    <rect x="412" y="608" width="186" height="104" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="505" y="626" text-anchor="middle" fill="#88ff88">fork_frame.frame</text>
+    <text x="505" y="641" text-anchor="middle" fill="#ffaa55">ret_addr = ret_from_fork_asm</text>
+    <text x="505" y="656" text-anchor="middle" fill="#88ff88">bp = encode_frame_pointer</text>
+    <text x="505" y="671" text-anchor="middle" fill="#88ff88">bx = 0(用户线程)/ fn(内核线程)</text>
+    <text x="505" y="686" text-anchor="middle" fill="#88ff88">r12 = 0 / fn_arg</text>
+    <text x="505" y="704" text-anchor="middle" fill="#88ff88">← p->thread.sp</text>
+  </g>
+
+  <g font-size="10.5" fill="#e6e6e6">
+    <text x="620" y="546">第一次被 pick 到:__switch_to_asm 把 rsp 换成 p->thread.sp</text>
+    <text x="620" y="562">pop ×6 弹出的是 copy_thread 伪造的 0 和 fn</text>
+    <text x="620" y="578">jmp __switch_to → 它的 ret 弹出 ret_addr = ret_from_fork_asm(entry_64.S:227)</text>
+    <text x="620" y="600" fill="#88ff88">ret_from_fork_asm:rdi = rax(prev) rsi = rsp(regs) rdx = rbx(fn) rcx = r12</text>
+    <text x="620" y="616" fill="#88ff88">call ret_from_fork(process.c:140)</text>
+    <text x="620" y="632">  → schedule_tail(prev) core.c:5247   放 rq 锁,补上 finish_task_switch</text>
+    <text x="620" y="648">  → fn 非空就跑内核线程函数;否则 syscall_exit_to_user_mode(regs)</text>
+    <text x="620" y="664">  → swapgs_restore_regs_and_return_to_usermode:按 childregs 恢复,rax = 0</text>
+    <text x="620" y="686" fill="#ffaa55">于是子进程「从 fork() 返回 0」—— 它从没调用过 fork,</text>
+    <text x="620" y="702" fill="#ffaa55">只是被塞了一帧跟父进程一模一样的现场。进程 = 栈 + 寄存器,在创建那头也成立。</text>
+  </g>
+
+  <!-- legend -->
+  <g font-size="10">
+    <rect x="990" y="60" width="12" height="12" fill="#1e3a5f" stroke="#4080c0"/><text x="1006" y="70" fill="#88c0ff">栈上普通帧</text>
+    <rect x="1080" y="60" width="12" height="12" fill="#1e5f3a" stroke="#40c060"/><text x="1096" y="70" fill="#88ff88">switch 帧</text>
+  </g>
+</svg>

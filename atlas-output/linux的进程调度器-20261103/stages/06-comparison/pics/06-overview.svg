@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="600" fill="#0a0c10"/>
+  <text x="600" y="34" text-anchor="middle" fill="#e6e6e6" font-size="19">Linux 6.12 与 Windows NT:四层逐项对照(鸟瞰)</text>
+  <text x="600" y="56" text-anchor="middle" fill="#8a94a6" font-size="12">越往下越像:策略层各走各的路,换人层被硬件和 ABI 压成同一个形状</text>
+
+  <!-- column headers -->
+  <rect x="170" y="74" width="430" height="34" rx="5" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="385" y="96" text-anchor="middle" fill="#88c0ff" font-size="14">Linux 6.12(EEVDF + 调度类链)</text>
+  <rect x="620" y="74" width="430" height="34" rx="5" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="835" y="96" text-anchor="middle" fill="#ffaa55" font-size="14">Windows NT(优先级 + 动态提升)</text>
+  <text x="1125" y="96" text-anchor="middle" fill="#8a94a6" font-size="12">相似度</text>
+
+  <!-- row 1 -->
+  <rect x="20" y="120" width="140" height="96" rx="5" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="90" y="160" text-anchor="middle" fill="#c088ff" font-size="15">谁先上</text>
+  <text x="90" y="182" text-anchor="middle" fill="#c088ff" font-size="11">C3 · C6</text>
+  <rect x="170" y="120" width="430" height="96" rx="5" fill="#111a26" stroke="#4080c0"/>
+  <text x="185" y="143" fill="#88c0ff" font-size="12">记一本连续的账:vruntime(按权重折算)</text>
+  <text x="185" y="163" fill="#88c0ff" font-size="12">红黑树里挑「有资格 + 虚拟期限最早」</text>
+  <text x="185" y="183" fill="#8a94a6" font-size="11">nice 是权重:-1 对 0 ≈ 55.5% : 44.5%</text>
+  <text x="185" y="203" fill="#8a94a6" font-size="11">睡过的人靠欠账(lag)自然排前</text>
+  <rect x="620" y="120" width="430" height="96" rx="5" fill="#261a11" stroke="#c08040"/>
+  <text x="635" y="143" fill="#ffaa55" font-size="12">排 32 个等级:每核 32 条 FIFO + 一个位图</text>
+  <text x="635" y="163" fill="#ffaa55" font-size="12">永远跑最高非空等级的队首</text>
+  <text x="635" y="183" fill="#8a94a6" font-size="11">等级是绝对序:9 对 8 ≈ 100% : 约 0%</text>
+  <text x="635" y="203" fill="#8a94a6" font-size="11">等完键盘 +6、声卡 +8,每跑完一片降 1 级</text>
+  <rect x="1070" y="120" width="110" height="96" rx="5" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="1125" y="163" text-anchor="middle" fill="#ff8888" font-size="14">分岔</text>
+  <text x="1125" y="184" text-anchor="middle" fill="#ff8888" font-size="11">账本 vs 等级</text>
+
+  <!-- row 2 -->
+  <rect x="20" y="228" width="140" height="96" rx="5" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="90" y="268" text-anchor="middle" fill="#c088ff" font-size="15">跑多久</text>
+  <text x="90" y="290" text-anchor="middle" fill="#c088ff" font-size="11">C2 · C4</text>
+  <rect x="170" y="228" width="430" height="96" rx="5" fill="#111a26" stroke="#4080c0"/>
+  <text x="185" y="251" fill="#88c0ff" font-size="12">每个任务一片:base slice 0.75 ms 起,按核数放大</text>
+  <text x="185" y="271" fill="#88c0ff" font-size="12">片折成虚拟期限,吃完即到期</text>
+  <text x="185" y="291" fill="#8a94a6" font-size="11">纳秒记账(rq clock),tick 1~4 ms 检查</text>
+  <text x="185" y="311" fill="#8a94a6" font-size="11">同一套默认值走桌面和服务器</text>
+  <rect x="620" y="228" width="430" height="96" rx="5" fill="#261a11" stroke="#c08040"/>
+  <text x="635" y="251" fill="#ffaa55" font-size="12">全机一个量子:桌面 2 个时钟间隔,服务器 12 个</text>
+  <text x="635" y="271" fill="#ffaa55" font-size="12">量子用完:降 1 级,排回同级队尾</text>
+  <text x="635" y="291" fill="#8a94a6" font-size="11">Vista 起按 CPU 周期数记,不算中断时间</text>
+  <text x="635" y="311" fill="#8a94a6" font-size="11">前台进程的量子可拉长到 3 倍</text>
+  <rect x="1070" y="228" width="110" height="96" rx="5" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="1125" y="271" text-anchor="middle" fill="#ffaa55" font-size="14">半同</text>
+  <text x="1125" y="292" text-anchor="middle" fill="#ffaa55" font-size="11">都是时钟敲门</text>
+
+  <!-- row 3 -->
+  <rect x="20" y="336" width="140" height="96" rx="5" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="90" y="376" text-anchor="middle" fill="#c088ff" font-size="15">放哪个核</text>
+  <text x="90" y="398" text-anchor="middle" fill="#c088ff" font-size="11">C5</text>
+  <rect x="170" y="336" width="430" height="96" rx="5" fill="#111a26" stroke="#4080c0"/>
+  <text x="185" y="359" fill="#88c0ff" font-size="12">每核一棵树;唤醒时在同缓存簇里找空闲核</text>
+  <text x="185" y="379" fill="#88c0ff" font-size="12">周期 + 空闲时按「负载」拉人对账</text>
+  <text x="185" y="399" fill="#8a94a6" font-size="11">不变量:各核负载(权重和)大致相等</text>
+  <text x="185" y="419" fill="#8a94a6" font-size="11">调度域分层:SMT / 核 / LLC / NUMA</text>
+  <rect x="620" y="336" width="430" height="96" rx="5" fill="#261a11" stroke="#c08040"/>
+  <text x="635" y="359" fill="#ffaa55" font-size="12">每核 32 条队;线程出生就分到一个「理想核」</text>
+  <text x="635" y="379" fill="#ffaa55" font-size="12">就绪时:空闲的理想核 / 上次核 优先,否则比等级抢占</text>
+  <text x="635" y="399" fill="#8a94a6" font-size="11">不变量:尽量让等级最高的线程在跑</text>
+  <text x="635" y="419" fill="#8a94a6" font-size="11">核空闲时去别的核队里找人;无周期性负载均衡</text>
+  <rect x="1070" y="336" width="110" height="96" rx="5" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="1125" y="379" text-anchor="middle" fill="#ffaa55" font-size="14">半同</text>
+  <text x="1125" y="400" text-anchor="middle" fill="#ffaa55" font-size="11">都是每核一队</text>
+
+  <!-- row 4 -->
+  <rect x="20" y="444" width="140" height="96" rx="5" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="90" y="484" text-anchor="middle" fill="#c088ff" font-size="15">换人</text>
+  <text x="90" y="506" text-anchor="middle" fill="#c088ff" font-size="11">C2 · C4</text>
+  <rect x="170" y="444" width="430" height="96" rx="5" fill="#111a26" stroke="#4080c0"/>
+  <text x="185" y="467" fill="#88c0ff" font-size="12">push 6 个 callee-saved → 两条 movq 换 rsp → pop</text>
+  <text x="185" y="487" fill="#88c0ff" font-size="12">prev 坐 rax 过来;接班者清 prev-&gt;on_cpu</text>
+  <text x="185" y="507" fill="#8a94a6" font-size="11">新任务:伪造 fork_frame,返回地址 ret_from_fork_asm</text>
+  <text x="185" y="527" fill="#8a94a6" font-size="11">到点只置 NEED_RESCHED,抢占计数为 0 才换</text>
+  <rect x="620" y="444" width="430" height="96" rx="5" fill="#261a11" stroke="#c08040"/>
+  <text x="635" y="467" fill="#ffaa55" font-size="12">压 nonvolatile 寄存器帧 → 两条 mov 换 rsp → 弹</text>
+  <text x="635" y="487" fill="#ffaa55" font-size="12">OldThread 坐 rdx 过来;接班者清 SwapBusy</text>
+  <text x="635" y="507" fill="#8a94a6" font-size="11">新线程:伪造初始帧,返回地址 KiThreadStartup</text>
+  <text x="635" y="527" fill="#8a94a6" font-size="11">到点只请求 DISPATCH 软中断,IRQL 降下来才换</text>
+  <rect x="1070" y="444" width="110" height="96" rx="5" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="1125" y="487" text-anchor="middle" fill="#88ff88" font-size="14">同构</text>
+  <text x="1125" y="508" text-anchor="middle" fill="#88ff88" font-size="11">逐条对得上</text>
+
+  <!-- legend -->
+  <rect x="170" y="560" width="14" height="14" fill="#1e3a5f" stroke="#4080c0"/><text x="190" y="572" fill="#8a94a6" font-size="11">Linux</text>
+  <rect x="250" y="560" width="14" height="14" fill="#5f3a1e" stroke="#c08040"/><text x="270" y="572" fill="#8a94a6" font-size="11">Windows / 半同</text>
+  <rect x="390" y="560" width="14" height="14" fill="#5f1e1e" stroke="#c04040"/><text x="410" y="572" fill="#8a94a6" font-size="11">分岔</text>
+  <rect x="470" y="560" width="14" height="14" fill="#1e5f3a" stroke="#40c060"/><text x="490" y="572" fill="#8a94a6" font-size="11">同构</text>
+  <rect x="550" y="560" width="14" height="14" fill="#3a1e5f" stroke="#8040c0"/><text x="570" y="572" fill="#8a94a6" font-size="11">对照的层 + 对应约束</text>
+  <text x="1180" y="590" text-anchor="end" fill="#5a6373" font-size="10">Windows 一侧:微软官方文档 + Windows Internals 7e;换人层代码参照 ReactOS amd64(重实现,非微软源码)</text>
+</svg>

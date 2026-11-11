@@ -1,0 +1,156 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="560" fill="#0a0c10"/>
+  <defs>
+    <marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#88c0ff"/>
+    </marker>
+    <marker id="arR" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#ff8888"/>
+    </marker>
+    <marker id="arG" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#88ff88"/>
+    </marker>
+  </defs>
+
+  <text x="600" y="34" text-anchor="middle" font-size="19" fill="#e6e6e6">Deep 鸟瞰:三条主线,都从 6.12 的同一个入口 __schedule() 出发</text>
+  <text x="600" y="56" text-anchor="middle" font-size="12" fill="#8a8f98">kernel/sched/core.c:6548  __schedule() → pick_next_task() → context_switch()   —— 三条主线分别钉「换人」「账本跨层」「答题人可换」</text>
+
+  <!-- central spine -->
+  <rect x="470" y="80" width="260" height="46" rx="6" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="600" y="99" text-anchor="middle" font-size="13" fill="#88ff88">__schedule()  core.c:6548</text>
+  <text x="600" y="116" text-anchor="middle" font-size="11" fill="#88ff88">rq_lock → pick_next_task → context_switch</text>
+
+  <!-- lane 1 : context switch -->
+  <rect x="24" y="150" width="1152" height="118" rx="8" fill="none" stroke="#4080c0" stroke-dasharray="4,4"/>
+  <text x="36" y="170" font-size="13" fill="#88c0ff">主线一  一次换人的全路径(C1·CPU快IO慢 + C2·程序不让台 + C4·调度不免费)  纳秒时间线在 §2.4</text>
+
+  <rect x="40" y="186" width="118" height="54" rx="5" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="99" y="207" text-anchor="middle" font-size="11" fill="#88c0ff">APIC 定时器中断</text>
+  <text x="99" y="224" text-anchor="middle" font-size="10" fill="#88c0ff">sched_tick() :5584</text>
+
+  <rect x="186" y="186" width="150" height="54" rx="5" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="261" y="203" text-anchor="middle" font-size="11" fill="#88c0ff">task_tick_fair → update_curr</text>
+  <text x="261" y="218" text-anchor="middle" font-size="10" fill="#88c0ff">fair.c:1216 vruntime += Δ/w</text>
+  <text x="261" y="232" text-anchor="middle" font-size="10" fill="#88c0ff">update_deadline :1007</text>
+
+  <rect x="364" y="186" width="130" height="54" rx="5" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="429" y="207" text-anchor="middle" font-size="11" fill="#ffaa55">resched_curr :1079</text>
+  <text x="429" y="224" text-anchor="middle" font-size="10" fill="#ffaa55">TIF_NEED_RESCHED</text>
+
+  <rect x="522" y="186" width="156" height="54" rx="5" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="600" y="203" text-anchor="middle" font-size="11" fill="#88c0ff">exit_to_user_mode_loop</text>
+  <text x="600" y="218" text-anchor="middle" font-size="10" fill="#88c0ff">entry/common.c:101</text>
+  <text x="600" y="232" text-anchor="middle" font-size="10" fill="#88c0ff">→ schedule()</text>
+
+  <rect x="706" y="186" width="150" height="54" rx="5" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="781" y="203" text-anchor="middle" font-size="11" fill="#c088ff">pick_next_task :6044</text>
+  <text x="781" y="218" text-anchor="middle" font-size="10" fill="#c088ff">fast path → pick_eevdf</text>
+  <text x="781" y="232" text-anchor="middle" font-size="10" fill="#c088ff">fair.c:907</text>
+
+  <rect x="884" y="186" width="130" height="54" rx="5" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="949" y="203" text-anchor="middle" font-size="11" fill="#88c0ff">context_switch :5272</text>
+  <text x="949" y="218" text-anchor="middle" font-size="10" fill="#88c0ff">switch_mm_irqs_off</text>
+  <text x="949" y="232" text-anchor="middle" font-size="10" fill="#88c0ff">(换 CR3)</text>
+
+  <rect x="1040" y="186" width="124" height="54" rx="5" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="1102" y="203" text-anchor="middle" font-size="11" fill="#88ff88">__switch_to_asm</text>
+  <text x="1102" y="218" text-anchor="middle" font-size="10" fill="#88ff88">entry_64.S:177</text>
+  <text x="1102" y="232" text-anchor="middle" font-size="10" fill="#88ff88">换 rsp = 换进程</text>
+
+  <line x1="158" y1="213" x2="186" y2="213" stroke="#88c0ff" marker-end="url(#ar)"/>
+  <line x1="336" y1="213" x2="364" y2="213" stroke="#88c0ff" marker-end="url(#ar)"/>
+  <line x1="494" y1="213" x2="522" y2="213" stroke="#88c0ff" marker-end="url(#ar)"/>
+  <line x1="678" y1="213" x2="706" y2="213" stroke="#88c0ff" marker-end="url(#ar)"/>
+  <line x1="856" y1="213" x2="884" y2="213" stroke="#88c0ff" marker-end="url(#ar)"/>
+  <line x1="1014" y1="213" x2="1040" y2="213" stroke="#88c0ff" marker-end="url(#ar)"/>
+  <text x="1102" y="258" text-anchor="middle" font-size="10" fill="#8a8f98">fork 分支:ret_addr = ret_from_fork_asm(§2.6)</text>
+
+  <!-- lane 2 : cgroup -->
+  <rect x="24" y="284" width="560" height="256" rx="8" fill="none" stroke="#c08040" stroke-dasharray="4,4"/>
+  <text x="36" y="304" font-size="13" fill="#ffaa55">主线二  账本跨层:cgroup 组调度 + 带宽(C7·同机多租户 + C3·凭账不凭嘴)</text>
+
+  <rect x="40" y="320" width="230" height="44" rx="5" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="155" y="338" text-anchor="middle" font-size="11" fill="#c088ff">rq-&gt;cfs(CPU0 的顶层账本)</text>
+  <text x="155" y="354" text-anchor="middle" font-size="10" fill="#c088ff">红黑树里:se_A(w≈100) se_B(w≈300)</text>
+
+  <rect x="40" y="392" width="106" height="60" rx="5" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="93" y="410" text-anchor="middle" font-size="10" fill="#88c0ff">A.cfs_rq[0]</text>
+  <text x="93" y="425" text-anchor="middle" font-size="10" fill="#88c0ff">t1 t2 t3</text>
+  <text x="93" y="441" text-anchor="middle" font-size="10" fill="#88c0ff">各 ≈ 8%</text>
+  <rect x="164" y="392" width="106" height="60" rx="5" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="217" y="410" text-anchor="middle" font-size="10" fill="#88c0ff">B.cfs_rq[0]</text>
+  <text x="217" y="425" text-anchor="middle" font-size="10" fill="#88c0ff">t4</text>
+  <text x="217" y="441" text-anchor="middle" font-size="10" fill="#88c0ff">≈ 75%</text>
+  <line x1="93" y1="364" x2="93" y2="392" stroke="#c088ff" stroke-dasharray="6,4" marker-end="url(#ar)"/>
+  <line x1="217" y1="364" x2="217" y2="392" stroke="#c088ff" stroke-dasharray="6,4" marker-end="url(#ar)"/>
+  <text x="155" y="474" text-anchor="middle" font-size="10" fill="#8a8f98">tick:for_each_sched_entity(se) 自下而上,同一段 Δt</text>
+  <text x="155" y="489" text-anchor="middle" font-size="10" fill="#8a8f98">在每层按该层权重折算一次(fair.c:13049 / 306)</text>
+  <text x="155" y="504" text-anchor="middle" font-size="10" fill="#8a8f98">pick:pick_task_fair do{…}while 自上而下(:8848)</text>
+
+  <rect x="300" y="320" width="268" height="44" rx="5" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="434" y="338" text-anchor="middle" font-size="11" fill="#ffaa55">cfs_bandwidth(组级全局池)</text>
+  <text x="434" y="354" text-anchor="middle" font-size="10" fill="#ffaa55">cpu.max 50000 100000 → quota 50ms / period 100ms</text>
+
+  <rect x="300" y="392" width="124" height="60" rx="5" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="362" y="410" text-anchor="middle" font-size="10" fill="#ffaa55">每核领 5 ms 一片</text>
+  <text x="362" y="425" text-anchor="middle" font-size="10" fill="#ffaa55">assign_cfs_rq_runtime</text>
+  <text x="362" y="441" text-anchor="middle" font-size="10" fill="#ffaa55">fair.c:5800</text>
+  <rect x="444" y="392" width="124" height="60" rx="5" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="506" y="410" text-anchor="middle" font-size="10" fill="#ff8888">池空 → throttle_cfs_rq</text>
+  <text x="506" y="425" text-anchor="middle" font-size="10" fill="#ff8888">:5915 整组出队</text>
+  <text x="506" y="441" text-anchor="middle" font-size="10" fill="#ff8888">period 到 → unthrottle :6018</text>
+  <line x1="362" y1="364" x2="362" y2="392" stroke="#ffaa55" stroke-dasharray="6,4" marker-end="url(#ar)"/>
+  <line x1="424" y1="422" x2="444" y2="422" stroke="#ff8888" marker-end="url(#arR)"/>
+  <text x="434" y="474" text-anchor="middle" font-size="10" fill="#8a8f98">update_curr → account_cfs_rq_runtime(:1216 → :5812)</text>
+  <text x="434" y="489" text-anchor="middle" font-size="10" fill="#8a8f98">runtime_remaining -= Δt;≤0 领不到 → resched_curr</text>
+  <text x="434" y="504" text-anchor="middle" font-size="10" fill="#8a8f98">hrtimer sched_cfs_period_timer(:6518)每 100 ms 补池</text>
+
+  <!-- lane 3 : sched_ext -->
+  <rect x="612" y="284" width="564" height="256" rx="8" fill="none" stroke="#8040c0" stroke-dasharray="4,4"/>
+  <text x="624" y="304" font-size="13" fill="#c088ff">主线三  答题人可换:sched_ext 挂载 / 回调 / 看门狗回退(C8·一算法不配万场景)</text>
+
+  <rect x="628" y="320" width="536" height="40" rx="5" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="896" y="337" text-anchor="middle" font-size="11" fill="#c088ff">链接脚本定死的类链 vmlinux.lds.h:131   stop → dl → rt → fair → ext → idle</text>
+  <text x="896" y="352" text-anchor="middle" font-size="10" fill="#c088ff">for_each_active_class:switched_all 时跳过 fair(sched.h:2535)</text>
+
+  <rect x="628" y="380" width="150" height="62" rx="5" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="703" y="398" text-anchor="middle" font-size="10" fill="#88c0ff">balance_scx → balance_one</text>
+  <text x="703" y="413" text-anchor="middle" font-size="10" fill="#88c0ff">ext.c:2738 / 2629</text>
+  <text x="703" y="428" text-anchor="middle" font-size="10" fill="#88c0ff">本地 DSQ 有人 → 不叫 BPF</text>
+
+  <rect x="806" y="380" width="150" height="62" rx="5" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="881" y="398" text-anchor="middle" font-size="10" fill="#88ff88">SCX_CALL_OP(dispatch)</text>
+  <text x="881" y="413" text-anchor="middle" font-size="10" fill="#88ff88">ext.c:1084 → BPF 程序</text>
+  <text x="881" y="428" text-anchor="middle" font-size="10" fill="#88ff88">scx_bpf_consume → 本地 DSQ</text>
+
+  <rect x="984" y="380" width="180" height="62" rx="5" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="1074" y="398" text-anchor="middle" font-size="10" fill="#88c0ff">pick_task_scx ext.c:2947</text>
+  <text x="1074" y="413" text-anchor="middle" font-size="10" fill="#88c0ff">弹本地 DSQ 队首</text>
+  <text x="1074" y="428" text-anchor="middle" font-size="10" fill="#88c0ff">slice 由 BPF 设,内核自己扣</text>
+  <line x1="778" y1="411" x2="806" y2="411" stroke="#88ff88" marker-end="url(#arG)"/>
+  <line x1="956" y1="411" x2="984" y2="411" stroke="#88c0ff" marker-end="url(#ar)"/>
+
+  <rect x="628" y="462" width="250" height="66" rx="5" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="753" y="480" text-anchor="middle" font-size="10" fill="#ff8888">看门狗 scx_watchdog_workfn ext.c:3340</text>
+  <text x="753" y="495" text-anchor="middle" font-size="10" fill="#ff8888">每 timeout/2 扫 runnable_list</text>
+  <text x="753" y="510" text-anchor="middle" font-size="10" fill="#ff8888">runnable_at 超时 → SCX_EXIT_ERROR_STALL</text>
+  <rect x="906" y="462" width="258" height="66" rx="5" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="1035" y="480" text-anchor="middle" font-size="10" fill="#ff8888">scx_ops_disable_workfn ext.c:4445</text>
+  <text x="1035" y="495" text-anchor="middle" font-size="10" fill="#ff8888">① bypass(true) 保证前进 ② 逐个 p-&gt;sched_class = fair</text>
+  <text x="1035" y="510" text-anchor="middle" font-size="10" fill="#ff8888">③ static_branch_disable(__scx_ops_enabled)</text>
+  <line x1="878" y1="495" x2="906" y2="495" stroke="#ff8888" marker-end="url(#arR)"/>
+
+  <!-- spine arrows -->
+  <line x1="600" y1="126" x2="600" y2="150" stroke="#88ff88" marker-end="url(#arG)"/>
+  <line x1="520" y1="126" x2="300" y2="284" stroke="#88ff88" stroke-dasharray="6,4" marker-end="url(#arG)"/>
+  <line x1="680" y1="126" x2="896" y2="284" stroke="#88ff88" stroke-dasharray="6,4" marker-end="url(#arG)"/>
+  <text x="380" y="214" text-anchor="middle" font-size="10" fill="#8a8f98" transform="rotate(-36 380 214)"></text>
+
+  <!-- legend -->
+  <g font-size="10">
+    <rect x="860" y="60" width="12" height="12" fill="#1e3a5f" stroke="#4080c0"/><text x="876" y="70" fill="#88c0ff">内核 C 路径</text>
+    <rect x="950" y="60" width="12" height="12" fill="#1e5f3a" stroke="#40c060"/><text x="966" y="70" fill="#88ff88">入口 / 跨界点</text>
+    <rect x="1050" y="60" width="12" height="12" fill="#5f3a1e" stroke="#c08040"/><text x="1066" y="70" fill="#ffaa55">标志 / 配额</text>
+    <rect x="1130" y="60" width="12" height="12" fill="#5f1e1e" stroke="#c04040"/><text x="1146" y="70" fill="#ff8888">踢 / 停</text>
+  </g>
+</svg>

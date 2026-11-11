@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="560" fill="#0a0c10"/>
+  <text x="600" y="36" text-anchor="middle" fill="#e6e6e6" font-size="20">Linux 调度器 33 年:两次换算法,一个问题问了二十年</text>
+
+  <!-- main axis -->
+  <line x1="60" y1="200" x2="1140" y2="200" stroke="#4080c0" stroke-width="3"/>
+  <polygon points="1140,200 1128,194 1128,206" fill="#4080c0"/>
+  <text x="60" y="186" fill="#88c0ff" font-size="12">主线:谁先上 / 跑多久 的算法换代</text>
+
+  <!-- 1991 -->
+  <circle cx="110" cy="200" r="8" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="110" y="228" text-anchor="middle" fill="#88c0ff" font-size="13">1991</text>
+  <text x="110" y="246" text-anchor="middle" fill="#e6e6e6" font-size="12">0.01 schedule()</text>
+  <text x="110" y="262" text-anchor="middle" fill="#9aa0a6" font-size="11">数 counter,O(n)</text>
+  <text x="110" y="278" text-anchor="middle" fill="#9aa0a6" font-size="11">Linus</text>
+
+  <!-- 2002 -->
+  <circle cx="300" cy="200" r="8" fill="#1e3a5f" stroke="#4080c0" stroke-width="2"/>
+  <text x="300" y="228" text-anchor="middle" fill="#88c0ff" font-size="13">2002</text>
+  <text x="300" y="246" text-anchor="middle" fill="#e6e6e6" font-size="12">O(1) 调度器</text>
+  <text x="300" y="262" text-anchor="middle" fill="#9aa0a6" font-size="11">每核队列 + 位图</text>
+  <text x="300" y="278" text-anchor="middle" fill="#9aa0a6" font-size="11">Ingo Molnar</text>
+
+  <!-- 2007 -->
+  <circle cx="540" cy="200" r="11" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="540" y="228" text-anchor="middle" fill="#88ff88" font-size="13">2007</text>
+  <text x="540" y="246" text-anchor="middle" fill="#e6e6e6" font-size="12">CFS 公平记账胜出</text>
+  <text x="540" y="262" text-anchor="middle" fill="#9aa0a6" font-size="11">红黑树 + vruntime</text>
+  <text x="540" y="278" text-anchor="middle" fill="#9aa0a6" font-size="11">Con Kolivas → Ingo</text>
+
+  <!-- 2023 -->
+  <circle cx="860" cy="200" r="11" fill="#1e5f3a" stroke="#40c060" stroke-width="2"/>
+  <text x="860" y="228" text-anchor="middle" fill="#88ff88" font-size="13">2023</text>
+  <text x="860" y="246" text-anchor="middle" fill="#e6e6e6" font-size="12">EEVDF 换掉 CFS</text>
+  <text x="860" y="262" text-anchor="middle" fill="#9aa0a6" font-size="11">lag + 虚拟期限</text>
+  <text x="860" y="278" text-anchor="middle" fill="#9aa0a6" font-size="11">Peter Zijlstra</text>
+
+  <!-- 2024 -->
+  <circle cx="1060" cy="200" r="11" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+  <text x="1060" y="228" text-anchor="middle" fill="#ffaa55" font-size="13">2024</text>
+  <text x="1060" y="246" text-anchor="middle" fill="#e6e6e6" font-size="12">sched_ext 合入 6.12</text>
+  <text x="1060" y="262" text-anchor="middle" fill="#9aa0a6" font-size="11">三问交给 eBPF</text>
+  <text x="1060" y="278" text-anchor="middle" fill="#9aa0a6" font-size="11">Tejun Heo</text>
+
+  <!-- upper: pluggable lineage -->
+  <text x="60" y="80" fill="#c088ff" font-size="12">可插拔谱系:同一个问题,二十年两个相反答案</text>
+  <line x1="300" y1="110" x2="540" y2="110" stroke="#8040c0" stroke-width="2" stroke-dasharray="6,4"/>
+  <line x1="540" y1="110" x2="1060" y2="110" stroke="#8040c0" stroke-width="2" stroke-dasharray="6,4"/>
+  <rect x="245" y="92" width="110" height="36" rx="4" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="300" y="107" text-anchor="middle" fill="#c088ff" font-size="11">2004 plugsched</text>
+  <text x="300" y="121" text-anchor="middle" fill="#c088ff" font-size="11">内核外补丁</text>
+  <rect x="470" y="92" width="140" height="36" rx="4" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="540" y="107" text-anchor="middle" fill="#ff8888" font-size="11">2007 被否决</text>
+  <text x="540" y="121" text-anchor="middle" fill="#ff8888" font-size="11">「一个好的胜过三个平庸的」</text>
+  <rect x="760" y="92" width="110" height="36" rx="4" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="815" y="107" text-anchor="middle" fill="#c088ff" font-size="11">2021 BPF 钩子</text>
+  <text x="815" y="121" text-anchor="middle" fill="#c088ff" font-size="11">Gushchin 提案</text>
+  <rect x="990" y="92" width="140" height="36" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="1060" y="107" text-anchor="middle" fill="#ffaa55" font-size="11">2024 合入</text>
+  <text x="1060" y="121" text-anchor="middle" fill="#ffaa55" font-size="11">「留在树外才是病」</text>
+  <line x1="540" y1="128" x2="540" y2="189" stroke="#c04040" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="1060" y1="128" x2="1060" y2="189" stroke="#c08040" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- lower: side lines -->
+  <text x="60" y="330" fill="#ffaa55" font-size="12">主线旁的三条支线(本节压短)</text>
+
+  <line x1="60" y1="365" x2="1140" y2="365" stroke="#5f3a1e" stroke-width="1.5"/>
+  <text x="60" y="357" fill="#ffaa55" font-size="11">组调度(C7·同机多租户)</text>
+  <circle cx="600" cy="365" r="5" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="600" y="385" text-anchor="middle" fill="#9aa0a6" font-size="11">2008 2.6.24 组实体 / Vaddagiri</text>
+  <circle cx="700" cy="365" r="5" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="700" y="403" text-anchor="middle" fill="#9aa0a6" font-size="11">2012 3.2 cpu.max 限额 / Turner</text>
+
+  <line x1="60" y1="440" x2="1140" y2="440" stroke="#5f1e1e" stroke-width="1.5"/>
+  <text x="60" y="432" fill="#ff8888" font-size="11">民间线:一个人的调度器</text>
+  <circle cx="570" cy="440" r="5" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="570" y="460" text-anchor="middle" fill="#9aa0a6" font-size="11">2004 staircase</text>
+  <circle cx="630" cy="440" r="5" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="630" y="478" text-anchor="middle" fill="#9aa0a6" font-size="11">2009 BFS</text>
+  <circle cx="780" cy="440" r="5" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="780" y="460" text-anchor="middle" fill="#9aa0a6" font-size="11">2016 MuQSS</text>
+  <circle cx="900" cy="440" r="5" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="900" y="478" text-anchor="middle" fill="#9aa0a6" font-size="11">2021 停更</text>
+  <text x="300" y="460" text-anchor="middle" fill="#9aa0a6" font-size="11">Con Kolivas,麻醉医生,从未进主线</text>
+
+  <line x1="60" y1="515" x2="1140" y2="515" stroke="#1e5f3a" stroke-width="1.5"/>
+  <text x="60" y="507" fill="#88ff88" font-size="11">实时线(C6·有人等不起)</text>
+  <circle cx="480" cy="515" r="5" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="480" y="535" text-anchor="middle" fill="#9aa0a6" font-size="11">2004 PREEMPT_RT 补丁</text>
+  <circle cx="760" cy="515" r="5" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="760" y="535" text-anchor="middle" fill="#9aa0a6" font-size="11">2014 3.14 SCHED_DEADLINE</text>
+  <circle cx="1060" cy="515" r="5" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="1060" y="535" text-anchor="middle" fill="#9aa0a6" font-size="11">2024 6.12 PREEMPT_RT 合入</text>
+</svg>

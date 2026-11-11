@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="600" fill="#0a0c10"/>
+  <text x="600" y="32" text-anchor="middle" fill="#e0e6f0" font-size="20">站在核 1 上看:三扇门进来 → 顺着调度类链问 → 本核账本里挑队头 → 换人</text>
+  <text x="600" y="54" text-anchor="middle" fill="#8892a0" font-size="12">三件事:① 每核一本账 + 一棵有序树(数据) ② 三扇门 + 换人几行(控制) ③ 调度类链(策略)</text>
+
+  <!-- doors -->
+  <g font-size="12">
+    <rect x="30" y="90" width="200" height="54" rx="5" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="130" y="112" text-anchor="middle" fill="#ffaa55">门 1:时钟中断 tick</text>
+    <text x="130" y="132" text-anchor="middle" fill="#ffaa55">每 4 ms 一次,记账 + 问「到点没」</text>
+    <rect x="30" y="160" width="200" height="54" rx="5" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="130" y="182" text-anchor="middle" fill="#ffaa55">门 2:系统调用 / 主动睡</text>
+    <text x="130" y="202" text-anchor="middle" fill="#ffaa55">read() 要等 → 自己请调度器</text>
+    <rect x="30" y="230" width="200" height="54" rx="5" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="130" y="252" text-anchor="middle" fill="#ffaa55">门 3:唤醒</text>
+    <text x="130" y="272" text-anchor="middle" fill="#ffaa55">事件到了 → 入队 + 比「要不要抢」</text>
+  </g>
+
+  <!-- need_resched flag -->
+  <rect x="290" y="150" width="190" height="74" rx="5" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="385" y="176" text-anchor="middle" fill="#c088ff" font-size="12">只打一个标记</text>
+  <text x="385" y="196" text-anchor="middle" fill="#c088ff" font-size="12">NEED_RESCHED</text>
+  <text x="385" y="214" text-anchor="middle" fill="#c088ff" font-size="11">门口不换人,出口才换</text>
+  <g stroke="#c08040" stroke-width="1.5" fill="none" marker-end="url(#arrO)">
+    <path d="M230 117 L290 170"/>
+    <path d="M230 187 L290 187"/>
+    <path d="M230 257 L290 204"/>
+  </g>
+
+  <!-- schedule() -->
+  <rect x="540" y="150" width="190" height="74" rx="5" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="635" y="176" text-anchor="middle" fill="#88ff88" font-size="12">出口检查点</text>
+  <text x="635" y="196" text-anchor="middle" fill="#88ff88" font-size="12">schedule()</text>
+  <text x="635" y="214" text-anchor="middle" fill="#88ff88" font-size="11">借当前任务的内核栈跑</text>
+  <path d="M480 187 L540 187" stroke="#8040c0" stroke-width="1.5" fill="none" marker-end="url(#arrP)"/>
+
+  <!-- class chain -->
+  <g font-size="11">
+    <text x="635" y="262" text-anchor="middle" fill="#8892a0">③ 调度类链:从高到低问「你有人要上吗」</text>
+    <rect x="470" y="272" width="56" height="30" rx="3" fill="#5f1e1e" stroke="#c04040"/><text x="498" y="292" text-anchor="middle" fill="#ff8888">stop</text>
+    <rect x="532" y="272" width="56" height="30" rx="3" fill="#5f1e1e" stroke="#c04040"/><text x="560" y="292" text-anchor="middle" fill="#ff8888">期限</text>
+    <rect x="594" y="272" width="56" height="30" rx="3" fill="#5f1e1e" stroke="#c04040"/><text x="622" y="292" text-anchor="middle" fill="#ff8888">实时</text>
+    <rect x="656" y="272" width="56" height="30" rx="3" fill="#1e3a5f" stroke="#4080c0"/><text x="684" y="292" text-anchor="middle" fill="#88c0ff">普通</text>
+    <rect x="718" y="272" width="56" height="30" rx="3" fill="#3a1e5f" stroke="#8040c0"/><text x="746" y="292" text-anchor="middle" fill="#c088ff">ext</text>
+    <rect x="780" y="272" width="56" height="30" rx="3" fill="#11141a" stroke="#333a46"/><text x="808" y="292" text-anchor="middle" fill="#8892a0">idle</text>
+    <path d="M635 224 L635 272" stroke="#40c060" stroke-width="1.5" fill="none" marker-end="url(#arrG)"/>
+  </g>
+
+  <!-- rb tree (fair) -->
+  <g font-size="11">
+    <rect x="470" y="330" width="370" height="150" rx="6" fill="#11141a" stroke="#4080c0"/>
+    <text x="482" y="350" fill="#88c0ff" font-size="12">① 核 1 的账本 + 树(普通类):按 vruntime 排,队头 = 欠得最多</text>
+    <!-- tree nodes -->
+    <circle cx="655" cy="385" r="16" fill="#1e3a5f" stroke="#4080c0"/><text x="655" y="389" text-anchor="middle" fill="#88c0ff">cc1</text>
+    <text x="655" y="410" text-anchor="middle" fill="#8892a0" font-size="10">v=4.1s</text>
+    <circle cx="585" cy="430" r="16" fill="#1e5f3a" stroke="#40c060"/><text x="585" y="434" text-anchor="middle" fill="#88ff88">chrome</text>
+    <text x="585" y="455" text-anchor="middle" fill="#8892a0" font-size="10">v=3.97s ← 队头</text>
+    <circle cx="725" cy="430" r="16" fill="#1e3a5f" stroke="#4080c0"/><text x="725" y="434" text-anchor="middle" fill="#88c0ff">cc1</text>
+    <text x="725" y="455" text-anchor="middle" fill="#8892a0" font-size="10">v=4.3s</text>
+    <line x1="643" y1="396" x2="597" y2="419" stroke="#4080c0"/>
+    <line x1="667" y1="396" x2="713" y2="419" stroke="#4080c0"/>
+    <text x="482" y="472" fill="#8892a0" font-size="10">当前在核上:cc1 #4 v=4.1s 还在跑 → chrome 醒来 v 更小 → 抢</text>
+  </g>
+
+  <!-- switch -->
+  <rect x="900" y="150" width="270" height="74" rx="5" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="1035" y="176" text-anchor="middle" fill="#88ff88" font-size="12">② 换人:context_switch</text>
+  <text x="1035" y="196" text-anchor="middle" fill="#88ff88" font-size="12">存旧栈指针 → 装新栈指针</text>
+  <text x="1035" y="214" text-anchor="middle" fill="#88ff88" font-size="11">前半在旧任务跑,后半在新任务醒</text>
+  <path d="M840 400 C 900 400, 900 230, 1000 224" stroke="#40c060" stroke-width="1.5" fill="none" marker-end="url(#arrG)"/>
+  <text x="930" y="330" fill="#88ff88" font-size="11">挑出 chrome</text>
+
+  <!-- other cores -->
+  <g font-size="11">
+    <rect x="900" y="330" width="270" height="150" rx="6" fill="#11141a" stroke="#333a46"/>
+    <text x="912" y="350" fill="#8892a0" font-size="12">别的核:各有各的账本和树</text>
+    <rect x="912" y="362" width="76" height="40" rx="3" fill="#3a1e5f" stroke="#8040c0"/><text x="950" y="378" text-anchor="middle" fill="#c088ff">核 0</text><text x="950" y="394" text-anchor="middle" fill="#c088ff" font-size="10">排 3 个</text>
+    <rect x="996" y="362" width="76" height="40" rx="3" fill="#3a1e5f" stroke="#8040c0"/><text x="1034" y="378" text-anchor="middle" fill="#c088ff">核 2</text><text x="1034" y="394" text-anchor="middle" fill="#c088ff" font-size="10">空</text>
+    <rect x="1080" y="362" width="76" height="40" rx="3" fill="#3a1e5f" stroke="#8040c0"/><text x="1118" y="378" text-anchor="middle" fill="#c088ff">核 3</text><text x="1118" y="394" text-anchor="middle" fill="#c088ff" font-size="10">排 1 个</text>
+    <path d="M950 402 C 950 440, 1034 440, 1034 402" stroke="#40c060" stroke-width="1.5" stroke-dasharray="6,4" fill="none" marker-end="url(#arrG)"/>
+    <text x="1035" y="462" text-anchor="middle" fill="#88ff88" font-size="10">隔一阵对账:核 0 → 核 2 搬一个(问题 ③)</text>
+    <text x="1035" y="476" text-anchor="middle" fill="#8892a0" font-size="10">醒来时也顺手挑一次核</text>
+  </g>
+  <path d="M840 405 L900 405" stroke="#8040c0" stroke-width="1.2" stroke-dasharray="6,4" fill="none"/>
+
+  <!-- legend -->
+  <g font-size="11">
+    <rect x="30" y="510" width="14" height="12" fill="#5f3a1e" stroke="#c08040"/><text x="50" y="520" fill="#ffaa55">三扇门 / 标记</text>
+    <rect x="180" y="510" width="14" height="12" fill="#1e5f3a" stroke="#40c060"/><text x="200" y="520" fill="#88ff88">调度器自己的代码(借栈跑)</text>
+    <rect x="420" y="510" width="14" height="12" fill="#1e3a5f" stroke="#4080c0"/><text x="440" y="520" fill="#88c0ff">普通类任务</text>
+    <rect x="560" y="510" width="14" height="12" fill="#5f1e1e" stroke="#c04040"/><text x="580" y="520" fill="#ff8888">高优先级类(期限 / 实时)</text>
+    <rect x="800" y="510" width="14" height="12" fill="#3a1e5f" stroke="#8040c0"/><text x="820" y="520" fill="#c088ff">队列 / 索引 / ext</text>
+    <text x="30" y="548" fill="#8892a0">实线 = 本核控制流;虚线 = 跨核(贵,少做)。源码钉 Linux 6.12,x86-64。</text>
+  </g>
+
+  <defs>
+    <marker id="arrO" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#c08040"/></marker>
+    <marker id="arrP" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8040c0"/></marker>
+    <marker id="arrG" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#40c060"/></marker>
+  </defs>
+</svg>

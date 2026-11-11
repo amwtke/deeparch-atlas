@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="600" fill="#0a0c10"/>
+  <text x="600" y="34" text-anchor="middle" fill="#e0e6f0" font-size="20">一台 4 核笔记本的某一毫秒:调度器眼里的世界</text>
+  <text x="600" y="56" text-anchor="middle" fill="#8892a0" font-size="12">编译 make -j8 · Chrome 放视频 · mysqld · ssh 会话 —— 同时「在跑」,其实每颗核一次只跑一条流</text>
+
+  <!-- Q2 tick -->
+  <rect x="40" y="76" width="1120" height="26" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="600" y="94" text-anchor="middle" fill="#ffaa55" font-size="13">时钟中断(tick):每隔几毫秒把每颗核拉回内核一次 —— 问题 ② 跑多久:时间片到了没?该换人了吗?</text>
+
+  <!-- cores -->
+  <g id="cores">
+    <!-- CPU0 -->
+    <rect x="40" y="120" width="260" height="120" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
+    <text x="52" y="140" fill="#88ff88" font-size="13">核 0(厨子 0)</text>
+    <rect x="52" y="150" width="236" height="78" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="170" y="176" text-anchor="middle" fill="#88c0ff" font-size="13">cc1(编译器进程 #3)</text>
+    <text x="170" y="196" text-anchor="middle" fill="#88c0ff" font-size="11">RUNNING · 纯算 · 已跑 2.9 ms</text>
+    <text x="170" y="214" text-anchor="middle" fill="#88c0ff" font-size="11">PC 指着它的下一条指令</text>
+
+    <!-- CPU1 -->
+    <rect x="330" y="120" width="260" height="120" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
+    <text x="342" y="140" fill="#88ff88" font-size="13">核 1(厨子 1)</text>
+    <rect x="342" y="150" width="236" height="78" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="460" y="176" text-anchor="middle" fill="#88c0ff" font-size="13">chrome 渲染线程</text>
+    <text x="460" y="196" text-anchor="middle" fill="#88c0ff" font-size="11">RUNNING · 画这一帧 · 16 ms 内必须完</text>
+    <text x="460" y="214" text-anchor="middle" fill="#88c0ff" font-size="11">刚被唤醒,抢占了一个 cc1</text>
+
+    <!-- CPU2 -->
+    <rect x="620" y="120" width="260" height="120" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
+    <text x="632" y="140" fill="#88ff88" font-size="13">核 2(厨子 2)</text>
+    <rect x="632" y="150" width="236" height="78" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="750" y="176" text-anchor="middle" fill="#88c0ff" font-size="13">cc1(编译器进程 #5)</text>
+    <text x="750" y="196" text-anchor="middle" fill="#88c0ff" font-size="11">RUNNING · 纯算 · 已跑 0.4 ms</text>
+    <text x="750" y="214" text-anchor="middle" fill="#88c0ff" font-size="11">刚从核 0 的队列搬过来</text>
+
+    <!-- CPU3 -->
+    <rect x="910" y="120" width="260" height="120" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
+    <text x="922" y="140" fill="#88ff88" font-size="13">核 3(厨子 3)</text>
+    <rect x="922" y="150" width="236" height="78" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="1040" y="176" text-anchor="middle" fill="#88c0ff" font-size="13">mysqld 工作线程</text>
+    <text x="1040" y="196" text-anchor="middle" fill="#88c0ff" font-size="11">RUNNING · 执行一条 SELECT</text>
+    <text x="1040" y="214" text-anchor="middle" fill="#88c0ff" font-size="11">算 0.2 ms 后要读盘 → 睡</text>
+  </g>
+
+  <!-- runqueues -->
+  <g id="rq">
+    <rect x="40" y="290" width="260" height="92" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+    <text x="52" y="310" fill="#c088ff" font-size="12">核 0 就绪队列(排队等灶)</text>
+    <rect x="52" y="320" width="70" height="26" rx="3" fill="#1e3a5f" stroke="#4080c0"/><text x="87" y="338" text-anchor="middle" fill="#88c0ff" font-size="11">cc1 #1</text>
+    <rect x="128" y="320" width="70" height="26" rx="3" fill="#1e3a5f" stroke="#4080c0"/><text x="163" y="338" text-anchor="middle" fill="#88c0ff" font-size="11">cc1 #2</text>
+    <rect x="204" y="320" width="84" height="26" rx="3" fill="#1e3a5f" stroke="#4080c0"/><text x="246" y="338" text-anchor="middle" fill="#88c0ff" font-size="11">cc1 #7</text>
+    <text x="52" y="372" fill="#c088ff" font-size="11">READY · 3 个在等,谁先上?</text>
+
+    <rect x="330" y="290" width="260" height="92" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+    <text x="342" y="310" fill="#c088ff" font-size="12">核 1 就绪队列</text>
+    <rect x="342" y="320" width="96" height="26" rx="3" fill="#1e3a5f" stroke="#4080c0"/><text x="390" y="338" text-anchor="middle" fill="#88c0ff" font-size="11">cc1 #4(被抢)</text>
+    <text x="342" y="372" fill="#c088ff" font-size="11">READY · 1 个</text>
+
+    <rect x="620" y="290" width="260" height="92" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+    <text x="632" y="310" fill="#c088ff" font-size="12">核 2 就绪队列</text>
+    <rect x="632" y="320" width="70" height="26" rx="3" fill="#1e3a5f" stroke="#4080c0"/><text x="667" y="338" text-anchor="middle" fill="#88c0ff" font-size="11">cc1 #6</text>
+    <text x="632" y="372" fill="#c088ff" font-size="11">READY · 1 个</text>
+
+    <rect x="910" y="290" width="260" height="92" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+    <text x="922" y="310" fill="#c088ff" font-size="12">核 3 就绪队列</text>
+    <rect x="922" y="320" width="70" height="26" rx="3" fill="#1e3a5f" stroke="#4080c0"/><text x="957" y="338" text-anchor="middle" fill="#88c0ff" font-size="11">cc1 #8</text>
+    <text x="922" y="372" fill="#c088ff" font-size="11">READY · 1 个</text>
+  </g>
+
+  <!-- Q1 arrows: queue -> core -->
+  <g stroke="#c088ff" stroke-width="1.5" fill="none" marker-end="url(#arr)">
+    <path d="M170 290 L170 246"/>
+    <path d="M460 290 L460 246"/>
+    <path d="M750 290 L750 246"/>
+    <path d="M1040 290 L1040 246"/>
+  </g>
+  <text x="186" y="268" fill="#c088ff" font-size="11">① 谁先上</text>
+  <text x="476" y="268" fill="#c088ff" font-size="11">① 谁先上</text>
+  <text x="766" y="268" fill="#c088ff" font-size="11">① 谁先上</text>
+  <text x="1056" y="268" fill="#c088ff" font-size="11">① 谁先上</text>
+
+  <!-- Q3 migration dashed arrow between rq0 and rq2 -->
+  <path d="M300 336 C 420 400, 520 400, 620 336" stroke="#40c060" stroke-width="1.5" stroke-dasharray="6,4" fill="none" marker-end="url(#arrg)"/>
+  <text x="460" y="408" text-anchor="middle" fill="#88ff88" font-size="11">③ 放哪个核:核 0 排 3 个、核 2 快空了 → 搬一个过去(迁移 / 负载均衡)</text>
+
+  <!-- sleeping -->
+  <rect x="40" y="430" width="760" height="110" rx="6" fill="#5f1e1e" stroke="#c04040" stroke-width="1.5"/>
+  <text x="52" y="450" fill="#ff8888" font-size="13">睡眠区(汤在火上煮,不占灶):SLEEPING,不在任何就绪队列里</text>
+  <rect x="52" y="462" width="170" height="30" rx="3" fill="#2a1414" stroke="#c04040"/><text x="137" y="482" text-anchor="middle" fill="#ff8888" font-size="11">bash / sshd · 等你敲键盘</text>
+  <rect x="232" y="462" width="190" height="30" rx="3" fill="#2a1414" stroke="#c04040"/><text x="327" y="482" text-anchor="middle" fill="#ff8888" font-size="11">mysqld 其他 15 线程 · 等请求</text>
+  <rect x="432" y="462" width="170" height="30" rx="3" fill="#2a1414" stroke="#c04040"/><text x="517" y="482" text-anchor="middle" fill="#ff8888" font-size="11">chrome 主线程 · 等下一帧</text>
+  <rect x="612" y="462" width="176" height="30" rx="3" fill="#2a1414" stroke="#c04040"/><text x="700" y="482" text-anchor="middle" fill="#ff8888" font-size="11">make · 等 8 个 cc1 结束</text>
+  <text x="52" y="522" fill="#ff8888" font-size="11">事件到了(键盘 / 网络包 / 磁盘读完 / 定时器)→ 唤醒 → 回到某个就绪队列 → 再答一次「谁先上」</text>
+
+  <!-- legend -->
+  <g font-size="11">
+    <rect x="830" y="430" width="340" height="110" rx="6" fill="#11141a" stroke="#333a46"/>
+    <text x="842" y="448" fill="#e0e6f0" font-size="12">图例</text>
+    <rect x="842" y="458" width="14" height="12" fill="#1e5f3a" stroke="#40c060"/><text x="862" y="468" fill="#88ff88">CPU 核(厨子 / 灶台)</text>
+    <rect x="842" y="476" width="14" height="12" fill="#1e3a5f" stroke="#4080c0"/><text x="862" y="486" fill="#88c0ff">任务 · 在跑或就绪</text>
+    <rect x="842" y="494" width="14" height="12" fill="#3a1e5f" stroke="#8040c0"/><text x="862" y="504" fill="#c088ff">就绪队列(排队)</text>
+    <rect x="842" y="512" width="14" height="12" fill="#5f1e1e" stroke="#c04040"/><text x="862" y="522" fill="#ff8888">任务 · 睡眠等事件</text>
+    <rect x="1010" y="458" width="14" height="12" fill="#5f3a1e" stroke="#c08040"/><text x="1030" y="468" fill="#ffaa55">时钟中断 / 抢占</text>
+    <text x="1010" y="486" fill="#8892a0">实线 = 选中上核</text>
+    <text x="1010" y="504" fill="#8892a0">虚线 = 跨核搬迁</text>
+  </g>
+
+  <text x="600" y="578" text-anchor="middle" fill="#8892a0" font-size="12">三问:① 谁先上 ② 跑多久 ③ 放哪个核 —— 调度器 = 内核里反复回答这三问的那段代码</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#c088ff"/></marker>
+    <marker id="arrg" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#40c060"/></marker>
+  </defs>
+</svg>

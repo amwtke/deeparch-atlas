@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 610" font-family="JetBrains Mono, Consolas, monospace">
+<rect width="1200" height="610" fill="#0a0c10"/>
+<text x="30" y="38" fill="#e6e6e6" font-size="20" font-weight="bold">一张图收束:问题固定,约束逼出决策,每个决策都有代价</text>
+<text x="40" y="78" fill="#c088ff" font-size="14" font-weight="bold">问题</text>
+<text x="210" y="78" fill="#ffaa55" font-size="14" font-weight="bold">被哪条约束逼的</text>
+<text x="450" y="78" fill="#88c0ff" font-size="14" font-weight="bold">Linux 6.12 的决策</text>
+<text x="850" y="78" fill="#ff8888" font-size="14" font-weight="bold">付出的代价</text>
+<line x1="30" y1="88" x2="1170" y2="88" stroke="#2a2f3a" stroke-width="1"/>
+<rect x="30" y="98" width="160" height="70" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="42" y="139" fill="#c088ff" font-size="15" font-weight="bold">① 谁先上</text>
+<rect x="200" y="98" width="230" height="70" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="1" opacity="0.9"/>
+<text x="212" y="127" fill="#ffaa55" font-size="13">C3·凭账不凭嘴</text>
+<text x="212" y="149" fill="#ffaa55" font-size="13">C6·有人等不起</text>
+<rect x="440" y="98" width="390" height="70" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1" opacity="0.9"/>
+<text x="452" y="127" fill="#88c0ff" font-size="13">按加权已用时间记账,红黑树取最左</text>
+<text x="452" y="149" fill="#88c0ff" font-size="13">调度类链:期限 → 实时 → 普通</text>
+<rect x="840" y="98" width="330" height="70" rx="6" fill="#5f1e1e" stroke="#c04040" stroke-width="1" opacity="0.9"/>
+<text x="852" y="127" fill="#ff8888" font-size="13">每个 tick 都要记账,插删 O(log n)</text>
+<text x="852" y="149" fill="#ff8888" font-size="13">高类能饿死低类,要加保险丝</text>
+<rect x="30" y="176" width="160" height="70" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="42" y="217" fill="#c088ff" font-size="15" font-weight="bold">② 跑多久</text>
+<rect x="200" y="176" width="230" height="70" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="1" opacity="0.9"/>
+<text x="212" y="205" fill="#ffaa55" font-size="13">C2·程序不让台</text>
+<text x="212" y="227" fill="#ffaa55" font-size="13">C4·调度不免费</text>
+<rect x="440" y="176" width="390" height="70" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1" opacity="0.9"/>
+<text x="452" y="205" fill="#88c0ff" font-size="13">时钟中断只打标记,安全点才换</text>
+<text x="452" y="227" fill="#88c0ff" font-size="13">片长由权重和人数算,基准约 3 ms</text>
+<rect x="840" y="176" width="330" height="70" rx="6" fill="#5f1e1e" stroke="#c04040" stroke-width="1" opacity="0.9"/>
+<text x="852" y="205" fill="#ff8888" font-size="13">从该换到真换有一段延迟</text>
+<text x="852" y="227" fill="#ff8888" font-size="13">响应的下限停在毫秒级</text>
+<rect x="30" y="254" width="160" height="70" rx="6" fill="#3a1e5f" stroke="#8040c0" stroke-width="1.5"/>
+<text x="42" y="295" fill="#c088ff" font-size="15" font-weight="bold">③ 放哪个核</text>
+<rect x="200" y="254" width="230" height="70" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="1" opacity="0.9"/>
+<text x="212" y="295" fill="#ffaa55" font-size="13">C5·核间不通气</text>
+<rect x="440" y="254" width="390" height="70" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1" opacity="0.9"/>
+<text x="452" y="283" fill="#88c0ff" font-size="13">每核一条队列,唤醒时选核</text>
+<text x="452" y="305" fill="#88c0ff" font-size="13">隔一阵对一次账,搬是例外</text>
+<rect x="840" y="254" width="330" height="70" rx="6" fill="#5f1e1e" stroke="#c04040" stroke-width="1" opacity="0.9"/>
+<text x="852" y="283" fill="#ff8888" font-size="13">短时间内一核排队、一核空闲</text>
+<text x="852" y="305" fill="#ff8888" font-size="13">搬过去的任务缓存是冷的</text>
+<rect x="30" y="332" width="160" height="70" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
+<text x="42" y="362" fill="#88ff88" font-size="15" font-weight="bold">底座:换人</text>
+<text x="42" y="384" fill="#88ff88" font-size="12" opacity="0.85">三问共用</text>
+<rect x="200" y="332" width="230" height="70" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="1" opacity="0.9"/>
+<text x="212" y="361" fill="#ffaa55" font-size="13">C1·CPU快IO慢</text>
+<text x="212" y="383" fill="#ffaa55" font-size="13">C4·调度不免费</text>
+<rect x="440" y="332" width="390" height="70" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1" opacity="0.9"/>
+<text x="452" y="361" fill="#88c0ff" font-size="13">换内核栈 + 6 个寄存器</text>
+<text x="452" y="383" fill="#88c0ff" font-size="13">新任务 = 一根伪造的栈</text>
+<rect x="840" y="332" width="330" height="70" rx="6" fill="#5f1e1e" stroke="#c04040" stroke-width="1" opacity="0.9"/>
+<text x="852" y="361" fill="#ff8888" font-size="13">每个任务一根内核栈</text>
+<text x="852" y="383" fill="#ff8888" font-size="13">一次 1.5 ~ 2 μs,外加缓存变冷</text>
+<rect x="30" y="410" width="160" height="70" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="42" y="440" fill="#88c0ff" font-size="15" font-weight="bold">扩展:cgroup</text>
+<text x="42" y="462" fill="#88c0ff" font-size="12" opacity="0.85">主语换成组</text>
+<rect x="200" y="410" width="230" height="70" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="1" opacity="0.9"/>
+<text x="212" y="451" fill="#ffaa55" font-size="13">C7·同机多租户</text>
+<rect x="440" y="410" width="390" height="70" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1" opacity="0.9"/>
+<text x="452" y="439" fill="#88c0ff" font-size="13">组实体 + 子树,账变成树套树</text>
+<text x="452" y="461" fill="#88c0ff" font-size="13">cpu.weight 管份额,cpu.max 管上限</text>
+<rect x="840" y="410" width="330" height="70" rx="6" fill="#5f1e1e" stroke="#c04040" stroke-width="1" opacity="0.9"/>
+<text x="852" y="439" fill="#ff8888" font-size="13">每多一层多记一次账</text>
+<text x="852" y="461" fill="#ff8888" font-size="13">限流会带来突发的停顿</text>
+<rect x="30" y="488" width="160" height="70" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+<text x="42" y="518" fill="#88c0ff" font-size="15" font-weight="bold">扩展:sched_ext</text>
+<text x="42" y="540" fill="#88c0ff" font-size="12" opacity="0.85">答题人换成你</text>
+<rect x="200" y="488" width="230" height="70" rx="6" fill="#5f3a1e" stroke="#c08040" stroke-width="1" opacity="0.9"/>
+<text x="212" y="529" fill="#ffaa55" font-size="13">C8·一算法不配万场景</text>
+<rect x="440" y="488" width="390" height="70" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1" opacity="0.9"/>
+<text x="452" y="517" fill="#88c0ff" font-size="13">ext 调度类 + eBPF 回调表</text>
+<text x="452" y="539" fill="#88c0ff" font-size="13">看门狗:出错就退回默认调度器</text>
+<rect x="840" y="488" width="330" height="70" rx="6" fill="#5f1e1e" stroke="#c04040" stroke-width="1" opacity="0.9"/>
+<text x="852" y="517" fill="#ff8888" font-size="13">每次决策多跨一道边界</text>
+<text x="852" y="539" fill="#ff8888" font-size="13">验证器限制了能写出的策略</text>
+<text x="30" y="588" fill="#9aa4b2" font-size="13">读法:横着读是一条「约束 → 决策 → 代价」;竖着读,前三行是三问,第四行是三问共用的底座,后两行不改算法,只换主语和答题人。</text>
+</svg>

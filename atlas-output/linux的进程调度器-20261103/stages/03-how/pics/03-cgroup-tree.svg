@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 440" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="440" fill="#0a0c10"/>
+  <text x="600" y="32" text-anchor="middle" fill="#e0e6f0" font-size="20">cgroup 组调度:账从一本变一棵树,每层各自公平</text>
+  <text x="600" y="54" text-anchor="middle" fill="#8892a0" font-size="12">核 1 的视角。左:没有分组,8 个 cc1 和 1 个 chrome 线程一人一票;右:分成两组,组与组一人一票,组内再分</text>
+
+  <!-- left: flat -->
+  <g font-size="11">
+    <rect x="30" y="80" width="520" height="300" rx="6" fill="#11141a" stroke="#333a46"/>
+    <text x="42" y="100" fill="#e0e6f0" font-size="12">没分组:核 1 的树里 9 个任务,权重都是 1024</text>
+    <rect x="42" y="112" width="496" height="40" rx="4" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="290" y="137" text-anchor="middle" fill="#c088ff">根账本(本核唯一的一棵树)</text>
+    <g>
+      <rect x="42" y="170" width="50" height="34" rx="3" fill="#1e3a5f" stroke="#4080c0"/><text x="67" y="191" text-anchor="middle" fill="#88c0ff">cc1</text>
+      <rect x="98" y="170" width="50" height="34" rx="3" fill="#1e3a5f" stroke="#4080c0"/><text x="123" y="191" text-anchor="middle" fill="#88c0ff">cc1</text>
+      <rect x="154" y="170" width="50" height="34" rx="3" fill="#1e3a5f" stroke="#4080c0"/><text x="179" y="191" text-anchor="middle" fill="#88c0ff">cc1</text>
+      <rect x="210" y="170" width="50" height="34" rx="3" fill="#1e3a5f" stroke="#4080c0"/><text x="235" y="191" text-anchor="middle" fill="#88c0ff">cc1</text>
+      <rect x="266" y="170" width="50" height="34" rx="3" fill="#1e3a5f" stroke="#4080c0"/><text x="291" y="191" text-anchor="middle" fill="#88c0ff">cc1</text>
+      <rect x="322" y="170" width="50" height="34" rx="3" fill="#1e3a5f" stroke="#4080c0"/><text x="347" y="191" text-anchor="middle" fill="#88c0ff">cc1</text>
+      <rect x="378" y="170" width="50" height="34" rx="3" fill="#1e3a5f" stroke="#4080c0"/><text x="403" y="191" text-anchor="middle" fill="#88c0ff">cc1</text>
+      <rect x="434" y="170" width="50" height="34" rx="3" fill="#1e3a5f" stroke="#4080c0"/><text x="459" y="191" text-anchor="middle" fill="#88c0ff">cc1</text>
+      <rect x="490" y="170" width="50" height="34" rx="3" fill="#1e5f3a" stroke="#40c060"/><text x="515" y="191" text-anchor="middle" fill="#88ff88">chr</text>
+    </g>
+    <text x="42" y="236" fill="#ff8888">结果:编译拿 8/9 ≈ 89%,浏览器拿 1/9 ≈ 11%</text>
+    <text x="42" y="256" fill="#8892a0">线程开得多的那边赢。公平的单位是「任务」,</text>
+    <text x="42" y="272" fill="#8892a0">而用户在乎的单位是「这个应用 / 这个容器」。</text>
+    <text x="42" y="300" fill="#ffaa55">→ C7·同机多租户:公平的单位必须可以是组</text>
+  </g>
+
+  <!-- right: grouped -->
+  <g font-size="11">
+    <rect x="580" y="80" width="590" height="300" rx="6" fill="#11141a" stroke="#333a46"/>
+    <text x="592" y="100" fill="#e0e6f0" font-size="12">分组:根树里只有两个「组实体」,各自再挂一棵本核的子树</text>
+    <rect x="592" y="112" width="566" height="40" rx="4" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="875" y="137" text-anchor="middle" fill="#c088ff">根账本:两个组实体,cpu.weight 各 100(= 权重 1024)</text>
+    <!-- group entities -->
+    <rect x="620" y="176" width="240" height="34" rx="3" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="740" y="197" text-anchor="middle" fill="#ffaa55">组实体:build.slice(编译组)</text>
+    <rect x="900" y="176" width="240" height="34" rx="3" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="1020" y="197" text-anchor="middle" fill="#ffaa55">组实体:browser.slice(浏览器组)</text>
+    <line x1="740" y1="152" x2="740" y2="176" stroke="#8040c0"/>
+    <line x1="1020" y1="152" x2="1020" y2="176" stroke="#8040c0"/>
+    <!-- subtrees -->
+    <rect x="620" y="226" width="240" height="40" rx="4" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="740" y="250" text-anchor="middle" fill="#c088ff">编译组在核 1 的子账本</text>
+    <rect x="900" y="226" width="240" height="40" rx="4" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="1020" y="250" text-anchor="middle" fill="#c088ff">浏览器组在核 1 的子账本</text>
+    <line x1="740" y1="210" x2="740" y2="226" stroke="#8040c0"/>
+    <line x1="1020" y1="210" x2="1020" y2="226" stroke="#8040c0"/>
+    <g>
+      <rect x="620" y="282" width="26" height="26" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+      <rect x="650" y="282" width="26" height="26" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+      <rect x="680" y="282" width="26" height="26" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+      <rect x="710" y="282" width="26" height="26" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+      <rect x="740" y="282" width="26" height="26" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+      <rect x="770" y="282" width="26" height="26" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+      <rect x="800" y="282" width="26" height="26" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+      <rect x="830" y="282" width="26" height="26" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+      <text x="740" y="326" text-anchor="middle" fill="#88c0ff">8 个 cc1,组内各 1/8</text>
+      <rect x="1007" y="282" width="26" height="26" rx="3" fill="#1e5f3a" stroke="#40c060"/>
+      <text x="1020" y="326" text-anchor="middle" fill="#88ff88">1 个 chrome 线程,组内独占</text>
+    </g>
+    <text x="592" y="356" fill="#88ff88">结果:编译组 50%,浏览器组 50%;chrome 线程拿到整整半颗核</text>
+    <text x="592" y="372" fill="#8892a0">选人时先在根树比两个组实体的账,再进赢家的子树比任务的账。</text>
+  </g>
+
+  <g font-size="11">
+    <text x="30" y="412" fill="#8892a0">cpu.weight 改的是组实体在父树里的权重;cpu.max 给组加一个硬上限(每周期最多跑多少 μs),超了整组被挂起到下个周期。</text>
+    <text x="30" y="430" fill="#8892a0">组实体在每颗核上各有一份(跟任务一样,各核各记账),所以「组」不改变 C5·核间不通气 的格局。</text>
+  </g>
+</svg>

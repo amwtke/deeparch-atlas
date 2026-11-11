@@ -1,0 +1,41 @@
+#!/usr/bin/env bpftrace
+/*
+ * 05-sched-switch.bt —— 在内核侧看 05-switch-demo 的每一次换人
+ *
+ * 运行:sudo bpftrace 05-sched-switch.bt
+ * 对应源码:trace_sched_switch 在 kernel/sched/core.c __schedule() 里、context_switch() 之前一行被触发;
+ *          __switch_to 是 arch/x86/kernel/process_64.c 里换栈之后、换寄存器状态的那半段。
+ */
+
+BEGIN { printf("%-14s %-16s %-6s -> %-16s %s\n", "us", "prev", "state", "next", "why"); }
+
+/* 每次 __schedule() 决定换人:prev_state 为 0 = 被抢占(门 1 / 门 3 的 wakeup_preempt),
+ * 非 0 = prev 主动睡了(门 2)。只看我们的 demo。 */
+tracepoint:sched:sched_switch
+/args->prev_comm == "05-switch-demo" || args->next_comm == "05-switch-demo"/
+{
+	$why = args->prev_state == 0 ? "preempt(tick/wakeup)" : "sleep(pipe/wait)";
+	printf("%-14llu %-16s %-6d -> %-16s %s\n", nsecs / 1000,
+	       args->prev_comm, args->prev_state, args->next_comm, $why);
+	@switch_reason[$why] = count();
+}
+
+/* 一次换人的「直接成本」:从 sched_switch 到 __switch_to 返回(切完寄存器状态)。
+ * 这不含缓存变冷,只量 C4 账单里的直接部分。 */
+tracepoint:sched:sched_switch
+/args->next_comm == "05-switch-demo"/
+{ @t0[cpu] = nsecs; }
+
+kretprobe:__switch_to
+/@t0[cpu]/
+{
+	@switch_ns = hist(nsecs - @t0[cpu]);
+	delete(@t0[cpu]);
+}
+
+/* fork 分支:子进程第一次醒来必经 schedule_tail */
+kprobe:schedule_tail
+/comm == "05-switch-demo"/
+{ printf("%-14llu [fork] child pid %d woke up via ret_from_fork -> schedule_tail\n", nsecs / 1000, pid); }
+
+END { clear(@t0); }

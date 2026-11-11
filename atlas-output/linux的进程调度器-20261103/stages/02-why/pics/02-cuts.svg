@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 570" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="570" fill="#0a0c10"/>
+  <text x="600" y="34" text-anchor="middle" fill="#e0e6f0" font-size="20">六刀长出一个调度器:每刀一个痛、一个补、一条约束</text>
+  <text x="600" y="56" text-anchor="middle" fill="#8892a0" font-size="12">起点:一次只跑一个程序 → 终点:多核上按历史账公平、有期限保证的调度器</text>
+
+  <!-- column headers -->
+  <text x="40" y="90" fill="#8892a0" font-size="12">刀</text>
+  <text x="120" y="90" fill="#ff8888" font-size="12">坏在哪(痛)</text>
+  <text x="470" y="90" fill="#88c0ff" font-size="12">补上什么(机制)</text>
+  <text x="820" y="90" fill="#ffaa55" font-size="12">浮现的约束</text>
+
+  <!-- rows -->
+  <g font-size="12">
+    <!-- row 1 -->
+    <rect x="30" y="104" width="1140" height="62" rx="4" fill="#11141a" stroke="#333a46"/>
+    <text x="40" y="128" fill="#88ff88" font-size="14">1</text>
+    <rect x="110" y="110" width="340" height="50" rx="3" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="120" y="130" fill="#ff8888">cc1 读盘 10 ms,CPU 陪它干等</text>
+    <text x="120" y="150" fill="#ff8888">三千万条指令的空档全浪费</text>
+    <rect x="460" y="110" width="340" height="50" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="470" y="130" fill="#88c0ff">等待时换人:任务三态</text>
+    <text x="470" y="150" fill="#88c0ff">RUNNING / READY / SLEEPING</text>
+    <rect x="810" y="110" width="350" height="50" rx="3" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="820" y="130" fill="#ffaa55">C1·CPU快IO慢</text>
+    <text x="820" y="150" fill="#ffaa55">快 10⁴ ~ 10⁷ 倍,等待是常态</text>
+
+    <!-- row 2 -->
+    <rect x="30" y="174" width="1140" height="62" rx="4" fill="#11141a" stroke="#333a46"/>
+    <text x="40" y="198" fill="#88ff88" font-size="14">2</text>
+    <rect x="110" y="180" width="340" height="50" rx="3" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="120" y="200" fill="#ff8888">换人靠自觉;cc1 从不读盘</text>
+    <text x="120" y="220" fill="#ff8888">一个程序霸住整机,ls 都敲不动</text>
+    <rect x="460" y="180" width="340" height="50" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="470" y="200" fill="#88c0ff">时钟中断:每 4 ms 强制收回 CPU</text>
+    <text x="470" y="220" fill="#88c0ff">抢占 + 时间片</text>
+    <rect x="810" y="180" width="350" height="50" rx="3" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="820" y="200" fill="#ffaa55">C2·程序不让台</text>
+    <text x="820" y="220" fill="#ffaa55">不会主动让;内核猜不到它还要多久</text>
+
+    <!-- row 3 -->
+    <rect x="30" y="244" width="1140" height="62" rx="4" fill="#11141a" stroke="#333a46"/>
+    <text x="40" y="268" fill="#88ff88" font-size="14">3</text>
+    <rect x="110" y="250" width="340" height="50" rx="3" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="120" y="270" fill="#ff8888">轮流每人 10 ms,30 个任务排队</text>
+    <text x="120" y="290" fill="#ff8888">Chrome 一帧等 290 ms,视频成幻灯片</text>
+    <rect x="460" y="250" width="340" height="50" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="470" y="270" fill="#88c0ff">按历史账排序:谁跑得少谁先上</text>
+    <text x="470" y="290" fill="#88c0ff">睡得多 = 欠得多 = 醒来排前面</text>
+    <rect x="810" y="250" width="350" height="50" rx="3" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="820" y="270" fill="#ffaa55">C3·凭账不凭嘴</text>
+    <text x="820" y="290" fill="#ffaa55">看不见未来;任务不自报,自报也不可信</text>
+
+    <!-- row 4 (merged) -->
+    <rect x="30" y="314" width="1140" height="62" rx="4" fill="#11141a" stroke="#333a46"/>
+    <text x="40" y="338" fill="#88ff88" font-size="14">4</text>
+    <rect x="110" y="320" width="340" height="50" rx="3" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="120" y="340" fill="#ff8888">换太勤:每 100 μs 换一次,整机慢两成</text>
+    <text x="120" y="360" fill="#ff8888">选太慢:3 万线程每次扫全表</text>
+    <rect x="460" y="320" width="340" height="50" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="470" y="340" fill="#88c0ff">最小运行粒度,公平按周期摊</text>
+    <text x="470" y="360" fill="#88c0ff">就绪队列有序,选队头 O(log n)</text>
+    <rect x="810" y="320" width="350" height="50" rx="3" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="820" y="340" fill="#ffaa55">C4·调度不免费</text>
+    <text x="820" y="360" fill="#ffaa55">换人 μs 级 + 缓存冷;选人不能随 n 涨</text>
+
+    <!-- row 5 -->
+    <rect x="30" y="384" width="1140" height="62" rx="4" fill="#11141a" stroke="#333a46"/>
+    <text x="40" y="408" fill="#88ff88" font-size="14">5</text>
+    <rect x="110" y="390" width="340" height="50" rx="3" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="120" y="410" fill="#ff8888">第二颗核来了:一条全局队列两核抢锁</text>
+    <text x="120" y="430" fill="#ff8888">任务来回跳核,缓存每次都是冷的</text>
+    <rect x="460" y="390" width="340" height="50" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="470" y="410" fill="#88c0ff">每核一条就绪队列 + 定期均衡</text>
+    <text x="470" y="430" fill="#88c0ff">各算各的账,偶尔对账</text>
+    <rect x="810" y="390" width="350" height="50" rx="3" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="820" y="410" fill="#ffaa55">C5·核间不通气</text>
+    <text x="820" y="430" fill="#ffaa55">共享一行慢几十倍,打断对方慢上千倍</text>
+
+    <!-- row 6 -->
+    <rect x="30" y="454" width="1140" height="62" rx="4" fill="#11141a" stroke="#333a46"/>
+    <text x="40" y="478" fill="#88ff88" font-size="14">6</text>
+    <rect x="110" y="460" width="340" height="50" rx="3" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="120" y="480" fill="#ff8888">音频线程每 5 ms 必须填一次缓冲</text>
+    <text x="120" y="500" fill="#ff8888">「公平」轮到它时已经爆音了</text>
+    <rect x="460" y="460" width="340" height="50" rx="3" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="470" y="480" fill="#88c0ff">调度类分家:实时 / 期限 优先于 普通</text>
+    <text x="470" y="500" fill="#88c0ff">先问「有没有人要迟到」,再谈公平</text>
+    <rect x="810" y="460" width="350" height="50" rx="3" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="820" y="480" fill="#ffaa55">C6·有人等不起</text>
+    <text x="820" y="500" fill="#ffaa55">份额 ≠ 时限,公平只保份额</text>
+  </g>
+
+  <!-- legend -->
+  <g font-size="11">
+    <rect x="30" y="528" width="14" height="12" fill="#5f1e1e" stroke="#c04040"/><text x="50" y="538" fill="#ff8888">痛:没有这一刀会坏在哪</text>
+    <rect x="260" y="528" width="14" height="12" fill="#1e3a5f" stroke="#4080c0"/><text x="280" y="538" fill="#88c0ff">补:加进来的机制(名字先露脸,How 再讲)</text>
+    <rect x="620" y="528" width="14" height="12" fill="#5f3a1e" stroke="#c08040"/><text x="640" y="538" fill="#ffaa55">约束:一刀一条,后面每个机制都指回这里</text>
+  </g>
+</svg>
