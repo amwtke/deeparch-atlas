@@ -11,7 +11,7 @@
 
   <!-- left: timeline -->
   <rect x="24" y="76" width="330" height="660" rx="8" fill="none" stroke="#4080c0" stroke-dasharray="4,4"/>
-  <text x="36" y="98" font-size="13" fill="#88c0ff">一次 tick 抢占换人,直接成本 ≈ 1~2 μs(待核 #24)</text>
+  <text x="36" y="98" font-size="13" fill="#88c0ff">一次 tick 抢占换人,直接成本 ≈ 1~2 μs(量级,未实测)</text>
   <g font-size="10.5">
     <text x="36" y="124" fill="#ffaa55">T+0</text><text x="110" y="124" fill="#e6e6e6">APIC 定时器中断进内核</text>
     <text x="110" y="138" fill="#8a8f98">压 pt_regs、swapgs      ≈ 100~200 ns</text>
