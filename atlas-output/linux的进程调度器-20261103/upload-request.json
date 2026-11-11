@@ -1,0 +1,67 @@
+{
+  "platform": "bilibili",
+  "title": "Linux 调度器从 for 循环到 sched_ext 深度解读（93 分钟大电影）",
+  "tags": [
+    "Linux",
+    "调度器",
+    "CFS",
+    "EEVDF",
+    "vruntime",
+    "上下文切换",
+    "cgroup",
+    "sched_ext",
+    "eBPF",
+    "内核源码",
+    "操作系统",
+    "系统设计"
+  ],
+  "cover": "cover-atlas.png",
+  "desc_file": "linux-sched-ep0-toc.desc.txt",
+  "parts": [
+    {
+      "file": "P0 目录：七集路线图.mp4",
+      "bytes": 15208079,
+      "sha256": "10d099ac1540ecfd84bd72bd4509e39a136d04b8623df220e3e8f1a93259250c"
+    },
+    {
+      "file": "P1 What：一颗只认下一条指令的 CPU，调度器替它做了什么.mp4",
+      "bytes": 39652759,
+      "sha256": "2ff53d48d7fabafc66fb32339ecdfbf1dd2fb4f4c238d00d6b044167612776dd"
+    },
+    {
+      "file": "P2 Why：从一次只跑一个程序砍六刀，调度器为什么非得长成这样.mp4",
+      "bytes": 51206598,
+      "sha256": "6cb841f94b288b3c7f222d19005c30b4c77689f542dd3a501fb7d21ae6d513ab"
+    },
+    {
+      "file": "P3 How：账本、三扇门、调度类链，调度器到底怎么答三问.mp4",
+      "bytes": 57022149,
+      "sha256": "4a2307bc7aea2db7ca2095b71641a2d1d32f3cc3711785b7f62b8429c1d7193d"
+    },
+    {
+      "file": "P4 Origin：调度器 33 年，一个被否决的问题怎么在二十年后翻案.mp4",
+      "bytes": 47636773,
+      "sha256": "54e6ff6ba4d05528a5e9cba51ed0f45f9b67e20359b0d7095ca7841806724c36"
+    },
+    {
+      "file": "P5 Deep：换人只换一根栈，三条主线钉到 6.12 源码行号.mp4",
+      "bytes": 64945635,
+      "sha256": "a4e783628684ae07ee281dbd16994d539c179877297dbadcc4390189f9e40c69"
+    },
+    {
+      "file": "P6 Comparison：同一个按键，Windows 和 Linux 凭的理由完全不同.mp4",
+      "bytes": 43582047,
+      "sha256": "5847fce8b4e9c0060e9a858a23942f70e17f4a29c0747a1bcb04160590a963eb"
+    },
+    {
+      "file": "P7 Synthesis：不是最聪明的算法，是八条约束筛剩下的.mp4",
+      "bytes": 52348846,
+      "sha256": "c6b5a0289bd430e0ca1a854c4814880ab679e1d8e27bbf46c19ba4828b04175e"
+    }
+  ],
+  "multipart": true,
+  "season": null,
+  "charging": false,
+  "scheduled": false,
+  "authorized_at": "2026-11-12T02:39:11+08:00"
+}

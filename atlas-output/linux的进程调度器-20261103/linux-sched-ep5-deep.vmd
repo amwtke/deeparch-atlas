@@ -1,0 +1,1341 @@
+# 第 5 集 Deep 阶段 — 换人只换一根栈：Linux 调度器三条主线钉到源码行号
+
+[intro-line] 今天钻进 Linux 6.12 调度器源码，看换人、cgroup 跨层记账和 sched_ext 回退，各在哪一行拍板。
+
+## 1 Deep 阶段开场
+
+[visual: spotlight]
+现在我们钻进 Deep 阶段
+真实源码到底长什么样？
+
+[narration]
+现在进入第 5 集，Deep 阶段。前四集讲清了三问、八条约束和二十年的来路。这一集翻开 Linux 6.12 的源码，把三条主线钉到行号：一次换人怎么走完，cgroup 的账怎么跨层，sched_ext 怎么挂上去、又怎么被踢下来。开始。
+
+---
+
+## 2 换人到底换了什么
+
+[visual: title]
+一次换人
+换的到底是什么
+
+[narration]
+你的 CPU 每秒要换人几千次。可你有没有想过，换人那一刻，CPU 到底换掉了什么？答案少得出乎意料：一根栈指针，六个寄存器，再加一个页表根。这一集，就从那一行汇编倒推回去。
+
+---
+
+## 3 三条主线三件事
+
+[visual: layers title=三条主线，三件事]
+主线一 换人：换一根内核栈 · entry_64.S 第 177 行
+主线二 跨层：同一段时间每层记一次账 · fair.c 第 306 行
+主线三 可换：类链上多挂一节，随时能摘 · ext.c 第 4445 行
+
+[sidebar]
+C1·CPU快IO慢
+C2·程序不让台
+C4·调度不免费
+C7·同机多租户
+C8·一算法不配万场景
+
+[narration]
+三条主线对应三件事。换人，就是换一根内核栈，C1 和 C2 逼它能随时冻结，C4 逼它便宜。跨层，是同一段时间在每一层各记一次账，这是 C7。可换，是在类链上多挂一节，出了错能整节摘掉，这是 C8 的后半句：错了不伤内核。
+
+---
+
+## 4 三条主线的鸟瞰
+
+[visual: html_slide image="pics/05-overview.png" title=三条主线，同一个入口]
+
+[step: auto]
+scroll auto
+
+[narration]
+三条主线都从同一个入口出发：core.c 第 6548 行的调度主函数。上面蓝框是主线一，一条直线：中断、记账、打标记、出口看见标记、选人、换栈。左下橙框是主线二，记账自下而上，选人自上而下。右下紫框是主线三，最底下那条红色的路，是全图唯一往回走的。
+
+---
+
+## 5 报幕：主线一
+
+[visual: spotlight title=主线一]
+一次换人，分三段
+决定要换 -> 选出换谁 -> 真的换
+
+[narration]
+先看主线一。一次换人分三段：tick 里决定要换，出口检查点选出换谁，最后 context switch 真的换。有意思的是，三段里没有一段是后台线程做的，全都借被打断的那个任务自己的内核栈来跑。
+
+---
+
+## 6 用户态看得到的账
+
+[visual: text title=用户态只看得到换人的账（演示实验设计）]
+voluntary_ctxt_switches：自己睡过去的次数
+nonvoluntary_ctxt_switches：被抢的次数
+/proc/schedstat：每核 nr_switches
+perf stat -e context-switches：按进程计数
+
+[sidebar]
+实验 1：两个忙循环压一个核
+-> 被抢次数涨
+实验 2：管道乒乓
+-> 自愿次数涨
+实验 3：fork
+-> 子进程返回 0
+
+[narration]
+用户态看不到换人本身，只看得到它的账。实验这样设计：两个忙循环压在一个核上，只能靠 tick 抢，被抢次数会涨；两个线程用管道乒乓，每拍都主动睡，自愿次数会涨；最后 fork 一次，看子进程怎么从没调用过的 fork 里返回零。
+
+---
+
+## 7 tick 里的记账
+
+[visual: code_explain lang=c title="update_curr：记账，然后只置标志（Linux 6.12 kernel/sched/fair.c）"]
+static void update_curr(struct cfs_rq *cfs_rq)
+{
+	struct sched_entity *curr = cfs_rq->curr;
+	struct rq *rq = rq_of(cfs_rq);
+	s64 delta_exec;
+	bool resched;
+
+	if (unlikely(!curr))
+		return;
+
+	delta_exec = update_curr_se(rq, curr);
+	if (unlikely(delta_exec <= 0))
+		return;
+
+	curr->vruntime += calc_delta_fair(delta_exec, curr);
+	resched = update_deadline(cfs_rq, curr);
+	update_min_vruntime(cfs_rq);
+
+	if (entity_is_task(curr)) {
+		struct task_struct *p = task_of(curr);
+
+		update_curr_task(p, delta_exec);
+
+		/*
+		 * Any fair task that runs outside of fair_server should
+		 * account against fair_server such that it can account for
+		 * this time and possibly avoid running this period.
+		 */
+		if (p->dl_server != &rq->fair_server)
+			dl_server_update(&rq->fair_server, delta_exec);
+	}
+
+	account_cfs_rq_runtime(cfs_rq, delta_exec);
+
+	if (cfs_rq->nr_running == 1)
+		return;
+
+	if (resched || did_preempt_short(cfs_rq, curr)) {
+		resched_curr(rq);
+		clear_buddies(cfs_rq, curr);
+	}
+}
+===HIGHLIGHT===
+lines=11-13
+作用：算出这次实际跑了多少 ns
+fair.c 第 1226 行
+delta_exec = 距上次记账的时间
+没跑就直接返回
+===HIGHLIGHT===
+lines=15-15
+vruntime += delta x 1024 / weight
+权重越大，虚拟时间走得越慢
+C3 凭账不凭嘴：只认跑过的时间
+===HIGHLIGHT===
+lines=16-16
+问 update_deadline：这片吃完了吗
+返回 true = 该让了
+===HIGHLIGHT===
+lines=33-33
+带宽记账：给 cpu.max 扣额度
+主线二再展开
+===HIGHLIGHT===
+lines=35-41
+只有一个人：换给谁？直接返回
+否则 resched_curr(core.c:1079)
+只置 TIF_NEED_RESCHED 标志
+tick 到此结束，人还没换
+
+[narration]
+第一段，决定要换。tick 每一到四毫秒跑一次，fair 类落到 update curr。它算出这次跑了多少纳秒，按权重折成虚拟时间加到 vruntime 上，再问 update deadline：这一片吃完了吗？吃完了，就调 resched curr。注意，调完就返回，人还没换。
+
+---
+
+## 8 一次比较定到期
+
+[visual: code_explain lang=c title="update_deadline：EEVDF 的那条公式（Linux 6.12 kernel/sched/fair.c）"]
+static bool update_deadline(struct cfs_rq *cfs_rq, struct sched_entity *se)
+{
+	if ((s64)(se->vruntime - se->deadline) < 0)
+		return false;
+
+	/*
+	 * For EEVDF the virtual time slope is determined by w_i (iow.
+	 * nice) while the request time r_i is determined by
+	 * sysctl_sched_base_slice.
+	 */
+	if (!se->custom_slice)
+		se->slice = sysctl_sched_base_slice;
+
+	/*
+	 * EEVDF: vd_i = ve_i + r_i / w_i
+	 */
+	se->deadline = se->vruntime + calc_delta_fair(se->slice, se);
+
+	/*
+	 * The task has consumed its request, reschedule.
+	 */
+	return true;
+===HIGHLIGHT===
+lines=3-4
+vruntime 还没追上 deadline
+-> 返回 false，继续跑
+===HIGHLIGHT===
+lines=11-12
+重新领一片：sysctl_sched_base_slice
+默认 750000 ns = 0.75 ms(fair.c:76)
+===HIGHLIGHT===
+lines=17-17
+新截止时间 = 现在的 vruntime
++ 片长按权重折算
+vd = ve + r / w
+===HIGHLIGHT===
+lines=22-22
+返回 true：这片吃完了，该让
+
+[narration]
+update deadline 只做一次比较：vruntime 没追上 deadline，就接着跑。追上了，就重新领一片，默认 0.75 毫秒，算出新的虚拟截止时间。这就是 EEVDF 那条公式：截止时间等于开始时间，加上请求长度除以权重。片为什么不再短？因为 C4，调度不免费。
+
+---
+
+## 9 为什么不当场换
+
+[visual: ascii title=已经知道该换了，为什么不在中断里当场换]
+ 中断处理函数中间：冻不得　          出口检查点：栈上干净
+┌────────────────────────────┐   ┌────────────────────────────┐
+│ 1 正持着本核 rq 锁　　　　    │   │ 处理函数已经完全退出　　　　　　│
+│   schedule 也要这把锁　　    │   │ 回到任务自己的内核栈　　　　　　│
+│ 2 可能站在每核中断栈上　　　   │   │ 栈底只剩一份 pt_regs　　　　  │
+│   冻在这里，下次被覆盖　　　   │   │ 手里不持任何内核锁　　　　     │
+│ 3 被打断的代码可能持锁　　　   │   │ 读 need_resched 标志        │
+│   换下去，别的核空转　　　　   │   │ 是，就调 schedule　　　　　　 │
+└────────────────────────────┘   └────────────────────────────┘
+               │　　　　　　　　　　　　　          │
+               ▼　　　　　　　　　　　　　          ▼
+   只置标志，马上返回　　　　         同一次中断的返回路上换人
+
+[sidebar]
+换人 = 冻住旧栈
+中断中间：锁、中断栈、持锁代码
+出口：栈干净，不持锁
+C2·程序不让台
+
+[narration]
+你可能会问：既然知道该换了，为什么不在中断里当场换？中断要短，只说对一小半。真正的原因是，换人要把旧任务的栈原样冻住，而处理函数中间有三样东西冻不得：它持着本核的 rq 锁；它可能站在公用的中断栈上；被打断的代码也可能持锁。
+
+---
+
+## 10 出口检查点
+
+[visual: code_explain lang=c title="exit_to_user_mode_loop：回用户态前的出口检查点（Linux 6.12 kernel/entry/common.c）"]
+__always_inline unsigned long exit_to_user_mode_loop(struct pt_regs *regs,
+						     unsigned long ti_work)
+{
+	/*
+	 * Before returning to user space ensure that all pending work
+	 * items have been completed.
+	 */
+	while (ti_work & EXIT_TO_USER_MODE_WORK) {
+
+		local_irq_enable_exit_to_user(ti_work);
+
+		if (ti_work & _TIF_NEED_RESCHED)
+			schedule();
+===HIGHLIGHT===
+lines=1-2
+作用：回用户态之前处理所有待办
+参数：regs 用户态现场，ti_work 标志位
+common.c 第 90 行
+===HIGHLIGHT===
+lines=8-10
+只要还有待办就循环
+先开中断
+===HIGHLIGHT===
+lines=12-13
+看见 _TIF_NEED_RESCHED
+-> schedule()，在这里真的换人
+此刻在任务自己的栈上，不持锁
+
+[narration]
+所以挪到同一次中断的返回路上。exit to user mode loop 在回用户态前检查标志，看见 need resched，就调 schedule。这时处理函数已经退完，回到了任务自己的栈，栈上只剩一份用户态现场，不持任何内核锁。这不是延后，是换到一个冻得住的位置。
+
+---
+
+## 11 三个安全换人点
+
+[visual: text title=三个安全换人点]
+回用户态之前：exit_to_user_mode_loop
+中断返回内核态之前：preempt_count 为 0 才换
+preempt_enable 减到 0：放完锁自己补换
+
+[sidebar]
+TIF_NEED_RESCHED
+发现者置，安全点读
+C2·程序不让台：必须能强换
+换人要冻栈：只能在安全点
+
+[narration]
+安全点一共三个。回用户态之前，永远安全。中断返回内核态之前，要先看抢占计数是不是零，也就是被打断的代码没持锁。第三个，是持锁的代码放完锁、计数减到零的那一刻，自己补上欠的那次换人。need resched 标志，就是为了跨过这段距离。
+
+---
+
+## 12 选人的快路和慢路
+
+[visual: code_explain lang=c title="__pick_next_task：fair 快路与类链慢路（Linux 6.12 kernel/sched/core.c）"]
+__pick_next_task(struct rq *rq, struct task_struct *prev, struct rq_flags *rf)
+{
+	const struct sched_class *class;
+	struct task_struct *p;
+
+	rq->dl_server = NULL;
+
+	if (scx_enabled())
+		goto restart;
+
+	/*
+	 * Optimization: we know that if all tasks are in the fair class we can
+	 * call that function directly, but only if the @prev task wasn't of a
+	 * higher scheduling class, because otherwise those lose the
+	 * opportunity to pull in more work from other CPUs.
+	 */
+	if (likely(!sched_class_above(prev->sched_class, &fair_sched_class) &&
+		   rq->nr_running == rq->cfs.h_nr_running)) {
+
+		p = pick_next_task_fair(rq, prev, rf);
+		if (unlikely(p == RETRY_TASK))
+			goto restart;
+
+		/* Assume the next prioritized class is idle_sched_class */
+		if (!p) {
+			p = pick_task_idle(rq);
+			put_prev_set_next_task(rq, prev, p);
+		}
+
+		return p;
+	}
+
+restart:
+	prev_balance(rq, prev, rf);
+
+	for_each_active_class(class) {
+		if (class->pick_next_task) {
+			p = class->pick_next_task(rq, prev);
+			if (p)
+				return p;
+		} else {
+			p = class->pick_task(rq);
+			if (p) {
+				put_prev_set_next_task(rq, prev, p);
+				return p;
+			}
+		}
+	}
+
+	BUG(); /* The idle class should always have a runnable task. */
+}
+===HIGHLIGHT===
+lines=8-9
+装了 BPF 调度器：放弃快路
+直接去类链（主线三）
+===HIGHLIGHT===
+lines=17-25
+本核全是 fair 任务：九成九走这里
+直接问 fair 要人
+最终落到 pick_eevdf(fair.c:907)
+有资格，且截止时间最早
+===HIGHLIGHT===
+lines=25-28
+fair 也没人：上 idle
+===HIGHLIGHT===
+lines=33-50
+慢路：按链接顺序逐类问
+stop dl rt fair ext idle
+谁先给出人就要谁
+
+[narration]
+进了 schedule，先拿本核的 rq 锁，只锁自己的队，这是 C5。然后选人。本核全是 fair 任务，就走快路直接问 fair，最终落到 pick eevdf，挑有资格、且截止时间最早的那个。注意第一个判断：一旦装了 BPF 调度器，就放弃快路，按类链逐节问。
+
+---
+
+## 13 真的换：三步
+
+[visual: code_explain lang=c title="context_switch：换页表根、换栈、收尾（Linux 6.12 kernel/sched/core.c）"]
+context_switch(struct rq *rq, struct task_struct *prev,
+	       struct task_struct *next, struct rq_flags *rf)
+{
+	prepare_task_switch(rq, prev, next);
+
+	/*
+	 * For paravirt, this is coupled with an exit in switch_to to
+	 * combine the page table reload and the switch backend into
+	 * one hypercall.
+	 */
+	arch_start_context_switch(prev);
+
+	/*
+	 * kernel -> kernel   lazy + transfer active
+	 *   user -> kernel   lazy + mmgrab_lazy_tlb() active
+	 *
+	 * kernel ->   user   switch + mmdrop_lazy_tlb() active
+	 *   user ->   user   switch
+	 *
+	 * switch_mm_cid() needs to be updated if the barriers provided
+	 * by context_switch() are modified.
+	 */
+	if (!next->mm) {                                // to kernel
+		enter_lazy_tlb(prev->active_mm, next);
+
+		next->active_mm = prev->active_mm;
+		if (prev->mm)                           // from user
+			mmgrab_lazy_tlb(prev->active_mm);
+		else
+			prev->active_mm = NULL;
+	} else {                                        // to user
+		membarrier_switch_mm(rq, prev->active_mm, next->mm);
+		/*
+		 * sys_membarrier() requires an smp_mb() between setting
+		 * rq->curr / membarrier_switch_mm() and returning to userspace.
+		 *
+		 * The below provides this either through switch_mm(), or in
+		 * case 'prev->active_mm == next->mm' through
+		 * finish_task_switch()'s mmdrop().
+		 */
+		switch_mm_irqs_off(prev->active_mm, next->mm, next);
+		lru_gen_use_mm(next->mm);
+
+		if (!prev->mm) {                        // from kernel
+			/* will mmdrop_lazy_tlb() in finish_task_switch(). */
+			rq->prev_mm = prev->active_mm;
+			prev->active_mm = NULL;
+		}
+	}
+
+	/* switch_mm_cid() requires the memory barriers above. */
+	switch_mm_cid(rq, prev, next);
+
+	prepare_lock_switch(rq, next, rf);
+
+	/* Here we just switch the register state and the stack. */
+	switch_to(prev, next, prev);
+	barrier();
+
+	return finish_task_switch(prev);
+}
+===HIGHLIGHT===
+lines=23-30
+换到内核线程：它没有自己的 mm
+借上一个任务的地址空间
+连 CR3 都不换
+===HIGHLIGHT===
+lines=31-41
+换到用户进程
+switch_mm_irqs_off：写 CR3 换页表根
+有 PCID 时不用刷 TLB
+===HIGHLIGHT===
+lines=57-57
+switch_to：换栈 + 换寄存器
+core.c 第 5328 行
+这一行返回时，跑的已是 next
+===HIGHLIGHT===
+lines=60-60
+finish_task_switch(prev)
+在 next 的栈上替 prev 收尾
+放 rq 锁，prev->on_cpu = 0
+
+[narration]
+选出人之后，context switch 分三步。换到内核线程，它没有地址空间，就借上一个任务的，连页表根都不换。换到用户进程，就写 CR3 换页表根。然后是 switch to，这一行返回时，跑着的已经是另一个任务了。最后在新任务的栈上替旧任务收尾、放锁。
+
+---
+
+## 14 两条 movq
+
+[visual: code_explain lang=asm title="__switch_to_asm：两条 movq 之间换了一个人（Linux 6.12 arch/x86/entry/entry_64.S）"]
+SYM_FUNC_START(__switch_to_asm)
+	/*
+	 * Save callee-saved registers
+	 * This must match the order in inactive_task_frame
+	 */
+	pushq	%rbp
+	pushq	%rbx
+	pushq	%r12
+	pushq	%r13
+	pushq	%r14
+	pushq	%r15
+
+	/* switch stack */
+	movq	%rsp, TASK_threadsp(%rdi)
+	movq	TASK_threadsp(%rsi), %rsp
+
+#ifdef CONFIG_STACKPROTECTOR
+	movq	TASK_stack_canary(%rsi), %rbx
+	movq	%rbx, PER_CPU_VAR(fixed_percpu_data + FIXED_stack_canary)
+#endif
+
+	/*
+	 * When switching from a shallower to a deeper call stack
+	 * the RSB may either underflow or use entries populated
+	 * with userspace addresses. On CPUs where those concerns
+	 * exist, overwrite the RSB with entries which capture
+	 * speculative execution to prevent attack.
+	 */
+	FILL_RETURN_BUFFER %r12, RSB_CLEAR_LOOPS, X86_FEATURE_RSB_CTXSW
+
+	/* restore callee-saved registers */
+	popq	%r15
+	popq	%r14
+	popq	%r13
+	popq	%r12
+	popq	%rbx
+	popq	%rbp
+
+	jmp	__switch_to
+SYM_FUNC_END(__switch_to_asm)
+===HIGHLIGHT===
+lines=6-11
+压 6 个 callee-saved 寄存器
+顺序必须和 inactive_task_frame 一致
+压在 prev 自己的内核栈上
+===HIGHLIGHT===
+lines=14-14
+prev->thread.sp = 当前栈顶
+prev 被冻结在这里
+entry_64.S 第 190 行
+===HIGHLIGHT===
+lines=15-15
+rsp = next->thread.sp
+从这一刻起，站在 next 的栈上
+===HIGHLIGHT===
+lines=32-37
+弹出 6 个寄存器
+弹的是 next 上次被冻结时压的值
+===HIGHLIGHT===
+lines=39-39
+jmp __switch_to
+C 收尾：FS/GS、TLS、FPU
+更新 per-CPU 的 current
+
+[narration]
+全部魔法就在这十几条汇编里。先把六个寄存器压到旧任务的栈上，再用两条 movq：一条把栈顶存进旧任务的账本，一条把新任务存过的栈顶装进 rsp。第二条执行完，我们就站在新任务的栈上了。随后六条 pop，弹出的是新任务上次冻结时压的值。
+
+---
+
+## 15 换栈的全景图
+
+[visual: html_slide image="pics/05-context-switch.png" title=switch_to 的魔法：两根栈，一条 movq]
+
+[step: auto]
+scroll auto
+
+[narration]
+这张图左栏是一次 tick 抢占的时间线，整次换人的直接成本，公开实测在 1.2 到 2.2 微秒之间。中间是两根内核栈，栈顶各冻着同样格式的一帧：六个寄存器加一个返回地址，因为两人上次都停在同一行。橙色的 rsp 一换，CPU 眼里的我是谁就变了。
+
+---
+
+## 16 进程在 CPU 眼里
+
+[visual: spotlight title=进程在 CPU 眼里]
+一根栈 + 6 个寄存器 + 一个页表根
+task_struct 是账本，不是身份
+
+[narration]
+一个本质浮出来：进程在 CPU 眼里，就是一根栈，加六个寄存器，再加一个页表根。task struct 是账本，不是身份：调度器读它决定换给谁，但换这个动作只读栈指针。这也是 sched_ext 能换掉整个决策层，却一行不碰换人代码的原因。
+
+---
+
+## 17 另外九个寄存器
+
+[visual: ascii title=换人时，寄存器各去了哪]
+┌──────────────────────┬─────────────┬──────────────────┐
+│ 寄存器　　　　　　　    │ 谁来存       │ 存在哪　　　　　　　│
+├──────────────────────┼─────────────┼──────────────────┤
+│ rbx rbp r12-r15(6个) │ 换栈汇编　　  │ 旧任务栈顶的帧　　  │
+│ rax rcx rdx rsi rdi  │ 编译器       │ 调用前存进旧栈　　　│
+│ r8-r11(共9个)　       │　　　　　　　 │　　　             │
+│ 用户态全部寄存器　　    │ 进内核时　　  │ 栈底的 pt_regs　  │
+│ 浮点与向量寄存器　　    │ __switch_to │ task_struct 尾部　│
+└──────────────────────┴─────────────┴──────────────────┘
+
+[sidebar]
+6 个：换栈汇编手工存
+9 个：调用约定，编译器存
+用户态：pt_regs
+浮点：XSAVES
+
+[narration]
+十六个通用寄存器，汇编只压了六个，栈指针是被换的那一个，剩下九个呢？按 x86-64 的调用约定，它们在函数调用边界上本来就算已毁，编译器在调用换栈函数之前，已经把还要用的值存进了旧任务的栈。用户态现场更早，进内核时就压成了 pt regs。只有浮点和向量寄存器，要靠 XSAVES 单独存。
+
+---
+
+## 18 醒来的人怎么知道是谁让的
+
+[visual: timeline title=C 把 CPU 让给 A：信使是 rax]
+T=1 [C 的栈] C 调换栈汇编：rdi 是 C，rsi 是 A
+T=2 [C 到 A] 压 6 个、换 rsp、弹 6 个，rdi 仍是 C
+T=3 [A 的栈] jmp __switch_to，返回值 rax 是 C
+T=4 [A 的栈] ret 回到 A 的 context_switch，prev 改写成 C
+T=5 [A 的栈] finish_task_switch(C)：清 on_cpu，放锁
+
+[narration]
+再想一个问题。A 很久以前换给了 B，A 栈上的 prev 记的是它自己。现在 C 把 CPU 还给 A，A 醒来要替 C 收尾，怎么知道是 C？换栈会换掉栈上的一切，只有寄存器能原样穿过去。switch to 的返回值在 rax 里，就是 C，宏的第三个参数就为这句话存在。
+
+---
+
+## 19 fork 伪造一帧
+
+[visual: code_explain lang=c title="copy_thread：给子进程伪造一帧（Linux 6.12 arch/x86/kernel/process.c）"]
+	fork_frame = container_of(childregs, struct fork_frame, regs);
+	frame = &fork_frame->frame;
+
+	frame->bp = encode_frame_pointer(childregs);
+	frame->ret_addr = (unsigned long) ret_from_fork_asm;
+	p->thread.sp = (unsigned long) fork_frame;
+	p->thread.io_bitmap = NULL;
+	p->thread.iopl_warn = 0;
+	memset(p->thread.ptrace_bps, 0, sizeof(p->thread.ptrace_bps));
+
+#ifdef CONFIG_X86_64
+	current_save_fsgs();
+	p->thread.fsindex = current->thread.fsindex;
+	p->thread.fsbase = current->thread.fsbase;
+	p->thread.gsindex = current->thread.gsindex;
+	p->thread.gsbase = current->thread.gsbase;
+
+	savesegment(es, p->thread.es);
+	savesegment(ds, p->thread.ds);
+
+	if (p->mm && (clone_flags & (CLONE_VM | CLONE_VFORK)) == CLONE_VM)
+		set_bit(MM_CONTEXT_LOCK_LAM, &p->mm->context.flags);
+#else
+	p->thread.sp0 = (unsigned long) (childregs + 1);
+	savesegment(gs, p->thread.gs);
+	/*
+	 * Clear all status flags including IF and set fixed bit. 64bit
+	 * does not have this initialization as the frame does not contain
+	 * flags. The flags consistency (especially vs. AC) is there
+	 * ensured via objtool, which lacks 32bit support.
+	 */
+	frame->flags = X86_EFLAGS_FIXED;
+#endif
+
+	/*
+	 * Allocate a new shadow stack for thread if needed. If shadow stack,
+	 * is disabled, new_ssp will remain 0, and fpu_clone() will know not to
+	 * update it.
+	 */
+	new_ssp = shstk_alloc_thread_stack(p, clone_flags, args->stack_size);
+	if (IS_ERR_VALUE(new_ssp))
+		return PTR_ERR((void *)new_ssp);
+
+	fpu_clone(p, clone_flags, args->fn, new_ssp);
+
+	/* Kernel thread ? */
+	if (unlikely(p->flags & PF_KTHREAD)) {
+		p->thread.pkru = pkru_get_init_value();
+		memset(childregs, 0, sizeof(struct pt_regs));
+		kthread_frame_init(frame, args->fn, args->fn_arg);
+		return 0;
+	}
+
+	/*
+	 * Clone current's PKRU value from hardware. tsk->thread.pkru
+	 * is only valid when scheduled out.
+	 */
+	p->thread.pkru = read_pkru();
+
+	frame->bx = 0;
+	*childregs = *current_pt_regs();
+	childregs->ax = 0;
+	if (sp)
+		childregs->sp = sp;
+===HIGHLIGHT===
+lines=1-3
+childregs：子进程栈顶预留的 pt_regs
+frame：紧贴在它下面的
+inactive_task_frame
+===HIGHLIGHT===
+lines=5-6
+ret_addr = ret_from_fork_asm
+伪造的返回地址
+thread.sp 指向这帧
+下次换栈就把 rsp 换到这里
+===HIGHLIGHT===
+lines=60-61
+bx = 0：用户进程，没有内核函数要跑
+整份抄父进程的用户态现场
+process.c 第 231 行
+===HIGHLIGHT===
+lines=62-62
+ax = 0：子进程看到的 fork 返回值
+只是一行赋值
+===HIGHLIGHT===
+lines=63-64
+给了新用户栈才换 sp
+fork 传 0，建线程才换
+
+[narration]
+fork 分支用的是同一个套路。copy thread 给子进程伪造一帧：返回地址写成 ret from fork asm，栈指针指向这帧。再把父进程进内核时的用户态现场整份抄过来，把 ax 那一格改成零。子进程的栈，生来就像一个刚被 tick 换下去的老任务。
+
+---
+
+## 20 子进程第一次醒来
+
+[visual: timeline title=子进程第一次被选中]
+T=1 [__switch_to_asm] rsp 换成伪造帧，6 个 pop 弹出伪造值
+T=2 [__switch_to] ret 弹出 ret_addr，到 ret_from_fork_asm
+T=3 [ret_from_fork_asm] rax 里的 prev 搬进参数
+T=4 [schedule_tail] 替 finish_task_switch 补课，放 rq 锁
+T=5 [sysret] 按抄来的现场回用户态，rax 为 0
+
+[narration]
+子进程第一次被选中，走的是和老任务一样的 pop 路径，弹出的是伪造值。返回地址把它带到 ret from fork asm，先把 rax 里的 prev 交给 schedule tail 补上收尾，再按抄来的现场回用户态，rax 是零。它从 fork 返回了零，却从没执行过 fork 的一行。
+
+---
+
+## 21 父子栈指针相同为什么不踩
+
+[visual: ascii title=两个执行流不互相踩：栈和页表至少一样不同]
+┌──────────────┬──────────┬──────────┬──────────────────────────────┐
+│ 创建方式　　　 │ 用户 rsp　│ 页表 CR3　│ 为什么不踩　　　　　　　　       │
+├──────────────┼──────────┼──────────┼──────────────────────────────┤
+│ fork 父子　   │ 相同　　  │ 不同　    │ 同一个数落在两个地址空间　　　　  │
+│ clone 建线程  │ 不同　　  │ 相同　    │ 同一地址空间各占一段　　　　　　  │
+│ vfork        │ 相同　    │ 相同　　  │ 会踩：父进程睡到子进程 exec　　  │
+└──────────────┴──────────┴──────────┴──────────────────────────────┘
+
+[sidebar]
+fork：页表不同
+线程：栈不同
+vfork：都相同，只能不同时跑
+
+[narration]
+fork 后父子的用户栈指针数值完全相同，为什么不互相踩？copy on write 是把它们分开的动作，但根上靠的是子进程有了自己的页表，同一个数落在两个地址空间里。建线程正好反过来：页表相同，栈不同。vfork 两样都相同，所以父进程只能睡着等。
+
+---
+
+## 22 反事实：换人的四种做法
+
+[visual: text title=反事实：换人为什么是换内核栈]
+A 硬件任务切换：CPU 自己存全部寄存器
+B 软件存全部 16 个寄存器
+C 每核一根栈，睡眠点手工存状态
+D 用户态绿色线程，内核看不见
+
+[sidebar]
+A B：违反 C4，存了用不着的
+C：打破内核任意点可睡
+D：一个阻塞调用卡住全部
+直接 1~2 微秒
+间接几十微秒
+
+[narration]
+能不能换个做法？硬件任务切换和存全部寄存器都违反 C4，存了编译器早就放进栈的东西，64 位长模式也不再支持硬件切换。每核一根栈，要求每个可能睡的点都手工存状态，驱动全得改写。绿色线程是叠在内核线程之上的另一层，不是替代。
+
+---
+
+## 23 主线二：两个租户
+
+[visual: ascii title=主线二：cgroup 就是一棵目录树（演示实验设计）]
+/sys/fs/cgroup/          根组 = 整台机器
+├── A/  cpu.weight 100   t1 t2 t3 三个忙循环
+└── B/  cpu.weight 300   t4 一个忙循环
+        cpu.max 50000 100000（实验 2 才加）
+
+没有 cgroup：4 个任务各 25%
+有 cgroup：　 B 拿 75%，A 拿 25%，t1 到 t3 各约 8%
+加 cpu.max： B 掉到 50%，A 的三个各约 17%
+
+[sidebar]
+C7·同机多租户
+weight：相对份额
+max：硬上限
+先分组，组内再分
+
+[narration]
+主线二换个问题：一台机器住着两个租户，A 开三个线程，B 开一个，全压在 CPU0 上。没有 cgroup，四个任务各分四分之一，B 被三倍稀释，这就是 C7。放进两个组，权重一比三，B 拿 75%，A 的三个均分 25%。再给 B 加 50% 的上限，B 就掉到一半。
+
+---
+
+## 24 下行选人
+
+[visual: code_explain lang=c title="pick_task_fair：从根往下，每层一次 EEVDF（Linux 6.12 kernel/sched/fair.c）"]
+static struct task_struct *pick_task_fair(struct rq *rq)
+{
+	struct sched_entity *se;
+	struct cfs_rq *cfs_rq;
+
+again:
+	cfs_rq = &rq->cfs;
+	if (!cfs_rq->nr_running)
+		return NULL;
+
+	do {
+		/* Might not have done put_prev_entity() */
+		if (cfs_rq->curr && cfs_rq->curr->on_rq)
+			update_curr(cfs_rq);
+
+		if (unlikely(check_cfs_rq_runtime(cfs_rq)))
+			goto again;
+
+		se = pick_next_entity(rq, cfs_rq);
+		if (!se)
+			goto again;
+		cfs_rq = group_cfs_rq(se);
+	} while (cfs_rq);
+
+	return task_of(se);
+}
+===HIGHLIGHT===
+lines=7-9
+从根开始：rq->cfs
+fair.c 第 8848 行
+整棵树没人就返回 NULL
+===HIGHLIGHT===
+lines=13-14
+先把这一层的账记到当下
+===HIGHLIGHT===
+lines=16-17
+这层带宽用完了？
+整层 throttle，从头再来
+===HIGHLIGHT===
+lines=19-22
+pick_next_entity -> pick_eevdf
+选中组实体：钻进它的树
+选中任务：group_cfs_rq 为 NULL，退出
+
+[narration]
+组调度没有新算法。它把每核一棵树在每个组里再复制一份，组本身在父级的树里占一个节点。选人从根往下钻：每层跑一次 pick eevdf，选中组节点就钻进它的树，选中任务就停。层数乘以 log n，这是 C4 的账单，也是 cgroup 不宜嵌套太深的原因。
+
+---
+
+## 25 上行记账
+
+[visual: text title=上行记账：同一段时间，每层各记一次]
+任务层：t1.vruntime += dt x 1024 / 任务权重
+组层：  A.vruntime  += dt x 1024 / 组实体权重
+组实体权重 = cpu.weight x 本核负载 / 全组负载
+for_each_sched_entity：se = se->parent 一路到根
+
+[sidebar]
+for_each_sched_entity：上行
+calc_group_shares：组权重
+C7·同机多租户
+C3·凭账不凭嘴
+
+[narration]
+记账反过来，自下而上。同一段运行时间，在任务那层按任务权重折一次，在组那层按组的权重再折一次。组的权重来自 cpu.weight，再按它在本核的负载占比切一份。跨层折算的不是 vruntime，是这段时间。一个宏往上走到根，就是跨层的全部。
+
+---
+
+## 26 带宽：池、片、闸
+
+[visual: code_explain lang=c title="__account_cfs_rq_runtime：本地额度扣光就去领（Linux 6.12 kernel/sched/fair.c）"]
+static void __account_cfs_rq_runtime(struct cfs_rq *cfs_rq, u64 delta_exec)
+{
+	/* dock delta_exec before expiring quota (as it could span periods) */
+	cfs_rq->runtime_remaining -= delta_exec;
+
+	if (likely(cfs_rq->runtime_remaining > 0))
+		return;
+
+	if (cfs_rq->throttled)
+		return;
+	/*
+	 * if we're unable to extend our runtime we resched so that the active
+	 * hierarchy can be throttled
+	 */
+	if (!assign_cfs_rq_runtime(cfs_rq) && likely(cfs_rq->curr))
+		resched_curr(rq_of(cfs_rq));
+}
+===HIGHLIGHT===
+lines=4-4
+本地额度扣掉这次跑的 delta_exec
+fair.c 第 5812 行
+===HIGHLIGHT===
+lines=6-7
+还有额度：直接返回
+===HIGHLIGHT===
+lines=9-10
+已经被 throttle：不重复处理
+===HIGHLIGHT===
+lines=15-16
+去组的全局池领一片，5 ms(fair.c:124)
+领不到：resched_curr 置标志
+随后 throttle_cfs_rq 整组出队
+下个 period 定时器补池再挂回
+
+[narration]
+带宽控制挂在同一条记账链上。每核一份本地额度，跑多少扣多少，扣光了去组的全局池领一片，每次 5 毫秒。为什么不精确到纳秒？全局池有把锁，C5 要求少去。领不到就置标志，随后整个组节点从父树摘下。下个周期补满池子，再整组挂回去。
+
+---
+
+## 27 主线三：链接脚本多了一行
+
+[visual: code_explain lang=c title="SCHED_DATA：调度类的顺序是内存地址（Linux 6.12 include/asm-generic/vmlinux.lds.h）"]
+#define SCHED_DATA				\
+	STRUCT_ALIGN();				\
+	__sched_class_highest = .;		\
+	*(__stop_sched_class)			\
+	*(__dl_sched_class)			\
+	*(__rt_sched_class)			\
+	*(__fair_sched_class)			\
+	*(__ext_sched_class)			\
+	*(__idle_sched_class)			\
+	__sched_class_lowest = .;
+===HIGHLIGHT===
+lines=3-3
+最高优先级的起点
+vmlinux.lds.h 第 131 行
+===HIGHLIGHT===
+lines=4-7
+stop dl rt fair
+按内存地址排成一段
+===HIGHLIGHT===
+lines=8-8
+6.12 新增：ext 类
+排在 fair 之后、idle 之前
+===HIGHLIGHT===
+lines=9-10
+idle 垫底，永远有人
+sched_class_above(a, b) 就是 a < b
+
+[narration]
+主线三，sched_ext。它在类链上多挂一节，挂在哪？答案在链接脚本里。六个调度类按 stop、deadline、实时、fair、ext、idle 排成一段连续内存，类的优先级就是链接时的内存地址。ext 在 fair 之后，没切过去的系统任务永远比 BPF 管的任务优先。
+
+---
+
+## 28 一个最小的 BPF 调度器
+
+[visual: code_explain lang=c title="scx_simple：三问三个回调（Linux 6.12 tools/sched_ext/scx_simple.bpf.c）"]
+s32 BPF_STRUCT_OPS(simple_select_cpu, struct task_struct *p, s32 prev_cpu, u64 wake_flags)
+{
+	bool is_idle = false;
+	s32 cpu;
+
+	cpu = scx_bpf_select_cpu_dfl(p, prev_cpu, wake_flags, &is_idle);
+	if (is_idle) {
+		stat_inc(0);	/* count local queueing */
+		scx_bpf_dispatch(p, SCX_DSQ_LOCAL, SCX_SLICE_DFL, 0);
+	}
+
+	return cpu;
+}
+
+void BPF_STRUCT_OPS(simple_enqueue, struct task_struct *p, u64 enq_flags)
+{
+	stat_inc(1);	/* count global queueing */
+
+	if (fifo_sched) {
+		scx_bpf_dispatch(p, SHARED_DSQ, SCX_SLICE_DFL, enq_flags);
+	} else {
+		u64 vtime = p->scx.dsq_vtime;
+
+		/*
+		 * Limit the amount of budget that an idling task can accumulate
+		 * to one slice.
+		 */
+		if (vtime_before(vtime, vtime_now - SCX_SLICE_DFL))
+			vtime = vtime_now - SCX_SLICE_DFL;
+
+		scx_bpf_dispatch_vtime(p, SHARED_DSQ, SCX_SLICE_DFL, vtime,
+				       enq_flags);
+	}
+}
+
+void BPF_STRUCT_OPS(simple_dispatch, s32 cpu, struct task_struct *prev)
+{
+	scx_bpf_consume(SHARED_DSQ);
+===HIGHLIGHT===
+lines=1-12
+select_cpu：放哪个核
+用内核默认算法找空闲核
+找到就直接派到它的本地 DSQ
+===HIGHLIGHT===
+lines=15-22
+enqueue：谁先上
+fifo_sched 未开：走 vtime 排序
+===HIGHLIGHT===
+lines=28-32
+睡太久的最多攒一片欠账
+按 vtime 放进共享 DSQ
+SCX_SLICE_DFL = 20 ms
+倒计时由内核扣
+===HIGHLIGHT===
+lines=36-38
+dispatch：本核没人了
+从共享 DSQ 搬一个过来
+
+[narration]
+一个最小的 BPF 调度器，内核树自带的 scx simple。select cpu 回答放哪个核，找到空闲核就直接派进它的本地队列。enqueue 回答谁先上，按虚拟时间放进一条共享队列。dispatch 只有一行：本核没人了，搬一个过来。跑多久？派发时给 20 毫秒，内核自己扣。
+
+---
+
+## 29 什么时候才问 BPF
+
+[visual: code_explain lang=c title="balance_one：三道闸都空，才跨边界（Linux 6.12 kernel/sched/ext.c）"]
+	if (prev_on_scx) {
+		update_curr_scx(rq);
+
+		/*
+		 * If @prev is runnable & has slice left, it has priority and
+		 * fetching more just increases latency for the fetched tasks.
+		 * Tell pick_task_scx() to keep running @prev. If the BPF
+		 * scheduler wants to handle this explicitly, it should
+		 * implement ->cpu_release().
+		 *
+		 * See scx_ops_disable_workfn() for the explanation on the
+		 * bypassing test.
+		 */
+		if ((prev->scx.flags & SCX_TASK_QUEUED) &&
+		    prev->scx.slice && !scx_rq_bypassing(rq)) {
+			rq->scx.flags |= SCX_RQ_BAL_KEEP;
+			goto has_tasks;
+		}
+	}
+
+	/* if there already are tasks to run, nothing to do */
+	if (rq->scx.local_dsq.nr)
+		goto has_tasks;
+
+	if (consume_global_dsq(rq))
+		goto has_tasks;
+
+	if (!SCX_HAS_OP(dispatch) || scx_rq_bypassing(rq) || !scx_rq_online(rq))
+		goto no_tasks;
+
+	dspc->rq = rq;
+
+	/*
+	 * The dispatch loop. Because flush_dispatch_buf() may drop the rq lock,
+	 * the local DSQ might still end up empty after a successful
+	 * ops.dispatch(). If the local DSQ is empty even after ops.dispatch()
+	 * produced some tasks, retry. The BPF scheduler may depend on this
+	 * looping behavior to simplify its implementation.
+	 */
+	do {
+		dspc->nr_tasks = 0;
+
+		SCX_CALL_OP(SCX_KF_DISPATCH, dispatch, cpu_of(rq),
+			    prev_on_scx ? prev : NULL);
+
+		flush_dispatch_buf(rq);
+
+		if (rq->scx.local_dsq.nr)
+			goto has_tasks;
+		if (consume_global_dsq(rq))
+			goto has_tasks;
+
+		/*
+		 * ops.dispatch() can trap us in this loop by repeatedly
+		 * dispatching ineligible tasks. Break out once in a while to
+		 * allow the watchdog to run. As IRQ can't be enabled in
+		 * balance(), we want to complete this scheduling cycle and then
+		 * start a new one. IOW, we want to call resched_curr() on the
+		 * next, most likely idle, task, not the current one. Use
+		 * scx_bpf_kick_cpu() for deferred kicking.
+		 */
+		if (unlikely(!--nr_loops)) {
+			scx_bpf_kick_cpu(cpu_of(rq), 0);
+			break;
+		}
+	} while (dspc->nr_tasks);
+===HIGHLIGHT===
+lines=14-18
+闸 1：prev 还有片
+继续跑它，不叫 BPF
+===HIGHLIGHT===
+lines=21-26
+闸 2：本地 DSQ 有人
+闸 3：内核全局 DSQ 有人
+===HIGHLIGHT===
+lines=28-29
+BPF 没实现 dispatch 或在 bypass
+-> 不问
+===HIGHLIGHT===
+lines=43-46
+SCX_CALL_OP：跨一次边界
+ext.c:1084，一次函数指针调用
+前后开关 kfunc 许可位
+===HIGHLIGHT===
+lines=62-66
+最多 32 轮
+防坏策略把这里卡死
+
+[narration]
+内核什么时候才问 BPF？看 balance one 的三道闸：旧任务还有片，继续跑它；本地队列有人；内核的全局队列有人。三道闸都空了，才通过 SCX CALL OP 跨一次边界，调你的 dispatch。派不出人最多重试 32 轮。本地队列挡掉了大部分跨界，这是 C4 的要求。
+
+---
+
+## 30 两层看门狗
+
+[visual: code_explain lang=c title="scx_watchdog_workfn 与 scx_tick：两层看门狗（Linux 6.12 kernel/sched/ext.c）"]
+static void scx_watchdog_workfn(struct work_struct *work)
+{
+	int cpu;
+
+	WRITE_ONCE(scx_watchdog_timestamp, jiffies);
+
+	for_each_online_cpu(cpu) {
+		if (unlikely(check_rq_for_timeouts(cpu_rq(cpu))))
+			break;
+
+		cond_resched();
+	}
+	queue_delayed_work(system_unbound_wq, to_delayed_work(work),
+			   scx_watchdog_timeout / 2);
+}
+
+void scx_tick(struct rq *rq)
+{
+	unsigned long last_check;
+
+	if (!scx_enabled())
+		return;
+
+	last_check = READ_ONCE(scx_watchdog_timestamp);
+	if (unlikely(time_after(jiffies,
+				last_check + READ_ONCE(scx_watchdog_timeout)))) {
+		u32 dur_ms = jiffies_to_msecs(jiffies - last_check);
+
+		scx_ops_error_kind(SCX_EXIT_ERROR_STALL,
+				   "watchdog failed to check in for %u.%03us",
+				   dur_ms / 1000, dur_ms % 1000);
+	}
+
+	update_other_load_avgs(rq);
+}
+===HIGHLIGHT===
+lines=5-5
+打卡：记下这次巡查的时间
+===HIGHLIGHT===
+lines=7-12
+扫所有在线 CPU 的 runnable_list
+有任务可运行却超时没跑
+-> SCX_EXIT_ERROR_STALL
+===HIGHLIGHT===
+lines=13-14
+每 timeout/2 再巡一次
+默认上限 30 s(ext.c:14)
+===HIGHLIGHT===
+lines=17-32
+scx_tick：tick 里反盯看门狗
+看门狗自己太久没打卡
+-> 同样判 STALL
+
+[narration]
+策略错了怎么办？靠两层看门狗。第一层每隔超时的一半，扫一遍所有核上排队的任务，谁可运行却超时没跑，默认 30 秒，就判调度器失职。可看门狗自己也要被调度，坏策略能把它也饿死。所以第二层放在 tick 里，反过来盯着看门狗有没有按时打卡。
+
+---
+
+## 31 拆除三步
+
+[visual: code_explain lang=c title="scx_ops_disable_workfn：先保前进，再逐个改回（Linux 6.12 kernel/sched/ext.c）"]
+	/* guarantee forward progress by bypassing scx_ops */
+	scx_ops_bypass(true);
+
+	switch (scx_ops_set_enable_state(SCX_OPS_DISABLING)) {
+	case SCX_OPS_DISABLING:
+		WARN_ONCE(true, "sched_ext: duplicate disabling instance?");
+		break;
+	case SCX_OPS_DISABLED:
+		pr_warn("sched_ext: ops error detected without ops (%s)\n",
+			scx_exit_info->msg);
+		WARN_ON_ONCE(scx_ops_set_enable_state(SCX_OPS_DISABLED) !=
+			     SCX_OPS_DISABLING);
+		goto done;
+	default:
+		break;
+	}
+
+	/*
+	 * Here, every runnable task is guaranteed to make forward progress and
+	 * we can safely use blocking synchronization constructs. Actually
+	 * disable ops.
+	 */
+	mutex_lock(&scx_ops_enable_mutex);
+
+	static_branch_disable(&__scx_switched_all);
+	WRITE_ONCE(scx_switching_all, false);
+
+	/*
+	 * Shut down cgroup support before tasks so that the cgroup attach path
+	 * doesn't race against scx_ops_exit_task().
+	 */
+	scx_cgroup_lock();
+	scx_cgroup_exit();
+	scx_cgroup_unlock();
+
+	/*
+	 * The BPF scheduler is going away. All tasks including %TASK_DEAD ones
+	 * must be switched out and exited synchronously.
+	 */
+	percpu_down_write(&scx_fork_rwsem);
+
+	scx_ops_init_task_enabled = false;
+
+	scx_task_iter_start(&sti);
+	while ((p = scx_task_iter_next_locked(&sti))) {
+		const struct sched_class *old_class = p->sched_class;
+		const struct sched_class *new_class =
+			__setscheduler_class(p->policy, p->prio);
+		struct sched_enq_and_set_ctx ctx;
+
+		if (old_class != new_class && p->se.sched_delayed)
+			dequeue_task(task_rq(p), p, DEQUEUE_SLEEP | DEQUEUE_DELAYED);
+
+		sched_deq_and_put_task(p, DEQUEUE_SAVE | DEQUEUE_MOVE, &ctx);
+
+		p->sched_class = new_class;
+		check_class_changing(task_rq(p), p, old_class);
+
+		sched_enq_and_set_task(&ctx);
+
+		check_class_changed(task_rq(p), p, old_class, p->prio);
+		scx_ops_exit_task(p);
+	}
+	scx_task_iter_stop(&sti);
+	percpu_up_write(&scx_fork_rwsem);
+
+	/* no task is on scx, turn off all the switches and flush in-progress calls */
+	static_branch_disable(&__scx_ops_enabled);
+	for (i = SCX_OPI_BEGIN; i < SCX_OPI_END; i++)
+		static_branch_disable(&scx_has_op[i]);
+===HIGHLIGHT===
+lines=1-2
+第 1 步：bypass
+ext 任务改走内核内置 FIFO
+不再调用任何 BPF 回调
+===HIGHLIGHT===
+lines=18-23
+此后人人能前进
+才敢拿睡眠锁
+===HIGHLIGHT===
+lines=44-48
+第 2 步：逐个任务
+按原来的 policy 算回 fair / rt / dl
+===HIGHLIGHT===
+lines=54-59
+出队、改 sched_class、重新入队
+现在它在 fair 的红黑树里了
+===HIGHLIGHT===
+lines=67-70
+第 3 步：关总开关
+pick_next_task 回到 fair 快路
+
+[narration]
+一旦判了失职，拆除分三步。第一步 bypass：所有 ext 任务改走内核内置的先进先出队列，不再调用任何 BPF 回调，保证人人都能往前跑。第二步拿锁，逐个任务按原来的策略算回 fair，出队、改类、重新入队。第三步关总开关。全程不重启，换人代码一行没改。
+
+---
+
+## 32 为什么先 bypass
+
+[visual: ascii title=为什么不直接改类，要先 bypass]
+ 直接改类　　　　　　　　　          先 bypass
+┌────────────────────────────┐   ┌────────────────────────────┐
+│ 要拿睡眠锁、fork 读写锁　　　　│   │ 只拿每核 rq 自旋锁　　　　　　 │
+│ 锁可能在饿着的任务手里　　     │   │ 不睡，不等任何人　　　　　     │
+│ 翻 static key 也要睡眠锁　   │   │ 每核只置一个 bypass 位　　    │
+│ 一半 fair 一半 ext　　　　　　│   │ 所有 ext 任务走内置 FIFO　　　│
+│ 坏策略一直工作到最后　　　     │   │ 混合态里人人能前进　　　　     │
+└────────────────────────────┘   └────────────────────────────┘
+               │　　　　　　　　　　　　　          │
+               ▼　　　　　　　　　　　　　          ▼
+   可能等一个永远不跑的人　　         持锁的人跑到放锁，拆得完
+
+[sidebar]
+活性，不是性能
+bypass：只拿自旋锁
+改类：要拿睡眠锁
+C8·错了不伤内核
+
+[narration]
+为什么不直接改类？不是为了性能，bypass 的先进先出比 fair 还不公平。是为了活性。改类要拿会睡的锁，而持锁的任务可能正被坏策略晾着，拆除线程就会去等一个永远排不上的人。bypass 只拿不睡的自旋锁，先让人人能跑，持锁的跑到放锁，才拆得完。
+
+---
+
+## 33 装载时也要先 bypass
+
+[visual: text title=装载时也先 bypass：决策者还没上岗]
+1 打开总开关：任务开始落进 ext 类
+2 逐个任务切到 ext，中间会睡
+3 关 bypass
+4 返回用户态，用户态调度循环这才启动
+
+[sidebar]
+用户态调度器
+决策者本身也要被调度
+它在等自己
+拆除、装载、挂起
+三处都先 bypass
+
+[narration]
+装载时也一样。用户态调度器里，做决定的是一个用户态进程，要等装载返回才开始干活。可总开关一打开，任务就开始排队了，连执行切换的线程自己也成了 ext 任务，它睡一下再醒，靠的正是自己还没启动的循环。所以只要决策者可能排不上 CPU，就让内核兜底。
+
+---
+
+## 34 反事实：可插拔的四种做法
+
+[visual: text title=反事实：可插拔为什么长成这样]
+A 编译期换整个调度器：plugsched
+B 决策放用户态：Google ghOSt
+C 只在 fair 里开几个钩子
+D 把 ext 排在 fair 之前
+
+[sidebar]
+A：没有兜底，被否决
+B：每次决策跨进程
+C：只能微调
+D：坏策略饿死系统任务
+C8·错了不伤内核
+
+[narration]
+换个做法行不行？编译期换整个调度器，错了就是内核崩，2007 年被否决。决策放用户态，Google 的 ghOSt 这么做，每次决策都要跨进程。只在 fair 里开几个钩子，只能微调。把 ext 排到 fair 前面，坏策略能饿死系统任务，包括看门狗。
+
+---
+
+## 35 三本账并列
+
+[visual: layers title=task_struct 里三本账并列]
+thread.sp：主线一只读它，决定换栈
+se：主线二只读它，fair 的账本
+scx：主线三只读它，ext 的账本
+三本账互不干扰：回退能成立的结构原因
+
+[narration]
+三条主线放在一起，各自只碰一本账：换人只读栈指针，fair 只读自己的账，ext 只读自己的账。三本账在 task struct 里并列，切到 ext 时，fair 的账从没删过。所以回退那一刻，改一个类指针，任务就能原样回到红黑树里。
+
+---
+
+## 36 本集总结
+
+[visual: html_slide image="pics/ep5-summary-card.png" title=源码里的三条主线]
+
+[step: auto]
+scroll auto
+
+[narration]
+这一集收成六句话。一，换人就是换一根内核栈。二，tick 只打标记，到安全点才换。三，fork 是伪造一帧。四，组调度没有新算法，同一段时间每层记一次账。五，sched_ext 挂在 fair 之后，本地队列挡掉大部分跨界。六，先 bypass 保前进，再逐个改回 fair。
+
+---
+
+## 37 下集预告
+
+[visual: spotlight title=下集预告]
+本集就到这里
+下集：换一套血统，Windows NT 怎么答三问
+
+[narration]
+本集就到这里。源码读到行号，很容易把 Linux 的做法当成唯一的做法。下一集，我们拿血统完全不同的 Windows NT 来照一照：它用 32 级优先级加临时提升，不记账；可换人那十几条汇编，却几乎一模一样。哪些差异是约束逼出来的？下集见。
+
+---

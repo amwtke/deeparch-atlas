@@ -1,0 +1,13 @@
+{
+  "people": [
+    {"name": "Linus Torvalds", "file": "pics/person-linus-torvalds.jpg", "source_url": "https://upload.wikimedia.org/wikipedia/commons/0/01/LinuxCon_Europe_Linus_Torvalds_03_%28cropped%29.jpg", "verified": true, "note": "复用上两部大电影已目检的 en.wikipedia 条目主图"},
+    {"name": "Ingo Molnar", "file": "pics/person-ingo-molnar.jpg", "source_url": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Ingo_molnar.jpg", "verified": true, "note": "en.wikipedia Ingo_Molnár 条目主图；目检胸牌写 Ingo Molnar / Red Hat / linuxsymposium"},
+    {"name": "Dave Cutler", "file": "pics/person-dave-cutler.jpg", "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/f2/DavidCutler_WindowsAzure.JPG", "verified": true, "note": "复用上一部大电影已目检的照片"}
+  ],
+  "text_only": [
+    {"name": "Con Kolivas", "reason": "无 Wikipedia 主图，Commons 与 facetime_search 均无结果；文字场景介绍"},
+    {"name": "Peter Zijlstra", "reason": "同上"},
+    {"name": "Tejun Heo", "reason": "同上"},
+    {"name": "David Vernet", "reason": "未检索到可确认本人的照片；旁白提及"}
+  ]
+}

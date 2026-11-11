@@ -1,0 +1,65 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 13.8
+ },
+ {
+  "idx": 2,
+  "type": "title",
+  "title": "Linux 进程调度器",
+  "start": 13.8,
+  "end": 33.23
+ },
+ {
+  "idx": 3,
+  "type": "spotlight",
+  "title": "2 三个问题，一条线",
+  "start": 33.23,
+  "end": 54.13
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "七集路线：从一颗 CPU 走到一套方法",
+  "start": 54.13,
+  "end": 86.37
+ },
+ {
+  "idx": 5,
+  "type": "ascii",
+  "title": "八条约束：后面每个设计都向它收敛",
+  "start": 86.37,
+  "end": 110.63
+ },
+ {
+  "idx": 6,
+  "type": "layers",
+  "title": "这些设计是谁做的",
+  "start": 110.63,
+  "end": 149.37
+ },
+ {
+  "idx": 7,
+  "type": "spotlight",
+  "title": "6 十一张图，一张不跳",
+  "start": 149.37,
+  "end": 170.0
+ },
+ {
+  "idx": 8,
+  "type": "html_slide",
+  "title": "七集路线图",
+  "start": 170.0,
+  "end": 201.7
+ },
+ {
+  "idx": 9,
+  "type": "title",
+  "title": "进入第 1 集",
+  "start": 201.7,
+  "end": 228.13
+ }
+]

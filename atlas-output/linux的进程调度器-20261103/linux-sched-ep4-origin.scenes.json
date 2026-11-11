@@ -1,0 +1,254 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 15.07
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Origin 阶段开场",
+  "start": 15.07,
+  "end": 31.43
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "33 年",
+  "start": 31.43,
+  "end": 52.77
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "33 年里的三个转折",
+  "start": 52.77,
+  "end": 75.0
+ },
+ {
+  "idx": 5,
+  "type": "html_slide",
+  "title": "Linux 调度器 33 年",
+  "start": 75.0,
+  "end": 97.8
+ },
+ {
+  "idx": 6,
+  "type": "facetime",
+  "title": "\"Linus Torvalds\"",
+  "start": 97.8,
+  "end": 117.47
+ },
+ {
+  "idx": 7,
+  "type": "code",
+  "title": "\"schedule() 的核心循环（Linux 0.01 kernel/sched.c）\"",
+  "start": 117.47,
+  "end": 141.53
+ },
+ {
+  "idx": 8,
+  "type": "code",
+  "title": "\"do_timer：时钟中断里只扣一格（Linux 0.01 kernel/sched.c）\"",
+  "start": 141.53,
+  "end": 161.4
+ },
+ {
+  "idx": 9,
+  "type": "ascii",
+  "title": "1991 的假设 vs 2001 的现实",
+  "start": 161.4,
+  "end": 178.9
+ },
+ {
+  "idx": 10,
+  "type": "facetime",
+  "title": "\"Ingo Molnar\"",
+  "start": 178.9,
+  "end": 197.6
+ },
+ {
+  "idx": 11,
+  "type": "layers",
+  "title": "O(1) 引入三样，活到今天的只有一样",
+  "start": 197.6,
+  "end": 221.5
+ },
+ {
+  "idx": 12,
+  "type": "text",
+  "title": "11 病根：猜",
+  "start": 221.5,
+  "end": 244.2
+ },
+ {
+  "idx": 13,
+  "type": "text",
+  "title": "12 墨尔本的麻醉医生",
+  "start": 244.2,
+  "end": 262.9
+ },
+ {
+  "idx": 14,
+  "type": "timeline",
+  "title": "Con Kolivas 的三次尝试",
+  "start": 262.9,
+  "end": 284.5
+ },
+ {
+  "idx": 15,
+  "type": "ascii",
+  "title": "当时摆在桌上的两条路，都走不通",
+  "start": 284.5,
+  "end": 304.87
+ },
+ {
+  "idx": 16,
+  "type": "spotlight",
+  "title": "15 62 小时",
+  "start": 304.87,
+  "end": 324.77
+ },
+ {
+  "idx": 17,
+  "type": "ascii",
+  "title": "实时要数组，公平要树：调度类把它们拆开",
+  "start": 324.77,
+  "end": 347.9
+ },
+ {
+  "idx": 18,
+  "type": "text",
+  "title": "17 Con 走了",
+  "start": 347.9,
+  "end": 369.43
+ },
+ {
+  "idx": 19,
+  "type": "spotlight",
+  "title": "18 赢的不是算法",
+  "start": 369.43,
+  "end": 388.33
+ },
+ {
+  "idx": 20,
+  "type": "text",
+  "title": "19 CFS 也开始猜",
+  "start": 388.33,
+  "end": 407.6
+ },
+ {
+  "idx": 21,
+  "type": "text",
+  "title": "20 Peter 的一句话",
+  "start": 407.6,
+  "end": 426.1
+ },
+ {
+  "idx": 22,
+  "type": "ascii",
+  "title": "EEVDF 在账本上加的三样",
+  "start": 426.1,
+  "end": 447.77
+ },
+ {
+  "idx": 23,
+  "type": "timeline",
+  "title": "EEVDF 进主线",
+  "start": 447.77,
+  "end": 467.33
+ },
+ {
+  "idx": 24,
+  "type": "ascii",
+  "title": "虚拟期限 2009 年就在树外，主线为什么 2023 才用",
+  "start": 467.33,
+  "end": 490.8
+ },
+ {
+  "idx": 25,
+  "type": "text",
+  "title": "24 2007 年为什么不行",
+  "start": 490.8,
+  "end": 514.6
+ },
+ {
+  "idx": 26,
+  "type": "text",
+  "title": "25 Tejun Heo 和 David Vernet",
+  "start": 514.6,
+  "end": 538.23
+ },
+ {
+  "idx": 27,
+  "type": "timeline",
+  "title": "sched_ext 进主线",
+  "start": 538.23,
+  "end": 559.4
+ },
+ {
+  "idx": 28,
+  "type": "ascii",
+  "title": "2007 否决 vs 2024 合入",
+  "start": 559.4,
+  "end": 582.0
+ },
+ {
+  "idx": 29,
+  "type": "layers",
+  "title": "能踢、能退的四个前提，2004 年一样没有",
+  "start": 582.0,
+  "end": 605.43
+ },
+ {
+  "idx": 30,
+  "type": "text",
+  "title": "29 两个真在用的",
+  "start": 605.43,
+  "end": 629.83
+ },
+ {
+  "idx": 31,
+  "type": "layers",
+  "title": "主线旁的三条支线",
+  "start": 629.83,
+  "end": 655.63
+ },
+ {
+  "idx": 32,
+  "type": "ascii",
+  "title": "没有一代是免费的",
+  "start": 655.63,
+  "end": 678.5
+ },
+ {
+  "idx": 33,
+  "type": "statemap",
+  "title": "约束一条条变硬",
+  "start": 678.5,
+  "end": 698.3
+ },
+ {
+  "idx": 34,
+  "type": "spotlight",
+  "title": "33 换代的公式",
+  "start": 698.3,
+  "end": 717.13
+ },
+ {
+  "idx": 35,
+  "type": "html_slide",
+  "title": "33 年，五个人",
+  "start": 717.13,
+  "end": 738.2
+ },
+ {
+  "idx": 36,
+  "type": "spotlight",
+  "title": "35 下集预告",
+  "start": 738.2,
+  "end": 759.53
+ }
+]

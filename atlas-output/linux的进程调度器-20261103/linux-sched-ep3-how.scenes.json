@@ -1,0 +1,275 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 14.13
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 How 阶段开场过场",
+  "start": 14.13,
+  "end": 32.83
+ },
+ {
+  "idx": 3,
+  "type": "layers",
+  "title": "六条约束落地后，只剩三件事",
+  "start": 32.83,
+  "end": 54.6
+ },
+ {
+  "idx": 4,
+  "type": "html_slide",
+  "title": "站在核 1 上看：三扇门进来，顺着链问，换人出去",
+  "start": 54.6,
+  "end": 79.3
+ },
+ {
+  "idx": 5,
+  "type": "spotlight",
+  "title": "4 问题一：谁先上",
+  "start": 79.3,
+  "end": 94.63
+ },
+ {
+  "idx": 6,
+  "type": "text",
+  "title": "vruntime：按权重折算后的已用时间",
+  "start": 94.63,
+  "end": 116.97
+ },
+ {
+  "idx": 7,
+  "type": "code",
+  "title": "\"calc_delta_fair：账本折算的入口（Linux 6.12 kernel/sched/fair.c）\"",
+  "start": 116.97,
+  "end": 137.63
+ },
+ {
+  "idx": 8,
+  "type": "timeline",
+  "title": "核 1 上 cc1 和 chrome 的一秒（都是 nice 0）",
+  "start": 137.63,
+  "end": 161.1
+ },
+ {
+  "idx": 9,
+  "type": "ascii",
+  "title": "睡了 10 秒的 chrome 醒来：两种记账",
+  "start": 161.1,
+  "end": 183.1
+ },
+ {
+  "idx": 10,
+  "type": "ascii",
+  "title": "选人要的三种操作：取最小、插入、删除",
+  "start": 183.1,
+  "end": 205.63
+ },
+ {
+  "idx": 11,
+  "type": "ascii",
+  "title": "EEVDF：先看有没有资格，再看谁的期限最早",
+  "start": 205.63,
+  "end": 231.07
+ },
+ {
+  "idx": 12,
+  "type": "code",
+  "title": "\"update_deadline：用完一片就续期并要求换人（Linux 6.12 kernel/sched/fair.c",
+  "start": 231.07,
+  "end": 254.73
+ },
+ {
+  "idx": 13,
+  "type": "spotlight",
+  "title": "12 问题二：跑多久",
+  "start": 254.73,
+  "end": 271.73
+ },
+ {
+  "idx": 14,
+  "type": "ascii",
+  "title": "三扇门进来，汇到同一个出口",
+  "start": 271.73,
+  "end": 295.87
+ },
+ {
+  "idx": 15,
+  "type": "ascii",
+  "title": "到点被换 vs 被人抢：两条路径",
+  "start": 295.87,
+  "end": 319.3
+ },
+ {
+  "idx": 16,
+  "type": "timeline",
+  "title": "__schedule() 的骨架（Linux 6.12 kernel/sched/core.c）",
+  "start": 319.3,
+  "end": 340.37
+ },
+ {
+  "idx": 17,
+  "type": "spotlight",
+  "title": "16 悬念一揭晓",
+  "start": 340.37,
+  "end": 355.87
+ },
+ {
+  "idx": 18,
+  "type": "html_slide",
+  "title": "调度器没有自己的进程",
+  "start": 355.87,
+  "end": 380.27
+ },
+ {
+  "idx": 19,
+  "type": "code",
+  "title": "\"__switch_to_asm：换栈即换人（Linux 6.12 arch/x86/entry/entry_64.S）",
+  "start": 380.27,
+  "end": 408.0
+ },
+ {
+  "idx": 20,
+  "type": "ascii",
+  "title": "如果调度器是一个独立的进程",
+  "start": 408.0,
+  "end": 431.53
+ },
+ {
+  "idx": 21,
+  "type": "statemap",
+  "title": "fork 出来的新任务第一次上核",
+  "start": 431.53,
+  "end": 455.73
+ },
+ {
+  "idx": 22,
+  "type": "timeline",
+  "title": "chrome 渲染线程：从显卡中断到第一条用户态指令",
+  "start": 455.73,
+  "end": 479.7
+ },
+ {
+  "idx": 23,
+  "type": "layers",
+  "title": "调度类链：从高到低问，谁先答有谁上",
+  "start": 479.7,
+  "end": 505.07
+ },
+ {
+  "idx": 24,
+  "type": "code",
+  "title": "\"__pick_next_task：顺着调度类链问（Linux 6.12 kernel/sched/core.c）\"",
+  "start": 505.07,
+  "end": 532.23
+ },
+ {
+  "idx": 25,
+  "type": "spotlight",
+  "title": "24 问题三：放哪个核",
+  "start": 532.23,
+  "end": 552.27
+ },
+ {
+  "idx": 26,
+  "type": "ascii",
+  "title": "select_task_rq_fair：唤醒时选核的骨架",
+  "start": 552.27,
+  "end": 572.9
+ },
+ {
+  "idx": 27,
+  "type": "ascii",
+  "title": "核 2 空了，从核 0 拉一个",
+  "start": 572.9,
+  "end": 596.87
+ },
+ {
+  "idx": 28,
+  "type": "layers",
+  "title": "调度域：一台 2 路 x 32 核 x 2 超线程的服务器",
+  "start": 596.87,
+  "end": 621.93
+ },
+ {
+  "idx": 29,
+  "type": "spotlight",
+  "title": "28 悬念四：线程多的赢",
+  "start": 621.93,
+  "end": 647.2
+ },
+ {
+  "idx": 30,
+  "type": "html_slide",
+  "title": "cgroup 组调度：账从一本变一棵树",
+  "start": 647.2,
+  "end": 674.6
+ },
+ {
+  "idx": 31,
+  "type": "ascii",
+  "title": "cgroup v2 的两个旋钮",
+  "start": 674.6,
+  "end": 700.4
+ },
+ {
+  "idx": 32,
+  "type": "text",
+  "title": "追加约束 C8 一算法不配万场景",
+  "start": 700.4,
+  "end": 723.03
+ },
+ {
+  "idx": 33,
+  "type": "layers",
+  "title": "struct sched_ext_ops：内核留的插口",
+  "start": 723.03,
+  "end": 749.2
+ },
+ {
+  "idx": 34,
+  "type": "code",
+  "title": "\"scx_simple：入队与派发（Linux 6.12 tools/sched_ext/scx_simple.bpf.",
+  "start": 749.2,
+  "end": 775.27
+ },
+ {
+  "idx": 35,
+  "type": "ascii",
+  "title": "交出答题权，靠三道兜底",
+  "start": 775.27,
+  "end": 799.9
+ },
+ {
+  "idx": 36,
+  "type": "ascii",
+  "title": "朴素方案 vs Linux 6.12",
+  "start": 799.9,
+  "end": 814.73
+ },
+ {
+  "idx": 37,
+  "type": "text",
+  "title": "三个常见误解",
+  "start": 814.73,
+  "end": 844.1
+ },
+ {
+  "idx": 38,
+  "type": "html_slide",
+  "title": "How 阶段总结",
+  "start": 844.1,
+  "end": 870.77
+ },
+ {
+  "idx": 39,
+  "type": "spotlight",
+  "title": "38 下集预告",
+  "start": 870.77,
+  "end": 896.47
+ }
+]

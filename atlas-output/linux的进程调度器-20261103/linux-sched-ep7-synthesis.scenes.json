@@ -1,0 +1,254 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 13.77
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Synthesis 阶段开场",
+  "start": 13.77,
+  "end": 32.5
+ },
+ {
+  "idx": 3,
+  "type": "layers",
+  "title": "整部片压成三件事",
+  "start": 32.5,
+  "end": 54.33
+ },
+ {
+  "idx": 4,
+  "type": "html_slide",
+  "title": "问题固定，约束逼出决策",
+  "start": 54.33,
+  "end": 71.43
+ },
+ {
+  "idx": 5,
+  "type": "ascii",
+  "title": "调度器没有自己的进程",
+  "start": 71.43,
+  "end": 92.57
+ },
+ {
+  "idx": 6,
+  "type": "ascii",
+  "title": "从朴素机器出发，撞八次墙",
+  "start": 92.57,
+  "end": 113.63
+ },
+ {
+  "idx": 7,
+  "type": "timeline",
+  "title": "凭账不凭嘴：一颗核上的 cc1 和渲染线程（示意）",
+  "start": 113.63,
+  "end": 134.1
+ },
+ {
+  "idx": 8,
+  "type": "code",
+  "title": "\"nice 只改权重：sched_prio_to_weight（Linux 6.12 kernel/sched/core",
+  "start": 134.1,
+  "end": 154.87
+ },
+ {
+  "idx": 9,
+  "type": "ascii",
+  "title": "份额不等于时限",
+  "start": 154.87,
+  "end": 174.57
+ },
+ {
+  "idx": 10,
+  "type": "layers",
+  "title": "调度类链：从上往下问「你有人要上吗」",
+  "start": 174.57,
+  "end": 196.27
+ },
+ {
+  "idx": 11,
+  "type": "ascii",
+  "title": "三问今天的答案：一页速览",
+  "start": 196.27,
+  "end": 218.53
+ },
+ {
+  "idx": 12,
+  "type": "statemap",
+  "title": "到点只打标记，到安全点才换",
+  "start": 218.53,
+  "end": 239.17
+ },
+ {
+  "idx": 13,
+  "type": "code",
+  "title": "\"换人只换一根栈：__switch_to_asm（Linux 6.12 arch/x86/entry/entry_64.",
+  "start": 239.17,
+  "end": 262.83
+ },
+ {
+  "idx": 14,
+  "type": "ascii",
+  "title": "新进程：一根伪造的栈",
+  "start": 262.83,
+  "end": 283.67
+ },
+ {
+  "idx": 15,
+  "type": "ascii",
+  "title": "cgroup：账变成树套树",
+  "start": 283.67,
+  "end": 304.6
+ },
+ {
+  "idx": 16,
+  "type": "layers",
+  "title": "cgroup 的两个旋钮",
+  "start": 304.6,
+  "end": 325.87
+ },
+ {
+  "idx": 17,
+  "type": "ascii",
+  "title": "可插拔：同一个问题，二十年两个答案",
+  "start": 325.87,
+  "end": 349.13
+ },
+ {
+  "idx": 18,
+  "type": "spotlight",
+  "title": "17 可插拔的前提",
+  "start": 349.13,
+  "end": 371.03
+ },
+ {
+  "idx": 19,
+  "type": "timeline",
+  "title": "上一代的代价，是下一代的理由",
+  "start": 371.03,
+  "end": 392.47
+ },
+ {
+  "idx": 20,
+  "type": "text",
+  "title": "19 推着它换代的力",
+  "start": 392.47,
+  "end": 415.17
+ },
+ {
+  "idx": 21,
+  "type": "ascii",
+  "title": "决策表 14 行，挑 6 行看",
+  "start": 415.17,
+  "end": 439.17
+ },
+ {
+  "idx": 22,
+  "type": "ascii",
+  "title": "读表：策略换了又换，机制三十年没动",
+  "start": 439.17,
+  "end": 460.9
+ },
+ {
+  "idx": 23,
+  "type": "ascii",
+  "title": "局部最优：每次拿掉一条约束",
+  "start": 460.9,
+  "end": 484.03
+ },
+ {
+  "idx": 24,
+  "type": "layers",
+  "title": "同构系统：同一个骨架，同一把钥匙",
+  "start": 484.03,
+  "end": 507.87
+ },
+ {
+  "idx": 25,
+  "type": "layers",
+  "title": "五步法：把方法带走",
+  "start": 507.87,
+  "end": 528.0
+ },
+ {
+  "idx": 26,
+  "type": "ascii",
+  "title": "第一步：Kubernetes 调度器面对的约束",
+  "start": 528.0,
+  "end": 551.7
+ },
+ {
+  "idx": 27,
+  "type": "ascii",
+  "title": "约束一换，三问的轻重就变",
+  "start": 551.7,
+  "end": 574.5
+ },
+ {
+  "idx": 28,
+  "type": "layers",
+  "title": "第二、三步：决策和代价",
+  "start": 574.5,
+  "end": 593.43
+ },
+ {
+  "idx": 29,
+  "type": "spotlight",
+  "title": "28 Kubernetes 凭嘴",
+  "start": 593.43,
+  "end": 614.07
+ },
+ {
+  "idx": 30,
+  "type": "ascii",
+  "title": "一个决定可以多贵，取决于它管多久",
+  "start": 614.07,
+  "end": 634.63
+ },
+ {
+  "idx": 31,
+  "type": "ascii",
+  "title": "可插拔要配多重的保险",
+  "start": 634.63,
+  "end": 656.53
+ },
+ {
+  "idx": 32,
+  "type": "ascii",
+  "title": "第四步：对账的频率由搬家的成本决定",
+  "start": 656.53,
+  "end": 677.07
+ },
+ {
+  "idx": 33,
+  "type": "layers",
+  "title": "第五步之后：从调度器带走的三句话",
+  "start": 677.07,
+  "end": 700.4
+ },
+ {
+  "idx": 34,
+  "type": "ascii",
+  "title": "八条约束，每条都有落点",
+  "start": 700.4,
+  "end": 720.8
+ },
+ {
+  "idx": 35,
+  "type": "html_slide",
+  "title": "七集收束",
+  "start": 720.8,
+  "end": 736.9
+ },
+ {
+  "idx": 36,
+  "type": "title",
+  "title": "调度器在替系统",
+  "start": 736.9,
+  "end": 762.73
+ }
+]

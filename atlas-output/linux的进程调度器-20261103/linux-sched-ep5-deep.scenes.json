@@ -1,0 +1,268 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 13.1
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Deep 阶段开场",
+  "start": 13.1,
+  "end": 32.8
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "一次换人",
+  "start": 32.8,
+  "end": 48.43
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "三条主线，三件事",
+  "start": 48.43,
+  "end": 69.3
+ },
+ {
+  "idx": 5,
+  "type": "html_slide",
+  "title": "三条主线，同一个入口",
+  "start": 69.3,
+  "end": 94.67
+ },
+ {
+  "idx": 6,
+  "type": "spotlight",
+  "title": "主线一",
+  "start": 94.67,
+  "end": 111.2
+ },
+ {
+  "idx": 7,
+  "type": "text",
+  "title": "用户态只看得到换人的账（演示实验设计）",
+  "start": 111.2,
+  "end": 129.8
+ },
+ {
+  "idx": 8,
+  "type": "code",
+  "title": "\"update_curr：记账，然后只置标志（Linux 6.12 kernel/sched/fair.c）\"",
+  "start": 129.8,
+  "end": 151.17
+ },
+ {
+  "idx": 9,
+  "type": "code",
+  "title": "\"update_deadline：EEVDF 的那条公式（Linux 6.12 kernel/sched/fair.c）",
+  "start": 151.17,
+  "end": 173.4
+ },
+ {
+  "idx": 10,
+  "type": "ascii",
+  "title": "已经知道该换了，为什么不在中断里当场换",
+  "start": 173.4,
+  "end": 193.6
+ },
+ {
+  "idx": 11,
+  "type": "code",
+  "title": "\"exit_to_user_mode_loop：回用户态前的出口检查点（Linux 6.12 kernel/entry/",
+  "start": 193.6,
+  "end": 214.1
+ },
+ {
+  "idx": 12,
+  "type": "text",
+  "title": "三个安全换人点",
+  "start": 214.1,
+  "end": 235.0
+ },
+ {
+  "idx": 13,
+  "type": "code",
+  "title": "\"__pick_next_task：fair 快路与类链慢路（Linux 6.12 kernel/sched/core.",
+  "start": 235.0,
+  "end": 256.4
+ },
+ {
+  "idx": 14,
+  "type": "code",
+  "title": "\"context_switch：换页表根、换栈、收尾（Linux 6.12 kernel/sched/core.c）\"",
+  "start": 256.4,
+  "end": 278.1
+ },
+ {
+  "idx": 15,
+  "type": "code",
+  "title": "\"__switch_to_asm：两条 movq 之间换了一个人（Linux 6.12 arch/x86/entry/e",
+  "start": 278.1,
+  "end": 298.13
+ },
+ {
+  "idx": 16,
+  "type": "html_slide",
+  "title": "switch_to 的魔法：两根栈，一条 movq",
+  "start": 298.13,
+  "end": 318.9
+ },
+ {
+  "idx": 17,
+  "type": "spotlight",
+  "title": "进程在 CPU 眼里",
+  "start": 318.9,
+  "end": 337.97
+ },
+ {
+  "idx": 18,
+  "type": "ascii",
+  "title": "换人时，寄存器各去了哪",
+  "start": 337.97,
+  "end": 364.17
+ },
+ {
+  "idx": 19,
+  "type": "timeline",
+  "title": "C 把 CPU 让给 A：信使是 rax",
+  "start": 364.17,
+  "end": 387.97
+ },
+ {
+  "idx": 20,
+  "type": "code",
+  "title": "\"copy_thread：给子进程伪造一帧（Linux 6.12 arch/x86/kernel/process.c）\"",
+  "start": 387.97,
+  "end": 407.47
+ },
+ {
+  "idx": 21,
+  "type": "timeline",
+  "title": "子进程第一次被选中",
+  "start": 407.47,
+  "end": 427.07
+ },
+ {
+  "idx": 22,
+  "type": "ascii",
+  "title": "两个执行流不互相踩：栈和页表至少一样不同",
+  "start": 427.07,
+  "end": 449.2
+ },
+ {
+  "idx": 23,
+  "type": "text",
+  "title": "反事实：换人为什么是换内核栈",
+  "start": 449.2,
+  "end": 470.83
+ },
+ {
+  "idx": 24,
+  "type": "ascii",
+  "title": "主线二：cgroup 就是一棵目录树（演示实验设计）",
+  "start": 470.83,
+  "end": 494.63
+ },
+ {
+  "idx": 25,
+  "type": "code",
+  "title": "\"pick_task_fair：从根往下，每层一次 EEVDF（Linux 6.12 kernel/sched/fair",
+  "start": 494.63,
+  "end": 516.03
+ },
+ {
+  "idx": 26,
+  "type": "text",
+  "title": "上行记账：同一段时间，每层各记一次",
+  "start": 516.03,
+  "end": 537.67
+ },
+ {
+  "idx": 27,
+  "type": "code",
+  "title": "\"__account_cfs_rq_runtime：本地额度扣光就去领（Linux 6.12 kernel/sched/",
+  "start": 537.67,
+  "end": 559.87
+ },
+ {
+  "idx": 28,
+  "type": "code",
+  "title": "\"SCHED_DATA：调度类的顺序是内存地址（Linux 6.12 include/asm-generic/vmlin",
+  "start": 559.87,
+  "end": 582.63
+ },
+ {
+  "idx": 29,
+  "type": "code",
+  "title": "\"scx_simple：三问三个回调（Linux 6.12 tools/sched_ext/scx_simple.bpf",
+  "start": 582.63,
+  "end": 605.8
+ },
+ {
+  "idx": 30,
+  "type": "code",
+  "title": "\"balance_one：三道闸都空，才跨边界（Linux 6.12 kernel/sched/ext.c）\"",
+  "start": 605.8,
+  "end": 627.9
+ },
+ {
+  "idx": 31,
+  "type": "code",
+  "title": "\"scx_watchdog_workfn 与 scx_tick：两层看门狗（Linux 6.12 kernel/sche",
+  "start": 627.9,
+  "end": 649.5
+ },
+ {
+  "idx": 32,
+  "type": "code",
+  "title": "\"scx_ops_disable_workfn：先保前进，再逐个改回（Linux 6.12 kernel/sched/e",
+  "start": 649.5,
+  "end": 672.93
+ },
+ {
+  "idx": 33,
+  "type": "ascii",
+  "title": "为什么不直接改类，要先 bypass",
+  "start": 672.93,
+  "end": 694.57
+ },
+ {
+  "idx": 34,
+  "type": "text",
+  "title": "装载时也先 bypass：决策者还没上岗",
+  "start": 694.57,
+  "end": 716.83
+ },
+ {
+  "idx": 35,
+  "type": "text",
+  "title": "反事实：可插拔为什么长成这样",
+  "start": 716.83,
+  "end": 738.23
+ },
+ {
+  "idx": 36,
+  "type": "layers",
+  "title": "task_struct 里三本账并列",
+  "start": 738.23,
+  "end": 758.27
+ },
+ {
+  "idx": 37,
+  "type": "html_slide",
+  "title": "源码里的三条主线",
+  "start": 758.27,
+  "end": 783.9
+ },
+ {
+  "idx": 38,
+  "type": "spotlight",
+  "title": "下集预告",
+  "start": 783.9,
+  "end": 809.23
+ }
+]

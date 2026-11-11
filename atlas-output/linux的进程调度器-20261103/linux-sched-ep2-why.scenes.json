@@ -1,0 +1,233 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 11.8
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Why 阶段开场",
+  "start": 11.8,
+  "end": 36.37
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "一颗核",
+  "start": 36.37,
+  "end": 61.97
+ },
+ {
+  "idx": 4,
+  "type": "layers",
+  "title": "六刀六条约束，一刀一条",
+  "start": 61.97,
+  "end": 85.77
+ },
+ {
+  "idx": 5,
+  "type": "html_slide",
+  "title": "六刀长出一个调度器：痛、补、约束",
+  "start": 85.77,
+  "end": 111.8
+ },
+ {
+  "idx": 6,
+  "type": "text",
+  "title": "第一刀：核要等的东西，慢了几个数量级",
+  "start": 111.8,
+  "end": 136.67
+ },
+ {
+  "idx": 7,
+  "type": "statemap",
+  "title": "任务第一次有了三种状态",
+  "start": 136.67,
+  "end": 156.1
+ },
+ {
+  "idx": 8,
+  "type": "spotlight",
+  "title": "C1 CPU快IO慢",
+  "start": 156.1,
+  "end": 176.3
+ },
+ {
+  "idx": 9,
+  "type": "text",
+  "title": "第二刀：cc1 不读盘，ls 永远上不了核",
+  "start": 176.3,
+  "end": 202.93
+ },
+ {
+  "idx": 10,
+  "type": "ascii",
+  "title": "协作式 vs 抢占式：谁决定换人",
+  "start": 202.93,
+  "end": 232.3
+ },
+ {
+  "idx": 11,
+  "type": "timeline",
+  "title": "轮流每人 10 ms：Chrome 一帧要等多久",
+  "start": 232.3,
+  "end": 259.7
+ },
+ {
+  "idx": 12,
+  "type": "ascii",
+  "title": "同样一秒，cc1 和 Chrome 各拿到多少 CPU",
+  "start": 259.7,
+  "end": 286.63
+ },
+ {
+  "idx": 13,
+  "type": "text",
+  "title": "补：给每个任务记一本账，谁用得最少谁先上",
+  "start": 286.63,
+  "end": 312.0
+ },
+ {
+  "idx": 14,
+  "type": "spotlight",
+  "title": "C3 凭账不凭嘴",
+  "start": 312.0,
+  "end": 335.4
+ },
+ {
+  "idx": 15,
+  "type": "text",
+  "title": "nice 和实时优先级，不违反 C3",
+  "start": 335.4,
+  "end": 364.0
+ },
+ {
+  "idx": 16,
+  "type": "code",
+  "title": "\"nice 权重表（Linux 6.12 kernel/sched/core.c）\"",
+  "start": 364.0,
+  "end": 394.97
+ },
+ {
+  "idx": 17,
+  "type": "code",
+  "title": "\"实时任务的预算（Linux 6.12 kernel/sched/rt.c）\"",
+  "start": 394.97,
+  "end": 417.67
+ },
+ {
+  "idx": 18,
+  "type": "text",
+  "title": "第四刀之一：换人不是免费的",
+  "start": 417.67,
+  "end": 445.67
+ },
+ {
+  "idx": 19,
+  "type": "ascii",
+  "title": "选人：扫全表 vs 看队头",
+  "start": 445.67,
+  "end": 474.13
+ },
+ {
+  "idx": 20,
+  "type": "layers",
+  "title": "第四刀的补：两张面孔两个办法",
+  "start": 474.13,
+  "end": 500.83
+ },
+ {
+  "idx": 21,
+  "type": "text",
+  "title": "第五刀：核与核之间没有共用的桌面",
+  "start": 500.83,
+  "end": 527.33
+ },
+ {
+  "idx": 22,
+  "type": "ascii",
+  "title": "全局一条队列 vs 每核一条队列",
+  "start": 527.33,
+  "end": 556.3
+ },
+ {
+  "idx": 23,
+  "type": "spotlight",
+  "title": "C5 核间不通气",
+  "start": 556.3,
+  "end": 579.8
+ },
+ {
+  "idx": 24,
+  "type": "timeline",
+  "title": "播放线程：份额一点没少，期限全错过",
+  "start": 579.8,
+  "end": 607.13
+ },
+ {
+  "idx": 25,
+  "type": "layers",
+  "title": "调度类分家：先问期限，再谈公平",
+  "start": 607.13,
+  "end": 629.37
+ },
+ {
+  "idx": 26,
+  "type": "text",
+  "title": "六刀六条：C1 ~ C6",
+  "start": 629.37,
+  "end": 655.4
+ },
+ {
+  "idx": 27,
+  "type": "ascii",
+  "title": "C4 一半软、一半硬",
+  "start": 655.4,
+  "end": 679.17
+ },
+ {
+  "idx": 28,
+  "type": "text",
+  "title": "哪条在变软，哪条在变硬",
+  "start": 679.17,
+  "end": 707.27
+ },
+ {
+  "idx": 29,
+  "type": "spotlight",
+  "title": "六刀压成两句话",
+  "start": 707.27,
+  "end": 732.9
+ },
+ {
+  "idx": 30,
+  "type": "ascii",
+  "title": "记账 和 少同步，各化解哪几条",
+  "start": 732.9,
+  "end": 756.63
+ },
+ {
+  "idx": 31,
+  "type": "text",
+  "title": "看起来像约束，其实不是",
+  "start": 756.63,
+  "end": 784.57
+ },
+ {
+  "idx": 32,
+  "type": "html_slide",
+  "title": "六刀长出一个调度器",
+  "start": 784.57,
+  "end": 808.53
+ },
+ {
+  "idx": 33,
+  "type": "spotlight",
+  "title": "32 下集预告",
+  "start": 808.53,
+  "end": 838.87
+ }
+]

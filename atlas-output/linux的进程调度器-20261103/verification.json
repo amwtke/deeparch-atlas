@@ -1,0 +1,211 @@
+{
+  "topic": "Linux 进程调度器",
+  "source_md": "linux的进程调度器-atlas.md",
+  "source_md_sha256": "dbc10215d7d485d6f2ee96be7f4281dde564f74f415b37066f839cf89bc9b7e8",
+  "kernel": "Linux v6.12 (jsDelivr gh/torvalds/linux@v6.12, 副本在 video-notes/src/)",
+  "theme": "anthropic",
+  "total_minutes": 93.2,
+  "all_pass": true,
+  "episodes": [
+    {
+      "file": "linux-sched-ep0-toc.mp4",
+      "render_rc": 0,
+      "vmd_sha256": "3f5a584e3f27e4f5399e8b3c6bc2e00632911e545a056ca1205c70ffc98d13e0",
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "srt_present": true,
+        "scenes_sidecar": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "duration_seconds": 228.13,
+      "bytes": 15208079,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "mp4_sha256": "10d099ac1540ecfd84bd72bd4509e39a136d04b8623df220e3e8f1a93259250c",
+      "status": "PASS",
+      "vmd_scenes": 8
+    },
+    {
+      "file": "linux-sched-ep1-what.mp4",
+      "render_rc": 0,
+      "vmd_sha256": "5f97ff5d2f652bae5cfaf427354cc58500f53f18655eb916021b33587491b480",
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "srt_present": true,
+        "scenes_sidecar": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "duration_seconds": 632.27,
+      "bytes": 39652759,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "mp4_sha256": "2ff53d48d7fabafc66fb32339ecdfbf1dd2fb4f4c238d00d6b044167612776dd",
+      "status": "PASS",
+      "vmd_scenes": 29
+    },
+    {
+      "file": "linux-sched-ep2-why.mp4",
+      "render_rc": 0,
+      "vmd_sha256": "2ebb1a7ad12709c1e2801c2d2b6498e24d448eafcc2c6ea11a27ccdf94fed7fb",
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "srt_present": true,
+        "scenes_sidecar": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "duration_seconds": 838.87,
+      "bytes": 51206598,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "mp4_sha256": "6cb841f94b288b3c7f222d19005c30b4c77689f542dd3a501fb7d21ae6d513ab",
+      "status": "PASS",
+      "vmd_scenes": 32
+    },
+    {
+      "file": "linux-sched-ep3-how.mp4",
+      "render_rc": 0,
+      "vmd_sha256": "d6ced1ff9418ff9cfe70019421f9e4545ae90cadb97536eed81304651650b181",
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "srt_present": true,
+        "scenes_sidecar": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "duration_seconds": 896.47,
+      "bytes": 57022149,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "mp4_sha256": "4a2307bc7aea2db7ca2095b71641a2d1d32f3cc3711785b7f62b8429c1d7193d",
+      "status": "PASS",
+      "vmd_scenes": 38
+    },
+    {
+      "file": "linux-sched-ep4-origin.mp4",
+      "render_rc": 0,
+      "vmd_sha256": "a9a3f6c71d5703a06b601bec2b7c6fd60e02a01f71206fede4c26d0fe4679ad8",
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "srt_present": true,
+        "scenes_sidecar": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "duration_seconds": 759.53,
+      "bytes": 47636773,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "mp4_sha256": "54e6ff6ba4d05528a5e9cba51ed0f45f9b67e20359b0d7095ca7841806724c36",
+      "status": "PASS",
+      "vmd_scenes": 35
+    },
+    {
+      "file": "linux-sched-ep5-deep.mp4",
+      "render_rc": 0,
+      "vmd_sha256": "7c92c44505c5ce07eb4c3a3cd4846bf3e7ab2386ce2ffc95bcc4a52b803700eb",
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "srt_present": true,
+        "scenes_sidecar": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "duration_seconds": 809.23,
+      "bytes": 64945635,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "mp4_sha256": "a4e783628684ae07ee281dbd16994d539c179877297dbadcc4390189f9e40c69",
+      "status": "PASS",
+      "vmd_scenes": 37
+    },
+    {
+      "file": "linux-sched-ep6-comparison.mp4",
+      "render_rc": 0,
+      "vmd_sha256": "94655da4d6d65eaa788217e4dee6c6193476593a2f65d92f9e43c666af320c9f",
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "srt_present": true,
+        "scenes_sidecar": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "duration_seconds": 664.97,
+      "bytes": 43582047,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "mp4_sha256": "5847fce8b4e9c0060e9a858a23942f70e17f4a29c0747a1bcb04160590a963eb",
+      "status": "PASS",
+      "vmd_scenes": 33
+    },
+    {
+      "file": "linux-sched-ep7-synthesis.mp4",
+      "render_rc": 0,
+      "vmd_sha256": "83fb4c67c642c9f2fb741498c1457720ec43313bdb2b351cb54d8791c562a5f9",
+      "checks": {
+        "resolution_1920x1080": true,
+        "audio_covers_video": true,
+        "srt_present": true,
+        "scenes_sidecar": true,
+        "full_decode": true,
+        "renderer_self_checks": true,
+        "vmd_unchanged_during_render": true
+      },
+      "duration_seconds": 762.73,
+      "bytes": 52348846,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "video": "h264",
+      "audio": "aac",
+      "mp4_sha256": "c6b5a0289bd430e0ca1a854c4814880ab679e1d8e27bbf46c19ba4828b04175e",
+      "status": "PASS",
+      "vmd_scenes": 35
+    }
+  ]
+}

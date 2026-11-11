@@ -1,0 +1,240 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 14.0
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 Comparison 阶段开场",
+  "start": 14.0,
+  "end": 30.43
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "同一个按键",
+  "start": 30.43,
+  "end": 49.2
+ },
+ {
+  "idx": 4,
+  "type": "html_slide",
+  "title": "Linux 6.12 与 Windows NT 四层对照",
+  "start": 49.2,
+  "end": 69.07
+ },
+ {
+  "idx": 5,
+  "type": "facetime",
+  "title": "\"Dave Cutler\"",
+  "start": 69.07,
+  "end": 84.8
+ },
+ {
+  "idx": 6,
+  "type": "text",
+  "title": "NT 调度器的出发点：此刻发生的事，说明谁更急",
+  "start": 84.8,
+  "end": 104.7
+ },
+ {
+  "idx": 7,
+  "type": "layers",
+  "title": "两套内核对照：三件事",
+  "start": 104.7,
+  "end": 122.97
+ },
+ {
+  "idx": 8,
+  "type": "spotlight",
+  "title": "7 对照一：谁先上",
+  "start": 122.97,
+  "end": 132.4
+ },
+ {
+  "idx": 9,
+  "type": "ascii",
+  "title": "就绪队列：一棵树，对 32 条链表",
+  "start": 132.4,
+  "end": 152.53
+ },
+ {
+  "idx": 10,
+  "type": "code",
+  "title": "\"Windows 选人：位图找最高非空等级（ReactOS ke_x.h 示意，非微软源码）\"",
+  "start": 152.53,
+  "end": 174.9
+ },
+ {
+  "idx": 11,
+  "type": "ascii",
+  "title": "动态提升：事件来了，临时抬等级",
+  "start": 174.9,
+  "end": 195.23
+ },
+ {
+  "idx": 12,
+  "type": "html_slide",
+  "title": "动态提升与逐片衰减",
+  "start": 195.23,
+  "end": 213.23
+ },
+ {
+  "idx": 13,
+  "type": "ascii",
+  "title": "算例：两个一直算的线程，差一档",
+  "start": 213.23,
+  "end": 236.03
+ },
+ {
+  "idx": 14,
+  "type": "code",
+  "title": "\"sched_prio_to_weight：nice 到权重（Linux 6.12 kernel/sched/core.",
+  "start": 236.03,
+  "end": 254.1
+ },
+ {
+  "idx": 15,
+  "type": "ascii",
+  "title": "不饿死：账本的性质，对派人巡逻",
+  "start": 254.1,
+  "end": 274.67
+ },
+ {
+  "idx": 16,
+  "type": "ascii",
+  "title": "同一条 C3，为什么 Windows 没走到记账",
+  "start": 274.67,
+  "end": 294.73
+ },
+ {
+  "idx": 17,
+  "type": "spotlight",
+  "title": "16 对照二：跑多久",
+  "start": 294.73,
+  "end": 311.0
+ },
+ {
+  "idx": 18,
+  "type": "code",
+  "title": "\"update_deadline：吃完一片就重排（Linux 6.12 kernel/sched/fair.c）\"",
+  "start": 311.0,
+  "end": 329.1
+ },
+ {
+  "idx": 19,
+  "type": "ascii",
+  "title": "算例：某个核上 3 个一直算的同级线程",
+  "start": 329.1,
+  "end": 351.63
+ },
+ {
+  "idx": 20,
+  "type": "spotlight",
+  "title": "19 对照三：放哪个核",
+  "start": 351.63,
+  "end": 367.4
+ },
+ {
+  "idx": 21,
+  "type": "ascii",
+  "title": "线程就绪时选核：两套规则",
+  "start": 367.4,
+  "end": 388.9
+ },
+ {
+  "idx": 22,
+  "type": "spotlight",
+  "title": "21 对照四：换人",
+  "start": 388.9,
+  "end": 403.97
+ },
+ {
+  "idx": 23,
+  "type": "code",
+  "title": "\"__switch_to_asm：换栈即换人（Linux 6.12 arch/x86/entry/entry_64.S）",
+  "start": 403.97,
+  "end": 424.27
+ },
+ {
+  "idx": 24,
+  "type": "code",
+  "title": "\"KiSwapContextInternal：同样两条 mov（ReactOS amd64 示意，非微软源码）\"",
+  "start": 424.27,
+  "end": 445.1
+ },
+ {
+  "idx": 25,
+  "type": "ascii",
+  "title": "上一集的五条结论，在 Windows 逐条成立",
+  "start": 445.1,
+  "end": 468.87
+ },
+ {
+  "idx": 26,
+  "type": "text",
+  "title": "唯一真不同：伪造的那帧里填什么",
+  "start": 468.87,
+  "end": 490.07
+ },
+ {
+  "idx": 27,
+  "type": "spotlight",
+  "title": "26 为什么这一层会同构",
+  "start": 490.07,
+  "end": 512.27
+ },
+ {
+  "idx": 28,
+  "type": "ascii",
+  "title": "C7 同机多租户：组在树里，还是套在外面",
+  "start": 512.27,
+  "end": 532.67
+ },
+ {
+  "idx": 29,
+  "type": "ascii",
+  "title": "C8 一算法不配万场景：两种回答",
+  "start": 532.67,
+  "end": 552.5
+ },
+ {
+  "idx": 30,
+  "type": "ascii",
+  "title": "SQL Server 为什么在 Windows 上面再盖一层调度器",
+  "start": 552.5,
+  "end": 575.77
+ },
+ {
+  "idx": 31,
+  "type": "timeline",
+  "title": "W1 在两个让出点之间死循环",
+  "start": 575.77,
+  "end": 601.93
+ },
+ {
+  "idx": 32,
+  "type": "ascii",
+  "title": "约束回扣：2 条同构，1 条差参数，5 条分岔",
+  "start": 601.93,
+  "end": 623.77
+ },
+ {
+  "idx": 33,
+  "type": "html_slide",
+  "title": "对照 Windows NT：本集收束",
+  "start": 623.77,
+  "end": 642.97
+ },
+ {
+  "idx": 34,
+  "type": "spotlight",
+  "title": "33 下集预告",
+  "start": 642.97,
+  "end": 664.97
+ }
+]

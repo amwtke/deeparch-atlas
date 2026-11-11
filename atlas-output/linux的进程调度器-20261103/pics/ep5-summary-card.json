@@ -1,0 +1,26 @@
+{
+  "title": "三条主线钉到行号",
+  "subtitle": "Linux 调度器 · Deep",
+  "tagline": "换人只换一根栈，跨层只多记几次账，可换只多挂一节类。",
+  "pillars": [
+    {"icon": "stack", "t": "换栈即换人", "d": "两条 movq"},
+    {"icon": "link", "t": "账本跨层", "d": "上记下选"},
+    {"icon": "gear", "t": "类链可换", "d": "fair 之后一节"},
+    {"icon": "shield", "t": "看门狗回退", "d": "先保前进"}
+  ],
+  "items": [
+    {"icon": "box", "t": "换人就是换内核栈", "d": "__switch_to_asm 压 6 个、换 rsp、弹 6 个；其余寄存器编译器早已存进栈。"},
+    {"icon": "target", "t": "tick 只打标记", "d": "update_curr 置 need_resched，出口检查点才 schedule，因为中断中间冻不得。"},
+    {"icon": "eye", "t": "fork 伪造一帧", "d": "copy_thread 抄 pt_regs、ax 改 0、ret_addr 指向 ret_from_fork_asm。"},
+    {"icon": "db", "t": "组调度没有新算法", "d": "同一段时间每层按本层权重记一次账；选人从根往下每层一次 EEVDF。"},
+    {"icon": "link", "t": "带宽是池与闸", "d": "每核领 5 ms 一片，领不到整组出队，下个 period 补池挂回。"},
+    {"icon": "compass", "t": "ext 挂在 fair 之后", "d": "本地 DSQ 有人不问 BPF；看门狗超时就 bypass、逐个改回 fair。"}
+  ],
+  "gains_title": "带得走的",
+  "gains": [
+    {"icon": "check", "t": "身份与账本分开", "d": "换人只读 thread.sp"},
+    {"icon": "bulb", "t": "发现与执行分开", "d": "标志跨过不安全的位置"},
+    {"icon": "shield", "t": "先兜底再拆除", "d": "决策者不可信时内核自救"}
+  ],
+  "takeaway": "task_struct 里 **三本账并列**，所以策略能换、错了能 **原样退回**。"
+}

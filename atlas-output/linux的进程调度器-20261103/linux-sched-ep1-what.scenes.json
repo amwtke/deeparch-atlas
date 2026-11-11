@@ -1,0 +1,212 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 12.0
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 What 阶段开场",
+  "start": 12.0,
+  "end": 27.87
+ },
+ {
+  "idx": 3,
+  "type": "title",
+  "title": "你要写第一个调度器",
+  "start": 27.87,
+  "end": 43.7
+ },
+ {
+  "idx": 4,
+  "type": "ascii",
+  "title": "CPU 一辈子只会做一件事",
+  "start": 43.7,
+  "end": 60.57
+ },
+ {
+  "idx": 5,
+  "type": "text",
+  "title": "第一版调度器：轮流",
+  "start": 60.57,
+  "end": 77.53
+ },
+ {
+  "idx": 6,
+  "type": "ascii",
+  "title": "B 读盘的 10 毫秒：两种做法",
+  "start": 77.53,
+  "end": 96.73
+ },
+ {
+  "idx": 7,
+  "type": "spotlight",
+  "title": "6 三个问题冒出来",
+  "start": 96.73,
+  "end": 113.47
+ },
+ {
+  "idx": 8,
+  "type": "text",
+  "title": "一句话定义",
+  "start": 113.47,
+  "end": 131.4
+ },
+ {
+  "idx": 9,
+  "type": "layers",
+  "title": "调度器的三问",
+  "start": 131.4,
+  "end": 152.77
+ },
+ {
+  "idx": 10,
+  "type": "ascii",
+  "title": "厨房与机器：一张对照表",
+  "start": 152.77,
+  "end": 176.17
+ },
+ {
+  "idx": 11,
+  "type": "text",
+  "title": "三问在厨房里长出来",
+  "start": 176.17,
+  "end": 201.97
+ },
+ {
+  "idx": 12,
+  "type": "text",
+  "title": "一台 4 核笔记本，同时开着",
+  "start": 201.97,
+  "end": 227.93
+ },
+ {
+  "idx": 13,
+  "type": "html_slide",
+  "title": "一台 4 核笔记本的某一毫秒",
+  "start": 227.93,
+  "end": 253.17
+ },
+ {
+  "idx": 14,
+  "type": "text",
+  "title": "从图上能读出的事",
+  "start": 253.17,
+  "end": 279.17
+ },
+ {
+  "idx": 15,
+  "type": "statemap",
+  "title": "一个任务的三种状态",
+  "start": 279.17,
+  "end": 298.73
+ },
+ {
+  "idx": 16,
+  "type": "spotlight",
+  "title": "15 Chrome 凭什么挤掉 cc1",
+  "start": 298.73,
+  "end": 311.73
+ },
+ {
+  "idx": 17,
+  "type": "ascii",
+  "title": "换人只能在 CPU 回到内核时发生",
+  "start": 311.73,
+  "end": 335.9
+ },
+ {
+  "idx": 18,
+  "type": "text",
+  "title": "凭什么是 Chrome",
+  "start": 335.9,
+  "end": 360.67
+ },
+ {
+  "idx": 19,
+  "type": "timeline",
+  "title": "核 3 上的 mysqld 主动让出",
+  "start": 360.67,
+  "end": 383.7
+ },
+ {
+  "idx": 20,
+  "type": "layers",
+  "title": "一个任务离开核，只有三条路",
+  "start": 383.7,
+  "end": 410.33
+ },
+ {
+  "idx": 21,
+  "type": "layers",
+  "title": "骨架：每个名词都挂在一问下面",
+  "start": 410.33,
+  "end": 431.5
+ },
+ {
+  "idx": 22,
+  "type": "ascii",
+  "title": "两个增强，都没有换掉调度器",
+  "start": 431.5,
+  "end": 455.97
+ },
+ {
+  "idx": 23,
+  "type": "layers",
+  "title": "调度器在系统里的位置",
+  "start": 455.97,
+  "end": 478.97
+ },
+ {
+  "idx": 24,
+  "type": "text",
+  "title": "同名或相邻，但不是它",
+  "start": 478.97,
+  "end": 502.37
+ },
+ {
+  "idx": 25,
+  "type": "spotlight",
+  "title": "24 悬念一",
+  "start": 502.37,
+  "end": 517.67
+ },
+ {
+  "idx": 26,
+  "type": "text",
+  "title": "留给后面几集的问题",
+  "start": 517.67,
+  "end": 537.47
+ },
+ {
+  "idx": 27,
+  "type": "ascii",
+  "title": "同一个问题，17 年后立场翻面",
+  "start": 537.47,
+  "end": 564.03
+ },
+ {
+  "idx": 28,
+  "type": "text",
+  "title": "内核里早就藏着一个策略模式",
+  "start": 564.03,
+  "end": 585.87
+ },
+ {
+  "idx": 29,
+  "type": "html_slide",
+  "title": "第 1 集总结：调度器是什么",
+  "start": 585.87,
+  "end": 605.93
+ },
+ {
+  "idx": 30,
+  "type": "spotlight",
+  "title": "29 下集预告",
+  "start": 605.93,
+  "end": 632.27
+ }
+]
