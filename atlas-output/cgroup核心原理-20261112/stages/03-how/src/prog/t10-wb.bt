@@ -1,0 +1,20 @@
+// t10-wb.bt:谁把写请求送进 io 控制器的闸门,这笔请求记在哪个组头上
+BEGIN { @total = 0; @shown = 0; }
+fentry:vmlinux:__blk_throtl_bio
+{
+  $g = str(args.bio->bi_blkg->blkcg->css.cgroup->kn->name);
+  @total += 1;
+  @n[comm, $g] = count();
+  @bytes[comm, $g] = sum(args.bio->bi_iter.bi_size);
+  if (@shown == 0 && $g == "report") {
+    @shown = 1;
+    printf("第一笔:提交它的进程是 %s(pid %d),%d 字节,这笔请求记在 %s 组头上。当时的调用栈:\n",
+           comm, pid, args.bio->bi_iter.bi_size, $g);
+    printf("%s\n", kstack(perf, 16));
+  }
+}
+END {
+  printf("走进闸门一共 %d 次。按「提交的进程, 记在哪个组」分,次数:\n", @total); print(@n);
+  printf("字节数:\n"); print(@bytes);
+  clear(@n); clear(@bytes); clear(@total); clear(@shown);
+}

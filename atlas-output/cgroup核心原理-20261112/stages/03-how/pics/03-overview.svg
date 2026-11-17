@@ -1,0 +1,198 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="640" fill="#0a0c10"/>
+  <text x="600" y="34" text-anchor="middle" fill="#e0e6f0" font-size="20">worker 的一生穿过内核的五条路:每条路上,cgroup 只多执行一步</text>
+  <text x="600" y="57" text-anchor="middle" fill="#8892a0" font-size="12">report 组:cpu.max 50000 100000 · memory.max 300M · io.max 253:0 wbps=10485760 · pids.max 20 · 时间取自实跑 life.log</text>
+
+  <defs>
+    <marker id="og" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8892a0"/></marker>
+    <marker id="ob" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4080c0"/></marker>
+  </defs>
+
+  <!-- column headers -->
+  <g font-size="13">
+    <text x="115" y="90" text-anchor="middle" fill="#88c0ff">worker 的一生</text>
+    <text x="402" y="90" text-anchor="middle" fill="#e0e6f0">内核本来就要走的路</text>
+    <text x="699" y="90" text-anchor="middle" fill="#88ff88">接入点(cgroup 加进去的位置)</text>
+    <text x="891" y="90" text-anchor="middle" fill="#c088ff">核心做了什么</text>
+    <text x="1079" y="90" text-anchor="middle" fill="#ffaa55">控制器做了什么</text>
+  </g>
+
+  <!-- ============ row 1: fork ============ -->
+  <g>
+    <rect x="30" y="102" width="170" height="66" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="42" y="124" fill="#88c0ff" font-size="13">① 出生(fork)</text>
+    <text x="42" y="142" fill="#e0e6f0" font-size="11">0.00 ~ 0.03 ms</text>
+    <text x="42" y="159" fill="#8892a0" font-size="10">生孩子时再走一次</text>
+
+    <rect x="212" y="102" width="380" height="66" fill="#11151c" stroke="#30363d"/>
+    <rect x="220" y="110" width="110" height="24" fill="#161b22" stroke="#30363d"/>
+    <text x="275" y="126" text-anchor="middle" fill="#e0e6f0" font-size="10">clone 系统调用</text>
+    <rect x="344" y="110" width="112" height="24" fill="#161b22" stroke="#30363d"/>
+    <text x="400" y="126" text-anchor="middle" fill="#e0e6f0" font-size="10">kernel_clone</text>
+    <rect x="470" y="110" width="114" height="24" fill="#161b22" stroke="#30363d"/>
+    <text x="527" y="126" text-anchor="middle" fill="#e0e6f0" font-size="10">copy_process</text>
+    <text x="402" y="157" text-anchor="middle" fill="#8892a0" font-size="11">复制父进程的档案,造出一个新进程</text>
+
+    <rect x="604" y="102" width="190" height="66" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="699" y="128" text-anchor="middle" fill="#88ff88" font-size="11">cgroup_can_fork</text>
+    <text x="699" y="150" text-anchor="middle" fill="#88ff88" font-size="11">cgroup_post_fork</text>
+
+    <rect x="806" y="102" width="170" height="66" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="816" y="126" fill="#e0e6f0" font-size="11">复制前:按登记表</text>
+    <text x="816" y="142" fill="#e0e6f0" font-size="11">问控制器能不能生</text>
+    <text x="816" y="160" fill="#c088ff" font-size="11">复制后:抄组籍指针</text>
+
+    <rect x="988" y="102" width="182" height="66" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="998" y="124" fill="#ffaa55" font-size="11">pids:能生吗?</text>
+    <text x="998" y="142" fill="#e0e6f0" font-size="11">放行,进程数 +1</text>
+    <text x="998" y="160" fill="#ff8888" font-size="10">超了:拒绝,fork 失败</text>
+  </g>
+
+  <!-- ============ row 2: cpu ============ -->
+  <g>
+    <rect x="30" y="182" width="170" height="66" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="42" y="204" fill="#88c0ff" font-size="13">② 跑 CPU</text>
+    <text x="42" y="222" fill="#e0e6f0" font-size="11">0.70 ms 第一次结算</text>
+
+    <rect x="212" y="182" width="380" height="66" fill="#11151c" stroke="#30363d"/>
+    <rect x="220" y="190" width="110" height="24" fill="#161b22" stroke="#30363d"/>
+    <text x="275" y="206" text-anchor="middle" fill="#e0e6f0" font-size="10">时钟中断 1 ms</text>
+    <rect x="344" y="190" width="112" height="24" fill="#161b22" stroke="#30363d"/>
+    <text x="400" y="206" text-anchor="middle" fill="#e0e6f0" font-size="10">sched_tick</text>
+    <rect x="470" y="190" width="114" height="24" fill="#161b22" stroke="#30363d"/>
+    <text x="527" y="206" text-anchor="middle" fill="#e0e6f0" font-size="10">update_curr</text>
+    <text x="402" y="237" text-anchor="middle" fill="#8892a0" font-size="11">结算当前进程刚才跑了多久</text>
+
+    <rect x="604" y="182" width="190" height="66" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="699" y="219" text-anchor="middle" fill="#88ff88" font-size="11">__account_cfs_rq_runtime</text>
+
+    <rect x="806" y="182" width="170" height="66" fill="#3a1e5f" stroke="#8040c0" stroke-dasharray="4,3"/>
+    <text x="816" y="208" fill="#8892a0" font-size="11">核心不参与</text>
+    <text x="816" y="226" fill="#8892a0" font-size="11">组是入组时定好的</text>
+
+    <rect x="988" y="182" width="182" height="66" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="998" y="204" fill="#ffaa55" font-size="11">cpu:从本核的本地额度里</text>
+    <text x="998" y="222" fill="#e0e6f0" font-size="11">扣 663 μs</text>
+    <text x="998" y="240" fill="#ff8888" font-size="10">超了:停到下个周期</text>
+  </g>
+
+  <!-- ============ row 3: memory ============ -->
+  <g>
+    <rect x="30" y="262" width="170" height="66" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="42" y="284" fill="#88c0ff" font-size="13">③ 要内存</text>
+    <text x="42" y="302" fill="#e0e6f0" font-size="11">0.11 ms 第一次缺页</text>
+
+    <rect x="212" y="262" width="380" height="66" fill="#11151c" stroke="#30363d"/>
+    <rect x="220" y="270" width="110" height="24" fill="#161b22" stroke="#30363d"/>
+    <text x="275" y="286" text-anchor="middle" fill="#e0e6f0" font-size="10">缺页</text>
+    <rect x="344" y="270" width="112" height="24" fill="#161b22" stroke="#30363d"/>
+    <text x="400" y="286" text-anchor="middle" fill="#e0e6f0" font-size="10">handle_mm_fault</text>
+    <rect x="470" y="270" width="114" height="24" fill="#161b22" stroke="#30363d"/>
+    <text x="527" y="286" text-anchor="middle" fill="#e0e6f0" font-size="10">wp_page_copy</text>
+    <text x="402" y="317" text-anchor="middle" fill="#8892a0" font-size="11">分一个物理页,填进页表</text>
+
+    <rect x="604" y="262" width="190" height="66" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="699" y="299" text-anchor="middle" fill="#88ff88" font-size="11">__mem_cgroup_charge</text>
+
+    <rect x="806" y="262" width="170" height="66" fill="#3a1e5f" stroke="#8040c0" stroke-dasharray="4,3"/>
+    <text x="816" y="288" fill="#8892a0" font-size="11">核心不参与</text>
+    <text x="816" y="306" fill="#8892a0" font-size="11">账在哪,看组籍</text>
+
+    <rect x="988" y="262" width="182" height="66" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="998" y="284" fill="#ffaa55" font-size="11">memory:记 1 页</text>
+    <text x="998" y="302" fill="#e0e6f0" font-size="11">页上记所属组 report</text>
+    <text x="998" y="320" fill="#ff8888" font-size="10">超了:回收,不行就杀</text>
+  </g>
+
+  <!-- ============ row 4: io ============ -->
+  <g>
+    <rect x="30" y="342" width="170" height="66" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="42" y="364" fill="#88c0ff" font-size="13">④ 写盘</text>
+    <text x="42" y="382" fill="#e0e6f0" font-size="11">204.59 ms</text>
+    <text x="42" y="399" fill="#8892a0" font-size="10">8 MiB,约 0.8 秒</text>
+
+    <rect x="212" y="342" width="380" height="66" fill="#11151c" stroke="#30363d"/>
+    <rect x="220" y="350" width="110" height="24" fill="#161b22" stroke="#30363d"/>
+    <text x="275" y="366" text-anchor="middle" fill="#e0e6f0" font-size="10">写回脏页</text>
+    <rect x="344" y="350" width="112" height="24" fill="#161b22" stroke="#30363d"/>
+    <text x="400" y="366" text-anchor="middle" fill="#e0e6f0" font-size="10">ext4_writepages</text>
+    <rect x="470" y="350" width="114" height="24" fill="#161b22" stroke="#30363d"/>
+    <text x="527" y="366" text-anchor="middle" fill="#e0e6f0" font-size="10">submit_bio</text>
+    <text x="402" y="397" text-anchor="middle" fill="#8892a0" font-size="11">把脏页组织成写请求,交给块层</text>
+
+    <rect x="604" y="342" width="190" height="66" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="699" y="379" text-anchor="middle" fill="#88ff88" font-size="11">__blk_throtl_bio</text>
+
+    <rect x="806" y="342" width="170" height="66" fill="#3a1e5f" stroke="#8040c0" stroke-dasharray="4,3"/>
+    <text x="816" y="368" fill="#8892a0" font-size="11">核心不参与</text>
+    <text x="816" y="386" fill="#8892a0" font-size="11">同一棵树上对账</text>
+
+    <rect x="988" y="342" width="182" height="66" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="998" y="364" fill="#ffaa55" font-size="11">io:一笔 4 MiB 的写</text>
+    <text x="998" y="382" fill="#e0e6f0" font-size="11">先过带宽限制检查</text>
+    <text x="998" y="400" fill="#ff8888" font-size="10">超了:请求排队等</text>
+  </g>
+
+  <!-- ============ row 5: exit ============ -->
+  <g>
+    <rect x="30" y="422" width="170" height="66" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="42" y="444" fill="#88c0ff" font-size="13">⑤ 退出</text>
+    <text x="42" y="462" fill="#e0e6f0" font-size="11">1012.05 ms</text>
+
+    <rect x="212" y="422" width="380" height="66" fill="#11151c" stroke="#30363d"/>
+    <rect x="220" y="430" width="110" height="24" fill="#161b22" stroke="#30363d"/>
+    <text x="275" y="446" text-anchor="middle" fill="#e0e6f0" font-size="10">exit_group</text>
+    <rect x="344" y="430" width="112" height="24" fill="#161b22" stroke="#30363d"/>
+    <text x="400" y="446" text-anchor="middle" fill="#e0e6f0" font-size="10">do_group_exit</text>
+    <rect x="470" y="430" width="114" height="24" fill="#161b22" stroke="#30363d"/>
+    <text x="527" y="446" text-anchor="middle" fill="#e0e6f0" font-size="10">do_exit</text>
+    <text x="402" y="477" text-anchor="middle" fill="#8892a0" font-size="11">进程收拾自己占着的东西</text>
+
+    <rect x="604" y="422" width="190" height="66" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="699" y="448" text-anchor="middle" fill="#88ff88" font-size="11">cgroup_task_exit</text>
+    <text x="699" y="470" text-anchor="middle" fill="#88ff88" font-size="11">pids_release</text>
+
+    <rect x="806" y="422" width="170" height="66" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="816" y="446" fill="#c088ff" font-size="11">按登记表通知;</text>
+    <text x="816" y="464" fill="#c088ff" font-size="11">稍后摘名单</text>
+
+    <rect x="988" y="422" width="182" height="66" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="998" y="444" fill="#ffaa55" font-size="11">pids:进程数 -1</text>
+    <text x="998" y="462" fill="#e0e6f0" font-size="11">1012.08 ms</text>
+  </g>
+
+  <!-- time flows down -->
+  <g stroke="#4080c0" stroke-width="1.4" fill="none" marker-end="url(#ob)">
+    <path d="M115,168 L115,180"/><path d="M115,248 L115,260"/><path d="M115,328 L115,340"/><path d="M115,408 L115,420"/>
+  </g>
+  <!-- road -> hook -->
+  <g stroke="#8892a0" stroke-width="1.2" fill="none" marker-end="url(#og)">
+    <path d="M330,122 L342,122"/><path d="M456,122 L468,122"/><path d="M584,122 L602,122"/>
+    <path d="M330,202 L342,202"/><path d="M456,202 L468,202"/><path d="M584,202 L602,202"/>
+    <path d="M330,282 L342,282"/><path d="M456,282 L468,282"/><path d="M584,282 L602,282"/>
+    <path d="M330,362 L342,362"/><path d="M456,362 L468,362"/><path d="M584,362 L602,362"/>
+    <path d="M330,442 L342,442"/><path d="M456,442 L468,442"/><path d="M584,442 L602,442"/>
+  </g>
+
+  <!-- bottom bands -->
+  <rect x="30" y="504" width="1140" height="34" rx="6" fill="#3a1e5f" stroke="#8040c0"/>
+  <text x="600" y="526" text-anchor="middle" fill="#c088ff" font-size="12">核心(树 · 组籍 · 文件接口 · 生命周期通知)不处理具体资源;四个控制器各管一种,在自己那条路上记账、比限、处置</text>
+  <rect x="30" y="548" width="1140" height="34" rx="6" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="600" y="570" text-anchor="middle" fill="#ffaa55" font-size="12">没人设限时那一步不执行:两个组都不写 cpu.max,1 秒内记 CPU 账 0 次;只给 report 写上,544 次,全是 report(free.log)</text>
+
+  <!-- legend -->
+  <g font-size="11">
+    <rect x="30" y="604" width="14" height="14" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="52" y="616" fill="#88c0ff">进程</text>
+    <rect x="110" y="604" width="14" height="14" fill="#161b22" stroke="#30363d"/>
+    <text x="132" y="616" fill="#e0e6f0">内核本来的路</text>
+    <rect x="250" y="604" width="14" height="14" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="272" y="616" fill="#88ff88">接入点</text>
+    <rect x="350" y="604" width="14" height="14" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="372" y="616" fill="#c088ff">核心(树、组籍)</text>
+    <rect x="510" y="604" width="14" height="14" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="532" y="616" fill="#ffaa55">控制器的账</text>
+    <text x="640" y="616" fill="#ff8888">红字 = 超了怎么处置</text>
+    <text x="1170" y="616" text-anchor="end" fill="#8892a0">虚线框 = 这一步核心不参与</text>
+  </g>
+</svg>

@@ -1,0 +1,33 @@
+// t1-cpuacct.bt:report 组的 CPU 账是怎么记的(统计 2 秒)
+//   __account_cfs_rq_runtime(cfs_rq, delta_exec):某颗核上,这个组刚跑掉 delta_exec 纳秒,记一笔
+//   cfs_rq->runtime_remaining:这个组在这颗核上的「零钱」(本地额度)
+fentry:vmlinux:__account_cfs_rq_runtime
+/@stop == 0 && str(args.cfs_rq->tg->css.cgroup->kn->name) == "report"/
+{
+  @before[cpu] = args.cfs_rq->runtime_remaining;
+  @in[cpu] = 1;
+}
+fexit:vmlinux:__account_cfs_rq_runtime
+/@in[cpu]/
+{
+  @in[cpu] = 0;
+  @n_acct = count();
+  @ns_acct = sum(args.delta_exec);
+  $got = args.cfs_rq->runtime_remaining - @before[cpu] + (int64)args.delta_exec;
+  if ($got > 0) {                       // 零钱变多了 = 这一次去公共额度池领了额度
+    @n_pool = count();
+    @got_us = lhist((uint64)$got / 1000, 0, 6000, 1000);
+  }
+}
+fentry:vmlinux:sched_cfs_period_timer /@stop == 0/ { @n_period = count(); }
+interval:s:2 {
+  @stop = 1;
+  printf("2 秒内,report 组:\n");
+  printf("  记账 %d 次,合计记下 %d ms 的 CPU 时间\n", (int64)@n_acct, (uint64)@ns_acct / 1000000);
+  printf("  其中要去公共额度池领额度的 %d 次\n", (int64)@n_pool);
+  printf("  周期定时器响了 %d 次\n", (int64)@n_period);
+  printf("  每次从公共池领到多少(微秒):\n");
+  print(@got_us);
+  exit();
+}
+END { clear(@before); clear(@in); clear(@n_acct); clear(@ns_acct); clear(@n_pool); clear(@n_period); clear(@got_us); clear(@stop); }

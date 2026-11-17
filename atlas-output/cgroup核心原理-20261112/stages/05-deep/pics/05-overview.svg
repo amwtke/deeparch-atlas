@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" font-family="JetBrains Mono, Consolas, monospace">
+<rect width="1200" height="560" fill="#0a0c10"/>
+<text x="600" y="34" text-anchor="middle" fill="#e0e6f0" font-size="20">源码三条主线:都从同一个 worker 的一生上分出去</text>
+<text x="600" y="56" text-anchor="middle" fill="#8892a0" font-size="12">上游 v7.0;时间取自实跑 life.log(微秒,从 fork 起算)</text>
+<defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8892a0"/></marker></defs>
+<line x1="60" y1="120" x2="1140" y2="120" stroke="#8892a0" stroke-width="2" marker-end="url(#a)"/>
+<circle cx="60" cy="120" r="6" fill="#40c060"/>
+<text x="60" y="104" text-anchor="middle" fill="#e0e6f0" font-size="11">0 us</text>
+<text x="60" y="144" text-anchor="middle" fill="#8892a0" font-size="11">fork</text>
+<circle cx="230" cy="120" r="6" fill="#c04040"/>
+<text x="230" y="104" text-anchor="middle" fill="#e0e6f0" font-size="11">0.07 s</text>
+<text x="230" y="144" text-anchor="middle" fill="#8892a0" font-size="11">第一次限流</text>
+<circle cx="400" cy="120" r="6" fill="#40c060"/>
+<text x="400" y="104" text-anchor="middle" fill="#e0e6f0" font-size="11">0.12 s</text>
+<text x="400" y="144" text-anchor="middle" fill="#8892a0" font-size="11">解除限流</text>
+<circle cx="640" cy="120" r="6" fill="#c04040"/>
+<text x="640" y="104" text-anchor="middle" fill="#e0e6f0" font-size="11">1.953 s</text>
+<text x="640" y="144" text-anchor="middle" fill="#8892a0" font-size="11">内存撞线</text>
+<circle cx="800" cy="120" r="6" fill="#c04040"/>
+<text x="800" y="104" text-anchor="middle" fill="#e0e6f0" font-size="11">1.954 s</text>
+<text x="800" y="144" text-anchor="middle" fill="#8892a0" font-size="11">组内 OOM 选中它</text>
+<circle cx="980" cy="120" r="6" fill="#4080c0"/>
+<text x="980" y="104" text-anchor="middle" fill="#e0e6f0" font-size="11">1.967 s</text>
+<text x="980" y="144" text-anchor="middle" fill="#8892a0" font-size="11">退出、收尸</text>
+<text x="60" y="90" fill="#88c0ff" font-size="13">§2 worker 的一生(一条时间线)</text>
+<rect x="40" y="180" width="360" height="300" rx="6" fill="#5f3a1e" fill-opacity="0.35" stroke="#c08040"/>
+<text x="54" y="206" fill="#ffaa55" font-size="14">§3 主线一:cpu.max</text>
+<text x="386" y="206" text-anchor="end" fill="#8892a0" font-size="11">灵魂问题 ①</text>
+<text x="54" y="236" fill="#e0e6f0" font-size="11.5">cpu_max_write → tg_set_cfs_bandwidth</text>
+<text x="54" y="262" fill="#e0e6f0" font-size="11.5">update_curr</text>
+<text x="54" y="288" fill="#e0e6f0" font-size="11.5">  → account_cfs_rq_runtime(两层开关)</text>
+<text x="54" y="314" fill="#e0e6f0" font-size="11.5">  → __account_cfs_rq_runtime</text>
+<text x="54" y="340" fill="#e0e6f0" font-size="11.5">  → assign_cfs_rq_runtime(领 5 ms)</text>
+<text x="54" y="366" fill="#e0e6f0" font-size="11.5">throttle_cfs_rq(设限流标记)</text>
+<text x="54" y="392" fill="#e0e6f0" font-size="11.5">  → throttle_cfs_rq_work(回用户态时停下)</text>
+<text x="54" y="418" fill="#e0e6f0" font-size="11.5">sched_cfs_period_timer</text>
+<text x="54" y="444" fill="#e0e6f0" font-size="11.5">  → distribute → unthrottle_cfs_rq</text>
+<rect x="420" y="180" width="360" height="300" rx="6" fill="#5f1e1e" fill-opacity="0.35" stroke="#c04040"/>
+<text x="434" y="206" fill="#ff8888" font-size="14">§4 主线二:内存记账与 OOM</text>
+<text x="766" y="206" text-anchor="end" fill="#8892a0" font-size="11">灵魂问题 ②</text>
+<text x="434" y="236" fill="#e0e6f0" font-size="11.5">__mem_cgroup_charge → try_charge_memcg</text>
+<text x="434" y="262" fill="#e0e6f0" font-size="11.5">  consume_stock / refill_stock(64 页)</text>
+<text x="434" y="288" fill="#e0e6f0" font-size="11.5">  page_counter_try_charge(沿树)</text>
+<text x="434" y="314" fill="#e0e6f0" font-size="11.5">撞线 → try_to_free_mem_cgroup_pages</text>
+<text x="434" y="340" fill="#e0e6f0" font-size="11.5">  → mem_cgroup_oom → out_of_memory</text>
+<text x="434" y="366" fill="#e0e6f0" font-size="11.5">  → mem_cgroup_scan_tasks</text>
+<text x="434" y="392" fill="#e0e6f0" font-size="11.5">  → oom_evaluate_task / oom_badness</text>
+<text x="434" y="418" fill="#e0e6f0" font-size="11.5">为什么有时多杀一个:</text>
+<text x="434" y="444" fill="#e0e6f0" font-size="11.5">  退出中的受害者遍历时被跳过</text>
+<rect x="800" y="180" width="360" height="300" rx="6" fill="#3a1e5f" fill-opacity="0.35" stroke="#8040c0"/>
+<text x="814" y="206" fill="#c088ff" font-size="14">§5 主线三:公共框架</text>
+<text x="1146" y="206" text-anchor="end" fill="#8892a0" font-size="11">灵魂问题 ③</text>
+<text x="814" y="236" fill="#e0e6f0" font-size="11.5">struct css_set(组籍)</text>
+<text x="814" y="262" fill="#e0e6f0" font-size="11.5">struct cgroup_subsys(登记表)</text>
+<text x="814" y="288" fill="#e0e6f0" font-size="11.5">cgroup_can_fork → pids_can_fork</text>
+<text x="814" y="314" fill="#e0e6f0" font-size="11.5">cgroup_post_fork(复制组籍)</text>
+<text x="814" y="340" fill="#e0e6f0" font-size="11.5">cgroup_attach_task(入组)</text>
+<text x="814" y="366" fill="#e0e6f0" font-size="11.5">cgroup_apply_control_enable</text>
+<text x="814" y="392" fill="#e0e6f0" font-size="11.5">  → css_create → css_alloc</text>
+<text x="814" y="418" fill="#e0e6f0" font-size="11.5">cgroup_task_exit / _release</text>
+<text x="814" y="444" fill="#e0e6f0" font-size="11.5">核心不直接调用任何控制器</text>
+<path d="M230,154 L220,176" stroke="#8892a0" stroke-dasharray="6,4" fill="none" marker-end="url(#a)"/>
+<path d="M640,154 L600,176" stroke="#8892a0" stroke-dasharray="6,4" fill="none" marker-end="url(#a)"/>
+<path d="M60,154 L980,176" stroke="#8892a0" stroke-dasharray="6,4" fill="none" marker-end="url(#a)"/>
+<rect x="40" y="496" width="1120" height="44" rx="6" fill="#5f3a1e" stroke="#c08040"/>
+<text x="600" y="523" text-anchor="middle" fill="#ffaa55" font-size="13">主线一、二是两个控制器各自的记账与限额检查;主线三是把它们接进内核、又不让核心了解具体资源的公共框架</text>
+</svg>

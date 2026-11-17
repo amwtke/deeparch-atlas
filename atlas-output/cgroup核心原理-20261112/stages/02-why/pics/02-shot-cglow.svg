@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1349" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="1349" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="1333" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg-lab — root@lima-cg-lab(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 4G,专用实验机)· 沙箱组 host01(1G)</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">cat /sys/fs/cgroup/host01/memory.max</tspan></text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">1073741824</text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">ls -l --block-size=M /var/tmp/db.dat /var/tmp/rep.dat | awk &#x27;{print $5, $9}&#x27;</tspan></text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">700 /var/tmp/db.dat</text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">700 /var/tmp/rep.dat</text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 1. 先试按比例:内存有没有 weight 这个旋钮</text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">ls /sys/fs/cgroup/host01/db/ | grep -E &#x27;^(cpu|memory)\.(weight|max|high|low|min)$&#x27;</tspan></text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">cpu.max</text>
+  <rect x="22" y="238" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre" fill="#88c0ff">cpu.weight</text>
+  <rect x="22" y="259" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre" fill="#88c0ff">memory.high</text>
+  <rect x="22" y="280" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#88c0ff">memory.low</text>
+  <rect x="22" y="301" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#88c0ff">memory.max</text>
+  <rect x="22" y="322" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre" fill="#88c0ff">memory.min</text>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 2. 不设保护:db 先把自己的 700M 数据文件读进页缓存,然后 report 也读 700M</text>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup db cat /var/tmp/db.dat &gt; /dev/null</tspan></text>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./memof</tspan></text>
+  <rect x="22" y="427" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre" fill="#88c0ff">db      合计   700 MiB   文件页   700 MiB   匿名页     0 MiB   memory.low 0</text>
+  <rect x="22" y="448" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre" fill="#88c0ff">report  合计     0 MiB   文件页     0 MiB   匿名页     0 MiB   memory.low 0</text>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report cat /var/tmp/rep.dat &gt; /dev/null</tspan></text>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./memof</tspan></text>
+  <rect x="22" y="511" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="526" xml:space="preserve" style="white-space:pre" fill="#88c0ff">db      合计   454 MiB   文件页   454 MiB   匿名页     0 MiB   memory.low 0</text>
+  <rect x="22" y="532" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="547" xml:space="preserve" style="white-space:pre" fill="#88c0ff">report  合计   566 MiB   文件页   566 MiB   匿名页     0 MiB   memory.low 0</text>
+  <text x="28" y="568" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">grep -H pgsteal /sys/fs/cgroup/host01/db/memory.stat | head -1</tspan></text>
+  <text x="28" y="589" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">/sys/fs/cgroup/host01/db/memory.stat:pgsteal 62976</text>
+  <text x="28" y="610" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="631" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 3. 清掉页缓存,给 db 组 memory.low = 700M,同样的顺序再来一遍</text>
+  <text x="28" y="652" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">echo 1 &gt; /proc/sys/vm/drop_caches</tspan></text>
+  <text x="28" y="673" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">echo 700M &gt; /sys/fs/cgroup/host01/db/memory.low</tspan></text>
+  <text x="28" y="694" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup db cat /var/tmp/db.dat &gt; /dev/null</tspan></text>
+  <text x="28" y="715" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./memof</tspan></text>
+  <rect x="22" y="721" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="736" xml:space="preserve" style="white-space:pre" fill="#88c0ff">db      合计   700 MiB   文件页   700 MiB   匿名页     0 MiB   memory.low 734003200</text>
+  <rect x="22" y="742" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="757" xml:space="preserve" style="white-space:pre" fill="#88c0ff">report  合计     0 MiB   文件页     0 MiB   匿名页     0 MiB   memory.low 0</text>
+  <text x="28" y="778" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report cat /var/tmp/rep.dat &gt; /dev/null</tspan></text>
+  <text x="28" y="799" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./memof</tspan></text>
+  <rect x="22" y="805" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="820" xml:space="preserve" style="white-space:pre" fill="#88c0ff">db      合计   700 MiB   文件页   700 MiB   匿名页     0 MiB   memory.low 734003200</text>
+  <rect x="22" y="826" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="841" xml:space="preserve" style="white-space:pre" fill="#88c0ff">report  合计   320 MiB   文件页   320 MiB   匿名页     0 MiB   memory.low 0</text>
+  <text x="28" y="862" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">grep -E &#x27;^low &#x27; /sys/fs/cgroup/host01/db/memory.events</tspan></text>
+  <rect x="22" y="868" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="883" xml:space="preserve" style="white-space:pre" fill="#88c0ff">low 0</text>
+  <text x="28" y="904" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="925" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 4. 换成程序自己申请的内存(匿名页,这台机器没有 swap):db 占 700M,report 要 600M</text>
+  <text x="28" y="946" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">echo 1 &gt; /proc/sys/vm/drop_caches</tspan></text>
+  <text x="28" y="967" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup db python3 hold.py db-sim 700 &amp;</tspan></text>
+  <text x="28" y="988" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">db-sim(pid 2682)已占住 700 MiB</text>
+  <text x="28" y="1009" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report python3 hold.py report-w 600 &amp;</tspan></text>
+  <text x="28" y="1030" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">report-w(pid 2687)已占住 600 MiB</text>
+  <text x="28" y="1051" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">bash: line 20:  2682 Killed                     ./ingroup db python3 hold.py db-sim 700</text>
+  <text x="28" y="1072" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./memof</tspan></text>
+  <rect x="22" y="1078" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1093" xml:space="preserve" style="white-space:pre" fill="#88c0ff">db      合计     0 MiB   文件页     0 MiB   匿名页     0 MiB   memory.low 734003200</text>
+  <rect x="22" y="1099" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1114" xml:space="preserve" style="white-space:pre" fill="#88c0ff">report  合计   604 MiB   文件页     0 MiB   匿名页   603 MiB   memory.low 0</text>
+  <text x="28" y="1135" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">journalctl -k --since 20:57:28 -o cat --no-pager | grep -E &#x27;oom-kill:|Killed process&#x27; | cut -c1-150</tspan></text>
+  <rect x="22" y="1141" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1156" xml:space="preserve" style="white-space:pre" fill="#88c0ff">oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=host01,mems_allowed=0,oom_memcg=/host01,task_memcg=/host01/db,task=db-sim,p</text>
+  <rect x="22" y="1162" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1177" xml:space="preserve" style="white-space:pre" fill="#88c0ff">id=2682,uid=0</text>
+  <rect x="22" y="1183" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1198" xml:space="preserve" style="white-space:pre" fill="#88c0ff">Memory cgroup out of memory: Killed process 2682 (db-sim) total-vm:737056kB, anon-rss:722240kB, file-rss:5724kB, shmem-rss:0kB, UID:0 p</text>
+  <rect x="22" y="1204" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1219" xml:space="preserve" style="white-space:pre" fill="#88c0ff">gtables:1476kB </text>
+  <text x="28" y="1240" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">ps -o pid,rss,comm -C db-sim,report-w</tspan></text>
+  <text x="28" y="1261" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    PID   RSS COMMAND</text>
+  <text x="28" y="1282" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">   2687 623644 report-w</text>
+  <text x="600.0" y="1327" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-13 · Lima 虚拟机 cg-lab · 日志原文 src/logs/cglow.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

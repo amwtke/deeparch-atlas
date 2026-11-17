@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="640" fill="#0a0c10"/>
+  <text x="600" y="34" text-anchor="middle" fill="#e0e6f0" font-size="20">v1 多棵树 vs v2 一棵树:同一个 worker 写一个文件,用量记到哪</text>
+  <text x="600" y="56" text-anchor="middle" fill="#8892a0" font-size="12">report 的一个 worker(pid 4322)调用 write() 写临时文件:先占内存(页缓存),稍后由内核回写线程写到盘上</text>
+
+  <line x1="600" y1="74" x2="600" y2="536" stroke="#30363d"/>
+  <defs>
+    <marker id="a1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8892a0"/></marker>
+  </defs>
+
+  <!-- ================= LEFT: v1 ================= -->
+  <text x="300" y="90" text-anchor="middle" fill="#ff8888" font-size="14">v1:每种资源各挂一棵树,各分各的组</text>
+
+  <!-- cpu tree -->
+  <g font-size="11">
+    <rect x="62" y="106" width="106" height="28" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="115" y="124" text-anchor="middle" fill="#c088ff">cpu 树 /</text>
+    <line x1="115" y1="134" x2="72" y2="164" stroke="#8892a0"/>
+    <line x1="115" y1="134" x2="158" y2="164" stroke="#8892a0"/>
+    <rect x="34" y="164" width="76" height="26" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="72" y="181" text-anchor="middle" fill="#88c0ff">web</text>
+    <rect x="120" y="164" width="76" height="26" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="158" y="181" text-anchor="middle" fill="#88c0ff">batch</text>
+    <line x1="158" y1="190" x2="158" y2="214" stroke="#8892a0"/>
+    <rect x="112" y="214" width="92" height="24" rx="12" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="158" y="230" text-anchor="middle" fill="#88ff88">pid 4322</text>
+  </g>
+  <!-- memory tree -->
+  <g font-size="11">
+    <rect x="247" y="106" width="106" height="28" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="300" y="124" text-anchor="middle" fill="#c088ff">memory 树 /</text>
+    <line x1="300" y1="134" x2="257" y2="164" stroke="#8892a0"/>
+    <line x1="300" y1="134" x2="343" y2="164" stroke="#8892a0"/>
+    <rect x="219" y="164" width="76" height="26" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="257" y="181" text-anchor="middle" fill="#88c0ff">db</text>
+    <rect x="305" y="164" width="76" height="26" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="343" y="181" text-anchor="middle" fill="#88c0ff">jobs</text>
+    <line x1="343" y1="190" x2="343" y2="214" stroke="#8892a0"/>
+    <rect x="297" y="214" width="92" height="24" rx="12" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="343" y="230" text-anchor="middle" fill="#88ff88">pid 4322</text>
+  </g>
+  <!-- blkio tree -->
+  <g font-size="11">
+    <rect x="432" y="106" width="106" height="28" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="485" y="124" text-anchor="middle" fill="#c088ff">blkio 树 /</text>
+    <line x1="485" y1="134" x2="442" y2="164" stroke="#8892a0"/>
+    <line x1="485" y1="134" x2="528" y2="164" stroke="#8892a0"/>
+    <rect x="404" y="164" width="76" height="26" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="442" y="181" text-anchor="middle" fill="#88c0ff">fast</text>
+    <rect x="490" y="164" width="76" height="26" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="528" y="181" text-anchor="middle" fill="#88c0ff">slow</text>
+    <line x1="528" y1="190" x2="528" y2="214" stroke="#8892a0"/>
+    <rect x="482" y="214" width="92" height="24" rx="12" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="528" y="230" text-anchor="middle" fill="#88ff88">pid 4322</text>
+  </g>
+  <!-- same process link -->
+  <path d="M158,238 L158,256 L528,256 L528,238" stroke="#8040c0" stroke-dasharray="6,4" fill="none"/>
+  <line x1="343" y1="238" x2="343" y2="256" stroke="#8040c0" stroke-dasharray="6,4"/>
+  <text x="343" y="274" text-anchor="middle" fill="#c088ff" font-size="11">同一个进程,三棵树上三处组籍(/proc/4322/cgroup 有三行甚至十几行)</text>
+
+  <!-- v1 flow -->
+  <rect x="34" y="296" width="532" height="52" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="46" y="317" fill="#88c0ff" font-size="12">① write():数据进页缓存,占掉的内存</text>
+  <text x="46" y="336" fill="#88c0ff" font-size="12">   记在 memory 树的 jobs 组里</text>
+  <line x1="300" y1="348" x2="300" y2="372" stroke="#8892a0" marker-end="url(#a1)"/>
+  <rect x="34" y="374" width="532" height="70" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="46" y="395" fill="#ff8888" font-size="12">② 稍后:内核回写线程把这些页写到盘上</text>
+  <text x="46" y="414" fill="#ff8888" font-size="12">   这笔磁盘 IO 记在 blkio 树的哪个组里?</text>
+  <text x="46" y="433" fill="#ff8888" font-size="11">   发 IO 的是内核线程;而从 memory 树的 jobs 推不出 blkio 树的 slow</text>
+  <g font-size="12" fill="#ff8888">
+    <text x="34" y="472">· 三棵树的形状可以完全不同,控制器之间没法互相核对记录</text>
+    <text x="34" y="494">· 管理程序同一件事要在每棵树上各做一遍</text>
+    <text x="34" y="516">· 一个进程的「组籍」长度不固定,树越多越长</text>
+  </g>
+
+  <!-- ================= RIGHT: v2 ================= -->
+  <text x="900" y="90" text-anchor="middle" fill="#88ff88" font-size="14">v2:只有一棵树,各种资源共用同一套分组</text>
+  <g font-size="11">
+    <rect x="812" y="106" width="176" height="28" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="900" y="124" text-anchor="middle" fill="#c088ff">/(唯一的一棵树)</text>
+    <line x1="900" y1="134" x2="900" y2="152" stroke="#8892a0"/>
+    <rect x="832" y="152" width="136" height="26" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="900" y="169" text-anchor="middle" fill="#88c0ff">host01</text>
+    <line x1="900" y1="178" x2="770" y2="200" stroke="#8892a0"/>
+    <line x1="900" y1="178" x2="1030" y2="200" stroke="#8892a0"/>
+    <rect x="680" y="200" width="180" height="42" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="770" y="217" text-anchor="middle" fill="#88c0ff">db</text>
+    <text x="770" y="234" text-anchor="middle" fill="#ffaa55">cpu · memory · io · pids</text>
+    <rect x="940" y="200" width="180" height="42" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="1030" y="217" text-anchor="middle" fill="#88c0ff">report</text>
+    <text x="1030" y="234" text-anchor="middle" fill="#ffaa55">cpu · memory · io · pids</text>
+    <line x1="1030" y1="242" x2="1030" y2="254" stroke="#8892a0"/>
+    <rect x="984" y="254" width="92" height="24" rx="12" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="1030" y="270" text-anchor="middle" fill="#88ff88">pid 4322</text>
+    <text x="800" y="270" text-anchor="middle" fill="#c088ff">只有一处组籍(/proc/4322/cgroup 只有一行)</text>
+  </g>
+
+  <!-- v2 flow -->
+  <rect x="634" y="296" width="532" height="52" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="646" y="317" fill="#88c0ff" font-size="12">① write():数据进页缓存,占掉的内存</text>
+  <text x="646" y="336" fill="#88c0ff" font-size="12">   记在 report 组里</text>
+  <line x1="900" y1="348" x2="900" y2="372" stroke="#8892a0" marker-end="url(#a1)"/>
+  <rect x="634" y="374" width="532" height="70" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="646" y="395" fill="#88ff88" font-size="12">② 稍后:内核回写线程把这些页写到盘上</text>
+  <text x="646" y="414" fill="#88ff88" font-size="12">   这笔磁盘 IO 也记在 report 组里</text>
+  <text x="646" y="433" fill="#88ff88" font-size="11">   脏页是哪个组弄脏的,内存这边有记录;同一棵树上,io 直接认这个组</text>
+  <g font-size="12" fill="#88ff88">
+    <text x="634" y="472">· 内存记录和 IO 记录说的是同一个「report」,可以对上</text>
+    <text x="634" y="494">· 建组、挪进程、删组,只做一遍</text>
+    <text x="634" y="516">· 哪个组管哪几种资源,由父组的 cgroup.subtree_control 决定</text>
+  </g>
+
+  <!-- bottom band -->
+  <rect x="30" y="548" width="1140" height="44" rx="6" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="600" y="567" text-anchor="middle" fill="#ffaa55" font-size="13">C5·所有资源共用同一套分组:写一次文件既是内存的用量又是磁盘的用量,所以所有资源必须对「谁是一组」给出同一个答案</text>
+  <text x="600" y="584" text-anchor="middle" fill="#ffaa55" font-size="11">v2 顺带立的另外三条规矩:只认进程不认线程 · 有进程的组不再给子组分内存这类资源 · 文件名和格式统一</text>
+
+  <!-- legend -->
+  <g font-size="11">
+    <rect x="30" y="610" width="14" height="14" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="52" y="622" fill="#c088ff">树根</text>
+    <rect x="100" y="610" width="14" height="14" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="122" y="622" fill="#88c0ff">组 / 记得上的记录</text>
+    <rect x="240" y="610" width="14" height="14" rx="7" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="262" y="622" fill="#88ff88">同一个进程</text>
+    <rect x="350" y="610" width="14" height="14" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="372" y="622" fill="#ff8888">对不上的记录</text>
+    <rect x="460" y="610" width="14" height="14" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="482" y="622" fill="#ffaa55">控制器 / 约束</text>
+    <text x="600" y="622" fill="#8892a0">树里的组名(web / batch / jobs / fast / slow)是为了说明而设的</text>
+  </g>
+</svg>

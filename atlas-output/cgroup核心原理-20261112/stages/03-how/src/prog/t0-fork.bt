@@ -1,0 +1,21 @@
+// t0-fork.bt:抓「入组」和「fork」两个时刻(只看 report 组)
+tracepoint:cgroup:cgroup_attach_task
+/str(args.dst_path) == "/host01/report"/
+{
+  printf("入组  pid %d(%s)被搬进 %s\n", args.pid, str(args.comm), str(args.dst_path));
+}
+
+fexit:vmlinux:cgroup_post_fork
+/str(curtask->cgroups->dfl_cgrp->kn->name) == "report"/
+{
+  $cs = args.child->cgroups;
+  printf("fork  父 %d(%s)的组籍 %p   子 %d 的组籍 %p   这张组籍上现在有 %d 个进程\n",
+         pid, comm, curtask->cgroups, args.child->pid, $cs, $cs->nr_tasks);
+  if (@shown == 0) {
+    @shown = 1;
+    printf("      这张组籍里写着:CPU 的账 → %p(组 %s)   内存的账 → %p(组 %s)\n",
+           $cs->subsys[cpu_cgrp_id], str($cs->subsys[cpu_cgrp_id]->cgroup->kn->name),
+           $cs->subsys[memory_cgrp_id], str($cs->subsys[memory_cgrp_id]->cgroup->kn->name));
+  }
+}
+END { clear(@shown); }

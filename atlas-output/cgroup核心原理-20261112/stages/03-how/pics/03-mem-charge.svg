@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="620" fill="#0a0c10"/>
+  <text x="600" y="34" text-anchor="middle" fill="#e0e6f0" font-size="20">内存的账:每拿到一页记一笔,从本核预付的页数里扣;预付的用完了才去改组的计数器,并顺着树往上改</text>
+  <text x="600" y="56" text-anchor="middle" fill="#8892a0" font-size="12">report 组,memory.max = 300M(76 800 页)。一个 worker 吃 100 MiB。数字取自实跑留档 t2、t4</text>
+
+  <defs>
+    <marker id="b1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8892a0"/></marker>
+    <marker id="b2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#c08040"/></marker>
+    <marker id="b3" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#c04040"/></marker>
+  </defs>
+
+  <!-- step 1: fault -->
+  <rect x="40" y="90" width="210" height="96" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="145" y="112" text-anchor="middle" fill="#88c0ff" font-size="13">worker 第一次摸一页</text>
+  <text x="145" y="134" text-anchor="middle" fill="#e0e6f0" font-size="11">缺页 → 内核分一个物理页</text>
+  <text x="145" y="152" text-anchor="middle" fill="#e0e6f0" font-size="11">→ 给它所在的组记 1 页</text>
+  <text x="145" y="174" text-anchor="middle" fill="#88ff88" font-size="11">实测 25 610 次</text>
+  <path d="M250,138 L296,138" stroke="#8892a0" stroke-width="1.3" marker-end="url(#b1)"/>
+
+  <!-- step 2: stock -->
+  <rect x="300" y="90" width="230" height="96" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="415" y="112" text-anchor="middle" fill="#ffaa55" font-size="13">本核的预付页数(每颗核一份)</text>
+  <text x="415" y="134" text-anchor="middle" fill="#e0e6f0" font-size="11">「report 组已预付 N 页」</text>
+  <text x="415" y="152" text-anchor="middle" fill="#e0e6f0" font-size="11">N &gt; 0:N 减 1,完事,不碰别人</text>
+  <text x="415" y="174" text-anchor="middle" fill="#88ff88" font-size="11">64 次里有 63 次到此为止</text>
+  <path d="M530,138 L576,138" stroke="#c08040" stroke-width="1.3" stroke-dasharray="6,4" marker-end="url(#b2)"/>
+  <text x="553" y="128" text-anchor="middle" fill="#ffaa55" font-size="10">N = 0</text>
+
+  <!-- step 3: counter chain -->
+  <rect x="580" y="74" width="580" height="170" rx="6" fill="none" stroke="#8040c0"/>
+  <text x="594" y="93" fill="#c088ff" font-size="12">去改组的计数器:一次改 64 页,1 页自用,63 页留作本核预付(实测 400 次)</text>
+  <rect x="600" y="106" width="170" height="74" fill="#5f3a1e" stroke="#c08040" stroke-width="2"/>
+  <text x="685" y="126" text-anchor="middle" fill="#ffaa55" font-size="12">report 的账</text>
+  <text x="685" y="146" text-anchor="middle" fill="#e0e6f0" font-size="11">959 → 1023 页</text>
+  <text x="685" y="166" text-anchor="middle" fill="#ff8888" font-size="11">上限 76 800 页</text>
+  <path d="M770,143 L792,143" stroke="#c08040" stroke-width="1.3" marker-end="url(#b2)"/>
+  <rect x="796" y="106" width="170" height="74" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="881" y="126" text-anchor="middle" fill="#ffaa55" font-size="12">父组 host01 的账</text>
+  <text x="881" y="146" text-anchor="middle" fill="#e0e6f0" font-size="11">1023 → 1087 页</text>
+  <text x="881" y="166" text-anchor="middle" fill="#ff8888" font-size="11">上限 2G</text>
+  <path d="M966,143 L988,143" stroke="#c08040" stroke-width="1.3" marker-end="url(#b2)"/>
+  <rect x="992" y="106" width="150" height="74" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="1067" y="126" text-anchor="middle" fill="#ffaa55" font-size="12">根的账</text>
+  <text x="1067" y="146" text-anchor="middle" fill="#e0e6f0" font-size="11">165161 → 165225</text>
+  <text x="1067" y="166" text-anchor="middle" fill="#8892a0" font-size="11">无上限</text>
+  <text x="870" y="204" text-anchor="middle" fill="#e0e6f0" font-size="11">每一层都是「加上 64,看超没超这一层的上限」。三层都没超,这 64 页才算记成</text>
+  <text x="870" y="224" text-anchor="middle" fill="#8892a0" font-size="10">(内核里:page_counter,每个计数器带一个 parent 指针)</text>
+
+  <!-- page tag -->
+  <rect x="40" y="206" width="490" height="38" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="285" y="230" text-anchor="middle" fill="#88ff88" font-size="12">同时,这一页上记下所属组:「属于 report」。实测抽查 25 610 页,全部如此</text>
+
+  <!-- hit the limit -->
+  <text x="40" y="282" fill="#e0e6f0" font-size="14">某一次加 64 页会超过 report 的上限(撞线):</text>
+
+  <rect x="40" y="298" width="250" height="110" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="165" y="320" text-anchor="middle" fill="#ff8888" font-size="13">① 撞线</text>
+  <text x="165" y="342" text-anchor="middle" fill="#e0e6f0" font-size="11">76 775 + 64 &gt; 76 800</text>
+  <text x="165" y="362" text-anchor="middle" fill="#e0e6f0" font-size="11">这次记账不成立</text>
+  <text x="165" y="384" text-anchor="middle" fill="#e0e6f0" font-size="11">撞线的进程停在原地</text>
+  <path d="M290,353 L326,353" stroke="#c04040" stroke-width="1.3" marker-end="url(#b3)"/>
+
+  <rect x="330" y="298" width="270" height="110" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="465" y="320" text-anchor="middle" fill="#ff8888" font-size="13">② 自己在组内回收</text>
+  <text x="465" y="342" text-anchor="middle" fill="#e0e6f0" font-size="11">只扫 report 组名下的页</text>
+  <text x="465" y="362" text-anchor="middle" fill="#e0e6f0" font-size="11">能丢弃的页缓存丢弃,账上减掉</text>
+  <text x="465" y="384" text-anchor="middle" fill="#e0e6f0" font-size="11">减够了 → 回到记账,继续跑</text>
+  <path d="M600,353 L636,353" stroke="#c04040" stroke-width="1.3" marker-end="url(#b3)"/>
+  <text x="618" y="343" text-anchor="middle" fill="#ff8888" font-size="10">收不动</text>
+
+  <rect x="640" y="298" width="250" height="110" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="765" y="320" text-anchor="middle" fill="#ff8888" font-size="13">③ 组内 OOM</text>
+  <text x="765" y="342" text-anchor="middle" fill="#e0e6f0" font-size="11">给 report 组里每个进程打分</text>
+  <text x="765" y="362" text-anchor="middle" fill="#e0e6f0" font-size="11">(占的内存越多分越高)</text>
+  <text x="765" y="384" text-anchor="middle" fill="#e0e6f0" font-size="11">最高分的那个收到 SIGKILL</text>
+  <path d="M890,353 L926,353" stroke="#c04040" stroke-width="1.3" marker-end="url(#b3)"/>
+
+  <rect x="930" y="298" width="230" height="110" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="1045" y="320" text-anchor="middle" fill="#88c0ff" font-size="13">④ 受害者退出</text>
+  <text x="1045" y="342" text-anchor="middle" fill="#e0e6f0" font-size="11">它的页一页页还回去</text>
+  <text x="1045" y="362" text-anchor="middle" fill="#e0e6f0" font-size="11">页上记着所属组,所以知道</text>
+  <text x="1045" y="384" text-anchor="middle" fill="#e0e6f0" font-size="11">该从谁的账上减</text>
+
+  <!-- two cases -->
+  <rect x="40" y="430" width="548" height="112" fill="none" stroke="#40c060"/>
+  <text x="54" y="452" fill="#88ff88" font-size="13">实测 A:读 600M 的文件(页缓存,收得回来)</text>
+  <text x="54" y="476" fill="#e0e6f0" font-size="11">撞线 146 次,回收 146 次,共收回 77 312 页(302 MiB)</text>
+  <text x="54" y="496" fill="#e0e6f0" font-size="11">进入 OOM 0 次。只走到 ②,文件照样读完</text>
+  <text x="54" y="520" fill="#8892a0" font-size="11">代价:cat 自己花时间做回收,读得慢一些</text>
+
+  <rect x="612" y="430" width="548" height="112" fill="none" stroke="#c04040"/>
+  <text x="626" y="452" fill="#ff8888" font-size="13">实测 B:三个 worker 占 150M / 80M / 慢慢涨到 100M(匿名页,没有 swap)</text>
+  <text x="626" y="476" fill="#e0e6f0" font-size="11">撞线的是第三个(pid 8242);打分 40 812 / 22 850 / 17 441</text>
+  <text x="626" y="496" fill="#e0e6f0" font-size="11">被杀的是占 150M 的那个(pid 8233),不是撞线的那个</text>
+  <text x="626" y="520" fill="#8892a0" font-size="11">从撞线到发出 SIGKILL:3.13 ms</text>
+
+  <!-- bottom band -->
+  <rect x="30" y="560" width="1140" height="44" rx="6" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="600" y="580" text-anchor="middle" fill="#ffaa55" font-size="13">记账和查限是同一个动作:「加上去,看超没超」。不超什么都不发生;超了,撞线的进程当场停下来处理</text>
+  <text x="600" y="597" text-anchor="middle" fill="#ffaa55" font-size="11">边界 = 撞线的是哪一层的计数器。哪一层撞线,回收和 OOM 就只在那一层的子树里做</text>
+</svg>

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 908" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="908" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="892" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg — root@lima-cg(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 8G)· 沙箱组 host01</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 1. 只分组,不封顶:report 的 cpu.max 是默认值 max,两个组的权重都是默认的 100</text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">cat /sys/fs/cgroup/host01/report/cpu.max</tspan></text>
+  <rect x="22" y="91" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre" fill="#88c0ff">max 100000</text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">cat /sys/fs/cgroup/host01/db/cpu.weight /sys/fs/cgroup/host01/report/cpu.weight</tspan></text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">100</text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">100</text>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 2. report 400 个 worker,db-sim 4 个进程</text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report python3 report.py cpu 400 &amp;</tspan></text>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">pgrep -c -x report-w</tspan></text>
+  <rect x="22" y="259" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre" fill="#88c0ff">400</text>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup db python3 db.py &amp;</tspan></text>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">ps -o psr= -C db-sim | sort -n | xargs echo 第 2 秒,4 个 db-sim 所在的核:</tspan></text>
+  <rect x="22" y="322" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre" fill="#88c0ff">第 2 秒,4 个 db-sim 所在的核: 1 1 2 3</text>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">ps -o psr= -C db-sim | sort -n | xargs echo 第 5 秒,4 个 db-sim 所在的核:</tspan></text>
+  <rect x="22" y="364" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre" fill="#88c0ff">第 5 秒,4 个 db-sim 所在的核: 1 1 2 3</text>
+  <rect x="22" y="385" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre" fill="#88c0ff">查询 1982 次(248 次/秒)  平均 16.2 ms  p99 39.5 ms</text>
+  <rect x="22" y="406" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre" fill="#88c0ff">这段时间的 CPU:db-sim×4 合计 152%   report-w×400 合计 234%</text>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 3. 权重不变(100 比 100),这次手工把 4 个 db-sim 一个核放一个</text>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup db python3 db.py &amp;</tspan></text>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">i=0; for p in $(pgrep -x db-sim); do taskset -cp $i $p &gt; /dev/null; i=$((i+1)); done</tspan></text>
+  <text x="28" y="526" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">ps -o psr= -C db-sim | sort -n | xargs echo 4 个 db-sim 所在的核:</tspan></text>
+  <rect x="22" y="532" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="547" xml:space="preserve" style="white-space:pre" fill="#88c0ff">4 个 db-sim 所在的核: 0 1 2 3</text>
+  <rect x="22" y="553" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="568" xml:space="preserve" style="white-space:pre" fill="#88c0ff">查询 2565 次(321 次/秒)  平均 12.5 ms  p99 60.0 ms</text>
+  <rect x="22" y="574" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="589" xml:space="preserve" style="white-space:pre" fill="#88c0ff">这段时间的 CPU:db-sim×4 合计 192%   report-w×400 合计 180%</text>
+  <text x="28" y="610" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="631" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 4. 不钉核,把 db 组的权重调到 900(report 还是 100)</text>
+  <text x="28" y="652" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">echo 900 &gt; /sys/fs/cgroup/host01/db/cpu.weight</tspan></text>
+  <text x="28" y="673" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup db python3 db.py &amp;</tspan></text>
+  <text x="28" y="694" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">ps -o psr= -C db-sim | sort -n | xargs echo 4 个 db-sim 所在的核:</tspan></text>
+  <rect x="22" y="700" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="715" xml:space="preserve" style="white-space:pre" fill="#88c0ff">4 个 db-sim 所在的核: 0 1 2 3</text>
+  <rect x="22" y="721" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="736" xml:space="preserve" style="white-space:pre" fill="#88c0ff">查询 4413 次(552 次/秒)  平均 7.2 ms  p99 19.9 ms</text>
+  <rect x="22" y="742" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="757" xml:space="preserve" style="white-space:pre" fill="#88c0ff">这段时间的 CPU:db-sim×4 合计 345%   report-w×400 合计 36%</text>
+  <text x="28" y="778" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="799" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 5. db-sim 没活的时候,权重只有 100 的 report 吃多少</text>
+  <text x="28" y="820" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">python3 cpuof.py 3</tspan></text>
+  <rect x="22" y="826" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="841" xml:space="preserve" style="white-space:pre" fill="#88c0ff">3 秒内的 CPU:report-w×400 合计 385%</text>
+  <text x="600.0" y="886" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-13 · Lima 虚拟机 cg · 日志原文 src/logs/cgweight.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

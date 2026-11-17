@@ -1,0 +1,5 @@
+#!/bin/sh
+# 用法:ingroup <组名> <命令...>    先入组,后变身
+echo $$ > /sys/fs/cgroup/host01/$1/cgroup.procs
+shift
+exec "$@"

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 908" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="908" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="892" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg — root@lima-cg(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 8G)</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 1. 先跑:一个父 shell 起 8 个吃 CPU 的子进程</text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">setsid bash -c &#x27;for i in {1..8}; do yes &gt;/dev/null &amp; done; echo $$ &gt; /tmp/parent.pid; wait&#x27; &amp;</tspan></text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">cat /tmp/parent.pid</tspan></text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">2993</text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">pgrep -P 2993 | xargs</tspan></text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">2995 2996 2997 2998 2999 3000 3001 3002</text>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">cat /proc/2993/cgroup</tspan></text>
+  <rect x="22" y="196" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#88c0ff">0::/user.slice/user-502.slice/session-6.scope</text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 2. 后建组,只把父进程写进去,再设限</text>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">mkdir /sys/fs/cgroup/demo</tspan></text>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">echo 2993 &gt; /sys/fs/cgroup/demo/cgroup.procs</tspan></text>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">echo &quot;50000 100000&quot; &gt; /sys/fs/cgroup/demo/cpu.max</tspan></text>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 3. 名单:组里只有父进程,子进程没跟过来</text>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">cat /sys/fs/cgroup/demo/cgroup.procs</tspan></text>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">2993</text>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">cat /proc/2993/cgroup</tspan></text>
+  <rect x="22" y="427" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre" fill="#88c0ff">0::/demo</text>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">cat /proc/2995/cgroup</tspan></text>
+  <rect x="22" y="469" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre" fill="#88c0ff">0::/user.slice/user-502.slice/session-6.scope</text>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="526" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 4. 采样 3 秒:8 个 yes 各吃多少 CPU,demo 组的账上有多少</text>
+  <text x="28" y="547" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">grep usage_usec /sys/fs/cgroup/demo/cpu.stat</tspan></text>
+  <rect x="22" y="553" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="568" xml:space="preserve" style="white-space:pre" fill="#88c0ff">usage_usec 0</text>
+  <text x="28" y="589" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">top -b -d 3 -n 2 | grep -E &#x27;PID|yes&#x27; | tail -9</tspan></text>
+  <text x="28" y="610" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND</text>
+  <rect x="22" y="616" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="631" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   3002 root      20   0   17812   8060   4912 R  53.2   0.1   0:02.22 yes</text>
+  <rect x="22" y="637" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="652" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   2997 root      20   0   17220   7108   4912 R  50.2   0.1   0:02.15 yes</text>
+  <rect x="22" y="658" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="673" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   3001 root      20   0   17688   7092   4896 R  50.2   0.1   0:02.16 yes</text>
+  <rect x="22" y="679" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="694" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   2995 root      20   0   17536   7096   4904 R  49.8   0.1   0:02.15 yes</text>
+  <rect x="22" y="700" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="715" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   2998 root      20   0   16896   7108   4912 R  49.8   0.1   0:02.27 yes</text>
+  <rect x="22" y="721" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="736" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   2999 root      20   0   17676   7096   4904 R  49.2   0.1   0:02.22 yes</text>
+  <rect x="22" y="742" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="757" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   2996 root      20   0   17632   7088   4892 R  48.8   0.1   0:02.15 yes</text>
+  <rect x="22" y="763" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="778" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   3000 root      20   0   17224   7104   4912 R  48.8   0.1   0:02.15 yes</text>
+  <text x="28" y="799" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">grep usage_usec /sys/fs/cgroup/demo/cpu.stat</tspan></text>
+  <rect x="22" y="805" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="820" xml:space="preserve" style="white-space:pre" fill="#88c0ff">usage_usec 0</text>
+  <text x="28" y="841" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="600.0" y="886" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-13 · Lima 虚拟机 cg · 日志原文 src/logs/join.log(第 1 ~ 4 步) · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="520" fill="#0a0c10"/>
+  <text x="600" y="34" text-anchor="middle" fill="#e0e6f0" font-size="20">「0.5 颗核」不是把核切开,是时间上只允许用一半</text>
+  <text x="600" y="56" text-anchor="middle" fill="#8892a0" font-size="12">cpu.max = 50000 100000:每 100 ms 的周期里,这一组合计最多跑 50 ms —— 用完就整组停到下个周期(示意,按理想情况画)</text>
+
+  <!-- period boundaries -->
+  <g stroke="#8040c0" stroke-width="1" stroke-dasharray="6,4">
+    <line x1="260" y1="76" x2="260" y2="400"/>
+    <line x1="680" y1="76" x2="680" y2="400"/>
+    <line x1="1100" y1="76" x2="1100" y2="400"/>
+  </g>
+  <text x="470" y="90" text-anchor="middle" fill="#c088ff" font-size="12">第 1 个周期(100 ms)</text>
+  <text x="890" y="90" text-anchor="middle" fill="#c088ff" font-size="12">第 2 个周期(100 ms)</text>
+
+  <!-- Scenario A -->
+  <text x="30" y="122" fill="#e0e6f0" font-size="13">场景 A</text>
+  <text x="30" y="140" fill="#8892a0" font-size="11">组里只有 1 个死循环</text>
+  <text x="250" y="140" text-anchor="end" fill="#88ff88" font-size="12">核 0</text>
+  <rect x="260" y="120" width="210" height="30" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="365" y="140" text-anchor="middle" fill="#88c0ff" font-size="12">在跑 50 ms</text>
+  <rect x="470" y="120" width="210" height="30" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="575" y="140" text-anchor="middle" fill="#ff8888" font-size="12">不在核上 50 ms</text>
+  <rect x="680" y="120" width="210" height="30" fill="#1e3a5f" stroke="#4080c0"/>
+  <text x="785" y="140" text-anchor="middle" fill="#88c0ff" font-size="12">在跑 50 ms</text>
+  <rect x="890" y="120" width="210" height="30" fill="#5f1e1e" stroke="#c04040"/>
+  <text x="995" y="140" text-anchor="middle" fill="#ff8888" font-size="12">不在核上 50 ms</text>
+  <text x="1110" y="140" fill="#8892a0" font-size="11">合计 50</text>
+
+  <!-- Scenario B -->
+  <text x="30" y="200" fill="#e0e6f0" font-size="13">场景 B</text>
+  <text x="30" y="218" fill="#8892a0" font-size="11">组里 8 个 worker</text>
+  <text x="30" y="234" fill="#8892a0" font-size="11">机器 4 颗核</text>
+
+  <g font-size="12">
+    <text x="250" y="204" text-anchor="end" fill="#88ff88">核 0</text>
+    <text x="250" y="240" text-anchor="end" fill="#88ff88">核 1</text>
+    <text x="250" y="276" text-anchor="end" fill="#88ff88">核 2</text>
+    <text x="250" y="312" text-anchor="end" fill="#88ff88">核 3</text>
+  </g>
+
+  <!-- period 1 rows -->
+  <g>
+    <rect x="260" y="186" width="52.5" height="26" fill="#1e3a5f" stroke="#4080c0"/>
+    <rect x="312.5" y="186" width="367.5" height="26" fill="#5f1e1e" stroke="#c04040"/>
+    <rect x="260" y="222" width="52.5" height="26" fill="#1e3a5f" stroke="#4080c0"/>
+    <rect x="312.5" y="222" width="367.5" height="26" fill="#5f1e1e" stroke="#c04040"/>
+    <rect x="260" y="258" width="52.5" height="26" fill="#1e3a5f" stroke="#4080c0"/>
+    <rect x="312.5" y="258" width="367.5" height="26" fill="#5f1e1e" stroke="#c04040"/>
+    <rect x="260" y="294" width="52.5" height="26" fill="#1e3a5f" stroke="#4080c0"/>
+    <rect x="312.5" y="294" width="367.5" height="26" fill="#5f1e1e" stroke="#c04040"/>
+  </g>
+  <!-- period 2 rows -->
+  <g>
+    <rect x="680" y="186" width="52.5" height="26" fill="#1e3a5f" stroke="#4080c0"/>
+    <rect x="732.5" y="186" width="367.5" height="26" fill="#5f1e1e" stroke="#c04040"/>
+    <rect x="680" y="222" width="52.5" height="26" fill="#1e3a5f" stroke="#4080c0"/>
+    <rect x="732.5" y="222" width="367.5" height="26" fill="#5f1e1e" stroke="#c04040"/>
+    <rect x="680" y="258" width="52.5" height="26" fill="#1e3a5f" stroke="#4080c0"/>
+    <rect x="732.5" y="258" width="367.5" height="26" fill="#5f1e1e" stroke="#c04040"/>
+    <rect x="680" y="294" width="52.5" height="26" fill="#1e3a5f" stroke="#4080c0"/>
+    <rect x="732.5" y="294" width="367.5" height="26" fill="#5f1e1e" stroke="#c04040"/>
+  </g>
+  <g font-size="11" fill="#88c0ff" text-anchor="middle">
+    <text x="286" y="204">12.5</text>
+    <text x="286" y="240">12.5</text>
+    <text x="286" y="276">12.5</text>
+    <text x="286" y="312">12.5</text>
+    <text x="706" y="204">12.5</text>
+    <text x="706" y="240">12.5</text>
+    <text x="706" y="276">12.5</text>
+    <text x="706" y="312">12.5</text>
+  </g>
+  <text x="496" y="240" text-anchor="middle" fill="#ff8888" font-size="12">4 颗核同时消耗同一份配额</text>
+  <text x="496" y="276" text-anchor="middle" fill="#ff8888" font-size="12">4 × 12.5 = 50 ms,12.5 ms 就用完</text>
+  <text x="496" y="312" text-anchor="middle" fill="#ff8888" font-size="12">整组不在核上 87.5 ms</text>
+  <text x="916" y="240" text-anchor="middle" fill="#ff8888" font-size="12">下个周期配额补满,再来一遍</text>
+  <text x="1110" y="258" fill="#8892a0" font-size="11">合计 50</text>
+
+  <!-- axis -->
+  <line x1="260" y1="352" x2="1100" y2="352" stroke="#8892a0" stroke-width="1"/>
+  <g stroke="#8892a0" stroke-width="1">
+    <line x1="260" y1="348" x2="260" y2="358"/>
+    <line x1="470" y1="348" x2="470" y2="358"/>
+    <line x1="680" y1="348" x2="680" y2="358"/>
+    <line x1="890" y1="348" x2="890" y2="358"/>
+    <line x1="1100" y1="348" x2="1100" y2="358"/>
+  </g>
+  <g font-size="11" fill="#8892a0" text-anchor="middle">
+    <text x="260" y="374">0</text>
+    <text x="470" y="374">50 ms</text>
+    <text x="680" y="374">100 ms</text>
+    <text x="890" y="374">150 ms</text>
+    <text x="1100" y="374">200 ms</text>
+    <text x="680" y="394">墙上时间 →</text>
+  </g>
+
+  <!-- takeaway band -->
+  <rect x="30" y="416" width="1140" height="44" rx="6" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="600" y="436" text-anchor="middle" fill="#ffaa55" font-size="13">两种场景每个周期用掉的 CPU 时间都是 50 ms。「0.5 颗核」= 50 ms CPU 时间 ÷ 100 ms 墙上时间</text>
+  <text x="600" y="453" text-anchor="middle" fill="#ffaa55" font-size="11">任何一瞬间,一颗核要么整颗在跑你,要么没在跑你 —— 没有「跑半颗」这种状态</text>
+
+  <!-- legend -->
+  <g font-size="11">
+    <rect x="30" y="482" width="14" height="14" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="52" y="494" fill="#88c0ff">这一组的进程在核上跑</text>
+    <rect x="240" y="482" width="14" height="14" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="262" y="494" fill="#ff8888">配额用完,这一组不在核上运行(核可以去跑别的组)</text>
+    <line x1="610" y1="489" x2="640" y2="489" stroke="#8040c0" stroke-dasharray="6,4"/>
+    <text x="648" y="494" fill="#c088ff">周期边界:配额在这里补满</text>
+    <rect x="860" y="482" width="14" height="14" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="882" y="494" fill="#ffaa55">结论</text>
+  </g>
+</svg>

@@ -1,0 +1,182 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 2441" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="2441" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="2425" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg-lab — root@lima-cg-lab(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 4G,专用实验机)· 沙箱组 host01</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 同一个组内 OOM 场景(两个 worker 先占 150M、80M,第三个慢慢吃到 100M;上限 300M)跑 4 轮(跟踪脚本也打印闸门挡住的时刻,和受害者被标成「</text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre" fill="#ffaa55">退出中」的时刻)</text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./oomrun.sh 4 2&gt;&amp;1 | grep &#x27;===&#x27;</tspan></text>
+  <rect x="22" y="112" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre" fill="#88c0ff">=== 第 1 轮:oom_kill 3,活下来 0 个</text>
+  <rect x="22" y="133" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre" fill="#88c0ff">=== 第 2 轮:oom_kill 3,活下来 0 个</text>
+  <rect x="22" y="154" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre" fill="#88c0ff">=== 第 3 轮:oom_kill 3,活下来 0 个</text>
+  <rect x="22" y="175" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#88c0ff">=== 第 4 轮:oom_kill 2,活下来 1 个</text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 第 1 轮的跟踪</text>
+  <rect x="22" y="238" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre" fill="#88c0ff">       4 us  第 1 次进入组内 OOM(触发者 pid 165757):report 的账 76800 页,上限 76800 页</text>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">      34 us      打分:pid 165754 40839 分</text>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">      37 us      打分:pid 165755 22879 分</text>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">      38 us      打分:pid 165757 17485 分</text>
+  <rect x="22" y="322" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     316 us      选中 pid 165754,发 SIGKILL</text>
+  <rect x="22" y="343" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     331 us  受害者 pid 165754 进入 do_exit(exit_signals);几微秒后 signal-&gt;live 归零,从那以后遍历看不到它</text>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">     389 us  受害者 pid 165754 开始拆自己的内存(exit_mmap)</text>
+  <rect x="22" y="385" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     594 us  第 2 次进入组内 OOM(触发者 pid 165757):report 的账 76800 页,上限 76800 页</text>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">     603 us      打分:pid 165755 22879 分</text>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">     604 us      打分:pid 165757 17485 分</text>
+  <rect x="22" y="448" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     741 us      选中 pid 165755,发 SIGKILL</text>
+  <rect x="22" y="469" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     821 us  第 3 次进入组内 OOM(触发者 pid 165757):report 的账 76800 页,上限 76800 页</text>
+  <rect x="22" y="490" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     822 us      遍历到 pid 165755:它是还没拆完的受害者,闸门挡住,这一轮不杀(abort)</text>
+  <rect x="22" y="511" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="526" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1000 us  第 4 次进入组内 OOM(触发者 pid 165757):report 的账 76800 页,上限 76800 页</text>
+  <rect x="22" y="532" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="547" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1002 us      遍历到 pid 165755:它是还没拆完的受害者,闸门挡住,这一轮不杀(abort)</text>
+  <rect x="22" y="553" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="568" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1179 us  第 5 次进入组内 OOM(触发者 pid 165757):report 的账 76800 页,上限 76800 页</text>
+  <rect x="22" y="574" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="589" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1181 us      遍历到 pid 165755:它是还没拆完的受害者,闸门挡住,这一轮不杀(abort)</text>
+  <rect x="22" y="595" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="610" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1241 us  第 6 次进入组内 OOM(触发者 pid 165757):report 的账 76800 页,上限 76800 页</text>
+  <rect x="22" y="616" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="631" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1242 us      遍历到 pid 165755:它是还没拆完的受害者,闸门挡住,这一轮不杀(abort)</text>
+  <rect x="22" y="637" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="652" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1306 us  第 7 次进入组内 OOM(触发者 pid 165757):report 的账 76800 页,上限 76800 页</text>
+  <rect x="22" y="658" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="673" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1306 us      遍历到 pid 165755:它是还没拆完的受害者,闸门挡住,这一轮不杀(abort)</text>
+  <rect x="22" y="679" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="694" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1366 us  第 8 次进入组内 OOM(触发者 pid 165757):report 的账 76800 页,上限 76800 页</text>
+  <rect x="22" y="700" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="715" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1366 us      遍历到 pid 165755:它是还没拆完的受害者,闸门挡住,这一轮不杀(abort)</text>
+  <rect x="22" y="721" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="736" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1458 us  受害者 pid 165755 进入 do_exit(exit_signals);几微秒后 signal-&gt;live 归零,从那以后遍历看不到它</text>
+  <text x="28" y="757" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="778" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 第 2 轮的跟踪</text>
+  <rect x="22" y="784" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="799" xml:space="preserve" style="white-space:pre" fill="#88c0ff">       3 us  第 1 次进入组内 OOM(触发者 pid 165784):report 的账 76800 页,上限 76800 页</text>
+  <text x="28" y="820" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">      28 us      打分:pid 165781 40837 分</text>
+  <text x="28" y="841" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">      30 us      打分:pid 165782 22891 分</text>
+  <text x="28" y="862" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">      30 us      打分:pid 165784 17485 分</text>
+  <rect x="22" y="868" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="883" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     207 us      选中 pid 165781,发 SIGKILL</text>
+  <rect x="22" y="889" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="904" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     268 us  受害者 pid 165781 进入 do_exit(exit_signals);几微秒后 signal-&gt;live 归零,从那以后遍历看不到它</text>
+  <text x="28" y="925" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">     358 us  受害者 pid 165781 开始拆自己的内存(exit_mmap)</text>
+  <rect x="22" y="931" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="946" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     830 us  第 2 次进入组内 OOM(触发者 pid 165784):report 的账 76800 页,上限 76800 页</text>
+  <text x="28" y="967" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">     833 us      打分:pid 165782 22891 分</text>
+  <text x="28" y="988" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">     834 us      打分:pid 165784 17485 分</text>
+  <rect x="22" y="994" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1009" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1022 us      选中 pid 165782,发 SIGKILL</text>
+  <rect x="22" y="1015" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1030" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1039 us  受害者 pid 165782 进入 do_exit(exit_signals);几微秒后 signal-&gt;live 归零,从那以后遍历看不到它</text>
+  <text x="28" y="1051" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    1053 us  受害者 pid 165782 开始拆自己的内存(exit_mmap)</text>
+  <rect x="22" y="1057" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1072" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1137 us  第 3 次进入组内 OOM(触发者 pid 165784):report 的账 76800 页,上限 76800 页</text>
+  <text x="28" y="1093" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    1138 us      打分:pid 165784 17485 分</text>
+  <rect x="22" y="1099" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1114" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1252 us      选中 pid 165784,发 SIGKILL</text>
+  <rect x="22" y="1120" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1135" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1347 us  受害者 pid 165784 进入 do_exit(exit_signals);几微秒后 signal-&gt;live 归零,从那以后遍历看不到它</text>
+  <text x="28" y="1156" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    1357 us  受害者 pid 165784 开始拆自己的内存(exit_mmap)</text>
+  <rect x="22" y="1162" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1177" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    4323 us  受害者 pid 165784 拆完映射,马上被标成「跳过」;此刻 report 的账 49004 页</text>
+  <text x="28" y="1198" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    5513 us  受害者 pid 165784 拆完(exit_mmap 返回):还了 15940 页;此刻 report 的账 32897 页</text>
+  <rect x="22" y="1204" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1219" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    7472 us  受害者 pid 165782 拆完映射,马上被标成「跳过」;此刻 report 的账 20134 页</text>
+  <text x="28" y="1240" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    8062 us  受害者 pid 165782 拆完(exit_mmap 返回):还了 21359 页;此刻 report 的账 13821 页</text>
+  <rect x="22" y="1246" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1261" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   10811 us  受害者 pid 165781 拆完映射,马上被标成「跳过」;此刻 report 的账 1275 页</text>
+  <text x="28" y="1282" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">   11795 us  受害者 pid 165781 拆完(exit_mmap 返回):还了 39286 页;此刻 report 的账 215 页</text>
+  <text x="28" y="1303" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="1324" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 第 3 轮的跟踪</text>
+  <rect x="22" y="1330" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1345" xml:space="preserve" style="white-space:pre" fill="#88c0ff">       2 us  第 1 次进入组内 OOM(触发者 pid 165812):report 的账 76800 页,上限 76800 页</text>
+  <text x="28" y="1366" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">      25 us      打分:pid 165810 22870 分</text>
+  <text x="28" y="1387" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">      26 us      打分:pid 165809 40848 分</text>
+  <text x="28" y="1408" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">      27 us      打分:pid 165812 17479 分</text>
+  <rect x="22" y="1414" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1429" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     211 us      选中 pid 165809,发 SIGKILL</text>
+  <rect x="22" y="1435" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1450" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     226 us  受害者 pid 165809 进入 do_exit(exit_signals);几微秒后 signal-&gt;live 归零,从那以后遍历看不到它</text>
+  <text x="28" y="1471" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">     289 us  受害者 pid 165809 开始拆自己的内存(exit_mmap)</text>
+  <rect x="22" y="1477" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1492" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     395 us  第 2 次进入组内 OOM(触发者 pid 165812):report 的账 76800 页,上限 76800 页</text>
+  <text x="28" y="1513" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">     413 us      打分:pid 165810 22870 分</text>
+  <text x="28" y="1534" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">     414 us      打分:pid 165812 17479 分</text>
+  <rect x="22" y="1540" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1555" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     745 us      选中 pid 165810,发 SIGKILL</text>
+  <rect x="22" y="1561" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1576" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     802 us  受害者 pid 165810 进入 do_exit(exit_signals);几微秒后 signal-&gt;live 归零,从那以后遍历看不到它</text>
+  <text x="28" y="1597" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">     826 us  受害者 pid 165810 开始拆自己的内存(exit_mmap)</text>
+  <rect x="22" y="1603" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1618" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     922 us  第 3 次进入组内 OOM(触发者 pid 165812):report 的账 76800 页,上限 76800 页</text>
+  <text x="28" y="1639" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">     924 us      打分:pid 165812 17479 分</text>
+  <rect x="22" y="1645" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1660" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1061 us      选中 pid 165812,发 SIGKILL</text>
+  <rect x="22" y="1666" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1681" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1090 us  受害者 pid 165812 进入 do_exit(exit_signals);几微秒后 signal-&gt;live 归零,从那以后遍历看不到它</text>
+  <text x="28" y="1702" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    1097 us  受害者 pid 165812 开始拆自己的内存(exit_mmap)</text>
+  <rect x="22" y="1708" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1723" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    4439 us  受害者 pid 165812 拆完映射,马上被标成「跳过」;此刻 report 的账 42891 页</text>
+  <text x="28" y="1744" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    5485 us  受害者 pid 165812 拆完(exit_mmap 返回):还了 15936 页;此刻 report 的账 28668 页</text>
+  <rect x="22" y="1750" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1765" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    6613 us  受害者 pid 165810 拆完映射,马上被标成「跳过」;此刻 report 的账 17246 页</text>
+  <text x="28" y="1786" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    7079 us  受害者 pid 165810 拆完(exit_mmap 返回):还了 21358 页;此刻 report 的账 11669 页</text>
+  <rect x="22" y="1792" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1807" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    9211 us  受害者 pid 165809 拆完映射,马上被标成「跳过」;此刻 report 的账 1283 页</text>
+  <text x="28" y="1828" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    9542 us  受害者 pid 165809 拆完(exit_mmap 返回):还了 39286 页;此刻 report 的账 221 页</text>
+  <text x="28" y="1849" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="1870" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 第 4 轮的跟踪</text>
+  <rect x="22" y="1876" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1891" xml:space="preserve" style="white-space:pre" fill="#88c0ff">       3 us  第 1 次进入组内 OOM(触发者 pid 165839):report 的账 76800 页,上限 76800 页</text>
+  <text x="28" y="1912" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">      87 us      打分:pid 165837 22843 分</text>
+  <text x="28" y="1933" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">      90 us      打分:pid 165836 40801 分</text>
+  <text x="28" y="1954" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">      91 us      打分:pid 165839 17502 分</text>
+  <rect x="22" y="1960" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1975" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     321 us      选中 pid 165836,发 SIGKILL</text>
+  <rect x="22" y="1981" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1996" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     474 us  受害者 pid 165836 进入 do_exit(exit_signals);几微秒后 signal-&gt;live 归零,从那以后遍历看不到它</text>
+  <rect x="22" y="2002" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="2017" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     483 us  第 2 次进入组内 OOM(触发者 pid 165839):report 的账 76800 页,上限 76800 页</text>
+  <text x="28" y="2038" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">     484 us      打分:pid 165837 22843 分</text>
+  <rect x="22" y="2044" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="2059" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     485 us      遍历到 pid 165836:它是还没拆完的受害者,闸门挡住,这一轮不杀(abort)</text>
+  <text x="28" y="2080" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">     503 us  受害者 pid 165836 开始拆自己的内存(exit_mmap)</text>
+  <rect x="22" y="2086" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="2101" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     545 us  第 3 次进入组内 OOM(触发者 pid 165839):report 的账 76800 页,上限 76800 页</text>
+  <text x="28" y="2122" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">     545 us      打分:pid 165837 22843 分</text>
+  <text x="28" y="2143" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">     545 us      打分:pid 165839 17511 分</text>
+  <rect x="22" y="2149" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="2164" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     652 us      选中 pid 165837,发 SIGKILL</text>
+  <rect x="22" y="2170" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="2185" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     721 us  第 4 次进入组内 OOM(触发者 pid 165839):report 的账 76800 页,上限 76800 页</text>
+  <rect x="22" y="2191" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="2206" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     721 us      遍历到 pid 165837:它是还没拆完的受害者,闸门挡住,这一轮不杀(abort)</text>
+  <rect x="22" y="2212" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="2227" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     781 us  第 5 次进入组内 OOM(触发者 pid 165839):report 的账 76800 页,上限 76800 页</text>
+  <rect x="22" y="2233" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="2248" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     781 us      遍历到 pid 165837:它是还没拆完的受害者,闸门挡住,这一轮不杀(abort)</text>
+  <rect x="22" y="2254" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="2269" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     880 us  第 6 次进入组内 OOM(触发者 pid 165839):report 的账 76800 页,上限 76800 页</text>
+  <rect x="22" y="2275" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="2290" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     881 us      遍历到 pid 165837:它是还没拆完的受害者,闸门挡住,这一轮不杀(abort)</text>
+  <rect x="22" y="2296" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="2311" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     942 us  第 7 次进入组内 OOM(触发者 pid 165839):report 的账 76800 页,上限 76800 页</text>
+  <rect x="22" y="2317" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="2332" xml:space="preserve" style="white-space:pre" fill="#88c0ff">     942 us      遍历到 pid 165837:它是还没拆完的受害者,闸门挡住,这一轮不杀(abort)</text>
+  <rect x="22" y="2338" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="2353" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1002 us  第 8 次进入组内 OOM(触发者 pid 165839):report 的账 76800 页,上限 76800 页</text>
+  <rect x="22" y="2359" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="2374" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    1002 us      遍历到 pid 165837:它是还没拆完的受害者,闸门挡住,这一轮不杀(abort)</text>
+  <text x="600.0" y="2419" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-16 · Lima 虚拟机 cg-lab · 日志原文 src/logs/oomrace.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

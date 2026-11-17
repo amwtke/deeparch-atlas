@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1370" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="1370" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="1354" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg-lab — root@lima-cg-lab(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 4G,专用实验机)· 沙箱组 host01</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 同一个 worker 再走一遍,这次每到一个接入点,打印当时的内核调用栈(从下往上读:谁调用了谁)</text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">bpftrace t7-life.bt 1 &gt; hooks.out 2&gt;&amp;1 &amp;</tspan></text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report python3 life.py</tspan></text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">grep -v -e Attached -e bpf_ -e &#x27;^$&#x27; hooks.out | sed -E &#x27;s/^\t[0-9a-f]+ ([^+]+)\+[0-9]+$/             \1/&#x27;</tspan></text>
+  <rect x="22" y="133" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  0.00 ms  [fork]      pids 控制器被问「能生吗」→ 放行,report 组的进程数 +1</text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             pids_can_fork</text>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             cgroup_can_fork</text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             copy_process</text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             kernel_clone</text>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             __do_sys_clone</text>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             __arm64_sys_clone</text>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             invoke_syscall.constprop.0</text>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             el0_svc_common.constprop.0</text>
+  <rect x="22" y="322" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  0.02 ms  [fork]      核心:子进程 9578 抄走父进程的组籍 0xffff0000c40f8400,挂上名单</text>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             cgroup_post_fork</text>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             copy_process</text>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             kernel_clone</text>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             __do_sys_clone</text>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             __arm64_sys_clone</text>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             invoke_syscall.constprop.0</text>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             el0_svc_common.constprop.0</text>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             do_el0_svc</text>
+  <rect x="22" y="511" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="526" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  0.07 ms  [缺页]      memory 控制器:分到物理页,给 report 组记 1 页</text>
+  <text x="28" y="547" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             try_charge_memcg</text>
+  <text x="28" y="568" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             charge_memcg</text>
+  <text x="28" y="589" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             __mem_cgroup_charge</text>
+  <text x="28" y="610" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             wp_page_copy</text>
+  <text x="28" y="631" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             do_wp_page</text>
+  <text x="28" y="652" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             handle_pte_fault</text>
+  <text x="28" y="673" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             __handle_mm_fault</text>
+  <text x="28" y="694" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             handle_mm_fault</text>
+  <rect x="22" y="700" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="715" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  0.38 ms  [调度结算]  cpu 控制器:刚跑掉 359 微秒,从 report 组在核 1 的零钱里扣</text>
+  <text x="28" y="736" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             __account_cfs_rq_runtime</text>
+  <text x="28" y="757" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             update_curr</text>
+  <text x="28" y="778" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             task_tick_fair</text>
+  <text x="28" y="799" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             sched_tick</text>
+  <text x="28" y="820" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             update_process_times</text>
+  <text x="28" y="841" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             tick_nohz_handler</text>
+  <text x="28" y="862" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             __hrtimer_run_queues</text>
+  <text x="28" y="883" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             hrtimer_interrupt</text>
+  <rect x="22" y="889" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="904" xml:space="preserve" style="white-space:pre" fill="#88c0ff">251.02 ms  [提交 IO]   io 控制器:一笔 4194304 字节的写请求,交给磁盘前先过 report 组的带宽闸门</text>
+  <text x="28" y="925" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             __blk_throtl_bio</text>
+  <text x="28" y="946" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             submit_bio_noacct</text>
+  <text x="28" y="967" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             submit_bio</text>
+  <text x="28" y="988" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             ext4_io_submit</text>
+  <text x="28" y="1009" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             ext4_do_writepages</text>
+  <text x="28" y="1030" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             ext4_writepages</text>
+  <text x="28" y="1051" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             do_writepages</text>
+  <text x="28" y="1072" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             filemap_writeback</text>
+  <rect x="22" y="1078" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1093" xml:space="preserve" style="white-space:pre" fill="#88c0ff">1061.76 ms  [fork]      worker 自己生孩子:pids 控制器又被问一次 → 放行</text>
+  <rect x="22" y="1099" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1114" xml:space="preserve" style="white-space:pre" fill="#88c0ff">1062.19 ms  [退出]      核心:把 worker 从组籍的名单上摘掉</text>
+  <text x="28" y="1135" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             cgroup_task_exit</text>
+  <text x="28" y="1156" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             do_exit</text>
+  <text x="28" y="1177" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             do_group_exit</text>
+  <text x="28" y="1198" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             __arm64_sys_exit_group</text>
+  <text x="28" y="1219" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             invoke_syscall.constprop.0</text>
+  <text x="28" y="1240" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             el0_svc_common.constprop.0</text>
+  <text x="28" y="1261" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             do_el0_svc</text>
+  <text x="28" y="1282" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             el0_svc</text>
+  <rect x="22" y="1288" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1303" xml:space="preserve" style="white-space:pre" fill="#88c0ff">1062.23 ms  [退出]      pids 控制器:report 组的进程数 -1</text>
+  <text x="600.0" y="1348" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-14 · Lima 虚拟机 cg-lab · 日志原文 src/logs/hooks.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

@@ -1,0 +1,22 @@
+// t3-count.bt:1 秒内,限流相关的事各发生了多少次(只看 report 组)
+fentry:vmlinux:sched_cfs_period_timer
+{
+  $b = (struct cfs_bandwidth *)((uint64)args.timer - offsetof(struct cfs_bandwidth, period_timer));
+  $tg = (struct task_group *)((uint64)$b - offsetof(struct task_group, cfs_bandwidth));
+  if (str($tg->css.cgroup->kn->name) == "report") { @n_period = count(); }
+}
+fexit:vmlinux:throttle_cfs_rq
+/retval && str(args.cfs_rq->tg->css.cgroup->kn->name) == "report"/ { @n_mark = count(); }
+fentry:vmlinux:throttle_cfs_rq_work
+/str(curtask->cgroups->dfl_cgrp->kn->name) == "report"/ { @n_off = count(); @who[pid] = count(); }
+fentry:vmlinux:unthrottle_cfs_rq
+/str(args.cfs_rq->tg->css.cgroup->kn->name) == "report"/ { @n_unmark = count(); }
+interval:s:1 {
+  printf("1 秒内,report 组:\n");
+  printf("  周期定时器响 %d 次\n", (int64)@n_period);
+  printf("  「在某颗核上标记限流」 %d 次\n", (int64)@n_mark);
+  printf("  「在某颗核上解除限流」 %d 次\n", (int64)@n_unmark);
+  printf("  「某个进程被请下场」   %d 次,涉及 %d 个不同的进程\n", (int64)@n_off, len(@who));
+  exit();
+}
+END { clear(@n_period); clear(@n_mark); clear(@n_off); clear(@n_unmark); clear(@who); }

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 593" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="593" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="577" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg-lab — root@lima-cg-lab(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 4G,专用实验机)· 沙箱组 host01</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">cat ingroup</tspan></text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">#!/bin/sh</text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"># 用法:ingroup &lt;组名&gt; &lt;命令...&gt;    先入组,后变身</text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">echo $$ &gt; /sys/fs/cgroup/host01/$1/cgroup.procs</text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">shift</text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">exec &quot;$@&quot;</text>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 1. 先挂上跟踪脚本,再让 report 入组并 fork 出 3 个 worker</text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">bpftrace t0-fork.bt &gt; t0.out 2&gt;&amp;1 &amp;</tspan></text>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report python3 report.py 3 0.2 &amp;</tspan></text>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">grep -v -e Attached -e &#x27;^$&#x27; t0.out</tspan></text>
+  <rect x="22" y="280" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#88c0ff">入组  pid 7405(ingroup)被搬进 /host01/report</text>
+  <rect x="22" y="301" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#88c0ff">fork  父 7405(report)的组籍 0xffff0000c40f8400   子 7407 的组籍 0xffff0000c40f8400   这张组籍上现在有 2 个进程</text>
+  <rect x="22" y="322" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre" fill="#88c0ff">      这张组籍里写着:CPU 的账 → 0xffff0000c0dae100(组 report)   内存的账 → 0xffff0000c5794a40(组 report)</text>
+  <rect x="22" y="343" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre" fill="#88c0ff">fork  父 7405(report)的组籍 0xffff0000c40f8400   子 7408 的组籍 0xffff0000c40f8400   这张组籍上现在有 3 个进程</text>
+  <rect x="22" y="364" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre" fill="#88c0ff">fork  父 7405(report)的组籍 0xffff0000c40f8400   子 7409 的组籍 0xffff0000c40f8400   这张组籍上现在有 4 个进程</text>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 2. 四个进程各自的组籍(从 /proc 看)</text>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">for p in $(pgrep -x &#x27;report|report-w&#x27;); do echo &quot;$p $(cat /proc/$p/cgroup)&quot;; done</tspan></text>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">7405 0::/host01/report</text>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">7407 0::/host01/report</text>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">7408 0::/host01/report</text>
+  <text x="28" y="526" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">7409 0::/host01/report</text>
+  <text x="600.0" y="571" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-14 · Lima 虚拟机 cg-lab · 日志原文 src/logs/t0.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

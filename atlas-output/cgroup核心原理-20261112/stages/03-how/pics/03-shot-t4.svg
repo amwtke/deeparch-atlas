@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 971" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="971" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="955" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg-lab — root@lima-cg-lab(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 4G,专用实验机)· 沙箱组 host01</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">echo 300M &gt; /sys/fs/cgroup/host01/report/memory.max</tspan></text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### A. 收得回来的内存:在 300M 的组里读一个 600M 的文件(页缓存)</text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">bpftrace t4-oom.bt &gt; t4a.out 2&gt;&amp;1 &amp;</tspan></text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report cat /var/tmp/rep.dat &gt; /dev/null</tspan></text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">grep -v -e Attached -e &#x27;^$&#x27; t4a.out</tspan></text>
+  <rect x="22" y="175" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   0.00 ms  撞线:pid 8198(cat)要再记 512 页,report 组的账 76672 页 + 512 &gt; 上限 76800 页</text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">   0.24 ms  回收:pid 8198(cat)自己动手在 report 组里回收,想要 512 页,收回 696 页</text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">   0.33 ms  回收:pid 8198(cat)自己动手在 report 组里回收,想要 512 页,收回 768 页</text>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">   0.42 ms  回收:pid 8198(cat)自己动手在 report 组里回收,想要 512 页,收回 776 页</text>
+  <rect x="22" y="259" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre" fill="#88c0ff">合计:撞线 146 次;组内回收 146 次,共收回 77312 页;进入 OOM 0 次</text>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">grep -E &#x27;^(max|oom|oom_kill) &#x27; /sys/fs/cgroup/host01/report/memory.events | xargs</tspan></text>
+  <rect x="22" y="301" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#88c0ff">max 146 oom 0 oom_kill 0</text>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### B. 收不回来的内存(匿名页,没有 swap):两个 worker 先占 150M 和 80M,第三个慢慢吃到 100M</text>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">bpftrace t4-oom.bt &gt; t4b.out 2&gt;&amp;1 &amp;</tspan></text>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report python3 hold.py report-w 150 &amp;</tspan></text>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report python3 hold.py report-w 80 &amp;</tspan></text>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">report-w(pid 8237)已占住 80 MiB</text>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">report-w(pid 8233)已占住 150 MiB</text>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report python3 hold.py report-w 100 10 0.1 &amp;</tspan></text>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">report-w(pid 8242)已占住 100 MiB</text>
+  <text x="28" y="526" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">grep -v -e Attached -e &#x27;^$&#x27; t4b.out</tspan></text>
+  <rect x="22" y="532" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="547" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   0.00 ms  撞线:pid 8242(report-w)要再记 64 页,report 组的账 76775 页 + 64 &gt; 上限 76800 页</text>
+  <text x="28" y="568" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">   0.31 ms  回收:pid 8242(report-w)自己动手在 report 组里回收,想要 1 页,收回 148 页</text>
+  <text x="28" y="589" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">   0.63 ms  回收:pid 8242(report-w)自己动手在 report 组里回收,想要 1 页,收回 48 页</text>
+  <text x="28" y="610" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">   0.82 ms  回收:pid 8242(report-w)自己动手在 report 组里回收,想要 1 页,收回 44 页</text>
+  <rect x="22" y="616" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="631" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   2.83 ms  回收不动了,进入 OOM:范围 = report 组,触发的是 pid 8242(report-w)</text>
+  <rect x="22" y="637" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="652" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   2.87 ms    打分:pid 8233(report-w) 40812 分</text>
+  <rect x="22" y="658" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="673" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   2.87 ms    打分:pid 8237(report-w) 22850 分</text>
+  <rect x="22" y="679" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="694" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   2.87 ms    打分:pid 8242(report-w) 17441 分</text>
+  <rect x="22" y="700" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="715" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   3.13 ms    选中:pid 8233(report-w),匿名内存 157056 kB,发 SIGKILL</text>
+  <rect x="22" y="721" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="736" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   3.43 ms    打分:pid 8237(report-w) 22850 分</text>
+  <rect x="22" y="742" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="757" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   3.45 ms    打分:pid 8242(report-w) 17441 分</text>
+  <rect x="22" y="763" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="778" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   3.58 ms    选中:pid 8237(report-w),匿名内存 85376 kB,发 SIGKILL</text>
+  <rect x="22" y="784" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="799" xml:space="preserve" style="white-space:pre" fill="#88c0ff">合计:撞线 560 次;组内回收 63 次,共收回 575 页;进入 OOM 2 次</text>
+  <text x="28" y="820" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">ps -o pid,rss,comm -C report-w</tspan></text>
+  <text x="28" y="841" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    PID   RSS COMMAND</text>
+  <rect x="22" y="847" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="862" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   8242 111776 report-w</text>
+  <text x="28" y="883" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">grep -E &#x27;^(max|oom|oom_kill) &#x27; /sys/fs/cgroup/host01/report/memory.events | xargs</tspan></text>
+  <rect x="22" y="889" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="904" xml:space="preserve" style="white-space:pre" fill="#88c0ff">max 209 oom 2 oom_kill 2</text>
+  <text x="600.0" y="949" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-14 · Lima 虚拟机 cg-lab · 日志原文 src/logs/t4.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

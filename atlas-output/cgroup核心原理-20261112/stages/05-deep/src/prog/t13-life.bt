@@ -1,0 +1,58 @@
+// t13-life.bt:一个 worker 的一生,对到 v7.0 的函数(微秒,从 fork 开始算;每类事件只打印前几次)
+BEGIN { @t0 = 0; @w = 0; }
+fexit:vmlinux:pids_can_fork
+/comm == "report" && @w == 0/
+{ @t0 = nsecs; printf("%9d us  [fork]   pids_can_fork:report 组进程数 +1,放行(返回 %d)\n", 0, retval); }
+fexit:vmlinux:cgroup_post_fork
+/comm == "report" && @w == 0 && @t0/
+{ @w = args.child->pid; printf("%9d us  [fork]   cgroup_post_fork:子进程 %d 挂到父进程的组籍 %p 上\n", (nsecs - @t0) / 1000, @w, args.child->cgroups); }
+fentry:vmlinux:__account_cfs_rq_runtime
+/@w && pid == @w && @acct < 1/
+{ @acct += 1; printf("%9d us  [CPU]    __account_cfs_rq_runtime:第一笔 CPU 账 %d us,扣核 %d 上 report 的零钱\n", (nsecs - @t0) / 1000, args.delta_exec / 1000, cpu); }
+fexit:vmlinux:throttle_cfs_rq
+/@w && retval && @thr < 2 && str(args.cfs_rq->tg->css.cgroup->kn->name) == "report"/
+{ @thr += 1; printf("%9d us  [CPU]    throttle_cfs_rq:公共池空了,核 %d 上 report 组挂牌「限流中」\n", (nsecs - @t0) / 1000, cpu); }
+fentry:vmlinux:throttle_cfs_rq_work
+/@w && pid == @w && @off < 2/
+{ @off += 1; printf("%9d us  [CPU]    throttle_cfs_rq_work:worker 在回用户态的路上下场\n", (nsecs - @t0) / 1000); }
+fentry:vmlinux:unthrottle_cfs_rq
+/@w && @un < 2 && str(args.cfs_rq->tg->css.cgroup->kn->name) == "report"/
+{ @un += 1; printf("%9d us  [CPU]    unthrottle_cfs_rq:周期定时器补满额度,核 %d 上摘牌\n", (nsecs - @t0) / 1000, cpu); }
+fentry:vmlinux:try_charge_memcg
+/@w && pid == @w && @ch < 1/
+{ @ch += 1; printf("%9d us  [内存]   try_charge_memcg:第一次要给 %s 组记 %d 页\n", (nsecs - @t0) / 1000, str(args.memcg->css.cgroup->kn->name), args.nr_pages); }
+fexit:vmlinux:page_counter_try_charge
+/@w && pid == @w/
+{
+  if (retval && @pc < 1) { @pc += 1; printf("%9d us  [内存]   page_counter_try_charge:改计数器 +%d 页,report 的账 %d 页\n", (nsecs - @t0) / 1000, args.nr_pages, args.counter->usage.counter); }
+  if (!retval && @fail < 1) { @fail += 1; printf("%9d us  [内存]   page_counter_try_charge:撞线,report 的账 %d 页 + %d > 上限 %d 页\n", (nsecs - @t0) / 1000, args.counter->usage.counter, args.nr_pages, args.counter->max); }
+}
+fexit:vmlinux:try_to_free_mem_cgroup_pages
+/@w && pid == @w && @rc < 2/
+{ @rc += 1; printf("%9d us  [内存]   try_to_free_mem_cgroup_pages:worker 自己在组内回收,收回 %d 页\n", (nsecs - @t0) / 1000, retval); }
+fentry:vmlinux:mem_cgroup_out_of_memory
+/@w && pid == @w && @oom < 1/
+{ @oom += 1; printf("%9d us  [内存]   mem_cgroup_out_of_memory:回收不动,进入组内 OOM\n", (nsecs - @t0) / 1000); }
+fexit:vmlinux:oom_badness
+/@w && pid == @w && @sc < 2/
+{ @sc += 1; printf("%9d us  [内存]   oom_badness:给 pid %d 打分 %d\n", (nsecs - @t0) / 1000, args.p->pid, retval); }
+tracepoint:oom:mark_victim
+/@w/
+{ printf("%9d us  [内存]   mark_victim:选中 pid %d,发 SIGKILL\n", (nsecs - @t0) / 1000, args.pid); }
+fentry:vmlinux:do_exit
+/@w && pid == @w/
+{ printf("%9d us  [退出]   do_exit:worker 开始退出\n", (nsecs - @t0) / 1000); }
+fentry:vmlinux:exit_mmap
+/@w && pid == @w/
+{ printf("%9d us  [退出]   exit_mmap:开始拆内存\n", (nsecs - @t0) / 1000); }
+fexit:vmlinux:exit_mmap
+/@w && pid == @w/
+{ $m = (struct mem_cgroup *)curtask->cgroups->subsys[memory_cgrp_id];
+  printf("%9d us  [退出]   exit_mmap 返回:report 的账降到 %d 页\n", (nsecs - @t0) / 1000, $m->memory.usage.counter); }
+fentry:vmlinux:cgroup_task_exit
+/@w && args.tsk->pid == @w/
+{ printf("%9d us  [退出]   cgroup_task_exit:核心把 worker 从组籍名单上摘掉\n", (nsecs - @t0) / 1000); }
+fentry:vmlinux:pids_release
+/@w && args.task->pid == @w/
+{ printf("%9d us  [退出]   pids_release:父进程收尸,report 组进程数 -1\n", (nsecs - @t0) / 1000); }
+END { clear(@t0); clear(@w); clear(@acct); clear(@thr); clear(@off); clear(@un); clear(@ch); clear(@pc); clear(@fail); clear(@rc); clear(@oom); clear(@sc); }

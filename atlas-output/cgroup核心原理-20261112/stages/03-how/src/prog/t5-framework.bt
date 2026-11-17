@@ -1,0 +1,28 @@
+// t5-framework.bt:框架和控制器是怎么配合的
+//   <控制器>_css_alloc :框架请某个控制器「给一个新组建一本你的账」
+//   <控制器>_attach    :框架通知某个控制器「有进程搬进你管的组了」
+//   组籍(css_set)里每个控制器一个格子,记着「这种资源的账在哪个组上」
+fentry:vmlinux:pids_css_alloc       { printf("建账  框架请 pids 控制器给 %s 的一个子组建账\n",   str(args.parent->cgroup->kn->name)); }
+fentry:vmlinux:blkcg_css_alloc      { printf("建账  框架请 io 控制器给 %s 的一个子组建账\n",     str(args.parent_css->cgroup->kn->name)); }
+fentry:vmlinux:cpu_cgroup_css_alloc { printf("建账  框架请 cpu 控制器给 %s 的一个子组建账\n",    str(args.parent_css->cgroup->kn->name)); }
+fentry:vmlinux:mem_cgroup_css_alloc { printf("建账  框架请 memory 控制器给 %s 的一个子组建账\n", str(args.parent_css->cgroup->kn->name)); }
+
+fentry:vmlinux:cpu_cgroup_attach /comm == "ingroup"/ { printf("入组  框架通知 cpu 控制器:pid %d 搬进来了\n", pid); }
+fentry:vmlinux:mem_cgroup_attach /comm == "ingroup"/ { printf("入组  框架通知 memory 控制器:pid %d 搬进来了\n", pid); }
+fentry:vmlinux:pids_can_attach   /comm == "ingroup"/ { printf("入组  框架询问 pids 控制器:pid %d 能搬进来吗\n", pid); }
+fentry:vmlinux:cpuset_attach     /comm == "ingroup"/ { printf("入组  框架通知 cpuset 控制器:pid %d 搬进来了\n", pid); }
+
+fexit:vmlinux:cgroup_post_fork
+/comm == "ticker"/
+{
+  $cs = curtask->cgroups;
+  if ((uint64)$cs != @last) {
+    @last = (uint64)$cs;
+    printf("组籍  ticker(pid %d)现在的组籍 %p,五个格子:cpuset → %s   cpu → %s   io → %s   memory → %s   pids → %s\n",
+           pid, $cs,
+           str($cs->subsys[cpuset_cgrp_id]->cgroup->kn->name), str($cs->subsys[cpu_cgrp_id]->cgroup->kn->name),
+           str($cs->subsys[io_cgrp_id]->cgroup->kn->name), str($cs->subsys[memory_cgrp_id]->cgroup->kn->name),
+           str($cs->subsys[pids_cgrp_id]->cgroup->kn->name));
+  }
+}
+END { clear(@last); }

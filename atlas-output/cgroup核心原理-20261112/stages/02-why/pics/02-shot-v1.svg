@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 803" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="803" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="787" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg — root@lima-cg(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 8G)· 沙箱组 host01</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 1. v1 的挂法:每种资源各挂一棵树(这里挂两棵还能用的:freezer 和 net_cls)</text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">mkdir -p /tmp/v1/freezer /tmp/v1/net_cls</tspan></text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">mount -t cgroup -o freezer none /tmp/v1/freezer</tspan></text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">mount -t cgroup -o net_cls none /tmp/v1/net_cls</tspan></text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">ls /tmp/v1/freezer</tspan></text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">cgroup.clone_children</text>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">cgroup.procs</text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">cgroup.sane_behavior</text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">notify_on_release</text>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">release_agent</text>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">tasks</text>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 2. 两棵树各建各的组,同一个 shell 在两棵树上各占一个位置</text>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">mkdir /tmp/v1/freezer/A /tmp/v1/net_cls/X</tspan></text>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">echo $$ &gt; /tmp/v1/freezer/A/cgroup.procs; echo $$ &gt; /tmp/v1/net_cls/X/cgroup.procs</tspan></text>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">cat /proc/$$/cgroup</tspan></text>
+  <rect x="22" y="385" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre" fill="#88c0ff">4:net_cls:/X</text>
+  <rect x="22" y="406" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre" fill="#88c0ff">3:freezer:/A</text>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">0::/user.slice/user-502.slice/session-6.scope</text>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 3. v1 允许把一个进程的两个线程拆到两个组</text>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">python3 two_threads.py &amp;</tspan></text>
+  <text x="28" y="526" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">进程 pid = 45856(主线程的 tid 也是它)</text>
+  <text x="28" y="547" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">副线程 tid = 45858</text>
+  <text x="28" y="568" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">mkdir /tmp/v1/freezer/B; echo 45858 &gt; /tmp/v1/freezer/B/tasks</tspan></text>
+  <text x="28" y="589" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">grep -H freezer /proc/45856/task/*/cgroup</tspan></text>
+  <rect x="22" y="595" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="610" xml:space="preserve" style="white-space:pre" fill="#88c0ff">/proc/45856/task/45856/cgroup:3:freezer:/A</text>
+  <rect x="22" y="616" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="631" xml:space="preserve" style="white-space:pre" fill="#88c0ff">/proc/45856/task/45858/cgroup:3:freezer:/B</text>
+  <text x="28" y="652" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="673" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 4. 这台内核里,v1 的内存控制器和 cpuset 已经没有编进来</text>
+  <text x="28" y="694" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">grep -E &#x27;MEMCG_V1|CPUSETS_V1&#x27; /boot/config-$(uname -r)</tspan></text>
+  <rect x="22" y="700" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="715" xml:space="preserve" style="white-space:pre" fill="#88c0ff"># CONFIG_MEMCG_V1 is not set</text>
+  <rect x="22" y="721" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="736" xml:space="preserve" style="white-space:pre" fill="#88c0ff"># CONFIG_CPUSETS_V1 is not set</text>
+  <text x="600.0" y="781" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-13 · Lima 虚拟机 cg · 日志原文 src/logs/v1.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

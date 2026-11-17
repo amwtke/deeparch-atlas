@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 572" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="572" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="556" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg — root@lima-cg(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 8G)· 沙箱组 host01</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 磁盘 IO:report 写一个 1 GiB 的临时文件(普通的带缓冲写),并且给它最低的 IO 优先级</text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">grep ^Cached: /proc/meminfo</tspan></text>
+  <rect x="22" y="91" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre" fill="#88c0ff">Cached:          2605832 kB</text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">ionice -c 3 dd if=/dev/zero of=/var/tmp/report.tmp bs=1M count=1024 2&gt;&amp;1 | tail -1</tspan></text>
+  <rect x="22" y="133" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre" fill="#88c0ff">1073741824 bytes (1.1 GB, 1.0 GiB) copied, 0.100223 s, 11 GB/s</text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">grep ^Cached: /proc/meminfo</tspan></text>
+  <rect x="22" y="175" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#88c0ff">Cached:          3654444 kB</text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 同样的写,但要求 dd 等数据真正落到盘上再返回</text>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">ionice -c 3 dd if=/dev/zero of=/var/tmp/report.tmp bs=1M count=1024 conv=fsync 2&gt;&amp;1 | tail -1</tspan></text>
+  <rect x="22" y="259" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre" fill="#88c0ff">1073741824 bytes (1.1 GB, 1.0 GiB) copied, 0.608359 s, 1.8 GB/s</text>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 进程数:用 ulimit -u 限成 30。先看普通用户 lima 名下已经有多少个</text>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">ps -L -u lima --no-headers | wc -l</tspan></text>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">3</text>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">runuser -u lima -- bash -c &#x27;ulimit -u 30; python3 forkn.py 100&#x27;</tspan></text>
+  <rect x="22" y="385" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre" fill="#88c0ff">第 26 次 fork 失败:[Errno 11] Resource temporarily unavailable</text>
+  <rect x="22" y="406" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre" fill="#88c0ff">想要 100 个子进程,成功 fork 出 25 个</text>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 同样的限制,换成 root(容器里的进程常常就是 root)</text>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">bash -c &#x27;ulimit -u 30; python3 forkn.py 100&#x27;</tspan></text>
+  <rect x="22" y="490" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre" fill="#88c0ff">想要 100 个子进程,成功 fork 出 100 个</text>
+  <text x="600.0" y="550" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-13 · Lima 虚拟机 cg · 日志原文 src/logs/same.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

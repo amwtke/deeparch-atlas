@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="600" fill="#0a0c10"/>
+  <text x="600" y="32" text-anchor="middle" fill="#e0e6f0" font-size="19">五个接入点的调用栈:下面是内核本来就要走的路,最上面一到三行是 cgroup 加进去的调用</text>
+  <text x="600" y="54" text-anchor="middle" fill="#8892a0" font-size="11">取自 hooks.log:同一个 worker 再走一遍,每个接入点打印一次内核调用栈(只打 11 层,去掉跟踪工具自己的几层,剩 8 行;更早的调用者被截掉)</text>
+
+  <defs>
+    <marker id="hu" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#88ff88"/></marker>
+  </defs>
+
+  <!-- read direction -->
+  <path d="M26,352 L26,140" stroke="#40c060" stroke-width="2" fill="none" marker-end="url(#hu)"/>
+  <text x="0" y="0" transform="translate(42,330) rotate(-90)" fill="#88ff88" font-size="11">从下往上读:下面调用上面</text>
+
+  <!-- ===== column 1: fork can_fork ===== -->
+  <g font-size="10">
+    <rect x="50" y="70" width="180" height="52" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="140" y="90" text-anchor="middle" fill="#88c0ff" font-size="12">fork:问能不能生</text>
+    <text x="140" y="110" text-anchor="middle" fill="#8892a0">0.00 ms · report 主进程</text>
+    <rect x="50" y="134" width="180" height="24" fill="#5f3a1e" stroke="#c08040"/><text x="58" y="150" fill="#ffaa55">pids_can_fork</text>
+    <rect x="50" y="161" width="180" height="24" fill="#3a1e5f" stroke="#8040c0"/><text x="58" y="177" fill="#c088ff">cgroup_can_fork</text>
+    <line x1="46" y1="188" x2="234" y2="188" stroke="#40c060" stroke-width="1.5" stroke-dasharray="6,4"/>
+    <rect x="50" y="191" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="58" y="207" fill="#e0e6f0">copy_process</text>
+    <rect x="50" y="218" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="58" y="234" fill="#e0e6f0">kernel_clone</text>
+    <rect x="50" y="245" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="58" y="261" fill="#e0e6f0">__do_sys_clone</text>
+    <rect x="50" y="272" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="58" y="288" fill="#e0e6f0">__arm64_sys_clone</text>
+    <rect x="50" y="299" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="58" y="315" fill="#e0e6f0">invoke_syscall.constprop.0</text>
+    <rect x="50" y="326" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="58" y="342" fill="#e0e6f0">el0_svc_common.constprop.0</text>
+    <rect x="50" y="372" width="180" height="96" fill="#11151c" stroke="#30363d"/>
+    <text x="58" y="390" fill="#8892a0">本来:clone 系统调用,</text>
+    <text x="58" y="405" fill="#8892a0">复制父进程的档案</text>
+    <text x="58" y="430" fill="#88ff88">cgroup:核心按登记表</text>
+    <text x="58" y="445" fill="#88ff88">问 pids「能生吗」</text>
+  </g>
+
+  <!-- ===== column 2: fork post_fork ===== -->
+  <g font-size="10">
+    <rect x="240" y="70" width="180" height="52" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="330" y="90" text-anchor="middle" fill="#88c0ff" font-size="12">fork:挂上组籍</text>
+    <text x="330" y="110" text-anchor="middle" fill="#8892a0">0.02 ms · 同一次 fork</text>
+    <rect x="240" y="134" width="180" height="24" fill="#3a1e5f" stroke="#8040c0"/><text x="248" y="150" fill="#c088ff">cgroup_post_fork</text>
+    <line x1="236" y1="161" x2="424" y2="161" stroke="#40c060" stroke-width="1.5" stroke-dasharray="6,4"/>
+    <rect x="240" y="164" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="248" y="180" fill="#e0e6f0">copy_process</text>
+    <rect x="240" y="191" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="248" y="207" fill="#e0e6f0">kernel_clone</text>
+    <rect x="240" y="218" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="248" y="234" fill="#e0e6f0">__do_sys_clone</text>
+    <rect x="240" y="245" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="248" y="261" fill="#e0e6f0">__arm64_sys_clone</text>
+    <rect x="240" y="272" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="248" y="288" fill="#e0e6f0">invoke_syscall.constprop.0</text>
+    <rect x="240" y="299" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="248" y="315" fill="#e0e6f0">el0_svc_common.constprop.0</text>
+    <rect x="240" y="326" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="248" y="342" fill="#e0e6f0">do_el0_svc</text>
+    <rect x="240" y="372" width="180" height="96" fill="#11151c" stroke="#30363d"/>
+    <text x="248" y="390" fill="#8892a0">本来:还是那一次</text>
+    <text x="248" y="405" fill="#8892a0">copy_process</text>
+    <text x="248" y="430" fill="#88ff88">cgroup:核心把子进程</text>
+    <text x="248" y="445" fill="#88ff88">挂到父进程的组籍上</text>
+  </g>
+
+  <!-- ===== column 3: page fault ===== -->
+  <g font-size="10">
+    <rect x="430" y="70" width="180" height="52" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="520" y="90" text-anchor="middle" fill="#88c0ff" font-size="12">缺页</text>
+    <text x="520" y="110" text-anchor="middle" fill="#8892a0">0.07 ms · worker</text>
+    <rect x="430" y="134" width="180" height="24" fill="#5f3a1e" stroke="#c08040"/><text x="438" y="150" fill="#ffaa55">try_charge_memcg</text>
+    <rect x="430" y="161" width="180" height="24" fill="#5f3a1e" stroke="#c08040"/><text x="438" y="177" fill="#ffaa55">charge_memcg</text>
+    <rect x="430" y="188" width="180" height="24" fill="#5f3a1e" stroke="#c08040"/><text x="438" y="204" fill="#ffaa55">__mem_cgroup_charge</text>
+    <line x1="426" y1="215" x2="614" y2="215" stroke="#40c060" stroke-width="1.5" stroke-dasharray="6,4"/>
+    <rect x="430" y="218" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="438" y="234" fill="#e0e6f0">wp_page_copy</text>
+    <rect x="430" y="245" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="438" y="261" fill="#e0e6f0">do_wp_page</text>
+    <rect x="430" y="272" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="438" y="288" fill="#e0e6f0">handle_pte_fault</text>
+    <rect x="430" y="299" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="438" y="315" fill="#e0e6f0">__handle_mm_fault</text>
+    <rect x="430" y="326" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="438" y="342" fill="#e0e6f0">handle_mm_fault</text>
+    <rect x="430" y="372" width="180" height="96" fill="#11151c" stroke="#30363d"/>
+    <text x="438" y="390" fill="#8892a0">本来:写了 fork 后共用</text>
+    <text x="438" y="405" fill="#8892a0">的页,内核复制一页</text>
+    <text x="438" y="430" fill="#88ff88">cgroup:memory 控制器</text>
+    <text x="438" y="445" fill="#88ff88">给这一新页记账</text>
+  </g>
+
+  <!-- ===== column 4: sched tick ===== -->
+  <g font-size="10">
+    <rect x="620" y="70" width="180" height="52" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="710" y="90" text-anchor="middle" fill="#88c0ff" font-size="12">调度结算</text>
+    <text x="710" y="110" text-anchor="middle" fill="#8892a0">0.38 ms · worker</text>
+    <rect x="620" y="134" width="180" height="24" fill="#5f3a1e" stroke="#c08040"/><text x="628" y="150" fill="#ffaa55">__account_cfs_rq_runtime</text>
+    <line x1="616" y1="161" x2="804" y2="161" stroke="#40c060" stroke-width="1.5" stroke-dasharray="6,4"/>
+    <rect x="620" y="164" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="628" y="180" fill="#e0e6f0">update_curr</text>
+    <rect x="620" y="191" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="628" y="207" fill="#e0e6f0">task_tick_fair</text>
+    <rect x="620" y="218" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="628" y="234" fill="#e0e6f0">sched_tick</text>
+    <rect x="620" y="245" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="628" y="261" fill="#e0e6f0">update_process_times</text>
+    <rect x="620" y="272" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="628" y="288" fill="#e0e6f0">tick_nohz_handler</text>
+    <rect x="620" y="299" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="628" y="315" fill="#e0e6f0">__hrtimer_run_queues</text>
+    <rect x="620" y="326" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="628" y="342" fill="#e0e6f0">hrtimer_interrupt</text>
+    <rect x="620" y="372" width="180" height="96" fill="#11151c" stroke="#30363d"/>
+    <text x="628" y="390" fill="#8892a0">本来:时钟中断,结算</text>
+    <text x="628" y="405" fill="#8892a0">当前进程跑了多久</text>
+    <text x="628" y="430" fill="#88ff88">cgroup:cpu 控制器</text>
+    <text x="628" y="445" fill="#88ff88">从组在这颗核的本地额度里扣</text>
+  </g>
+
+  <!-- ===== column 5: submit io ===== -->
+  <g font-size="10">
+    <rect x="810" y="70" width="180" height="52" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="900" y="90" text-anchor="middle" fill="#88c0ff" font-size="12">提交 IO</text>
+    <text x="900" y="110" text-anchor="middle" fill="#8892a0">251.02 ms · worker</text>
+    <rect x="810" y="134" width="180" height="24" fill="#5f3a1e" stroke="#c08040"/><text x="818" y="150" fill="#ffaa55">__blk_throtl_bio</text>
+    <line x1="806" y1="161" x2="994" y2="161" stroke="#40c060" stroke-width="1.5" stroke-dasharray="6,4"/>
+    <rect x="810" y="164" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="818" y="180" fill="#e0e6f0">submit_bio_noacct</text>
+    <rect x="810" y="191" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="818" y="207" fill="#e0e6f0">submit_bio</text>
+    <rect x="810" y="218" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="818" y="234" fill="#e0e6f0">ext4_io_submit</text>
+    <rect x="810" y="245" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="818" y="261" fill="#e0e6f0">ext4_do_writepages</text>
+    <rect x="810" y="272" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="818" y="288" fill="#e0e6f0">ext4_writepages</text>
+    <rect x="810" y="299" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="818" y="315" fill="#e0e6f0">do_writepages</text>
+    <rect x="810" y="326" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="818" y="342" fill="#e0e6f0">filemap_writeback</text>
+    <rect x="810" y="372" width="180" height="96" fill="#11151c" stroke="#30363d"/>
+    <text x="818" y="390" fill="#8892a0">本来:把文件的脏页</text>
+    <text x="818" y="405" fill="#8892a0">组织成写请求交给块层</text>
+    <text x="818" y="430" fill="#88ff88">cgroup:io 控制器</text>
+    <text x="818" y="445" fill="#88ff88">先过组的带宽限制检查</text>
+  </g>
+
+  <!-- ===== column 6: exit ===== -->
+  <g font-size="10">
+    <rect x="1000" y="70" width="180" height="52" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="1090" y="90" text-anchor="middle" fill="#88c0ff" font-size="12">退出</text>
+    <text x="1090" y="110" text-anchor="middle" fill="#8892a0">1062.19 ms · worker</text>
+    <rect x="1000" y="134" width="180" height="24" fill="#3a1e5f" stroke="#8040c0"/><text x="1008" y="150" fill="#c088ff">cgroup_task_exit</text>
+    <line x1="996" y1="161" x2="1184" y2="161" stroke="#40c060" stroke-width="1.5" stroke-dasharray="6,4"/>
+    <rect x="1000" y="164" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="1008" y="180" fill="#e0e6f0">do_exit</text>
+    <rect x="1000" y="191" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="1008" y="207" fill="#e0e6f0">do_group_exit</text>
+    <rect x="1000" y="218" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="1008" y="234" fill="#e0e6f0">__arm64_sys_exit_group</text>
+    <rect x="1000" y="245" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="1008" y="261" fill="#e0e6f0">invoke_syscall.constprop.0</text>
+    <rect x="1000" y="272" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="1008" y="288" fill="#e0e6f0">el0_svc_common.constprop.0</text>
+    <rect x="1000" y="299" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="1008" y="315" fill="#e0e6f0">do_el0_svc</text>
+    <rect x="1000" y="326" width="180" height="24" fill="#161b22" stroke="#30363d"/><text x="1008" y="342" fill="#e0e6f0">el0_svc</text>
+    <rect x="1000" y="372" width="180" height="96" fill="#11151c" stroke="#30363d"/>
+    <text x="1008" y="390" fill="#8892a0">本来:exit_group 系统</text>
+    <text x="1008" y="405" fill="#8892a0">调用,进程收拾自己</text>
+    <text x="1008" y="430" fill="#88ff88">cgroup:核心把它从</text>
+    <text x="1008" y="445" fill="#88ff88">组籍的名单上摘掉</text>
+  </g>
+
+  <text x="615" y="364" text-anchor="middle" fill="#8892a0" font-size="10">(每一列再往下还有更早的调用者,被截掉了;fork 和退出两列往下是用户程序发出的系统调用)</text>
+
+  <!-- bottom band -->
+  <rect x="50" y="484" width="1130" height="54" rx="6" fill="#1e5f3a" stroke="#40c060"/>
+  <text x="615" y="506" text-anchor="middle" fill="#88ff88" font-size="13">绿色虚线以下的每一行,在一个没有 cgroup 的内核里也一样要走;</text>
+  <text x="615" y="526" text-anchor="middle" fill="#88ff88" font-size="13">cgroup 没有自己的路,只在这几条路的末端各多执行一小步</text>
+
+  <!-- legend -->
+  <g font-size="11">
+    <rect x="50" y="560" width="14" height="14" fill="#161b22" stroke="#30363d"/>
+    <text x="72" y="572" fill="#e0e6f0">内核本来的路</text>
+    <rect x="190" y="560" width="14" height="14" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="212" y="572" fill="#c088ff">核心</text>
+    <rect x="270" y="560" width="14" height="14" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="292" y="572" fill="#ffaa55">控制器</text>
+    <line x1="360" y1="567" x2="400" y2="567" stroke="#40c060" stroke-width="1.5" stroke-dasharray="6,4"/>
+    <text x="408" y="572" fill="#88ff88">分界线</text>
+    <rect x="480" y="560" width="14" height="14" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="502" y="572" fill="#88c0ff">哪个进程、第几毫秒</text>
+  </g>
+</svg>

@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1202" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="1202" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="1186" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg-lab — root@lima-cg-lab(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 4G,专用实验机)· 沙箱组 host01</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 1. report 组限每秒写 10 MiB。组里的一个进程带缓冲地写 30 MiB:不 fsync,也不关文件</text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">echo &#x27;253:0 wbps=10485760&#x27; &gt; /sys/fs/cgroup/host01/report/io.max</tspan></text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">bpftrace t10-wb.bt &gt; wb1.out 2&gt;&amp;1 &amp;</tspan></text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report python3 bufwrite.py 30 &amp;</tspan></text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">bufwrite(pid 162472)写完 30 MiB,文件没关,也没 fsync</text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">cat /sys/fs/cgroup/host01/report/io.stat; grep -E &#x27;^file_dirty&#x27; /sys/fs/cgroup/host01/report/memory.stat</tspan></text>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">253:0 </text>
+  <rect x="22" y="196" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#88c0ff">file_dirty 31457280</text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 2. 在组外(本终端的 shell 不在 report 组里)催内核把脏页写到盘上,看要多久</text>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">cat /proc/self/cgroup; time sync</tspan></text>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">0::/user.slice/user-502.slice/session-6.scope</text>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <rect x="22" y="322" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre" fill="#88c0ff">real    0m3.075s</text>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">user    0m0.001s</text>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">sys     0m0.002s</text>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">cat /sys/fs/cgroup/host01/report/io.stat; grep -E &#x27;^file_dirty&#x27; /sys/fs/cgroup/host01/report/memory.stat</tspan></text>
+  <rect x="22" y="406" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre" fill="#88c0ff">253:0 rbytes=0 wbytes=31457280 rios=0 wios=8 dbytes=0 dios=0</text>
+  <rect x="22" y="427" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre" fill="#88c0ff">file_dirty 0</text>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">grep -v -e Attached -e bpf_ -e &#x27;^$&#x27; wb1.out | sed -E &#x27;s/^\t[0-9a-f]+ ([^+]+)\+[0-9]+$/             \1/&#x27;</tspan></text>
+  <rect x="22" y="469" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre" fill="#88c0ff">第一笔:提交它的进程是 kworker/u16:4(pid 162205),8388608 字节,这笔请求记在 report 组头上。当时的调用栈:</text>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             __blk_throtl_bio</text>
+  <text x="28" y="526" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             submit_bio_noacct</text>
+  <text x="28" y="547" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             submit_bio</text>
+  <text x="28" y="568" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             ext4_io_submit</text>
+  <text x="28" y="589" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             ext4_do_writepages</text>
+  <text x="28" y="610" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             ext4_writepages</text>
+  <text x="28" y="631" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             do_writepages</text>
+  <text x="28" y="652" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             __writeback_single_inode</text>
+  <text x="28" y="673" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             writeback_sb_inodes</text>
+  <text x="28" y="694" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             wb_writeback</text>
+  <text x="28" y="715" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             wb_do_writeback</text>
+  <rect x="22" y="721" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="736" xml:space="preserve" style="white-space:pre" fill="#88c0ff">             wb_workfn</text>
+  <text x="28" y="757" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">             process_one_work</text>
+  <rect x="22" y="763" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="778" xml:space="preserve" style="white-space:pre" fill="#88c0ff">走进闸门一共 4 次。按「提交的进程, 记在哪个组」分,次数:</text>
+  <rect x="22" y="784" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="799" xml:space="preserve" style="white-space:pre" fill="#88c0ff">@n[kworker/u16:4, report]: 4</text>
+  <text x="28" y="820" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">字节数:</text>
+  <rect x="22" y="826" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="841" xml:space="preserve" style="white-space:pre" fill="#88c0ff">@bytes[kworker/u16:4, report]: 31457280</text>
+  <text x="28" y="862" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="883" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 3. 对照:去掉上限,同样的事再做一遍</text>
+  <text x="28" y="904" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">echo &#x27;253:0 wbps=max&#x27; &gt; /sys/fs/cgroup/host01/report/io.max</tspan></text>
+  <text x="28" y="925" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">bpftrace t10-wb.bt &gt; wb2.out 2&gt;&amp;1 &amp;</tspan></text>
+  <text x="28" y="946" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report python3 bufwrite.py 30 &amp;</tspan></text>
+  <text x="28" y="967" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">bufwrite(pid 162522)写完 30 MiB,文件没关,也没 fsync</text>
+  <text x="28" y="988" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">time sync</tspan></text>
+  <text x="28" y="1009" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <rect x="22" y="1015" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1030" xml:space="preserve" style="white-space:pre" fill="#88c0ff">real    0m0.024s</text>
+  <text x="28" y="1051" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">user    0m0.001s</text>
+  <text x="28" y="1072" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">sys     0m0.003s</text>
+  <text x="28" y="1093" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">grep -v -e Attached -e &#x27;^$&#x27; wb2.out</tspan></text>
+  <rect x="22" y="1099" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1114" xml:space="preserve" style="white-space:pre" fill="#88c0ff">走进闸门一共 0 次。按「提交的进程, 记在哪个组」分,次数:</text>
+  <text x="28" y="1135" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">字节数:</text>
+  <text x="600.0" y="1180" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-14 · Lima 虚拟机 cg-lab · 日志原文 src/logs/wb.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

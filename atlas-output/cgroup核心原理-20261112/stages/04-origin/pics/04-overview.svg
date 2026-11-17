@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 986" font-family="JetBrains Mono, Consolas, monospace">
+<rect width="1200" height="986" fill="#0a0c10"/>
+<text x="600" y="34" text-anchor="middle" fill="#e0e6f0" font-size="20">cgroup 的来路:四个人,二十年</text>
+<text x="600" y="56" text-anchor="middle" fill="#8892a0" font-size="12">横轴是年份,每条横带是一条线索,圆点是事件发生的位置。日期都出自邮件、提交或手册(正文各节有链接)</text>
+<line x1="70.0" y1="72" x2="70.0" y2="902" stroke="#1c2128"/>
+<text x="70.0" y="920" text-anchor="middle" fill="#8892a0" font-size="11">2003</text>
+<line x1="116.5" y1="72" x2="116.5" y2="902" stroke="#1c2128"/>
+<line x1="163.0" y1="72" x2="163.0" y2="902" stroke="#1c2128"/>
+<text x="163.0" y="920" text-anchor="middle" fill="#8892a0" font-size="11">2005</text>
+<line x1="209.5" y1="72" x2="209.5" y2="902" stroke="#1c2128"/>
+<line x1="256.0" y1="72" x2="256.0" y2="902" stroke="#1c2128"/>
+<text x="256.0" y="920" text-anchor="middle" fill="#8892a0" font-size="11">2007</text>
+<line x1="302.5" y1="72" x2="302.5" y2="902" stroke="#1c2128"/>
+<line x1="349.0" y1="72" x2="349.0" y2="902" stroke="#1c2128"/>
+<text x="349.0" y="920" text-anchor="middle" fill="#8892a0" font-size="11">2009</text>
+<line x1="395.5" y1="72" x2="395.5" y2="902" stroke="#1c2128"/>
+<line x1="442.0" y1="72" x2="442.0" y2="902" stroke="#1c2128"/>
+<text x="442.0" y="920" text-anchor="middle" fill="#8892a0" font-size="11">2011</text>
+<line x1="488.5" y1="72" x2="488.5" y2="902" stroke="#1c2128"/>
+<line x1="535.0" y1="72" x2="535.0" y2="902" stroke="#1c2128"/>
+<text x="535.0" y="920" text-anchor="middle" fill="#8892a0" font-size="11">2013</text>
+<line x1="581.5" y1="72" x2="581.5" y2="902" stroke="#1c2128"/>
+<line x1="628.0" y1="72" x2="628.0" y2="902" stroke="#1c2128"/>
+<text x="628.0" y="920" text-anchor="middle" fill="#8892a0" font-size="11">2015</text>
+<line x1="674.5" y1="72" x2="674.5" y2="902" stroke="#1c2128"/>
+<line x1="721.0" y1="72" x2="721.0" y2="902" stroke="#1c2128"/>
+<text x="721.0" y="920" text-anchor="middle" fill="#8892a0" font-size="11">2017</text>
+<line x1="767.5" y1="72" x2="767.5" y2="902" stroke="#1c2128"/>
+<line x1="814.0" y1="72" x2="814.0" y2="902" stroke="#1c2128"/>
+<text x="814.0" y="920" text-anchor="middle" fill="#8892a0" font-size="11">2019</text>
+<line x1="860.5" y1="72" x2="860.5" y2="902" stroke="#1c2128"/>
+<line x1="907.0" y1="72" x2="907.0" y2="902" stroke="#1c2128"/>
+<text x="907.0" y="920" text-anchor="middle" fill="#8892a0" font-size="11">2021</text>
+<line x1="953.5" y1="72" x2="953.5" y2="902" stroke="#1c2128"/>
+<line x1="1000.0" y1="72" x2="1000.0" y2="902" stroke="#1c2128"/>
+<text x="1000.0" y="920" text-anchor="middle" fill="#8892a0" font-size="11">2023</text>
+<line x1="1046.5" y1="72" x2="1046.5" y2="902" stroke="#1c2128"/>
+<line x1="1093.0" y1="72" x2="1093.0" y2="902" stroke="#1c2128"/>
+<text x="1093.0" y="920" text-anchor="middle" fill="#8892a0" font-size="11">2025</text>
+<line x1="1139.5" y1="72" x2="1139.5" y2="902" stroke="#1c2128"/>
+<text x="1139.5" y="920" text-anchor="middle" fill="#8892a0" font-size="11">2026</text>
+<line x1="70.0" y1="902" x2="1139.5" y2="902" stroke="#8892a0"/>
+<line x1="106.3" y1="86" x2="106.3" y2="108" stroke="#4080c0" stroke-opacity="0.6"/>
+<circle cx="106.3" cy="86" r="3" fill="#4080c0"/>
+<rect x="106.3" y="108" width="156" height="36" fill="#1e3a5f" stroke="#4080c0"/>
+<text x="114.3" y="123" fill="#88c0ff" font-size="11">2003-10 cpusets 原型</text>
+<text x="114.3" y="138" fill="#e0e6f0" font-size="10">Bull / SGI,2.6.12 进主线</text>
+<line x1="142.1" y1="86" x2="142.1" y2="152" stroke="#4080c0" stroke-opacity="0.6"/>
+<circle cx="142.1" cy="86" r="3" fill="#4080c0"/>
+<rect x="142.1" y="152" width="144" height="36" fill="#1e3a5f" stroke="#4080c0"/>
+<text x="150.1" y="167" fill="#88c0ff" font-size="11">2004 CKRM(IBM)</text>
+<text x="150.1" y="182" fill="#e0e6f0" font-size="10">后改名 Resource Groups</text>
+<line x1="238.3" y1="86" x2="238.3" y2="196" stroke="#4080c0" stroke-opacity="0.6"/>
+<circle cx="238.3" cy="86" r="3" fill="#4080c0"/>
+<rect x="238.3" y="196" width="143" height="22" fill="#1e3a5f" stroke="#4080c0"/>
+<text x="246.3" y="211" fill="#88c0ff" font-size="11">2006-08 UBC(OpenVZ)</text>
+<line x1="242.1" y1="86" x2="242.1" y2="240" stroke="#4080c0" stroke-opacity="0.6"/>
+<circle cx="242.1" cy="86" r="3" fill="#4080c0"/>
+<rect x="242.1" y="240" width="248" height="22" fill="#1e3a5f" stroke="#4080c0"/>
+<text x="250.1" y="255" fill="#88c0ff" font-size="11">2006-09-14 Rohit Seth 的 containers</text>
+<rect x="8" y="78" width="1184" height="204" fill="none" stroke="#4080c0" stroke-opacity="0.35"/>
+<text x="16" y="96" fill="#88c0ff" font-size="12">前史:各有各的分组</text>
+<line x1="243.9" y1="300" x2="243.9" y2="322" stroke="#40c060" stroke-opacity="0.6"/>
+<circle cx="243.9" cy="300" r="3" fill="#40c060"/>
+<rect x="243.9" y="322" width="177" height="36" fill="#1e5f3a" stroke="#40c060"/>
+<text x="251.9" y="337" fill="#88ff88" font-size="11">2006-09-28 首发</text>
+<text x="251.9" y="352" fill="#e0e6f0" font-size="10">把分组从 cpusets 抽出来;单棵树</text>
+<line x1="250.4" y1="300" x2="250.4" y2="366" stroke="#c04040" stroke-opacity="0.6"/>
+<circle cx="250.4" cy="300" r="3" fill="#c04040"/>
+<rect x="250.4" y="366" width="145" height="22" fill="#5f1e1e" stroke="#c04040"/>
+<text x="258.4" y="381" fill="#ff8888" font-size="11">2006-11-17 加入多棵树</text>
+<line x1="293.2" y1="300" x2="293.2" y2="410" stroke="#40c060" stroke-opacity="0.6"/>
+<circle cx="293.2" cy="300" r="3" fill="#40c060"/>
+<rect x="293.2" y="410" width="187" height="36" fill="#1e5f3a" stroke="#40c060"/>
+<text x="301.2" y="425" fill="#88ff88" font-size="11">2007-10-19 合入主线(2.6.24)</text>
+<text x="301.2" y="440" fill="#e0e6f0" font-size="10">此前改名 control groups</text>
+<line x1="482.5" y1="300" x2="482.5" y2="322" stroke="#40c060" stroke-opacity="0.6"/>
+<circle cx="482.5" cy="300" r="3" fill="#40c060"/>
+<rect x="482.5" y="322" width="125" height="22" fill="#1e5f3a" stroke="#40c060"/>
+<text x="490.5" y="337" fill="#88ff88" font-size="11">2011-11 交出维护权</text>
+<rect x="8" y="292" width="1184" height="160" fill="none" stroke="#40c060" stroke-opacity="0.35"/>
+<text x="16" y="310" fill="#88ff88" font-size="12">Paul Menage(Google):抽出公共框架</text>
+<line x1="307.1" y1="470" x2="307.1" y2="492" stroke="#c08040" stroke-opacity="0.6"/>
+<circle cx="307.1" cy="470" r="3" fill="#c08040"/>
+<rect x="307.1" y="492" width="200" height="36" fill="#5f3a1e" stroke="#c08040"/>
+<text x="315.1" y="507" fill="#ffaa55" font-size="11">2008-02 内存控制器合入(2.6.25)</text>
+<text x="315.1" y="522" fill="#e0e6f0" font-size="10">IBM + OpenVZ;被嫌每页开销太大</text>
+<line x1="401.1" y1="470" x2="401.1" y2="536" stroke="#c08040" stroke-opacity="0.6"/>
+<circle cx="401.1" cy="470" r="3" fill="#c08040"/>
+<rect x="401.1" y="536" width="216" height="22" fill="#5f3a1e" stroke="#c08040"/>
+<text x="409.1" y="551" fill="#ffaa55" font-size="11">2010-02 Turner 首发 CPU 绝对上限</text>
+<line x1="467.6" y1="470" x2="467.6" y2="580" stroke="#c08040" stroke-opacity="0.6"/>
+<circle cx="467.6" cy="470" r="3" fill="#c08040"/>
+<rect x="467.6" y="580" width="135" height="36" fill="#5f3a1e" stroke="#c08040"/>
+<text x="475.6" y="595" fill="#ffaa55" font-size="11">2011-07 合入(3.2)</text>
+<text x="475.6" y="610" fill="#e0e6f0" font-size="10">周期 100 ms,一份 5 ms</text>
+<line x1="633.1" y1="470" x2="633.1" y2="492" stroke="#c08040" stroke-opacity="0.6"/>
+<circle cx="633.1" cy="470" r="3" fill="#c08040"/>
+<rect x="633.1" y="492" width="187" height="36" fill="#5f3a1e" stroke="#c08040"/>
+<text x="641.1" y="507" fill="#ffaa55" font-size="11">2015-02 Weiner</text>
+<text x="641.1" y="522" fill="#e0e6f0" font-size="10">memory.low / high / max(4.0)</text>
+<line x1="813.1" y1="470" x2="813.1" y2="536" stroke="#c08040" stroke-opacity="0.6"/>
+<circle cx="813.1" cy="470" r="3" fill="#c08040"/>
+<rect x="813.1" y="536" width="130" height="22" fill="#5f3a1e" stroke="#c08040"/>
+<text x="821.1" y="551" fill="#ffaa55" font-size="11">2018-12 PSI(4.20)</text>
+<line x1="983.7" y1="470" x2="983.7" y2="492" stroke="#c08040" stroke-opacity="0.6"/>
+<circle cx="983.7" cy="470" r="3" fill="#c08040"/>
+<rect x="983.7" y="492" width="163" height="22" fill="#5f3a1e" stroke="#c08040"/>
+<text x="991.7" y="507" fill="#ffaa55" font-size="11">2022-08 一批 32 → 64 页</text>
+<line x1="1135.8" y1="470" x2="1135.8" y2="536" stroke="#c08040" stroke-opacity="0.6"/>
+<circle cx="1135.8" cy="470" r="3" fill="#c08040"/>
+<rect x="999.1" y="536" width="187" height="36" fill="#5f3a1e" stroke="#c08040"/>
+<text x="1007.1" y="551" fill="#ffaa55" font-size="11">2025-11 限流改为按任务(6.18)</text>
+<text x="1007.1" y="566" fill="#e0e6f0" font-size="10">进程回用户态时才停下</text>
+<rect x="8" y="462" width="1184" height="160" fill="none" stroke="#c08040" stroke-opacity="0.35"/>
+<text x="16" y="480" fill="#ffaa55" font-size="12">控制器:CPU(Paul Turner)、内存(Johannes Weiner 等)</text>
+<line x1="495.0" y1="640" x2="495.0" y2="662" stroke="#8040c0" stroke-opacity="0.6"/>
+<circle cx="495.0" cy="640" r="3" fill="#8040c0"/>
+<rect x="495.0" y="662" width="125" height="36" fill="#3a1e5f" stroke="#8040c0"/>
+<text x="503.0" y="677" fill="#c088ff" font-size="11">2012-02 质疑多棵树</text>
+<text x="503.0" y="692" fill="#e0e6f0" font-size="10">3 月:计划去掉多棵树</text>
+<line x1="549.4" y1="640" x2="549.4" y2="706" stroke="#c04040" stroke-opacity="0.6"/>
+<circle cx="549.4" cy="640" r="3" fill="#c04040"/>
+<rect x="549.4" y="706" width="205" height="22" fill="#5f1e1e" stroke="#c04040"/>
+<text x="557.4" y="721" fill="#ff8888" font-size="11">2013-04 Google:强制一棵树是疯了</text>
+<line x1="608.9" y1="640" x2="608.9" y2="750" stroke="#8040c0" stroke-opacity="0.6"/>
+<circle cx="608.9" cy="640" r="3" fill="#8040c0"/>
+<rect x="608.9" y="750" width="154" height="22" fill="#3a1e5f" stroke="#8040c0"/>
+<text x="616.9" y="765" fill="#c088ff" font-size="11">2014-08 开发选项(3.16)</text>
+<line x1="658.7" y1="640" x2="658.7" y2="662" stroke="#8040c0" stroke-opacity="0.6"/>
+<circle cx="658.7" cy="640" r="3" fill="#8040c0"/>
+<rect x="658.7" y="662" width="180" height="22" fill="#3a1e5f" stroke="#8040c0"/>
+<text x="666.7" y="677" fill="#c088ff" font-size="11">2015-08 回写按组记账(4.2)</text>
+<line x1="683.8" y1="640" x2="683.8" y2="794" stroke="#8040c0" stroke-opacity="0.6"/>
+<circle cx="683.8" cy="640" r="3" fill="#8040c0"/>
+<rect x="683.8" y="794" width="198" height="36" fill="#3a1e5f" stroke="#8040c0"/>
+<text x="691.8" y="809" fill="#c088ff" font-size="11">2016-03 v2 转正(4.5)</text>
+<text x="691.8" y="824" fill="#e0e6f0" font-size="10">kernelnewbies:只有 memory 和 io</text>
+<line x1="709.8" y1="640" x2="709.8" y2="838" stroke="#c04040" stroke-opacity="0.6"/>
+<circle cx="709.8" cy="640" r="3" fill="#c04040"/>
+<rect x="709.8" y="838" width="163" height="22" fill="#5f1e1e" stroke="#c04040"/>
+<text x="717.8" y="853" fill="#ff8888" font-size="11">2016-10 调度器维护者:NAK</text>
+<line x1="770.8" y1="640" x2="770.8" y2="706" stroke="#8040c0" stroke-opacity="0.6"/>
+<circle cx="770.8" cy="640" r="3" fill="#8040c0"/>
+<rect x="770.8" y="706" width="201" height="36" fill="#3a1e5f" stroke="#8040c0"/>
+<text x="778.8" y="721" fill="#c088ff" font-size="11">2018-01 cpu 控制器进 v2(4.15)</text>
+<text x="778.8" y="736" fill="#e0e6f0" font-size="10">靠 4.14 的线程模式折中</text>
+<rect x="8" y="632" width="1184" height="248" fill="none" stroke="#8040c0" stroke-opacity="0.35"/>
+<text x="16" y="650" fill="#c088ff" font-size="12">Tejun Heo:把多棵树收回来</text>
+<rect x="30" y="940" width="14" height="14" fill="#1e3a5f" stroke="#4080c0"/>
+<text x="52" y="952" fill="#88c0ff" font-size="11">前史里的方案</text>
+<rect x="158" y="940" width="14" height="14" fill="#1e5f3a" stroke="#40c060"/>
+<text x="180" y="952" fill="#88ff88" font-size="11">公共框架</text>
+<rect x="264" y="940" width="14" height="14" fill="#5f3a1e" stroke="#c08040"/>
+<text x="286" y="952" fill="#ffaa55" font-size="11">控制器(账与限)</text>
+<rect x="405.42" y="940" width="14" height="14" fill="#3a1e5f" stroke="#8040c0"/>
+<text x="427.42" y="952" fill="#c088ff" font-size="11">v2</text>
+<rect x="480.84000000000003" y="940" width="14" height="14" fill="#5f1e1e" stroke="#c04040"/>
+<text x="502.84000000000003" y="952" fill="#ff8888" font-size="11">分歧 / 后来被推翻的决定</text>
+<text x="1170" y="974" text-anchor="end" fill="#8892a0" font-size="11">多棵树 2006-11 加入,v2 2016-03 转正:这个决定用了九年多才被收回</text>
+</svg>

@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 540" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="540" fill="#0a0c10"/>
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 z" fill="#8892a0"/>
+    </marker>
+  </defs>
+
+  <text x="600" y="34" text-anchor="middle" fill="#e0e6f0" font-size="20">一条命令经过的五个环节:docker run --cpus=0.5 -m 512m</text>
+  <text x="600" y="56" text-anchor="middle" fill="#8892a0" font-size="12">每个环节只做转换,把上一个环节的表示换成下一个能处理的表示 —— 到内核这里,只剩建目录和写文件</text>
+
+  <!-- stations -->
+  <g font-size="13">
+    <rect x="30" y="80" width="212" height="96" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+    <text x="136" y="106" text-anchor="middle" fill="#88c0ff" font-size="15">① docker 命令行</text>
+    <text x="136" y="130" text-anchor="middle" fill="#88c0ff">解析你敲的参数</text>
+    <text x="136" y="152" text-anchor="middle" fill="#88c0ff" font-size="11">--cpus=0.5  -m 512m</text>
+
+    <rect x="262" y="80" width="212" height="96" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+    <text x="368" y="106" text-anchor="middle" fill="#88c0ff" font-size="15">② dockerd</text>
+    <text x="368" y="130" text-anchor="middle" fill="#88c0ff">把「几颗核」换算成</text>
+    <text x="368" y="152" text-anchor="middle" fill="#88c0ff">「每周期多少微秒」</text>
+
+    <rect x="494" y="80" width="212" height="96" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+    <text x="600" y="106" text-anchor="middle" fill="#88c0ff" font-size="15">③ containerd + shim</text>
+    <text x="600" y="130" text-anchor="middle" fill="#88c0ff">备好根文件系统和配置</text>
+    <text x="600" y="152" text-anchor="middle" fill="#88c0ff">调用 runc</text>
+
+    <rect x="726" y="80" width="212" height="96" rx="6" fill="#1e3a5f" stroke="#4080c0" stroke-width="1.5"/>
+    <text x="832" y="106" text-anchor="middle" fill="#88c0ff" font-size="15">④ runc</text>
+    <text x="832" y="130" text-anchor="middle" fill="#88c0ff">建组 · 入组 · 写数</text>
+    <text x="832" y="152" text-anchor="middle" fill="#88c0ff">再换成 report,自己退出</text>
+
+    <rect x="958" y="80" width="212" height="96" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
+    <text x="1064" y="106" text-anchor="middle" fill="#88ff88" font-size="15">⑤ 内核</text>
+    <text x="1064" y="130" text-anchor="middle" fill="#88ff88">cgroup 文件系统</text>
+    <text x="1064" y="152" text-anchor="middle" fill="#88ff88" font-size="11">挂在 /sys/fs/cgroup</text>
+  </g>
+
+  <!-- arrows between stations -->
+  <g stroke="#8892a0" stroke-width="1.5" marker-end="url(#arr)">
+    <line x1="242" y1="128" x2="260" y2="128"/>
+    <line x1="474" y1="128" x2="492" y2="128"/>
+    <line x1="706" y1="128" x2="724" y2="128"/>
+    <line x1="938" y1="128" x2="956" y2="128"/>
+  </g>
+
+  <!-- hand-over label -->
+  <text x="146" y="206" fill="#8892a0" font-size="12">▼ 每个环节交给下一个环节的东西</text>
+
+  <!-- payload cards -->
+  <g stroke="#8892a0" stroke-width="1" stroke-dasharray="6,4">
+    <line x1="136" y1="176" x2="136" y2="226"/>
+    <line x1="368" y1="176" x2="368" y2="226"/>
+    <line x1="600" y1="176" x2="600" y2="226"/>
+    <line x1="832" y1="176" x2="832" y2="226"/>
+    <line x1="1064" y1="176" x2="1064" y2="226"/>
+  </g>
+
+  <g font-size="11">
+    <rect x="30" y="226" width="212" height="150" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="42" y="248" fill="#ffaa55" font-size="12">一个 HTTP 请求</text>
+    <text x="42" y="272" fill="#ffaa55">POST /containers/create</text>
+    <text x="42" y="292" fill="#ffaa55">NanoCpus: 500000000</text>
+    <text x="42" y="312" fill="#ffaa55">Memory:   536870912</text>
+    <text x="42" y="340" fill="#c9a070">走本机套接字</text>
+    <text x="42" y="358" fill="#c9a070">/var/run/docker.sock</text>
+
+    <rect x="262" y="226" width="212" height="150" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="274" y="248" fill="#ffaa55" font-size="12">一份 config.json(OCI)</text>
+    <text x="274" y="272" fill="#ffaa55">cpu.quota:    50000</text>
+    <text x="274" y="292" fill="#ffaa55">cpu.period:   100000</text>
+    <text x="274" y="312" fill="#ffaa55">memory.limit: 536870912</text>
+    <text x="274" y="340" fill="#c9a070">cgroupsPath:</text>
+    <text x="274" y="358" fill="#c9a070">system.slice:docker:9f2c…e1</text>
+
+    <rect x="494" y="226" width="212" height="150" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="506" y="248" fill="#ffaa55" font-size="12">一个目录 + 两条命令</text>
+    <text x="506" y="272" fill="#ffaa55">bundle/</text>
+    <text x="506" y="292" fill="#ffaa55">  ├─ rootfs/</text>
+    <text x="506" y="312" fill="#ffaa55">  └─ config.json</text>
+    <text x="506" y="340" fill="#c9a070">runc create job</text>
+    <text x="506" y="358" fill="#c9a070">runc start  job</text>
+
+    <rect x="726" y="226" width="212" height="150" rx="4" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="738" y="248" fill="#c088ff" font-size="12">建目录 + 写三个文件</text>
+    <text x="738" y="272" fill="#c088ff">mkdir docker-9f2c…e1.scope</text>
+    <text x="738" y="292" fill="#c088ff">4321 → cgroup.procs</text>
+    <text x="738" y="312" fill="#c088ff">"50000 100000" → cpu.max</text>
+    <text x="738" y="332" fill="#c088ff">536870912 → memory.max</text>
+    <text x="738" y="358" fill="#a890c8">(swap 另写一个文件,见正文)</text>
+
+    <rect x="958" y="226" width="212" height="150" rx="4" fill="#5f1e1e" stroke="#c04040" stroke-dasharray="6,4"/>
+    <text x="970" y="248" fill="#ff8888" font-size="12">然后呢?(留到后面)</text>
+    <text x="970" y="276" fill="#ff8888">数字进了内核,</text>
+    <text x="970" y="296" fill="#ff8888">谁在统计那 50 ms?</text>
+    <text x="970" y="316" fill="#ff8888">用完后怎么限制?</text>
+    <text x="970" y="336" fill="#ff8888">512 MiB 满了杀哪个进程?</text>
+  </g>
+
+  <!-- bottom band -->
+  <rect x="30" y="400" width="1140" height="64" rx="6" fill="#1e5f3a" stroke="#40c060" stroke-width="1.5"/>
+  <text x="600" y="426" text-anchor="middle" fill="#88ff88" font-size="15">到内核面前,只剩三个动作</text>
+  <text x="600" y="450" text-anchor="middle" fill="#88ff88" font-size="13">① 建一个目录 = 建组      ② 把 pid 写进 cgroup.procs = 入组      ③ 把数字写进 cpu.max / memory.max = 设限</text>
+
+  <!-- legend -->
+  <g font-size="11">
+    <rect x="30" y="488" width="14" height="14" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="52" y="500" fill="#88c0ff">用户态程序</text>
+    <rect x="160" y="488" width="14" height="14" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="182" y="500" fill="#ffaa55">环节之间传递的配置</text>
+    <rect x="350" y="488" width="14" height="14" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="372" y="500" fill="#c088ff">落到 /sys/fs/cgroup 的目录和文件</text>
+    <rect x="630" y="488" width="14" height="14" fill="#1e5f3a" stroke="#40c060"/>
+    <text x="652" y="500" fill="#88ff88">内核</text>
+    <rect x="720" y="488" width="14" height="14" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="742" y="500" fill="#ff8888">这一节不回答、留到后面的问题</text>
+    <text x="1170" y="526" text-anchor="end" fill="#5c6675">换算代码:moby v27.3.1 daemon/daemon_unix.go · runc v1.2.0 libcontainer/cgroups</text>
+  </g>
+</svg>

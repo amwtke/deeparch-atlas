@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1559" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="1559" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="1543" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg-lab — root@lima-cg-lab(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 4G,专用实验机)· 沙箱组 host01</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 0. report 组限半颗核,这次起 7 个 worker(4 颗核,必有一颗核上只有 1 个)</text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">echo &#x27;50000 100000&#x27; &gt; /sys/fs/cgroup/host01/report/cpu.max</tspan></text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report python3 report.py 7 &amp;</tspan></text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 1. 3 秒里,7 个 worker 各自拿到多少 CPU、待在哪颗核上</text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">python3 percpu.py 3</tspan></text>
+  <rect x="22" y="175" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  核 0   pid 7538    12.3%</text>
+  <rect x="22" y="196" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  核 1   pid 7539    12.3%</text>
+  <rect x="22" y="217" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  核 2   pid 7537     6.0%</text>
+  <rect x="22" y="238" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  核 2   pid 7541     6.0%</text>
+  <rect x="22" y="259" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  核 3   pid 7536     4.0%</text>
+  <rect x="22" y="280" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  核 3   pid 7540     4.0%</text>
+  <rect x="22" y="301" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  核 3   pid 7542     4.0%</text>
+  <rect x="22" y="322" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre" fill="#88c0ff">按核合计:核 0:1 个进程共 12.3%   核 1:1 个进程共 12.3%   核 2:2 个进程共 12.0%   核 3:3 个进程共 12.0%   总计 48.6%</text>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 2. 两个周期的时间线(毫秒)</text>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">bpftrace t3-throttle.bt | grep .</tspan></text>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">Attached 7 probes</text>
+  <rect x="22" y="427" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   0.00 ms  周期定时器响(第 1 个周期开始),公共池补到 50000 微秒</text>
+  <rect x="22" y="448" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   0.01 ms  核 2:解除限流,等候名单上的进程放回队列</text>
+  <rect x="22" y="469" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   0.02 ms  核 0:解除限流,等候名单上的进程放回队列</text>
+  <rect x="22" y="490" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   0.02 ms  核 3:解除限流,等候名单上的进程放回队列</text>
+  <rect x="22" y="511" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="526" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   0.02 ms  核 1:解除限流,等候名单上的进程放回队列</text>
+  <text x="28" y="547" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">   0.21 ms  核 1 领 5181 微秒,公共池还剩 32984 微秒</text>
+  <text x="28" y="568" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">   0.21 ms  核 3 领 5183 微秒,公共池还剩 27797 微秒</text>
+  <text x="28" y="589" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">   0.21 ms  核 0 领 5187 微秒,公共池还剩 27797 微秒</text>
+  <text x="28" y="610" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">   0.21 ms  核 2 领 5187 微秒,公共池还剩 27797 微秒</text>
+  <text x="28" y="631" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">   5.21 ms  核 3 领 5000 微秒,公共池还剩 22797 微秒</text>
+  <text x="28" y="652" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">   5.21 ms  核 2 领 5000 微秒,公共池还剩 17796 微秒</text>
+  <text x="28" y="673" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">   6.21 ms  核 0 领 5999 微秒,公共池还剩 11797 微秒</text>
+  <text x="28" y="694" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">   6.21 ms  核 1 领 5931 微秒,公共池还剩  5865 微秒</text>
+  <text x="28" y="715" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  10.21 ms  核 2 领 5000 微秒,公共池还剩   864 微秒</text>
+  <text x="28" y="736" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  11.21 ms  核 3 领  864 微秒,公共池还剩     0 微秒</text>
+  <rect x="22" y="742" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="757" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  11.21 ms  核 3:公共池空了,report 组在这颗核上被标记为「限流中」</text>
+  <rect x="22" y="763" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="778" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  11.21 ms  核 0:公共池空了,report 组在这颗核上被标记为「限流中」</text>
+  <text x="28" y="799" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  11.21 ms  核 0:进程 7538(report-w)在返回用户态的路上被请下场</text>
+  <text x="28" y="820" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  11.21 ms  核 3:进程 7542(report-w)在返回用户态的路上被请下场</text>
+  <text x="28" y="841" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  11.21 ms  核 3:进程 7536(report-w)在返回用户态的路上被请下场</text>
+  <text x="28" y="862" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  11.21 ms  核 3:进程 7540(report-w)在返回用户态的路上被请下场</text>
+  <rect x="22" y="868" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="883" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  12.21 ms  核 1:公共池空了,report 组在这颗核上被标记为「限流中」</text>
+  <text x="28" y="904" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  12.22 ms  核 1:进程 7539(report-w)在返回用户态的路上被请下场</text>
+  <rect x="22" y="910" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="925" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  16.21 ms  核 2:公共池空了,report 组在这颗核上被标记为「限流中」</text>
+  <text x="28" y="946" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  16.22 ms  核 2:进程 7541(report-w)在返回用户态的路上被请下场</text>
+  <text x="28" y="967" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  16.22 ms  核 2:进程 7537(report-w)在返回用户态的路上被请下场</text>
+  <rect x="22" y="973" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="988" xml:space="preserve" style="white-space:pre" fill="#88c0ff"> 100.86 ms  周期定时器响(第 2 个周期开始),公共池补到 50000 微秒</text>
+  <rect x="22" y="994" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1009" xml:space="preserve" style="white-space:pre" fill="#88c0ff"> 100.89 ms  核 2:解除限流,等候名单上的进程放回队列</text>
+  <rect x="22" y="1015" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1030" xml:space="preserve" style="white-space:pre" fill="#88c0ff"> 100.90 ms  核 3:解除限流,等候名单上的进程放回队列</text>
+  <rect x="22" y="1036" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1051" xml:space="preserve" style="white-space:pre" fill="#88c0ff"> 100.90 ms  核 0:解除限流,等候名单上的进程放回队列</text>
+  <rect x="22" y="1057" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1072" xml:space="preserve" style="white-space:pre" fill="#88c0ff"> 100.91 ms  核 1:解除限流,等候名单上的进程放回队列</text>
+  <text x="28" y="1093" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 101.21 ms  核 0 领 5300 微秒,公共池还剩 32014 微秒</text>
+  <text x="28" y="1114" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 101.21 ms  核 3 领 5263 微秒,公共池还剩 26715 微秒</text>
+  <text x="28" y="1135" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 101.21 ms  核 2 领 5304 微秒,公共池还剩 26715 微秒</text>
+  <text x="28" y="1156" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 101.21 ms  核 1 领 5299 微秒,公共池还剩 26715 微秒</text>
+  <text x="28" y="1177" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 106.21 ms  核 2 领 5000 微秒,公共池还剩 21714 微秒</text>
+  <text x="28" y="1198" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 107.21 ms  核 0 领 5987 微秒,公共池还剩 15726 微秒</text>
+  <text x="28" y="1219" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 107.21 ms  核 3 领 5985 微秒,公共池还剩  3741 微秒</text>
+  <text x="28" y="1240" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 107.21 ms  核 1 领 5999 微秒,公共池还剩  3741 微秒</text>
+  <text x="28" y="1261" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 112.21 ms  核 2 领 3741 微秒,公共池还剩     0 微秒</text>
+  <rect x="22" y="1267" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1282" xml:space="preserve" style="white-space:pre" fill="#88c0ff"> 113.21 ms  核 0:公共池空了,report 组在这颗核上被标记为「限流中」</text>
+  <rect x="22" y="1288" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1303" xml:space="preserve" style="white-space:pre" fill="#88c0ff"> 113.21 ms  核 3:公共池空了,report 组在这颗核上被标记为「限流中」</text>
+  <text x="28" y="1324" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 113.21 ms  核 0:进程 7538(report-w)在返回用户态的路上被请下场</text>
+  <rect x="22" y="1330" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1345" xml:space="preserve" style="white-space:pre" fill="#88c0ff"> 113.21 ms  核 1:公共池空了,report 组在这颗核上被标记为「限流中」</text>
+  <text x="28" y="1366" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 113.21 ms  核 1:进程 7539(report-w)在返回用户态的路上被请下场</text>
+  <text x="28" y="1387" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 113.24 ms  核 3:进程 7540(report-w)在返回用户态的路上被请下场</text>
+  <text x="28" y="1408" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 113.25 ms  核 3:进程 7536(report-w)在返回用户态的路上被请下场</text>
+  <text x="28" y="1429" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 113.25 ms  核 3:进程 7542(report-w)在返回用户态的路上被请下场</text>
+  <rect x="22" y="1435" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1450" xml:space="preserve" style="white-space:pre" fill="#88c0ff"> 115.22 ms  核 2:公共池空了,report 组在这颗核上被标记为「限流中」</text>
+  <text x="28" y="1471" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 115.22 ms  核 2:进程 7537(report-w)在返回用户态的路上被请下场</text>
+  <text x="28" y="1492" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 115.22 ms  核 2:进程 7541(report-w)在返回用户态的路上被请下场</text>
+  <text x="600.0" y="1537" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-14 · Lima 虚拟机 cg-lab · 日志原文 src/logs/t3.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

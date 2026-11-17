@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 719" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="719" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="703" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg-lab — root@lima-cg-lab(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 4G,专用实验机)· 沙箱组 host01</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### report 组:CPU 半颗核,内存 300M(透明大页已关,页数好数)</text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">echo &#x27;50000 100000&#x27; &gt; /sys/fs/cgroup/host01/report/cpu.max; echo 300M &gt; /sys/fs/cgroup/host01/report/memory.max</tspan></text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">bpftrace t13-life.bt &gt; life.out 2&gt;&amp;1 &amp;</tspan></text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report python3 life2.py</tspan></text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">report:worker 退出,状态 9(9 号信号 = SIGKILL)</text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">grep -v -e Attached -e &#x27;^$&#x27; life.out</tspan></text>
+  <rect x="22" y="175" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#88c0ff">        0 us  [fork]   pids_can_fork:report 组进程数 +1,放行(返回 0)</text>
+  <rect x="22" y="196" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#88c0ff">       53 us  [fork]   cgroup_post_fork:子进程 164941 挂到父进程的组籍 0xffff0000cfd3c000 上</text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">      144 us  [内存]   try_charge_memcg:第一次要给 report 组记 1 页</text>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">      150 us  [内存]   page_counter_try_charge:改计数器 +64 页,report 的账 960 页</text>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">      490 us  [CPU]    __account_cfs_rq_runtime:第一笔 CPU 账 427 us,扣核 0 上 report 的零钱</text>
+  <rect x="22" y="280" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    68496 us  [CPU]    throttle_cfs_rq:公共池空了,核 0 上 report 组挂牌「限流中」</text>
+  <rect x="22" y="301" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#88c0ff">    68518 us  [CPU]    throttle_cfs_rq_work:worker 在回用户态的路上下场</text>
+  <rect x="22" y="322" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   115539 us  [CPU]    unthrottle_cfs_rq:周期定时器补满额度,核 0 上摘牌</text>
+  <rect x="22" y="343" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   165482 us  [CPU]    throttle_cfs_rq:公共池空了,核 0 上 report 组挂牌「限流中」</text>
+  <rect x="22" y="364" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   165488 us  [CPU]    throttle_cfs_rq_work:worker 在回用户态的路上下场</text>
+  <rect x="22" y="385" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   219246 us  [CPU]    unthrottle_cfs_rq:周期定时器补满额度,核 0 上摘牌</text>
+  <rect x="22" y="406" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  1953473 us  [内存]   page_counter_try_charge:撞线,report 的账 76800 页 + 64 &gt; 上限 76800 页</text>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  1953653 us  [内存]   try_to_free_mem_cgroup_pages:worker 自己在组内回收,收回 0 页</text>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  1953693 us  [内存]   try_to_free_mem_cgroup_pages:worker 自己在组内回收,收回 0 页</text>
+  <rect x="22" y="469" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  1953874 us  [内存]   mem_cgroup_out_of_memory:回收不动,进入组内 OOM</text>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  1953893 us  [内存]   oom_badness:给 pid 164940 打分 2416</text>
+  <text x="28" y="526" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  1953894 us  [内存]   oom_badness:给 pid 164941 打分 77763</text>
+  <rect x="22" y="532" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="547" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  1954143 us  [内存]   mark_victim:选中 pid 164941,发 SIGKILL</text>
+  <text x="28" y="568" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  1954364 us  [退出]   do_exit:worker 开始退出</text>
+  <rect x="22" y="574" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="589" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  1954405 us  [退出]   exit_mmap:开始拆内存</text>
+  <rect x="22" y="595" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="610" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  1966703 us  [退出]   exit_mmap 返回:report 的账降到 1043 页</text>
+  <text x="28" y="631" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  1966729 us  [退出]   cgroup_task_exit:核心把 worker 从组籍名单上摘掉</text>
+  <rect x="22" y="637" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="652" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  1966767 us  [退出]   pids_release:父进程收尸,report 组进程数 -1</text>
+  <text x="600.0" y="697" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-16 · Lima 虚拟机 cg-lab · 日志原文 src/logs/life.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

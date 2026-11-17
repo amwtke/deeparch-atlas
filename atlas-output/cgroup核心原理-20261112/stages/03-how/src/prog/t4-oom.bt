@@ -1,0 +1,62 @@
+// t4-oom.bt:report 组撞上 memory.max 之后发生了什么
+//   时间以毫秒计,从这个组第一次撞线算起
+BEGIN { @n_oom = 0; }
+fexit:vmlinux:page_counter_try_charge
+/!retval/
+{
+  $m = (struct mem_cgroup *)((uint64)args.counter - offsetof(struct mem_cgroup, memory));
+  if (str($m->css.cgroup->kn->name) == "report") {
+    if (@t0 == 0) {
+      @t0 = nsecs;
+      printf("   0.00 ms  撞线:pid %d(%s)要再记 %d 页,report 组的账 %d 页 + %d > 上限 %d 页\n",
+             pid, comm, args.nr_pages, args.counter->usage.counter, args.nr_pages, args.counter->max);
+    }
+    @n_hit = count();
+  }
+}
+fentry:vmlinux:try_to_free_mem_cgroup_pages
+/@t0 && str(args.memcg->css.cgroup->kn->name) == "report"/ { @rc[tid] = 1; }
+fexit:vmlinux:try_to_free_mem_cgroup_pages
+/@rc[tid]/
+{
+  @rc[tid] = 0;
+  @n_reclaim = count(); @pages_back = sum(retval);
+  if (@shown < 3) {
+    @shown++;
+    printf("%4d.%02d ms  回收:pid %d(%s)自己动手在 report 组里回收,想要 %d 页,收回 %d 页\n",
+           (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100, pid, comm, args.nr_pages, retval);
+  }
+}
+fentry:vmlinux:mem_cgroup_out_of_memory
+/str(args.memcg->css.cgroup->kn->name) == "report"/
+{
+  @oom[tid] = 1;
+  if (@n_oom == 0) {
+    printf("%4d.%02d ms  回收不动了,进入 OOM:范围 = %s 组,触发的是 pid %d(%s)\n",
+           (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100,
+           str(args.memcg->css.cgroup->kn->name), pid, comm);
+  }
+  @n_oom += 1;
+}
+fexit:vmlinux:oom_badness
+/@oom[tid]/
+{
+  printf("%4d.%02d ms    打分:pid %d(%s) %d 分\n",
+         (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100, args.p->pid, args.p->comm, retval);
+}
+tracepoint:oom:mark_victim
+{
+  printf("%4d.%02d ms    选中:pid %d(%s),匿名内存 %d kB,发 SIGKILL\n",
+         (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100, args.pid, str(args.comm), args.anon_rss);
+}
+fexit:vmlinux:mem_cgroup_out_of_memory /@oom[tid]/ { @oom[tid] = 0; }
+tracepoint:oom:finish_task_reaping
+{
+  printf("%4d.%02d ms    pid %d 的内存已被内核收回\n",
+         (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100, args.pid);
+}
+END {
+  printf("合计:撞线 %d 次;组内回收 %d 次,共收回 %d 页;进入 OOM %d 次\n",
+         (int64)@n_hit, (int64)@n_reclaim, (int64)@pages_back, @n_oom);
+  clear(@t0); clear(@n_hit); clear(@rc); clear(@n_reclaim); clear(@pages_back); clear(@shown); clear(@oom); clear(@n_oom);
+}

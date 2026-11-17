@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 803" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="803" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="787" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg — root@lima-cg(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 8G)· 沙箱组 host01</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 1. db-sim 先占住 1500 MiB(扮演 mysqld 的缓冲池);这台「机器」一共 3072 MiB</text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">python3 hold.py db-sim 1500 &amp;</tspan></text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">db-sim(pid 46097)已占住 1500 MiB</text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 2. report 起 8 个 worker,每个慢慢吃到 300 MiB(合计 2400 MiB)</text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">python3 report.py mem 8 300 &amp;</tspan></text>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 3. 内核日志:谁触发的,谁被杀了</text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">bash: line 20: 46097 Killed                     python3 hold.py db-sim 1500</text>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">journalctl -k --since 18:41:24 -o cat --no-pager | grep -E &#x27;invoked oom-killer|oom-kill:|Killed process&#x27;</tspan></text>
+  <rect x="22" y="259" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre" fill="#88c0ff">report-w invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=0</text>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=host01,mems_allowed=0,oom_memcg=/host01,task_memcg=/host01,task=db-sim,pid=</text>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">46097,uid=0</text>
+  <rect x="22" y="322" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre" fill="#88c0ff">Memory cgroup out of memory: Killed process 46097 (db-sim) total-vm:1555400kB, anon-rss:1540552kB, file-rss:5824kB, shmem-rss:0kB, UID:</text>
+  <rect x="22" y="343" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre" fill="#88c0ff">0 pgtables:3080kB oom_score_adj:0</text>
+  <rect x="22" y="364" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre" fill="#88c0ff">report-w invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=0</text>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=host01,mems_allowed=0,oom_memcg=/host01,task_memcg=/host01,task=report-w,pi</text>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">d=46111,uid=0</text>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">Memory cgroup out of memory: Killed process 46111 (report-w) total-vm:224136kB, anon-rss:208900kB, file-rss:4204kB, shmem-rss:0kB, UID:</text>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">0 pgtables:476kB oom_score_adj:0</text>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 4. 活下来的</text>
+  <text x="28" y="526" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">ps -o pid,rss,comm -C db-sim,report-w</tspan></text>
+  <text x="28" y="547" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    PID   RSS COMMAND</text>
+  <text x="28" y="568" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  46104 314828 report-w</text>
+  <text x="28" y="589" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  46105 314828 report-w</text>
+  <text x="28" y="610" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  46106 314828 report-w</text>
+  <text x="28" y="631" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  46107 314828 report-w</text>
+  <text x="28" y="652" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  46108 314828 report-w</text>
+  <text x="28" y="673" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  46109 314828 report-w</text>
+  <text x="28" y="694" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  46110 314828 report-w</text>
+  <text x="28" y="715" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">wait 46097; echo &quot;db-sim 的退出状态 = $?(137 = 128 + 9,被 SIGKILL 杀死)&quot;</tspan></text>
+  <rect x="22" y="721" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="736" xml:space="preserve" style="white-space:pre" fill="#88c0ff">db-sim 的退出状态 = 137(137 = 128 + 9,被 SIGKILL 杀死)</text>
+  <text x="600.0" y="781" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-13 · Lima 虚拟机 cg · 日志原文 src/logs/oom.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

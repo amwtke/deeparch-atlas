@@ -1,0 +1,61 @@
+// t7-life.bt:一个 worker 的一生,在内核里经过哪些接入点(每类只打印第一次)
+//   时间以毫秒计,从 worker 出生算起。带 STACK=1 时同时打印当时的内核调用栈
+fexit:vmlinux:pids_can_fork
+/comm == "report" && @w == 0/
+{
+  @t0 = nsecs;
+  printf("  0.00 ms  [fork]      pids 控制器被问「能生吗」→ %s\n", retval == 0 ? "放行,report 组的进程数 +1" : "拒绝");
+  if ($1 == 1) { printf("%s\n", kstack(perf, 11)); }
+}
+fexit:vmlinux:cgroup_post_fork
+/comm == "report" && @w == 0/
+{
+  @w = args.child->pid;
+  printf("%3d.%02d ms  [fork]      核心:子进程 %d 抄走父进程的组籍 %p,挂上名单\n",
+         (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100, @w, args.child->cgroups);
+  if ($1 == 1) { printf("%s\n", kstack(perf, 11)); }
+}
+fentry:vmlinux:__account_cfs_rq_runtime
+/pid == @w && @w && @s_cpu == 0/
+{
+  @s_cpu = 1;
+  printf("%3d.%02d ms  [调度结算]  cpu 控制器:刚跑掉 %d 微秒,从 report 组在核 %d 的零钱里扣\n",
+         (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100, args.delta_exec / 1000, cpu);
+  if ($1 == 1) { printf("%s\n", kstack(perf, 11)); }
+}
+fentry:vmlinux:try_charge_memcg
+/pid == @w && @w && @s_mem == 0/
+{
+  @s_mem = 1;
+  printf("%3d.%02d ms  [缺页]      memory 控制器:分到物理页,给 %s 组记 %d 页\n",
+         (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100, str(args.memcg->css.cgroup->kn->name), args.nr_pages);
+  if ($1 == 1) { printf("%s\n", kstack(perf, 11)); }
+}
+fentry:vmlinux:__blk_throtl_bio
+/pid == @w && @w && @s_io == 0/
+{
+  @s_io = 1;
+  printf("%3d.%02d ms  [提交 IO]   io 控制器:一笔 %d 字节的写请求,交给磁盘前先过 report 组的带宽闸门\n",
+         (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100, args.bio->bi_iter.bi_size);
+  if ($1 == 1) { printf("%s\n", kstack(perf, 11)); }
+}
+fexit:vmlinux:pids_can_fork
+/pid == @w && @w/
+{
+  printf("%3d.%02d ms  [fork]      worker 自己生孩子:pids 控制器又被问一次 → %s\n",
+         (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100, retval == 0 ? "放行" : "拒绝");
+}
+fentry:vmlinux:cgroup_task_exit
+/args.tsk->pid == @w && @w/
+{
+  printf("%3d.%02d ms  [退出]      核心:把 worker 从组籍的名单上摘掉\n",
+         (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100);
+  if ($1 == 1) { printf("%s\n", kstack(perf, 11)); }
+}
+fentry:vmlinux:pids_release
+/args.task->pid == @w && @w/
+{
+  printf("%3d.%02d ms  [退出]      pids 控制器:report 组的进程数 -1\n",
+         (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100);
+}
+END { clear(@t0); clear(@w); clear(@s_cpu); clear(@s_mem); clear(@s_io); }

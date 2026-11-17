@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="JetBrains Mono, Consolas, monospace">
+<rect width="1200" height="600" fill="#0a0c10"/>
+<text x="600" y="34" text-anchor="middle" fill="#e0e6f0" font-size="20">同一个问题,两种形状:cgroup 与 Windows Job Object</text>
+<text x="600" y="56" text-anchor="middle" fill="#8892a0" font-size="12">左:公共框架 + 一排插件;右:一个内核对象,自带一组固定的限额。Windows 一侧出自微软官方文档</text>
+<line x1="600" y1="74" x2="600" y2="500" stroke="#30363d"/>
+<text x="300" y="90" text-anchor="middle" fill="#88ff88" font-size="15">Linux cgroup v2</text>
+<rect x="40" y="104" width="520" height="92" rx="4" fill="#3a1e5f" stroke="#8040c0"/>
+<text x="52" y="124" fill="#c088ff" font-size="13">核心(与具体资源无关)</text>
+<text x="52" y="146" fill="#e0e6f0" font-size="11.5">一棵目录树(/sys/fs/cgroup),组 = 目录</text>
+<text x="52" y="165" fill="#e0e6f0" font-size="11.5">进程身上记着所属组的指针(css_set);fork 继承</text>
+<text x="52" y="184" fill="#e0e6f0" font-size="11.5">进程可以被 root 搬到别的组(写 cgroup.procs)</text>
+<rect x="40" y="214" width="124" height="70" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+<text x="52" y="234" fill="#ffaa55" font-size="13">cpu</text>
+<text x="52" y="256" fill="#e0e6f0" font-size="11">cpu.max</text>
+<rect x="172" y="214" width="124" height="70" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+<text x="184" y="234" fill="#ffaa55" font-size="13">memory</text>
+<text x="184" y="256" fill="#e0e6f0" font-size="11">memory.max</text>
+<rect x="304" y="214" width="124" height="70" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+<text x="316" y="234" fill="#ffaa55" font-size="13">io</text>
+<text x="316" y="256" fill="#e0e6f0" font-size="11">io.max</text>
+<rect x="436" y="214" width="124" height="70" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+<text x="448" y="234" fill="#ffaa55" font-size="13">pids</text>
+<text x="448" y="256" fill="#e0e6f0" font-size="11">pids.max</text>
+<text x="300" y="304" text-anchor="middle" fill="#8892a0" font-size="11">……共 9 个控制器,各自向核心交一张回调函数表;新增一种资源 = 新写一个插件</text>
+<rect x="40" y="318" width="520" height="92" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+<text x="52" y="338" fill="#88c0ff" font-size="13">接口与处置</text>
+<text x="52" y="360" fill="#e0e6f0" font-size="11.5">配置:读写文件,权限就是文件权限</text>
+<text x="52" y="379" fill="#e0e6f0" font-size="11.5">内存记物理页;超了先回收,收不动在组内杀</text>
+<text x="52" y="398" fill="#e0e6f0" font-size="11.5">通知:memory.events 之类的文件</text>
+<text x="900" y="90" text-anchor="middle" fill="#88ff88" font-size="15">Windows Job Object</text>
+<rect x="640" y="104" width="520" height="92" rx="4" fill="#3a1e5f" stroke="#8040c0"/>
+<text x="652" y="124" fill="#c088ff" font-size="13">job 对象(自己就带着限额)</text>
+<text x="652" y="146" fill="#e0e6f0" font-size="11.5">一个有句柄、有安全描述符的内核对象</text>
+<text x="652" y="165" fill="#e0e6f0" font-size="11.5">进程一旦加入就不能退出;子进程默认跟着进</text>
+<text x="652" y="184" fill="#e0e6f0" font-size="11.5">Windows 8 起可以嵌套:子 job 的进程是父 job 的子集</text>
+<rect x="640" y="214" width="520" height="70" rx="4" fill="#5f3a1e" stroke="#c08040"/>
+<text x="652" y="234" fill="#ffaa55" font-size="13">限额是 job 对象里的几个结构</text>
+<text x="652" y="256" fill="#e0e6f0" font-size="11">CPU:按周期的硬上限 / 权重 / 最小最大值</text>
+<text x="652" y="275" fill="#e0e6f0" font-size="11">提交内存(进程级、job 级) · 活动进程数 · 用户态时间 · 工作集 · 优先级 · 亲和性</text>
+<text x="900" y="304" text-anchor="middle" fill="#8892a0" font-size="11">新增一种限额 = 给 job 对象加一个信息类和一个结构(由微软一家改)</text>
+<rect x="640" y="318" width="520" height="92" rx="4" fill="#1e3a5f" stroke="#4080c0"/>
+<text x="652" y="338" fill="#88c0ff" font-size="13">接口与处置</text>
+<text x="652" y="360" fill="#e0e6f0" font-size="11.5">配置:CreateJobObject / SetInformationJobObject 等 API</text>
+<text x="652" y="379" fill="#e0e6f0" font-size="11.5">内存记「提交量」;超了这次申请失败,不杀</text>
+<text x="652" y="398" fill="#e0e6f0" font-size="11.5">通知:发到绑定的 IO 完成端口(多数消息不保证送达)</text>
+<rect x="30" y="420" width="1140" height="70" rx="6" fill="#5f3a1e" stroke="#c08040"/>
+<text x="600" y="446" text-anchor="middle" fill="#ffaa55" font-size="13">共同点:按组计合计、父组管子树、进程自己不能退出、数字由外面的管理程序写(docker 在两边都是这么用的)</text>
+<text x="600" y="470" text-anchor="middle" fill="#ffaa55" font-size="13">最大的不同:谁来增加新的资源种类,以及内存记的是「物理页」还是「提交量」</text>
+<rect x="30" y="520" width="14" height="14" fill="#3a1e5f" stroke="#8040c0"/><text x="52" y="532" fill="#c088ff" font-size="11">分组</text>
+<rect x="180" y="520" width="14" height="14" fill="#5f3a1e" stroke="#c08040"/><text x="202" y="532" fill="#ffaa55" font-size="11">限额 / 账</text>
+<rect x="330" y="520" width="14" height="14" fill="#1e3a5f" stroke="#4080c0"/><text x="352" y="532" fill="#88c0ff" font-size="11">接口与处置</text>
+<text x="1170" y="566" text-anchor="end" fill="#8892a0" font-size="10">Windows 一侧的每一条见正文链接(learn.microsoft.com);没有在 Windows 上做实验</text>
+</svg>

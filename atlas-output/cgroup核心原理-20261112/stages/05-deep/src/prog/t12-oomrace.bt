@@ -1,0 +1,48 @@
+// t12-oomrace.bt:组内 OOM 时,第二次挑人发生在什么时候(微秒,从第一次进入组内 OOM 算起)
+//   关注四件事:每次进入组内 OOM 时 report 组的账有多少页;受害者的内存什么时候开始拆、
+//   什么时候被标成「跳过」(exit_mmap 里拆完映射之后);内存什么时候真正还回去;第二次挑了谁
+BEGIN { @t0 = 0; @n = 0; }
+fentry:vmlinux:mem_cgroup_out_of_memory
+/str(args.memcg->css.cgroup->kn->name) == "report"/
+{
+  if (@t0 == 0) { @t0 = nsecs; }
+  @n += 1;
+  printf("%8d us  第 %d 次进入组内 OOM(触发者 pid %d):report 的账 %d 页,上限 %d 页\n",
+         (nsecs - @t0) / 1000, @n, pid, args.memcg->memory.usage.counter, args.memcg->memory.max);
+}
+fexit:vmlinux:oom_badness
+/@t0 && @n > 0/
+{ printf("%8d us      打分:pid %d %d 分\n", (nsecs - @t0) / 1000, args.p->pid, retval); }
+tracepoint:oom:mark_victim
+/@t0/
+{ @victim[args.pid] = 1; printf("%8d us      选中 pid %d,发 SIGKILL\n", (nsecs - @t0) / 1000, args.pid); }
+fexit:vmlinux:oom_evaluate_task
+/@t0 && retval == 1/
+{ printf("%8d us      遍历到 pid %d:它是还没拆完的受害者,闸门挡住,这一轮不杀(abort)\n", (nsecs - @t0) / 1000, args.task->pid); }
+fentry:vmlinux:exit_signals
+/@t0 && @victim[pid]/
+{ printf("%8d us  受害者 pid %d 进入 do_exit(exit_signals);几微秒后 signal->live 归零,从那以后遍历看不到它\n", (nsecs - @t0) / 1000, pid); }
+fentry:vmlinux:exit_mmap
+/@t0 && @victim[pid]/
+{ printf("%8d us  受害者 pid %d 开始拆自己的内存(exit_mmap)\n", (nsecs - @t0) / 1000, pid); }
+fexit:vmlinux:unmap_vmas
+/@t0 && @victim[pid]/
+{
+  $m = (struct mem_cgroup *)curtask->cgroups->subsys[memory_cgrp_id];
+  printf("%8d us  受害者 pid %d 拆完映射,马上被标成「跳过」;此刻 report 的账 %d 页\n",
+         (nsecs - @t0) / 1000, pid, $m->memory.usage.counter);
+}
+fentry:vmlinux:page_counter_uncharge
+/@t0 && @victim[pid]/
+{
+  $m = (struct mem_cgroup *)((uint64)args.counter - offsetof(struct mem_cgroup, memory));
+  if (str($m->css.cgroup->kn->name) == "report") { @back[pid] += (int64)args.nr_pages; @last[pid] = nsecs; }
+}
+fexit:vmlinux:exit_mmap
+/@t0 && @victim[pid]/
+{
+  $m = (struct mem_cgroup *)curtask->cgroups->subsys[memory_cgrp_id];
+  printf("%8d us  受害者 pid %d 拆完(exit_mmap 返回):还了 %d 页;此刻 report 的账 %d 页\n",
+         (nsecs - @t0) / 1000, pid, @back[pid], $m->memory.usage.counter);
+}
+END { clear(@t0); clear(@n); clear(@victim); clear(@back); clear(@last); }

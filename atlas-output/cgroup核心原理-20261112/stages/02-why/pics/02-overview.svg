@@ -1,0 +1,177 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 844" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="844" fill="#0a0c10"/>
+  <text x="600" y="34" text-anchor="middle" fill="#e0e6f0" font-size="20">十个发现合成五条约束:每试一个旧办法,就暴露出它的缺陷</text>
+  <text x="600" y="56" text-anchor="middle" fill="#8892a0" font-size="12">场景始终是 host01 上的 db 和 report。数字是虚拟机实测(db-sim 独占时 690 次/秒);④ 和 §5 的两项(⑦⑧)是推演</text>
+  <g font-size="12" fill="#c088ff">
+    <rect x="30" y="70" width="250" height="26" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="155" y="88" text-anchor="middle">编号 · 位置 · 试的办法</text>
+    <rect x="290" y="70" width="306" height="26" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="443" y="88" text-anchor="middle">实测 / 算例</text>
+    <rect x="606" y="70" width="262" height="26" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="737" y="88" text-anchor="middle">它的缺陷</text>
+    <rect x="878" y="70" width="292" height="26" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="1024" y="88" text-anchor="middle">记进哪条约束</text>
+  </g>
+  <g font-size="12">
+    <rect x="30" y="104" width="250" height="48" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="42" y="124" fill="#88c0ff">① §1 什么都不管</text>
+    <text x="42" y="142" fill="#8892a0" font-size="11">调度器按进程平分 4 颗核</text>
+    <text x="300" y="124" fill="#e0e6f0">db 690 → 226 次/秒</text>
+    <text x="300" y="142" fill="#8892a0" font-size="11">12 个进程平分,db 只占 4/12</text>
+    <rect x="606" y="104" width="262" height="48" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="618" y="124" fill="#ff8888">内核只认单个进程</text>
+    <text x="618" y="142" fill="#ff8888" font-size="11">看不见「一组」</text>
+    <rect x="878" y="104" width="292" height="48" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="890" y="124" fill="#ffaa55">C1·按组限制合计用量</text>
+    <text x="890" y="142" fill="#ffaa55" font-size="11">要点①:单位是组,不是进程</text>
+  </g>
+  <g font-size="12">
+    <rect x="30" y="158" width="250" height="48" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="42" y="178" fill="#88c0ff">② §2.1 nice 19</text>
+    <text x="42" y="196" fill="#8892a0" font-size="11">report 降到最低优先级</text>
+    <text x="300" y="178" fill="#e0e6f0">8 个 worker:648;400 个:268</text>
+    <text x="300" y="196" fill="#8892a0" font-size="11">db 没活时 report 照样吃满 398%</text>
+    <rect x="606" y="158" width="262" height="48" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="618" y="178" fill="#ff8888">只有「抢的时候谁多」</text>
+    <text x="618" y="196" fill="#ff8888" font-size="11">没有天花板;进程一多就被稀释</text>
+    <rect x="878" y="158" width="292" height="48" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="890" y="178" fill="#ffaa55">C1·按组限制合计用量</text>
+    <text x="890" y="196" fill="#ffaa55" font-size="11">要点②:上限是绝对数</text>
+  </g>
+  <g font-size="12">
+    <rect x="30" y="212" width="250" height="48" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="42" y="232" fill="#88c0ff">③ §2.2 绑核 · §2.3 setsid</text>
+    <text x="42" y="250" fill="#8892a0" font-size="11">圈在 3 号核;按进程组杀</text>
+    <text x="300" y="232" fill="#e0e6f0">worker 自己解绑后回到 215</text>
+    <text x="300" y="250" fill="#8892a0" font-size="11">setsid 的那个子进程逃过按组杀</text>
+    <rect x="606" y="212" width="262" height="48" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="618" y="232" fill="#ff8888">限制是进程自己设的,自己能解除</text>
+    <text x="618" y="250" fill="#ff8888" font-size="11">普通用户一行代码就能解除</text>
+    <rect x="878" y="212" width="292" height="48" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="890" y="232" fill="#ffaa55">C3·内核负责执行,配额由外部设定</text>
+    <text x="890" y="250" fill="#ffaa55" font-size="11">前一半:被管的进程改不了</text>
+  </g>
+  <g font-size="12">
+    <rect x="30" y="266" width="250" height="48" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="42" y="286" fill="#88c0ff">④ §2.4 额度一层层往下分</text>
+    <text x="42" y="304" fill="#8892a0" font-size="11">平台 → 租户 → report</text>
+    <text x="300" y="286" fill="#e0e6f0">(推演,没有实测)</text>
+    <text x="300" y="304" fill="#8892a0" font-size="11">组只有一层时,租户的合计没人管</text>
+    <rect x="606" y="266" width="262" height="48" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="618" y="286" fill="#ff8888">合计还得能分层</text>
+    <text x="618" y="304" fill="#ff8888" font-size="11">上级只管合计,不管下级怎么分</text>
+    <rect x="878" y="266" width="292" height="48" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="890" y="286" fill="#ffaa55">C1·按组限制合计用量</text>
+    <text x="890" y="304" fill="#ffaa55" font-size="11">要点③:组能套组</text>
+  </g>
+  <g font-size="12">
+    <rect x="30" y="320" width="250" height="48" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="42" y="340" fill="#88c0ff">⑤ §3.1 ulimit -v 512M</text>
+    <text x="42" y="358" fill="#8892a0" font-size="11">每个进程最多 512 MiB</text>
+    <text x="300" y="340" fill="#e0e6f0">8 个各 308 MiB,合计 2461 MiB</text>
+    <text x="300" y="358" fill="#8892a0" font-size="11">一页没碰的 1 GiB 映射反而被拒</text>
+    <rect x="606" y="320" width="262" height="48" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="618" y="340" fill="#ff8888">按人头算,量的是地址空间</text>
+    <text x="618" y="358" fill="#ff8888" font-size="11">页缓存不算在任何进程的用量里</text>
+    <rect x="878" y="320" width="292" height="48" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="890" y="340" fill="#ffaa55">C2·记实际用量,超限处理看资源类型</text>
+    <text x="890" y="358" fill="#ffaa55" font-size="11">要点①:记物理消耗</text>
+  </g>
+  <g font-size="12">
+    <rect x="30" y="374" width="250" height="48" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="42" y="394" fill="#88c0ff">⑥ §3.2 内存真的吃光了</text>
+    <text x="42" y="412" fill="#8892a0" font-size="11">内核在全机挑进程杀</text>
+    <text x="300" y="394" fill="#e0e6f0">report-w 触发,死的是 db-sim</text>
+    <text x="300" y="412" fill="#8892a0" font-size="11">全场最胖的先死,不问谁闯的祸</text>
+    <rect x="606" y="374" width="262" height="48" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="618" y="394" fill="#ff8888">内存等不来,只能回收或杀</text>
+    <text x="618" y="412" fill="#ff8888" font-size="11">杀谁没有边界</text>
+    <rect x="878" y="374" width="292" height="48" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="890" y="394" fill="#ffaa55">C2·记实际用量,超限处理看资源类型</text>
+    <text x="890" y="412" fill="#ffaa55" font-size="11">要点②:超了怎么办看资源</text>
+  </g>
+  <rect x="30" y="428" width="1140" height="34" fill="#14102a" stroke="#8040c0" stroke-dasharray="6,4"/>
+  <text x="600" y="450" text-anchor="middle" fill="#c088ff" font-size="12">§4 磁盘 IO 与进程数:同一类问题,不新增约束 → 四种资源、六个旧工具各有各的单位;缺的不是第七个工具,而是一套公共的分组框架</text>
+  <g font-size="12">
+    <rect x="30" y="470" width="250" height="48" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="42" y="490" fill="#88c0ff">⑦ §5 一种资源写一个限制器</text>
+    <text x="42" y="508" fill="#8892a0" font-size="11">CPU、内存、IO、进程数各一个</text>
+    <text x="300" y="490" fill="#e0e6f0">分组、继承、接口、权限写四遍</text>
+    <text x="300" y="508" fill="#8892a0" font-size="11">这台内核已经认识 9 种资源</text>
+    <rect x="606" y="470" width="262" height="48" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="618" y="490" fill="#ff8888">重复、对不上、种类还会增加</text>
+    <text x="618" y="508" fill="#ff8888" font-size="11">种类跟着硬件和业务走</text>
+    <rect x="878" y="470" width="292" height="48" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="890" y="490" fill="#ffaa55">C5·所有资源共用同一套分组</text>
+    <text x="890" y="508" fill="#ffaa55" font-size="11">前一半:种类会增加</text>
+  </g>
+  <g font-size="12">
+    <rect x="30" y="524" width="250" height="48" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="42" y="544" fill="#88c0ff">⑧ §5.4 数字谁来定</text>
+    <text x="42" y="562" fill="#8892a0" font-size="11">report 该分多少</text>
+    <text x="300" y="544" fill="#e0e6f0">§1 的调度器分毫不差地公平</text>
+    <text x="300" y="562" fill="#8892a0" font-size="11">公平的单位却是错的</text>
+    <rect x="606" y="524" width="262" height="48" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="618" y="544" fill="#ff8888">内核不知道谁重要</text>
+    <text x="618" y="562" fill="#ff8888" font-size="11">也不该替业务做主</text>
+    <rect x="878" y="524" width="292" height="48" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="890" y="544" fill="#ffaa55">C3·内核负责执行,配额由外部设定</text>
+    <text x="890" y="562" fill="#ffaa55" font-size="11">后一半:数字由外面写</text>
+  </g>
+  <g font-size="12">
+    <rect x="30" y="578" width="250" height="48" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="42" y="598" fill="#88c0ff">⑨ §6 每家一台虚拟机?</text>
+    <text x="42" y="616" fill="#8892a0" font-size="11">或者给 cgroup 另修一条路?</text>
+    <text x="300" y="598" fill="#e0e6f0">开机 7.8 秒;闲着的 3G 借不到</text>
+    <text x="300" y="616" fill="#8892a0" font-size="11">0.1 秒要给 26 万个页记账</text>
+    <rect x="606" y="578" width="262" height="48" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="618" y="598" fill="#ff8888">太贵;程序不会改走别的路</text>
+    <text x="618" y="616" fill="#ff8888" font-size="11">记账在最热的路上</text>
+    <rect x="878" y="578" width="292" height="48" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="890" y="598" fill="#ffaa55">C4·在内核已有代码路径上记账,开销要小</text>
+    <text x="890" y="616" fill="#ffaa55" font-size="11">共用一个内核 + 复用已有路径</text>
+  </g>
+  <g font-size="12">
+    <rect x="30" y="632" width="250" height="48" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="42" y="652" fill="#88c0ff">⑩ §8.2 v1:每种资源一棵树</text>
+    <text x="42" y="670" fill="#8892a0" font-size="11">cpu、memory、blkio 各一棵</text>
+    <text x="300" y="652" fill="#e0e6f0">写文件先占内存,后由内核线程写盘</text>
+    <text x="300" y="670" fill="#8892a0" font-size="11">IO 该记在哪棵树的哪个组里?</text>
+    <rect x="606" y="632" width="262" height="48" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="618" y="652" fill="#ff8888">各资源对「谁是一组」答案不同</text>
+    <text x="618" y="670" fill="#ff8888" font-size="11">记录对不上 → v2 只留一棵树</text>
+    <rect x="878" y="632" width="292" height="48" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="890" y="652" fill="#ffaa55">C5·所有资源共用同一套分组</text>
+    <text x="890" y="670" fill="#ffaa55" font-size="11">后一半:记录要对得上,只能一棵树</text>
+  </g>
+  <text x="600" y="708" text-anchor="middle" fill="#ffaa55" font-size="13">十个发现合成五条约束(后文一律用「编号·短名」引用)</text>
+  <rect x="30" y="720" width="220" height="56" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+  <text x="140" y="743" text-anchor="middle" fill="#ffaa55" font-size="12">C1·按组限制合计用量</text>
+  <text x="140" y="763" text-anchor="middle" fill="#e0e6f0" font-size="12">← ① ② ④</text>
+  <rect x="260" y="720" width="220" height="56" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+  <text x="370" y="743" text-anchor="middle" fill="#ffaa55" font-size="12">C2·记实际用量,超限处理看资源类型</text>
+  <text x="370" y="763" text-anchor="middle" fill="#e0e6f0" font-size="12">← ⑤ ⑥</text>
+  <rect x="490" y="720" width="220" height="56" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+  <text x="600" y="743" text-anchor="middle" fill="#ffaa55" font-size="12">C3·内核负责执行,配额由外部设定</text>
+  <text x="600" y="763" text-anchor="middle" fill="#e0e6f0" font-size="12">← ③ ⑧</text>
+  <rect x="720" y="720" width="220" height="56" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+  <text x="830" y="739" text-anchor="middle" fill="#ffaa55" font-size="12">C4·在内核已有代码路径上</text>
+  <text x="830" y="755" text-anchor="middle" fill="#ffaa55" font-size="12">记账,开销要小</text>
+  <text x="830" y="771" text-anchor="middle" fill="#e0e6f0" font-size="12">← ⑨</text>
+  <rect x="950" y="720" width="220" height="56" rx="4" fill="#5f3a1e" stroke="#c08040" stroke-width="1.5"/>
+  <text x="1060" y="743" text-anchor="middle" fill="#ffaa55" font-size="12">C5·所有资源共用同一套分组</text>
+  <text x="1060" y="763" text-anchor="middle" fill="#e0e6f0" font-size="12">← ⑦ ⑩</text>
+  <text x="600" y="798" text-anchor="middle" fill="#8892a0" font-size="11">C1、C2 和 C3 的前一半回答「为什么必须有 cgroup」;C3 的后一半、C4、C5 回答「为什么长成这样」</text>
+  <g font-size="11">
+    <rect x="30" y="814" width="14" height="14" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="52" y="826" fill="#88c0ff">试过的办法 / 你的第一版</text>
+    <rect x="235" y="814" width="14" height="14" fill="#5f1e1e" stroke="#c04040"/>
+    <text x="257" y="826" fill="#ff8888">它差在哪</text>
+    <rect x="341" y="814" width="14" height="14" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="363" y="826" fill="#ffaa55">约束(编号·短名)</text>
+    <rect x="502" y="814" width="14" height="14" fill="#3a1e5f" stroke="#8040c0"/>
+    <text x="524" y="826" fill="#c088ff">表头</text>
+    <rect x="586" y="814" width="14" height="14" fill="#14102a" stroke="#8040c0" stroke-dasharray="3,2"/>
+    <text x="608" y="826" fill="#c088ff">转折(不新增约束)</text>
+  </g>
+</svg>

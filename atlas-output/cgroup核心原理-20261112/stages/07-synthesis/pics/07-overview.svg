@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" font-family="JetBrains Mono, Consolas, monospace">
+<rect width="1200" height="640" fill="#0a0c10"/>
+<text x="600" y="34" text-anchor="middle" fill="#e0e6f0" font-size="20">cgroup 的八个想法,一页纸</text>
+<text x="600" y="56" text-anchor="middle" fill="#8892a0" font-size="12">问题:一台机器上几个业务共用一个内核,怎么让一个业务的进程合起来最多用多少,而且一样办法管住各种资源</text>
+<rect x="40" y="84" width="265" height="208" rx="6" fill="#1e5f3a" fill-opacity="0.45" stroke="#40c060"/>
+<text x="56" y="118" fill="#88ff88" font-size="16">① 分进程组记账</text>
+<text x="56" y="160" fill="#e0e6f0" font-size="12.5">每个进程标明自己属于哪个组;</text>
+<text x="56" y="190" fill="#e0e6f0" font-size="12.5">每用一点资源,也记到组的账上;</text>
+<text x="56" y="220" fill="#e0e6f0" font-size="12.5">于是能给一组设合计上限</text>
+<rect x="325" y="84" width="265" height="208" rx="6" fill="#5f1e1e" fill-opacity="0.45" stroke="#c04040"/>
+<text x="341" y="118" fill="#ff8888" font-size="16">② 将工具统一成框架</text>
+<text x="341" y="160" fill="#e0e6f0" font-size="12.5">旧工具各管各的单位:</text>
+<text x="341" y="190" fill="#e0e6f0" font-size="12.5">进程、用户、会话、整台机器;</text>
+<text x="341" y="220" fill="#e0e6f0" font-size="12.5">改成所有资源共用一套分组</text>
+<rect x="610" y="84" width="265" height="208" rx="6" fill="#3a1e5f" fill-opacity="0.45" stroke="#8040c0"/>
+<text x="626" y="118" fill="#c088ff" font-size="16">③ 公共框架加资源插件</text>
+<text x="626" y="160" fill="#e0e6f0" font-size="12.5">分组的代码只写一遍;</text>
+<text x="626" y="190" fill="#e0e6f0" font-size="12.5">每种资源一个插件,交一张回调表;</text>
+<text x="626" y="220" fill="#e0e6f0" font-size="12.5">加新资源不改公共部分</text>
+<rect x="895" y="84" width="265" height="208" rx="6" fill="#5f3a1e" fill-opacity="0.45" stroke="#c08040"/>
+<text x="911" y="118" fill="#ffaa55" font-size="16">④ 复用已有路径记账</text>
+<text x="911" y="160" fill="#e0e6f0" font-size="12.5">在内核原有代码后加一步记账;</text>
+<text x="911" y="190" fill="#e0e6f0" font-size="12.5">CPU、IO 没设上限就跳过;</text>
+<text x="911" y="220" fill="#e0e6f0" font-size="12.5">每核先领一份额度,少碰公共账</text>
+<rect x="40" y="312" width="265" height="208" rx="6" fill="#5f3a1e" fill-opacity="0.45" stroke="#c08040"/>
+<text x="56" y="346" fill="#ffaa55" font-size="16">⑤ 记账时检查限额</text>
+<text x="56" y="388" fill="#e0e6f0" font-size="12.5">记账时顺便和上限比较;</text>
+<text x="56" y="418" fill="#e0e6f0" font-size="12.5">超了当场处理;</text>
+<text x="56" y="448" fill="#e0e6f0" font-size="12.5">没有后台程序定期检查</text>
+<rect x="325" y="312" width="265" height="208" rx="6" fill="#5f1e1e" fill-opacity="0.45" stroke="#c04040"/>
+<text x="341" y="346" fill="#ff8888" font-size="16">⑥ 按资源特性处理</text>
+<text x="341" y="388" fill="#e0e6f0" font-size="12.5">CPU、IO:等下一个周期;</text>
+<text x="341" y="418" fill="#e0e6f0" font-size="12.5">进程数:这次创建失败;</text>
+<text x="341" y="448" fill="#e0e6f0" font-size="12.5">内存:先回收,不行再杀</text>
+<rect x="610" y="312" width="265" height="208" rx="6" fill="#1e3a5f" fill-opacity="0.45" stroke="#4080c0"/>
+<text x="626" y="346" fill="#88c0ff" font-size="16">⑦ 提供机制,定制策略</text>
+<text x="626" y="388" fill="#e0e6f0" font-size="12.5">配置方式就是读写文件;</text>
+<text x="626" y="418" fill="#e0e6f0" font-size="12.5">内核只按写进去的数执行;</text>
+<text x="626" y="448" fill="#e0e6f0" font-size="12.5">给多少由 docker、systemd 决定</text>
+<rect x="895" y="312" width="265" height="208" rx="6" fill="#3a1e5f" fill-opacity="0.45" stroke="#8040c0"/>
+<text x="911" y="346" fill="#c088ff" font-size="16">⑧ 统一管理所有资源</text>
+<text x="911" y="388" fill="#e0e6f0" font-size="12.5">只有一棵分组树;</text>
+<text x="911" y="418" fill="#e0e6f0" font-size="12.5">所有资源按同一套分组记账;</text>
+<text x="911" y="448" fill="#e0e6f0" font-size="12.5">写文件时内存账和磁盘账能对上</text>
+<rect x="40" y="548" width="1120" height="58" rx="6" fill="#5f3a1e" stroke="#c08040"/>
+<text x="600" y="572" text-anchor="middle" fill="#ffaa55" font-size="13">① 是做法;② 是为什么要这么做;③ ~ ⑧ 是具体怎么设计的</text>
+<text x="600" y="594" text-anchor="middle" fill="#ffaa55" font-size="11">颜色:绿 = 入口 · 红 = 问题与超限处理 · 紫 = 框架 · 橙 = 记账 · 蓝 = 接口</text>
+</svg>

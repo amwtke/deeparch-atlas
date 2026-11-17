@@ -1,0 +1,42 @@
+// t2-memacct.bt:一个 worker 吃内存时,账是怎么记到组上的(只看 report 组里名叫 report-w 的进程)
+//   try_charge_memcg(memcg, gfp, nr_pages):要给这个组记 nr_pages 页的账
+//   page_counter_try_charge(counter, nr_pages):真正去改组的那本账(counter),并顺着 parent 一层层往上改
+fentry:vmlinux:do_anonymous_page /comm == "report-w"/ { @n_fault = count(); }
+
+fentry:vmlinux:try_charge_memcg
+/comm == "report-w" && str(args.memcg->css.cgroup->kn->name) == "report"/
+{ @n_ask = count(); @pages_ask = sum(args.nr_pages); }
+
+fentry:vmlinux:page_counter_try_charge
+/comm == "report-w"/
+{
+  $m = (struct mem_cgroup *)((uint64)args.counter - offsetof(struct mem_cgroup, memory));
+  if (str($m->css.cgroup->kn->name) == "report") {
+    @n_real = count(); @pages_real = sum(args.nr_pages);
+    @batch = lhist(args.nr_pages, 0, 96, 32);
+    @c[tid] = (uint64)args.counter;
+    @u0[tid] = args.counter->usage.counter;
+    @u1[tid] = args.counter->parent->usage.counter;
+    @u2[tid] = args.counter->parent->parent->usage.counter;
+  }
+}
+fexit:vmlinux:page_counter_try_charge
+/@c[tid]/
+{
+  $c = (struct page_counter *)@c[tid];
+  if (@shown < 3) {
+    @shown++;
+    printf("第 %d 次改账(+%d 页):report %d → %d 页   父组 host01 %d → %d 页   根 %d → %d 页\n",
+           @shown, args.nr_pages, @u0[tid], $c->usage.counter, @u1[tid], $c->parent->usage.counter,
+           @u2[tid], $c->parent->parent->usage.counter);
+  }
+  @c[tid] = 0;
+}
+END {
+  printf("worker 第一次摸到新内存页(缺页)%d 次\n", (int64)@n_fault);
+  printf("问「给 report 组记账」 %d 次,共 %d 页\n", (int64)@n_ask, (int64)@pages_ask);
+  printf("真正去改 report 组那本账 %d 次,共 %d 页;每次改多少页:\n", (int64)@n_real, (int64)@pages_real);
+  print(@batch);
+  clear(@n_fault); clear(@n_ask); clear(@pages_ask); clear(@n_real); clear(@pages_real); clear(@batch); clear(@shown);
+  clear(@c); clear(@u0); clear(@u1); clear(@u2);
+}

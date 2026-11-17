@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 677" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="677" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="661" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg-lab — root@lima-cg-lab(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 4G,专用实验机)· 沙箱组 host01(1G)</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">cat /sys/fs/cgroup/host01/memory.max</tspan></text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">1073741824</text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">echo 700M &gt; /sys/fs/cgroup/host01/db/memory.low</tspan></text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">echo 300M &gt; /sys/fs/cgroup/host01/report/memory.max</tspan></text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup db python3 hold.py db-sim 700 &amp;</tspan></text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">db-sim(pid 4053)已占住 700 MiB</text>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report python3 hold.py report-w 600 &amp;</tspan></text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">bash: line 20:  4058 Killed                     ./ingroup report python3 hold.py report-w 600</text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">journalctl -k --since 09:03:03 -o cat --no-pager | grep -E &#x27;oom-kill:|Killed process&#x27; | cut -c1-150</tspan></text>
+  <rect x="22" y="238" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre" fill="#88c0ff">oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=host01,mems_allowed=0,oom_memcg=/host01/report,task_memcg=/host01/report,ta</text>
+  <rect x="22" y="259" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre" fill="#88c0ff">sk=report-w,pid</text>
+  <rect x="22" y="280" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#88c0ff">Memory cgroup out of memory: Killed process 4058 (report-w) total-vm:327220kB, anon-rss:306504kB, file-rss:5740kB, shmem-rss:0kB, UID:0</text>
+  <rect x="22" y="301" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#88c0ff"> pgtables:672kB</text>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">grep -H oom_kill /sys/fs/cgroup/host01/memory.events /sys/fs/cgroup/host01/db/memory.events /sys/fs/cgroup/host0</tspan></text>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre" fill="#e0e6f0">1/report/memory.events</text>
+  <rect x="22" y="364" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre" fill="#88c0ff">/sys/fs/cgroup/host01/memory.events:oom_kill 1</text>
+  <rect x="22" y="385" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre" fill="#88c0ff">/sys/fs/cgroup/host01/db/memory.events:oom_kill 0</text>
+  <rect x="22" y="406" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre" fill="#88c0ff">/sys/fs/cgroup/host01/report/memory.events:oom_kill 1</text>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">grep -H -E &#x27;^(oom_kill|max) &#x27; /sys/fs/cgroup/host01/report/memory.events.local /sys/fs/cgroup/host01/memory.even</tspan></text>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre" fill="#e0e6f0">ts.local</text>
+  <rect x="22" y="469" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre" fill="#88c0ff">/sys/fs/cgroup/host01/report/memory.events.local:max 53</text>
+  <rect x="22" y="490" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre" fill="#88c0ff">/sys/fs/cgroup/host01/report/memory.events.local:oom_kill 1</text>
+  <rect x="22" y="511" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="526" xml:space="preserve" style="white-space:pre" fill="#88c0ff">/sys/fs/cgroup/host01/memory.events.local:max 0</text>
+  <rect x="22" y="532" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="547" xml:space="preserve" style="white-space:pre" fill="#88c0ff">/sys/fs/cgroup/host01/memory.events.local:oom_kill 0</text>
+  <text x="28" y="568" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">ps -o pid,rss,comm -C db-sim,report-w</tspan></text>
+  <text x="28" y="589" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    PID   RSS COMMAND</text>
+  <rect x="22" y="595" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="610" xml:space="preserve" style="white-space:pre" fill="#88c0ff">   4053 727836 db-sim</text>
+  <text x="600.0" y="655" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-14 · Lima 虚拟机 cg-lab · 日志原文 src/logs/cgmax.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

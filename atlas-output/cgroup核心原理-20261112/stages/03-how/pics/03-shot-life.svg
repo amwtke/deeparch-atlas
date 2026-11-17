@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 488" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="488" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="472" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg-lab — root@lima-cg-lab(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 4G,专用实验机)· 沙箱组 host01</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 1. report 组四种资源各写一个上限</text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">echo &#x27;50000 100000&#x27; &gt; /sys/fs/cgroup/host01/report/cpu.max</tspan></text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">echo 300M &gt; /sys/fs/cgroup/host01/report/memory.max</tspan></text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">echo &#x27;253:0 wbps=10485760&#x27; &gt; /sys/fs/cgroup/host01/report/io.max</tspan></text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">echo 20 &gt; /sys/fs/cgroup/host01/report/pids.max</tspan></text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 2. 挂上跟踪脚本,让 report 生出一个 worker:烧 CPU → 要内存 → 写盘 → 生一个孩子 → 退出</text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">bpftrace t7-life.bt 0 &gt; life.out 2&gt;&amp;1 &amp;</tspan></text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report python3 life.py</tspan></text>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">grep -v -e Attached -e &#x27;^$&#x27; life.out</tspan></text>
+  <rect x="22" y="259" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  0.00 ms  [fork]      pids 控制器被问「能生吗」→ 放行,report 组的进程数 +1</text>
+  <rect x="22" y="280" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  0.03 ms  [fork]      核心:子进程 9356 抄走父进程的组籍 0xffff0000c5b97400,挂上名单</text>
+  <rect x="22" y="301" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  0.11 ms  [缺页]      memory 控制器:分到物理页,给 report 组记 1 页</text>
+  <rect x="22" y="322" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  0.70 ms  [调度结算]  cpu 控制器:刚跑掉 663 微秒,从 report 组在核 3 的零钱里扣</text>
+  <rect x="22" y="343" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre" fill="#88c0ff">204.59 ms  [提交 IO]   io 控制器:一笔 4194304 字节的写请求,交给磁盘前先过 report 组的带宽闸门</text>
+  <rect x="22" y="364" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre" fill="#88c0ff">1011.44 ms  [fork]      worker 自己生孩子:pids 控制器又被问一次 → 放行</text>
+  <rect x="22" y="385" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre" fill="#88c0ff">1012.05 ms  [退出]      核心:把 worker 从组籍的名单上摘掉</text>
+  <rect x="22" y="406" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre" fill="#88c0ff">1012.08 ms  [退出]      pids 控制器:report 组的进程数 -1</text>
+  <text x="600.0" y="466" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-14 · Lima 虚拟机 cg-lab · 日志原文 src/logs/life.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

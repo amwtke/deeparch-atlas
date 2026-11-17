@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 467" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="467" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="451" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg — root@lima-cg(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 8G)· 沙箱组 host01</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">cat db.py | head -5</tspan></text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"># 扮演 mysqld 的替身:4 个「连接」进程,各自不停地做查询;一次查询 = 一小段定量的纯计算</text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">import os, time</text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">CONN = 4            # 4 个连接</text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">DUR = 8             # 跑 8 秒</text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">K = 270000          # 一次查询 = 27 万次乘加,本机独占一颗核时约 5 ms</text>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 1. 只有 db-sim 在跑</text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">python3 db.py</tspan></text>
+  <rect x="22" y="238" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre" fill="#88c0ff">查询 5518 次(690 次/秒)  平均 5.8 ms  p99 7.7 ms</text>
+  <rect x="22" y="259" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre" fill="#88c0ff">这段时间的 CPU:db-sim×4 合计 398%</text>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 2. report 起 8 个 worker,db-sim 再跑一遍</text>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">python3 report.py cpu 8 &amp;</tspan></text>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">python3 db.py</tspan></text>
+  <rect x="22" y="364" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre" fill="#88c0ff">查询 1808 次(226 次/秒)  平均 17.7 ms  p99 25.9 ms</text>
+  <rect x="22" y="385" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre" fill="#88c0ff">这段时间的 CPU:db-sim×4 合计 132%   report-w×8 合计 266%</text>
+  <text x="600.0" y="445" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-13 · Lima 虚拟机 cg · 日志原文 src/logs/cpu0.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

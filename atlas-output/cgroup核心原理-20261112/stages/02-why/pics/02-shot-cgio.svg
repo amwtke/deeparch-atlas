@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 761" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="761" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="745" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg-lab — root@lima-cg-lab(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 4G,专用实验机)· 沙箱组 host01(1G)</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">lsblk -o NAME,MAJ:MIN,TYPE,MOUNTPOINT | grep -E &#x27;NAME|vda |vda1&#x27;</tspan></text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">NAME    MAJ:MIN TYPE MOUNTPOINT</text>
+  <rect x="22" y="91" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre" fill="#88c0ff">vda     253:0   disk </text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">├─vda1  253:1   part /</text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">├─vda13 253:13  part /boot</text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">└─vda15 253:15  part /boot/efi</text>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 1. 不设限:在 report 组里写 50 MiB(绕过页缓存,直接写盘)</text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report dd if=/dev/zero of=/var/tmp/r1.tmp bs=1M count=50 oflag=direct 2&gt;&amp;1 | tail -1</tspan></text>
+  <rect x="22" y="238" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre" fill="#88c0ff">52428800 bytes (52 MB, 50 MiB) copied, 0.00679885 s, 8.7 GB/s</text>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">cat /sys/fs/cgroup/host01/report/io.stat</tspan></text>
+  <rect x="22" y="280" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#88c0ff">253:0 rbytes=0 wbytes=52428800 rios=0 wios=50 dbytes=0 dios=0</text>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 2. report 组在这块盘上每秒最多写 10 MiB</text>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">echo &#x27;253:0 wbps=10485760&#x27; &gt; /sys/fs/cgroup/host01/report/io.max</tspan></text>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report dd if=/dev/zero of=/var/tmp/r2.tmp bs=1M count=50 oflag=direct 2&gt;&amp;1 | tail -1</tspan></text>
+  <rect x="22" y="385" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre" fill="#88c0ff">52428800 bytes (52 MB, 50 MiB) copied, 4.99987 s, 10 MB/s</text>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">cat /sys/fs/cgroup/host01/report/io.stat</tspan></text>
+  <rect x="22" y="427" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre" fill="#88c0ff">253:0 rbytes=12288 wbytes=104857600 rios=3 wios=200 dbytes=0 dios=0</text>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 3. 同样的限制,换成带缓冲的写(先进页缓存,由内核线程写盘),等落盘再返回</text>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report dd if=/dev/zero of=/var/tmp/r3.tmp bs=1M count=50 conv=fsync 2&gt;&amp;1 | tail -1</tspan></text>
+  <rect x="22" y="511" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="526" xml:space="preserve" style="white-space:pre" fill="#88c0ff">52428800 bytes (52 MB, 50 MiB) copied, 4.97412 s, 11 MB/s</text>
+  <text x="28" y="547" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">cat /sys/fs/cgroup/host01/report/io.stat</tspan></text>
+  <rect x="22" y="553" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="568" xml:space="preserve" style="white-space:pre" fill="#88c0ff">253:0 rbytes=16384 wbytes=157286400 rios=4 wios=213 dbytes=0 dios=0</text>
+  <text x="28" y="589" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="610" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 4. 对照:db 组没有设限,同样带缓冲地写 50 MiB</text>
+  <text x="28" y="631" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup db dd if=/dev/zero of=/var/tmp/d1.tmp bs=1M count=50 conv=fsync 2&gt;&amp;1 | tail -1</tspan></text>
+  <rect x="22" y="637" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="652" xml:space="preserve" style="white-space:pre" fill="#88c0ff">52428800 bytes (52 MB, 50 MiB) copied, 0.0261246 s, 2.0 GB/s</text>
+  <text x="28" y="673" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">cat /sys/fs/cgroup/host01/db/io.stat</tspan></text>
+  <rect x="22" y="679" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="694" xml:space="preserve" style="white-space:pre" fill="#88c0ff">253:0 rbytes=4096 wbytes=52428800 rios=1 wios=13 dbytes=0 dios=0</text>
+  <text x="600.0" y="739" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-14 · Lima 虚拟机 cg-lab · 日志原文 src/logs/cgio.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

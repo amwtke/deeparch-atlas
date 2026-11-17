@@ -1,0 +1,45 @@
+// t3-throttle.bt:额度用完那一刻的时间线(从某个周期开始,记 2 个周期)
+//   时间以毫秒计,从第一次周期定时器响起算
+fentry:vmlinux:sched_cfs_period_timer
+{
+  $b = (struct cfs_bandwidth *)((uint64)args.timer - offsetof(struct cfs_bandwidth, period_timer));
+  $tg = (struct task_group *)((uint64)$b - offsetof(struct task_group, cfs_bandwidth));
+  if (str($tg->css.cgroup->kn->name) == "report") {
+    if (@t0 == 0) { @t0 = nsecs; }
+    @np++;
+    if (@np > 2) { exit(); }
+    printf("%4d.%02d ms  周期定时器响(第 %d 个周期开始),公共池补到 %d 微秒\n",
+           (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100, @np, $b->quota / 1000);
+  }
+}
+fentry:vmlinux:__account_cfs_rq_runtime
+/@t0 && str(args.cfs_rq->tg->css.cgroup->kn->name) == "report"/
+{
+  @before[cpu] = args.cfs_rq->runtime_remaining; @in[cpu] = 1;
+}
+fexit:vmlinux:__account_cfs_rq_runtime
+/@in[cpu]/
+{
+  @in[cpu] = 0;
+  $got = args.cfs_rq->runtime_remaining - @before[cpu] + (int64)args.delta_exec;
+  if ($got > 0) {
+    printf("%4d.%02d ms  核 %d 领 %4d 微秒,公共池还剩 %5d 微秒\n", (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100, cpu,
+           (uint64)$got / 1000, args.cfs_rq->tg->cfs_bandwidth.runtime / 1000);
+  }
+}
+fexit:vmlinux:throttle_cfs_rq
+/@t0 && retval && str(args.cfs_rq->tg->css.cgroup->kn->name) == "report"/
+{
+  printf("%4d.%02d ms  核 %d:公共池空了,report 组在这颗核上被标记为「限流中」\n", (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100, cpu);
+}
+fentry:vmlinux:throttle_cfs_rq_work
+/@t0 && str(curtask->cgroups->dfl_cgrp->kn->name) == "report"/
+{
+  printf("%4d.%02d ms  核 %d:进程 %d(%s)在返回用户态的路上被请下场\n", (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100, cpu, pid, comm);
+}
+fentry:vmlinux:unthrottle_cfs_rq
+/@t0 && str(args.cfs_rq->tg->css.cgroup->kn->name) == "report"/
+{
+  printf("%4d.%02d ms  核 %d:解除限流,等候名单上的进程放回队列\n", (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100, cpu);
+}
+END { clear(@t0); clear(@np); clear(@before); clear(@in); }

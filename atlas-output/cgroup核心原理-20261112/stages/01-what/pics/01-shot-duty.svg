@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 425" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="425" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="409" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg — root@lima-cg(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 8G)</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 同一份约 0.5 秒 CPU 的活,配额逐级调小</text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">python3 work.py 27777777</tspan></text>
+  <rect x="22" y="91" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre" fill="#88c0ff">墙上时间=0.50s  CPU时间=0.50s</text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">echo &quot;50000 100000&quot; &gt; /sys/fs/cgroup/half/cpu.max; bash -c &#x27;echo $$ &gt; /sys/fs/cgroup/half/cgroup.procs; exec &quot;$@&quot;&#x27; _</tspan></text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre" fill="#e0e6f0"> python3 work.py 27777777</text>
+  <rect x="22" y="154" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre" fill="#88c0ff">墙上时间=1.24s  CPU时间=0.63s</text>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">echo &quot;25000 100000&quot; &gt; /sys/fs/cgroup/half/cpu.max; bash -c &#x27;echo $$ &gt; /sys/fs/cgroup/half/cgroup.procs; exec &quot;$@&quot;&#x27; _</tspan></text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#e0e6f0"> python3 work.py 27777777</text>
+  <rect x="22" y="217" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre" fill="#88c0ff">墙上时间=5.27s  CPU时间=1.34s</text>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">echo &quot;12500 100000&quot; &gt; /sys/fs/cgroup/half/cpu.max; bash -c &#x27;echo $$ &gt; /sys/fs/cgroup/half/cgroup.procs; exec &quot;$@&quot;&#x27; _</tspan></text>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre" fill="#e0e6f0"> python3 work.py 27777777</text>
+  <rect x="22" y="280" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#88c0ff">墙上时间=14.46s  CPU时间=1.81s</text>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">echo &quot;5000 100000&quot; &gt; /sys/fs/cgroup/half/cpu.max; bash -c &#x27;echo $$ &gt; /sys/fs/cgroup/half/cgroup.procs; exec &quot;$@&quot;&#x27; _ </tspan></text>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre" fill="#e0e6f0">python3 work.py 27777777</text>
+  <rect x="22" y="343" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre" fill="#88c0ff">墙上时间=38.60s  CPU时间=1.93s</text>
+  <text x="600.0" y="403" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-13 · Lima 虚拟机 cg · 日志原文 src/logs/duty.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

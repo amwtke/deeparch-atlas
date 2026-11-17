@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" font-family="JetBrains Mono, Consolas, monospace">
+  <rect width="1200" height="560" fill="#0a0c10"/>
+  <text x="600" y="34" text-anchor="middle" fill="#e0e6f0" font-size="20">核心想法:把记账和限额从进程身上,挪到一个进程自己改不了的「组」上</text>
+  <text x="600" y="56" text-anchor="middle" fill="#8892a0" font-size="12">还是 report:1 个主进程 + 8 个 worker。左边是 ulimit / nice 的世界,右边是 cgroup 的世界</text>
+
+  <!-- divider -->
+  <line x1="600" y1="76" x2="600" y2="452" stroke="#30363d" stroke-width="1"/>
+
+  <!-- LEFT: per-process ledgers -->
+  <text x="300" y="92" text-anchor="middle" fill="#ff8888" font-size="14">之前:用量和限额记在每个进程自己身上</text>
+  <g font-size="11">
+    <!-- 9 process boxes in 3x3 -->
+    <g>
+      <rect x="60" y="112" width="150" height="74" fill="#1e3a5f" stroke="#4080c0"/>
+      <text x="135" y="130" text-anchor="middle" fill="#88c0ff">report 主进程</text>
+      <rect x="70" y="140" width="130" height="38" fill="#5f3a1e" stroke="#c08040"/>
+      <text x="135" y="155" text-anchor="middle" fill="#ffaa55">自己的用量 + 限额</text>
+      <text x="135" y="170" text-anchor="middle" fill="#ffaa55">nice / 512M</text>
+    </g>
+    <g>
+      <rect x="225" y="112" width="150" height="74" fill="#1e3a5f" stroke="#4080c0"/>
+      <text x="300" y="130" text-anchor="middle" fill="#88c0ff">worker 1</text>
+      <rect x="235" y="140" width="130" height="38" fill="#5f3a1e" stroke="#c08040"/>
+      <text x="300" y="155" text-anchor="middle" fill="#ffaa55">自己的用量 + 限额</text>
+      <text x="300" y="170" text-anchor="middle" fill="#ffaa55">nice / 512M</text>
+    </g>
+    <g>
+      <rect x="390" y="112" width="150" height="74" fill="#1e3a5f" stroke="#4080c0"/>
+      <text x="465" y="130" text-anchor="middle" fill="#88c0ff">worker 2</text>
+      <rect x="400" y="140" width="130" height="38" fill="#5f3a1e" stroke="#c08040"/>
+      <text x="465" y="155" text-anchor="middle" fill="#ffaa55">自己的用量 + 限额</text>
+      <text x="465" y="170" text-anchor="middle" fill="#ffaa55">nice / 512M</text>
+    </g>
+    <g>
+      <rect x="60" y="198" width="150" height="74" fill="#1e3a5f" stroke="#4080c0"/>
+      <text x="135" y="216" text-anchor="middle" fill="#88c0ff">worker 3</text>
+      <rect x="70" y="226" width="130" height="38" fill="#5f3a1e" stroke="#c08040"/>
+      <text x="135" y="241" text-anchor="middle" fill="#ffaa55">自己的用量 + 限额</text>
+      <text x="135" y="256" text-anchor="middle" fill="#ffaa55">nice / 512M</text>
+    </g>
+    <g>
+      <rect x="225" y="198" width="150" height="74" fill="#1e3a5f" stroke="#4080c0"/>
+      <text x="300" y="216" text-anchor="middle" fill="#88c0ff">worker 4</text>
+      <rect x="235" y="226" width="130" height="38" fill="#5f3a1e" stroke="#c08040"/>
+      <text x="300" y="241" text-anchor="middle" fill="#ffaa55">自己的用量 + 限额</text>
+      <text x="300" y="256" text-anchor="middle" fill="#ffaa55">nice / 512M</text>
+    </g>
+    <g>
+      <rect x="390" y="198" width="150" height="74" fill="#1e3a5f" stroke="#4080c0"/>
+      <text x="465" y="216" text-anchor="middle" fill="#88c0ff">……worker 8</text>
+      <rect x="400" y="226" width="130" height="38" fill="#5f3a1e" stroke="#c08040"/>
+      <text x="465" y="241" text-anchor="middle" fill="#ffaa55">自己的用量 + 限额</text>
+      <text x="465" y="256" text-anchor="middle" fill="#ffaa55">nice / 512M</text>
+    </g>
+  </g>
+  <g font-size="12" fill="#ff8888">
+    <text x="60" y="302">· 再 fork 一个,就多一份用量记录、多一份额度</text>
+    <text x="60" y="324">· 没有哪个数字管着「合计最多多少」</text>
+    <text x="60" y="346">· 绑核、会话这些边界,进程自己能改</text>
+    <text x="60" y="368">· 限的是地址空间;页缓存不算在任何进程的用量里</text>
+    <text x="60" y="390">· 内存见底时全机挑最胖的杀,不问谁闯的祸</text>
+  </g>
+
+  <!-- RIGHT: group ledger -->
+  <text x="900" y="92" text-anchor="middle" fill="#88ff88" font-size="14">之后:用量记在组上,进程只带一个「组籍」(记录它属于哪个组)</text>
+  <rect x="640" y="112" width="520" height="216" rx="6" fill="none" stroke="#40c060" stroke-width="2"/>
+  <text x="654" y="131" fill="#88ff88" font-size="12">report 组(/sys/fs/cgroup/host01/report)</text>
+  <!-- the one ledger -->
+  <rect x="930" y="144" width="214" height="118" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="1037" y="164" text-anchor="middle" fill="#ffaa55" font-size="12">全组共用的一份记录</text>
+  <text x="942" y="186" fill="#ffaa55" font-size="11">cpu.max     50000 100000</text>
+  <text x="942" y="204" fill="#ffaa55" font-size="11">memory.max  536870912</text>
+  <text x="942" y="228" fill="#e0e6f0" font-size="11">已用 CPU   每周期 ≤ 50 ms</text>
+  <text x="942" y="246" fill="#e0e6f0" font-size="11">已用内存   ≤ 512 MiB</text>
+  <!-- processes -->
+  <g font-size="11">
+    <rect x="656" y="146" width="112" height="30" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="712" y="165" text-anchor="middle" fill="#88c0ff">report 主进程</text>
+    <rect x="656" y="188" width="112" height="30" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="712" y="207" text-anchor="middle" fill="#88c0ff">worker 1</text>
+    <rect x="656" y="230" width="112" height="30" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="712" y="249" text-anchor="middle" fill="#88c0ff">worker 2</text>
+    <rect x="656" y="272" width="112" height="30" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="712" y="291" text-anchor="middle" fill="#88c0ff">……worker 400</text>
+  </g>
+  <!-- arrows process -> ledger -->
+  <defs>
+    <marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#c08040"/></marker>
+    <marker id="ag" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#40c060"/></marker>
+  </defs>
+  <g stroke="#c08040" stroke-width="1.2" stroke-dasharray="6,4" fill="none" marker-end="url(#ar)">
+    <path d="M768,161 L926,190"/>
+    <path d="M768,203 L926,200"/>
+    <path d="M768,245 L926,212"/>
+    <path d="M768,287 L926,226"/>
+  </g>
+  <text x="790" y="150" fill="#ffaa55" font-size="11">每用一点,记到组上</text>
+  <!-- fork inherit -->
+  <path d="M648,161 C622,180 622,190 652,203" stroke="#40c060" stroke-width="1.5" fill="none" marker-end="url(#ag)"/>
+  <text x="820" y="318" text-anchor="middle" fill="#88ff88" font-size="11">fork 出来的子进程,生下来就在父进程的组里(左侧绿箭头)</text>
+
+  <g font-size="12" fill="#88ff88">
+    <text x="640" y="350">· 开 8 个还是 400 个,都算进同一个合计 ← C1·按组限制合计用量</text>
+    <text x="640" y="372">· 限额写的是绝对数:50 ms / 512 MiB ← C1·按组限制合计用量</text>
+    <text x="640" y="394">· 组籍和限额,进程自己改不了 ← C3·内核负责执行,配额由外部设定</text>
+    <text x="640" y="416">· 记的是物理页和跑掉的 CPU 时间 ← C2·记实际用量,超限处理看资源类型</text>
+    <text x="640" y="438">· 额度用完,只在这一组里回收和杀 ← C2·记实际用量,超限处理看资源类型</text>
+  </g>
+
+  <!-- takeaway -->
+  <rect x="30" y="466" width="1140" height="46" rx="6" fill="#5f3a1e" stroke="#c08040"/>
+  <text x="600" y="486" text-anchor="middle" fill="#ffaa55" font-size="13">用「每个进程多带一个组籍 + 每次消耗时多记一笔」,换「对任意一组进程的合计设限」</text>
+  <text x="600" y="503" text-anchor="middle" fill="#ffaa55" font-size="11">这一切都发生在同一个内核里,不用给每个业务配一台虚拟机 ← C4·在内核已有代码路径上记账,开销要小</text>
+
+  <!-- legend -->
+  <g font-size="11">
+    <rect x="30" y="530" width="14" height="14" fill="#1e3a5f" stroke="#4080c0"/>
+    <text x="52" y="542" fill="#88c0ff">进程</text>
+    <rect x="110" y="530" width="14" height="14" fill="#5f3a1e" stroke="#c08040"/>
+    <text x="132" y="542" fill="#ffaa55">用量与限额</text>
+    <rect x="220" y="530" width="14" height="14" fill="none" stroke="#40c060" stroke-width="2"/>
+    <text x="242" y="542" fill="#88ff88">组(进程自己改不了归属)</text>
+    <line x1="470" y1="537" x2="500" y2="537" stroke="#c08040" stroke-dasharray="6,4"/>
+    <text x="508" y="542" fill="#ffaa55">记账</text>
+    <text x="580" y="542" fill="#ff8888">红字:旧办法的毛病</text>
+    <text x="740" y="542" fill="#88ff88">绿字:搬到组上之后</text>
+  </g>
+</svg>

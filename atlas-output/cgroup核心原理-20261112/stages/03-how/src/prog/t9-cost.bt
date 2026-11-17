@@ -1,0 +1,34 @@
+// t9-cost.bt:三条路各数两个数 —— 「路」走了多少次,其中 cgroup「搭车」了多少次(统计 4 秒,按组分)
+//   CPU :路 = update_curr(调度器结算)        车 = __account_cfs_rq_runtime
+//   内存:路 = handle_mm_fault(缺页)          车 = try_charge_memcg
+//   IO  :路 = submit_bio_noacct(提交读写请求) 车 = __blk_throtl_bio
+BEGIN { @t_cpu = 0; @t_mem = 0; @t_io = 0; @road_mem_root = 0; }
+fentry:vmlinux:update_curr
+/comm == "spin"/ { @road_cpu[str(curtask->cgroups->subsys[cpu_cgrp_id]->cgroup->kn->name)] = count(); }
+fentry:vmlinux:__account_cfs_rq_runtime
+/comm == "spin"/ { @ride_cpu[str(args.cfs_rq->tg->css.cgroup->kn->name)] = count(); @t_cpu += 1; }
+
+fentry:vmlinux:handle_mm_fault
+/comm == "eat"/
+{
+  $c = curtask->cgroups->subsys[memory_cgrp_id];
+  if ($c->parent == 0) { @road_mem_root += 1; } else { @road_mem[str($c->cgroup->kn->name)] = count(); }
+}
+fentry:vmlinux:try_charge_memcg
+/comm == "eat"/ { @ride_mem[str(args.memcg->css.cgroup->kn->name)] = count(); @t_mem += 1; }
+
+fentry:vmlinux:submit_bio_noacct
+/comm == "dd"/ { @road_io[str(curtask->cgroups->subsys[io_cgrp_id]->cgroup->kn->name)] = count(); }
+fentry:vmlinux:__blk_throtl_bio
+/comm == "dd"/ { @ride_io[str(args.bio->bi_blkg->blkcg->css.cgroup->kn->name)] = count(); @t_io += 1; }
+
+interval:s:4 {
+  printf("CPU   路(调度器结算)各组走了多少次:\n"); print(@road_cpu);
+  printf("CPU   车(给组记 CPU 账)一共 %d 次:\n", @t_cpu); print(@ride_cpu);
+  printf("内存  路(缺页)各组走了多少次(另有根组里的那个进程 %d 次):\n", @road_mem_root); print(@road_mem);
+  printf("内存  车(给组记内存账)一共 %d 次:\n", @t_mem); print(@ride_mem);
+  printf("IO    路(提交读写请求)各组走了多少次:\n"); print(@road_io);
+  printf("IO    车(过组的带宽闸门)一共 %d 次:\n", @t_io); print(@ride_io);
+  exit();
+}
+END { clear(@road_cpu); clear(@ride_cpu); clear(@road_mem); clear(@ride_mem); clear(@road_io); clear(@ride_io); clear(@t_cpu); clear(@t_mem); clear(@t_io); clear(@road_mem_root); }

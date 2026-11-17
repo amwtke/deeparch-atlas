@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 761" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="761" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="745" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg — root@lima-cg(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 8G)· 沙箱组 host01</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">cat ingroup</tspan></text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">#!/bin/sh</text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"># 用法:ingroup &lt;组名&gt; &lt;命令...&gt;    先入组,后变身</text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">echo $$ &gt; /sys/fs/cgroup/host01/$1/cgroup.procs</text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">shift</text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">exec &quot;$@&quot;</text>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 1. host01 下面分两个组;report 这一组每 100 ms 合计最多 50 ms</text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">ls -d /sys/fs/cgroup/host01/*/</tspan></text>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">/sys/fs/cgroup/host01/db/</text>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">/sys/fs/cgroup/host01/report/</text>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">echo &#x27;50000 100000&#x27; &gt; /sys/fs/cgroup/host01/report/cpu.max</tspan></text>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 2. report 8 个 worker(不用 nice,不绑核)</text>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report python3 report.py cpu 8 &amp;</tspan></text>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup db python3 db.py</tspan></text>
+  <rect x="22" y="385" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre" fill="#88c0ff">查询 5063 次(633 次/秒)  平均 6.3 ms  p99 13.7 ms</text>
+  <rect x="22" y="406" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre" fill="#88c0ff">这段时间的 CPU:db-sim×4 合计 348%   report-w×8 合计 50%</text>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">echo 1 &gt; /sys/fs/cgroup/host01/report/cgroup.kill</tspan></text>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 3. report 400 个 worker</text>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report python3 report.py cpu 400 &amp;</tspan></text>
+  <text x="28" y="526" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">pgrep -c -x report-w</tspan></text>
+  <rect x="22" y="532" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="547" xml:space="preserve" style="white-space:pre" fill="#88c0ff">400</text>
+  <text x="28" y="568" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup db python3 db.py</tspan></text>
+  <rect x="22" y="574" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="589" xml:space="preserve" style="white-space:pre" fill="#88c0ff">查询 5120 次(640 次/秒)  平均 6.3 ms  p99 21.0 ms</text>
+  <rect x="22" y="595" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="610" xml:space="preserve" style="white-space:pre" fill="#88c0ff">这段时间的 CPU:db-sim×4 合计 348%   report-w×400 合计 52%</text>
+  <text x="28" y="631" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">grep -E &#x27;usage_usec|nr_periods|nr_throttled&#x27; /sys/fs/cgroup/host01/report/cpu.stat</tspan></text>
+  <rect x="22" y="637" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="652" xml:space="preserve" style="white-space:pre" fill="#88c0ff">usage_usec 64859376</text>
+  <rect x="22" y="658" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="673" xml:space="preserve" style="white-space:pre" fill="#88c0ff">nr_periods 1298</text>
+  <rect x="22" y="679" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="694" xml:space="preserve" style="white-space:pre" fill="#88c0ff">nr_throttled 1296</text>
+  <text x="600.0" y="739" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-13 · Lima 虚拟机 cg · 日志原文 src/logs/cgcpu.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

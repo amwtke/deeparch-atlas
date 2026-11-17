@@ -1,0 +1,18 @@
+// t6-pids.bt:进程数的账。pids 控制器在 fork 的路上被框架问一句「能生吗」
+//   pids_can_fork 返回 0 = 可以;返回负数 = 拒绝(这次 fork 失败)
+fexit:vmlinux:pids_can_fork
+/comm == "python3" && str(curtask->cgroups->dfl_cgrp->kn->name) == "report"/
+{
+  $p = (struct pids_cgroup *)curtask->cgroups->subsys[pids_cgrp_id];
+  @n = count();
+  if (retval != 0) {
+    printf("拒绝  pid %d 要 fork:report 组的进程数账 %d,上限 %d,再加 1 就超 → fork 失败(返回 %d)\n",
+           pid, $p->counter.counter, $p->limit.counter, retval);
+  } else if (@shown < 3) {
+    @shown++;
+    printf("放行  pid %d 要 fork:report 组的进程数账 → %d(上限 %d)   父组 host01 的账 → %d\n",
+           pid, $p->counter.counter, $p->limit.counter,
+           ((struct pids_cgroup *)$p->css.parent)->counter.counter);
+  }
+}
+END { printf("pids 控制器一共被问了 %d 次\n", (int64)@n); clear(@n); clear(@shown); }

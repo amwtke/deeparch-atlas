@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 803" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="803" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="787" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg — root@lima-cg(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 8G)· 沙箱组 host01</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 1. 每个进程最多 512 MiB:单个进程要 600 MiB,被拒</text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">bash -c &#x27;ulimit -v 524288; python3 -c &quot;x = b\&quot;x\&quot; * (600 &lt;&lt; 20)&quot;&#x27;</tspan></text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">Traceback (most recent call last):</text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  File &quot;&lt;string&gt;&quot;, line 1, in &lt;module&gt;</text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    x = b&quot;x&quot; * (600 &lt;&lt; 20)</text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">        ~~~~~^~~~~~~~~~~~~</text>
+  <rect x="22" y="175" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#88c0ff">MemoryError</text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 2. 同样的限制下,8 个 worker 每个要 300 MiB</text>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">bash -c &#x27;ulimit -v 524288; python3 report.py mem 8 300&#x27; &amp;</tspan></text>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">ps -o pid,vsz,rss,comm -C report-w</tspan></text>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    PID    VSZ   RSS COMMAND</text>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  46031 325712 315132 report-w</text>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  46032 325712 315128 report-w</text>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  46033 325712 315128 report-w</text>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  46034 325712 315132 report-w</text>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  46035 325712 315132 report-w</text>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  46036 325712 315132 report-w</text>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  46037 325712 315132 report-w</text>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">  46038 325712 315132 report-w</text>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">ps -o rss= -C report-w | awk &#x27;{s += $1} END {printf &quot;8 个 worker 合计占住 %d MiB\n&quot;, s / 1024}&#x27;</tspan></text>
+  <rect x="22" y="490" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre" fill="#88c0ff">8 个 worker 合计占住 2461 MiB</text>
+  <text x="28" y="526" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="547" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 3. 它量的是地址空间,不是真占住的内存</text>
+  <text x="28" y="568" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">cat vm.py</tspan></text>
+  <text x="28" y="589" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">import mmap</text>
+  <text x="28" y="610" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">m = mmap.mmap(-1, 1 &lt;&lt; 30)          # 向内核要 1 GiB 匿名内存,但一页都不去碰</text>
+  <rect x="22" y="616" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="631" xml:space="preserve" style="white-space:pre" fill="#88c0ff">rss = [l for l in open(&#x27;/proc/self/status&#x27;) if l.startswith(&#x27;VmRSS&#x27;)][0].split()[1]</text>
+  <rect x="22" y="637" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="652" xml:space="preserve" style="white-space:pre" fill="#88c0ff">print(f&quot;映射 1 GiB 成功;此刻真正占住的物理内存 VmRSS = {int(rss) // 1024} MiB&quot;)</text>
+  <text x="28" y="673" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">python3 vm.py</tspan></text>
+  <rect x="22" y="679" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="694" xml:space="preserve" style="white-space:pre" fill="#88c0ff">映射 1 GiB 成功;此刻真正占住的物理内存 VmRSS = 10 MiB</text>
+  <text x="28" y="715" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">bash -c &#x27;ulimit -v 524288; python3 vm.py&#x27; 2&gt;&amp;1 | tail -1</tspan></text>
+  <rect x="22" y="721" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="736" xml:space="preserve" style="white-space:pre" fill="#88c0ff">OSError: [Errno 12] Cannot allocate memory</text>
+  <text x="600.0" y="781" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-13 · Lima 虚拟机 cg · 日志原文 src/logs/ulimit.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

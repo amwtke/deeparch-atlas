@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" font-family="JetBrains Mono, Consolas, monospace">
+<rect width="1200" height="700" fill="#0a0c10"/>
+<text x="600" y="34" text-anchor="middle" fill="#e0e6f0" font-size="20">演练:用八个想法设计一个数据库的资源组</text>
+<text x="600" y="56" text-anchor="middle" fill="#8892a0" font-size="12">一个数据库进程里跑着几个租户的查询;要让一个租户的大查询拖不垮别人。左列是 cgroup 的做法,右列是搬过来的样子(设计推演,不对应某个具体产品)</text>
+<rect x="30" y="74" width="160" height="34" fill="#3a1e5f" stroke="#8040c0"/><text x="110" y="96" text-anchor="middle" fill="#c088ff" font-size="13">想法</text>
+<rect x="196" y="74" width="330" height="34" fill="#3a1e5f" stroke="#8040c0"/><text x="361" y="96" text-anchor="middle" fill="#c088ff" font-size="13">cgroup</text>
+<rect x="532" y="74" width="638" height="34" fill="#3a1e5f" stroke="#8040c0"/><text x="851" y="96" text-anchor="middle" fill="#c088ff" font-size="13">数据库资源组</text>
+<rect x="30" y="116" width="160" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="110" y="150" text-anchor="middle" fill="#88ff88" font-size="13">分组记账</text>
+<rect x="196" y="116" width="330" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="208" y="150" fill="#88c0ff" font-size="12">进程带组籍,fork 继承</text>
+<rect x="532" y="116" width="638" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="544" y="150" fill="#ffaa55" font-size="12">会话带组号;登录时按用户 / 应用映射;并行查询的工作线程继承</text>
+<rect x="30" y="182" width="160" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="110" y="216" text-anchor="middle" fill="#88ff88" font-size="13">统一成框架</text>
+<rect x="196" y="182" width="330" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="208" y="216" fill="#88c0ff" font-size="12">核心 + 插件 + 登记表</text>
+<rect x="532" y="182" width="638" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="544" y="216" fill="#ffaa55" font-size="12">资源组框架 + CPU / 内存 / IO / 并发 四个插件;建组、会话入组时按表通知</text>
+<rect x="30" y="248" width="160" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="110" y="282" text-anchor="middle" fill="#88ff88" font-size="13">复用已有路径</text>
+<rect x="196" y="248" width="330" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="208" y="282" fill="#88c0ff" font-size="12">记账挂在调度、缺页、提交 IO 上</text>
+<rect x="532" y="248" width="638" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="544" y="282" fill="#ffaa55" font-size="12">记在线程让出 CPU 处、内存分配器、缓冲池取页、发 IO 处;没设限的组不记</text>
+<rect x="30" y="314" width="160" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="110" y="348" text-anchor="middle" fill="#88ff88" font-size="13">记账时检查</text>
+<rect x="196" y="314" width="330" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="208" y="348" fill="#88c0ff" font-size="12">加上去,看超没超</text>
+<rect x="532" y="314" width="638" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="544" y="348" fill="#ffaa55" font-size="12">分配时比上限;不另起一个线程定期扫描查询</text>
+<rect x="30" y="380" width="160" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="110" y="414" text-anchor="middle" fill="#88ff88" font-size="13">按资源处理</text>
+<rect x="196" y="380" width="330" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="208" y="414" fill="#88c0ff" font-size="12">等 / 拒 / 回收或杀</text>
+<rect x="532" y="380" width="638" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="544" y="414" fill="#ffaa55" font-size="12">CPU:让出、排队;并发:准入排队;IO:限速;内存:分配时直接报错(有返回值)</text>
+<rect x="30" y="446" width="160" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="110" y="480" text-anchor="middle" fill="#88ff88" font-size="13">机制与策略</text>
+<rect x="196" y="446" width="330" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="208" y="480" fill="#88c0ff" font-size="12">文件界面,数字由外面写</text>
+<rect x="532" y="446" width="638" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="544" y="480" fill="#ffaa55" font-size="12">CREATE / ALTER 资源组的语句,数字由 DBA 或控制面写;引擎只兑现</text>
+<rect x="30" y="512" width="160" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="110" y="546" text-anchor="middle" fill="#88ff88" font-size="13">层层转包</text>
+<rect x="196" y="512" width="330" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="208" y="546" fill="#88c0ff" font-size="12">父组管子树</text>
+<rect x="532" y="512" width="638" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="544" y="546" fill="#ffaa55" font-size="12">租户 → 应用 → 会话 两三层;父组的上限管住下面所有</text>
+<rect x="30" y="578" width="160" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="110" y="612" text-anchor="middle" fill="#88ff88" font-size="13">统一管理</text>
+<rect x="196" y="578" width="330" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="208" y="612" fill="#88c0ff" font-size="12">只有一棵树;进程自己改不了组籍</text>
+<rect x="532" y="578" width="638" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="544" y="612" fill="#ffaa55" font-size="12">所有资源共用一套分组;会话自己不能换组,要有权限</text>
+<text x="600" y="672" text-anchor="middle" fill="#8892a0" font-size="11">最大的不同在「处置」一行:数据库自己分配内存,分配有返回值,所以内存超限可以报错而不必杀,和 Windows 的 Job Object 同一个位置</text>
+</svg>

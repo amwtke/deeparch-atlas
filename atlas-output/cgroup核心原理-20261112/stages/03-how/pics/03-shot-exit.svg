@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1181" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="1181" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="1165" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg-lab — root@lima-cg-lab(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 4G,专用实验机)· 沙箱组 host01</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">cat exit.py</tspan></text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"># exit.py:report 主进程 fork 一个 worker;worker 占 50 MiB,0.6 秒后退出;</text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">#         主进程故意等 1.6 秒才去收尸(这中间 worker 是僵尸),再过 0.6 秒自己退出</text>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">import os, time</text>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">def setname(s):</text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    with open(&#x27;/proc/self/comm&#x27;, &#x27;w&#x27;) as f: f.write(s)</text>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">setname(&#x27;report&#x27;)</text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">if os.fork() == 0:</text>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    setname(&#x27;worker&#x27;)</text>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    hold = b&#x27;x&#x27; * (50 &lt;&lt; 20)</text>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    time.sleep(0.6)</text>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    os._exit(0)</text>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">time.sleep(1.6); os.wait(); time.sleep(0.6)</text>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">bpftrace t11-exit.bt &gt; exit.out 2&gt;&amp;1 &amp;</tspan></text>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">./ingroup report python3 exit.py &amp;</tspan></text>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="400" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### worker 活着(第 0.3 秒)</text>
+  <text x="28" y="421" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">ps -o pid,stat,rss,comm -C worker,report; cd /sys/fs/cgroup/host01/report; grep -H . memory.current pids.current</tspan></text>
+  <text x="28" y="442" xml:space="preserve" style="white-space:pre" fill="#e0e6f0">; cd /tmp</text>
+  <text x="28" y="463" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    PID STAT   RSS COMMAND</text>
+  <text x="28" y="484" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 162264 S     9616 report</text>
+  <text x="28" y="505" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 162266 S    58768 worker</text>
+  <rect x="22" y="511" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="526" xml:space="preserve" style="white-space:pre" fill="#88c0ff">memory.current:56885248</text>
+  <rect x="22" y="532" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="547" xml:space="preserve" style="white-space:pre" fill="#88c0ff">pids.current:2</text>
+  <text x="28" y="568" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="589" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### worker 已退出,主进程还没收尸(第 1.1 秒)</text>
+  <text x="28" y="610" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">ps -o pid,stat,rss,comm -C worker,report; cd /sys/fs/cgroup/host01/report; grep -H . memory.current pids.current</tspan></text>
+  <text x="28" y="631" xml:space="preserve" style="white-space:pre" fill="#e0e6f0">; cd /tmp</text>
+  <text x="28" y="652" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    PID STAT   RSS COMMAND</text>
+  <text x="28" y="673" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 162264 S     9616 report</text>
+  <rect x="22" y="679" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="694" xml:space="preserve" style="white-space:pre" fill="#88c0ff"> 162266 Z        0 worker</text>
+  <rect x="22" y="700" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="715" xml:space="preserve" style="white-space:pre" fill="#88c0ff">memory.current:3846144</text>
+  <rect x="22" y="721" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="736" xml:space="preserve" style="white-space:pre" fill="#88c0ff">pids.current:2</text>
+  <text x="28" y="757" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="778" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 主进程收尸之后(第 2.0 秒)</text>
+  <text x="28" y="799" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">ps -o pid,stat,rss,comm -C worker,report; cd /sys/fs/cgroup/host01/report; grep -H . memory.current pids.current</tspan></text>
+  <text x="28" y="820" xml:space="preserve" style="white-space:pre" fill="#e0e6f0">; cd /tmp</text>
+  <text x="28" y="841" xml:space="preserve" style="white-space:pre" fill="#a8b3c2">    PID STAT   RSS COMMAND</text>
+  <text x="28" y="862" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"> 162264 S     9680 report</text>
+  <rect x="22" y="868" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="883" xml:space="preserve" style="white-space:pre" fill="#88c0ff">memory.current:3846144</text>
+  <rect x="22" y="889" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="904" xml:space="preserve" style="white-space:pre" fill="#88c0ff">pids.current:1</text>
+  <text x="28" y="925" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="946" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 跟踪脚本看到的</text>
+  <text x="28" y="967" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg-lab:/tmp# </tspan><tspan fill="#e0e6f0">grep -v -e Attached -e &#x27;^$&#x27; exit.out</tspan></text>
+  <rect x="22" y="973" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="988" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  0.00 ms  worker(pid 162266)开始退出</text>
+  <rect x="22" y="994" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1009" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  5.44 ms  这之前,memory 控制器已经从 report 的账上减了 454 次,共 12883 页(最后一次在 5.36 ms)</text>
+  <rect x="22" y="1015" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1030" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  5.46 ms  核心:把 worker 从组籍的名单上摘掉(cgroup_task_exit),然后按登记表挨个通知</text>
+  <rect x="22" y="1036" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1051" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  5.47 ms    io 控制器被通知「它退出了」(blkcg_exit)</text>
+  <rect x="22" y="1057" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1072" xml:space="preserve" style="white-space:pre" fill="#88c0ff">  5.47 ms    memory 控制器被通知「它退出了」(mem_cgroup_exit)</text>
+  <rect x="22" y="1078" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1093" xml:space="preserve" style="white-space:pre" fill="#88c0ff"> 978.03 ms  核心:worker 被收尸,做最后的释放(cgroup_task_release),由 report(pid 162264)触发</text>
+  <rect x="22" y="1099" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="1114" xml:space="preserve" style="white-space:pre" fill="#88c0ff"> 978.05 ms    pids 控制器:report 组的进程数 -1(pids_release)</text>
+  <text x="600.0" y="1159" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-14 · Lima 虚拟机 cg-lab · 日志原文 src/logs/exit.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

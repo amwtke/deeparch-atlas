@@ -1,0 +1,9 @@
+// t8-free.bt:1 秒内,调度器给哪些组记了 CPU 的账(__account_cfs_rq_runtime 被调用的次数,按组名分)
+BEGIN { @total = 0; }
+fentry:vmlinux:__account_cfs_rq_runtime { @n[str(args.cfs_rq->tg->css.cgroup->kn->name)] = count(); @total += 1; }
+interval:s:1 {
+  printf("1 秒内「给某个组记 CPU 账」一共发生 %d 次,按组分:\n", @total);
+  print(@n);
+  exit();
+}
+END { clear(@n); clear(@total); }

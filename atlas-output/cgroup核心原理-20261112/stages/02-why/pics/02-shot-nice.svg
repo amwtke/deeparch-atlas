@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 446" font-family="JetBrains Mono, Consolas, monospace" font-size="14">
+  <rect width="1200" height="446" fill="#0a0c10"/>
+  <rect x="8" y="8" width="1184" height="430" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <path d="M8,42 L1192,42" stroke="#30363d"/>
+  <circle cx="30" cy="25" r="6" fill="#ff5f56"/><circle cx="50" cy="25" r="6" fill="#ffbd2e"/><circle cx="70" cy="25" r="6" fill="#27c93f"/>
+  <text x="600.0" y="30" text-anchor="middle" fill="#8892a0" font-size="13">limactl shell cg — root@lima-cg(Ubuntu 26.04.1 · Linux 7.0.0-38 · 4 核 8G)· 沙箱组 host01</text>
+  <text x="28" y="64" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 1. report 降到最低优先级(nice 19),8 个 worker</text>
+  <text x="28" y="85" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">nice -n 19 python3 report.py cpu 8 &amp;</tspan></text>
+  <text x="28" y="106" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">python3 db.py</tspan></text>
+  <rect x="22" y="112" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="127" xml:space="preserve" style="white-space:pre" fill="#88c0ff">查询 5184 次(648 次/秒)  平均 6.2 ms  p99 10.2 ms</text>
+  <rect x="22" y="133" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="148" xml:space="preserve" style="white-space:pre" fill="#88c0ff">这段时间的 CPU:db-sim×4 合计 386%   report-w×8 合计 11%</text>
+  <text x="28" y="169" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="190" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 2. db-sim 没活的时候,nice 19 的 report 吃多少</text>
+  <text x="28" y="211" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">python3 cpuof.py 3</tspan></text>
+  <rect x="22" y="217" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="232" xml:space="preserve" style="white-space:pre" fill="#88c0ff">3 秒内的 CPU:report-w×8 合计 398%</text>
+  <text x="28" y="253" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">pkill -f report.py</tspan></text>
+  <text x="28" y="274" xml:space="preserve" style="white-space:pre" fill="#a8b3c2"></text>
+  <text x="28" y="295" xml:space="preserve" style="white-space:pre" fill="#ffaa55">### 3. 还是 nice 19,但 report 这次起 400 个 worker</text>
+  <text x="28" y="316" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">nice -n 19 python3 report.py cpu 400 &amp;</tspan></text>
+  <text x="28" y="337" xml:space="preserve" style="white-space:pre"><tspan fill="#88ff88">root@lima-cg:/tmp# </tspan><tspan fill="#e0e6f0">python3 db.py</tspan></text>
+  <rect x="22" y="343" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="358" xml:space="preserve" style="white-space:pre" fill="#88c0ff">查询 2147 次(268 次/秒)  平均 14.9 ms  p99 24.4 ms</text>
+  <rect x="22" y="364" width="1156" height="21" fill="#1e3a5f" opacity="0.55"/>
+  <text x="28" y="379" xml:space="preserve" style="white-space:pre" fill="#88c0ff">这段时间的 CPU:db-sim×4 合计 164%   report-w×400 合计 237%</text>
+  <text x="600.0" y="424" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-13 · Lima 虚拟机 cg · 日志原文 src/logs/nice.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
+</svg>

@@ -1,0 +1,33 @@
+// t11-exit.bt:worker 退出时,核心和各控制器依次做了什么(毫秒,从 worker 开始退出算起)
+fentry:vmlinux:do_exit
+/comm == "worker"/
+{ @t0 = nsecs; @w = pid; printf("  0.00 ms  worker(pid %d)开始退出\n", pid); }
+
+fentry:vmlinux:page_counter_uncharge
+/pid == @w && @w/
+{
+  $m = (struct mem_cgroup *)((uint64)args.counter - offsetof(struct mem_cgroup, memory));
+  if (str($m->css.cgroup->kn->name) == "report") { @unch_n = count(); @unch_pages = sum(args.nr_pages); @last = nsecs; }
+}
+fentry:vmlinux:cgroup_task_exit
+/args.tsk->pid == @w && @w/
+{
+  printf("%3d.%02d ms  这之前,memory 控制器已经从 report 的账上减了 %d 次,共 %d 页(最后一次在 %d.%02d ms)\n",
+         (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100, (int64)@unch_n, (int64)@unch_pages,
+         (@last - @t0) / 1000000, ((@last - @t0) / 10000) % 100);
+  printf("%3d.%02d ms  核心:把 worker 从组籍的名单上摘掉(cgroup_task_exit),然后按登记表挨个通知\n",
+         (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100);
+}
+fentry:vmlinux:mem_cgroup_exit
+/args.task->pid == @w && @w/
+{ printf("%3d.%02d ms    memory 控制器被通知「它退出了」(mem_cgroup_exit)\n", (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100); }
+fentry:vmlinux:blkcg_exit
+/args.tsk->pid == @w && @w/
+{ printf("%3d.%02d ms    io 控制器被通知「它退出了」(blkcg_exit)\n", (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100); }
+fentry:vmlinux:cgroup_task_release
+/args.task->pid == @w && @w/
+{ printf("%4d.%02d ms  核心:worker 被收尸,做最后的释放(cgroup_task_release),由 %s(pid %d)触发\n", (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100, comm, pid); }
+fentry:vmlinux:pids_release
+/args.task->pid == @w && @w/
+{ printf("%4d.%02d ms    pids 控制器:report 组的进程数 -1(pids_release)\n", (nsecs - @t0) / 1000000, ((nsecs - @t0) / 10000) % 100); }
+END { clear(@t0); clear(@w); clear(@unch_n); clear(@unch_pages); clear(@last); }
