@@ -1,0 +1,1075 @@
+# 第 5 集 Deep 阶段 — 三条主线对到 Linux 7.0 源码
+
+[intro-line] 今天钻进 Linux 7.0 源码,看 cpu.max 的限流、内存的记账与组内 OOM,以及公共框架怎么接进内核。
+
+## 1 场景 1
+
+[visual: spotlight]
+现在我们来看 Deep 阶段
+v7.0 源码里怎么写的?
+
+[narration]
+上一集讲了 cgroup 怎么长成今天这样。这一集打开 Linux 7.0 源码,把三个问题对到函数上:cpu.max 怎么兑现,内存超限怎么杀进程,公共框架怎么接进内核。最后查清一个留了很久的现象,组内 OOM 为什么有时多杀一个。
+
+---
+
+## 2 三条主线,三件事
+
+[visual: layers title=三条主线,三件事]
+主线一 cpu.max 的记账与限流 · kernel/sched/fair.c
+主线二 内存的记账与组内 OOM · mm/memcontrol.c
+主线三 组籍与登记表 · kernel/cgroup/cgroup.c
+
+[sidebar]
+C1·按组限制合计用量
+C2·记实际用量,超限处理看资源类型
+C4·在内核已有代码路径上记账,开销要小
+C5·所有资源共用同一套分组
+
+[narration]
+三条主线对应三件事。cpu 的记账和限流,对应 C1,按组限制合计用量,和 C4,在内核已有代码路径上记账,开销要小。内存沿父组记账、超限先回收再杀,对应 C2,记实际用量,超限处理看资源类型。组籍和登记表,对应 C5,所有资源共用同一套分组。
+
+---
+
+## 3 图
+
+[visual: html_slide image="pics/05-overview.png" title=三条主线,都从同一个 worker 的一生分出去]
+[step: auto]
+scroll auto
+
+[narration]
+先看最上面的时间线:0 时刻 fork,0.07 秒第一次限流,0.12 秒解除,1.953 秒内存超限,1.954 秒组内 OOM 选中它,1.967 秒退出。橙框是 cpu.max,红框是内存记账和 OOM,紫框是公共框架。
+
+---
+
+## 4 实验设计:一个 worker 的一生
+
+[visual: text title=实验设计:一个 worker 的一生]
+report 组:cpu.max 为 50000 100000,memory.max 为 300M
+worker 先烧 0.3 秒 CPU,再每 50 毫秒要 10 MiB
+预期:fork 时各控制器先被询问
+CPU 每个周期停一半,内存到 300M 时先回收再被组内 OOM 杀掉
+
+[sidebar]
+看 fork 路径
+看 CPU 限流
+看内存超限和 OOM
+
+[narration]
+先讲实验。report 组的 cpu.max 写 50000 100000,也就是半颗核,memory.max 设 300M。worker 先烧 0.3 秒 CPU,再每 50 毫秒多要 10 MiB。预期:fork 时各控制器先被询问,CPU 每个周期停一半,内存到上限先回收,再被组内 OOM 杀掉。
+
+---
+
+## 5 图
+
+[visual: html_slide image="pics/05-shot-life.png" title=实测:一个 worker 从 fork 到被父进程回收]
+[step: auto]
+scroll auto
+
+[narration]
+这是实测留档。fork 时先问 pids 控制器放不放行,再挂到父进程的组籍上。144 微秒第一次记内存,只要 1 页,计数器加了 64 页。68.5 毫秒总额度用完,worker 停下,115.5 毫秒定时器补满。1.953 秒内存超限,回收收回 0 页,进入 OOM,选中 worker。
+
+---
+
+## 6 场景 6
+
+[visual: spotlight]
+主线一
+cpu.max 怎么兑现
+
+[narration]
+先看主线一。往 cpu.max 写两个数,内核到底做了什么,才能让这组进程最多只用半颗核。
+
+---
+
+## 7 为什么要有本核额度
+
+[visual: ascii title=为什么要有本核额度]
+┌───────────────────────────────┐  ┌───────────────────────────────┐
+│ 每次结算都改总额度:           │  │ 每核先带一份本核额度:         │
+│                               │  │                               │
+│ 核0 核1 核2 核3               │  │ 核0  核1  核2  核3            │
+│   ▼   ▼   ▼   ▼               │  │ 本核  本核  本核  本核        │
+│ ┌─────────────────┐           │  │   扣完才向总额度领            │
+│ │ 组的总额度,一把锁 │         │  │   ▼ 一次领 5 ms               │
+│ └─────────────────┘           │  │ 组的总额度,几毫秒才碰一次     │
+│ 每毫秒 4 次抢同一把锁         │  │ 1660 笔账里只领 181 次        │
+└───────────────────────────────┘  └───────────────────────────────┘
+
+[sidebar]
+C1·按组限制合计用量
+C4·在内核已有代码路径上记账,开销要小
+
+[narration]
+先讲为什么这样设计。上限是绝对数,组里就得有一个总额度。可调度器每毫秒结算一次,四颗核都改它会抢同一把锁。所以每颗核先带一份本核额度,扣完才去总额度领 5 毫秒。实测 1660 笔账只有 181 笔要领。这是 C1,按组限制合计用量,和 C4,在内核已有代码路径上记账,开销要小,的折中。
+
+---
+
+## 8 写入 cpu.max 之后:tg_set_cfs_bandwidth(Linux 7.0 kernel/sched/core.c)
+
+[visual: code_explain lang=c title="写入 cpu.max 之后:tg_set_cfs_bandwidth(Linux 7.0 kernel/sched/core.c)"]
+	scoped_guard (raw_spinlock_irq, &cfs_b->lock) {
+		cfs_b->period = ns_to_ktime(period);
+		cfs_b->quota = quota;
+		cfs_b->burst = burst;
+
+		__refill_cfs_bandwidth_runtime(cfs_b);
+
+		/*
+		 * Restart the period timer (if active) to handle new
+		 * period expiry:
+		 */
+		if (runtime_enabled)
+			start_cfs_bandwidth(cfs_b);
+	}
+
+	for_each_online_cpu(i) {
+		struct cfs_rq *cfs_rq = tg->cfs_rq[i];
+		struct rq *rq = cfs_rq->rq;
+
+		guard(rq_lock_irq)(rq);
+		cfs_rq->runtime_enabled = runtime_enabled;
+		cfs_rq->runtime_remaining = 1;
+
+		if (cfs_rq->throttled)
+			unthrottle_cfs_rq(cfs_rq);
+	}
+===HIGHLIGHT===
+lines=2-4
+周期、额度、突发额度
+三个数落进这个组的结构
+===HIGHLIGHT===
+lines=6-6
+总额度先补满一次
+===HIGHLIGHT===
+lines=12-13
+设了限:启动周期定时器
+===HIGHLIGHT===
+lines=16-25
+遍历每颗核上这个组的队列
+9560 打开这颗核的第二层开关
+9561 本核额度设成 1 ns
+下一次结算就变负,马上去领
+
+[narration]
+cpu_max_write 解析完 50000 100000,最后落到这里。先把周期和额度存进这个组的结构,总额度补满一次,启动 100 毫秒的定时器。再遍历每颗核,打开开关,把本核额度设成 1 纳秒,下一次结算一扣就变负,逼它马上去领第一份。
+
+---
+
+## 9 记账:account_cfs_rq_runtime(Linux 7.0 kernel/sched/fair.c)
+
+[visual: code_explain lang=c title="记账:account_cfs_rq_runtime(Linux 7.0 kernel/sched/fair.c)"]
+static void __account_cfs_rq_runtime(struct cfs_rq *cfs_rq, u64 delta_exec)
+{
+	/* dock delta_exec before expiring quota (as it could span periods) */
+	cfs_rq->runtime_remaining -= delta_exec;
+
+	if (likely(cfs_rq->runtime_remaining > 0))
+		return;
+
+	if (cfs_rq->throttled)
+		return;
+	/*
+	 * if we're unable to extend our runtime we resched so that the active
+	 * hierarchy can be throttled
+	 */
+	if (!assign_cfs_rq_runtime(cfs_rq) && likely(cfs_rq->curr))
+		resched_curr(rq_of(cfs_rq));
+}
+
+static __always_inline
+void account_cfs_rq_runtime(struct cfs_rq *cfs_rq, u64 delta_exec)
+{
+	if (!cfs_bandwidth_used() || !cfs_rq->runtime_enabled)
+		return;
+
+	__account_cfs_rq_runtime(cfs_rq, delta_exec);
+}
+===HIGHLIGHT===
+lines=4-4
+先扣本核额度
+只动本核的数据
+===HIGHLIGHT===
+lines=6-7
+余额还是正的:结束
+===HIGHLIGHT===
+lines=15-16
+领不到额度:
+请调度器重新选一次进程
+===HIGHLIGHT===
+lines=22-23
+两层开关:全机没人设限就跳过
+这个组在这颗核没设限也跳过
+
+[narration]
+调度器每次结算运行时间之后,多走这一步。先看最后几行的两层开关:整台机器没人设过限,或这个组在这颗核上没设限,直接返回。设了限,先从本核额度里扣,余额还是正的就结束,没碰任何共享数据。扣成负数才去领,领不到就请调度器重新选进程。
+
+---
+
+## 10 领额度:__assign_cfs_rq_runtime(Linux 7.0 kernel/sched/fair.c)
+
+[visual: code_explain lang=c title="领额度:__assign_cfs_rq_runtime(Linux 7.0 kernel/sched/fair.c)"]
+	/* note: this is a positive sum as runtime_remaining <= 0 */
+	min_amount = target_runtime - cfs_rq->runtime_remaining;
+
+	if (cfs_b->quota == RUNTIME_INF)
+		amount = min_amount;
+	else {
+		start_cfs_bandwidth(cfs_b);
+
+		if (cfs_b->runtime > 0) {
+			amount = min(cfs_b->runtime, min_amount);
+			cfs_b->runtime -= amount;
+			cfs_b->idle = 0;
+		}
+	}
+
+	cfs_rq->runtime_remaining += amount;
+
+	return cfs_rq->runtime_remaining > 0;
+===HIGHLIGHT===
+lines=2-2
+要领多少 = 一份 + 欠的
+===HIGHLIGHT===
+lines=7-12
+保证周期定时器在转
+总额度有多少给多少
+总额度扣掉给出去的
+===HIGHLIGHT===
+lines=16-18
+加到本核额度
+补完仍大于 0 才算领到
+
+[narration]
+一份是 5 毫秒,默认值。要领的量是这一份加上欠的部分,所以余额是负 181 微秒时,领 5181。总额度有多少给多少,补完本核额度还是正的,才算领到。透支不是错误,是为了不在每次结算都加锁。
+
+---
+
+## 11 限流的一个周期
+
+[visual: statemap title=限流的一个周期]
+本核额度扣完
+向总额度领一份
+总额度空了,设限流标记
+进程回用户态时自己停下
+定时器补满额度
+清除标记,进程放回队列
+
+[narration]
+把一个周期串起来。本核额度扣完就去领。总额度空了,下一次选进程时给这颗核设限流标记。组里的进程不是被统一摘掉,而是各自回用户态时停下。每 100 毫秒定时器补满额度、清除标记、放回进程。整个过程没有代码去轮询这个组。
+
+---
+
+## 12 限流发生的地方:pick_task_fair(Linux 7.0 kernel/sched/fair.c)
+
+[visual: code_explain lang=c title="限流发生的地方:pick_task_fair(Linux 7.0 kernel/sched/fair.c)"]
+	do {
+		/* Might not have done put_prev_entity() */
+		if (cfs_rq->curr && cfs_rq->curr->on_rq)
+			update_curr(cfs_rq);
+
+		throttled |= check_cfs_rq_runtime(cfs_rq);
+
+		se = pick_next_entity(rq, cfs_rq);
+		if (!se)
+			goto again;
+		cfs_rq = group_cfs_rq(se);
+	} while (cfs_rq);
+
+	p = task_of(se);
+	if (unlikely(throttled))
+		task_throttle_setup_work(p);
+===HIGHLIGHT===
+lines=6-6
+每一层都问:你被限流了吗
+没额度就设限流标记
+===HIGHLIGHT===
+lines=8-11
+选下一层,一直到具体进程
+===HIGHLIGHT===
+lines=14-16
+路上有被限的层:
+给选中的进程登记一个活
+等它回用户态时再做
+
+[narration]
+领不到额度之后,真正限流发生在选进程这一步。从根往下逐层选,每一层先问 check_cfs_rq_runtime,没额度就设限流标记。选完后,如果路上有被限的层,就给选中的进程登记一个回调,等它下次回用户态时执行。这一步只设标记,没有摘任何进程。
+
+---
+
+## 13 两种停法:6.18 之前 与 v7.0
+
+[visual: ascii title=两种停法:6.18 之前 与 v7.0]
+         6.18 之前                         v7.0
+┌───────────────────────────────┐  ┌───────────────────────────────┐
+│ throttle_cfs_rq               │  │ throttle_cfs_rq               │
+│   ▼                           │  │   ▼                           │
+│ 整个组在这颗核上的            │  │ 只设限流标记                  │
+│ 队列一次摘掉                  │  │   ▼                           │
+│   ▼                           │  │ 每个进程回用户态时            │
+│ 组里谁都跑不了                │  │ 自己摘下队列                  │
+│ 内核里拿着锁的也停住          │  │   ▼                           │
+│   ▼                           │  │ 这时锁已经放了                │
+│ 组外要这把锁的进程            │  │ 组外进程不受拖累              │
+│ 只能等下个周期                │  │ 代价:每进程每周期一次回调     │
+└───────────────────────────────┘  └───────────────────────────────┘
+
+[sidebar]
+6.18 之前:一次摘整个组
+v7.0:设标记,各自回用户态停
+代价:每进程每周期一次回调
+
+[narration]
+为什么在回用户态时停。6.18 之前,一次把整个组在这颗核上的队列摘掉,连在内核里拿着锁的进程也被停住,组外要这把锁的进程只能等。v7.0 只设标记,每个进程回用户态时自己停,这时锁已经放了。代价是每个进程每周期多一次回调,400 个进程是 4000 次。
+
+---
+
+## 14 回用户态时停下:throttle_cfs_rq_work(Linux 7.0 kernel/sched/fair.c)
+
+[visual: code_explain lang=c title="回用户态时停下:throttle_cfs_rq_work(Linux 7.0 kernel/sched/fair.c)"]
+	if ((p->flags & PF_EXITING))
+		return;
+
+	scoped_guard(task_rq_lock, p) {
+		se = &p->se;
+		cfs_rq = cfs_rq_of(se);
+
+		/* Raced, forget */
+		if (p->sched_class != &fair_sched_class)
+			return;
+
+		/*
+		 * If not in limbo, then either replenish has happened or this
+		 * task got migrated out of the throttled cfs_rq, move along.
+		 */
+		if (!cfs_rq->throttle_count)
+			return;
+		rq = scope.rq;
+		update_rq_clock(rq);
+		WARN_ON_ONCE(p->throttled || !list_empty(&p->throttle_node));
+		dequeue_task_fair(rq, p, DEQUEUE_SLEEP | DEQUEUE_THROTTLE);
+		list_add(&p->throttle_node, &cfs_rq->throttled_limbo_list);
+		/*
+		 * Must not set throttled before dequeue or dequeue will
+		 * mistakenly regard this task as an already throttled one.
+		 */
+		p->throttled = true;
+		resched_curr(rq);
+	}
+===HIGHLIGHT===
+lines=1-2
+正在退出的进程不用管
+===HIGHLIGHT===
+lines=16-17
+标记已经清除:算了
+===HIGHLIGHT===
+lines=21-22
+摘下运行队列
+放进这一层的等候名单
+===HIGHLIGHT===
+lines=27-28
+记上已停,
+让调度器重新选进程
+
+[narration]
+这个回调才真正把进程摘下来。挑回用户态这个时刻,是因为进程在内核里的事已经做完,手里不会拿着锁。先检查是不是在退出、标记是不是已清除,再摘下队列,放进等候名单。
+
+---
+
+## 15 还额度、清标记:distribute_cfs_runtime(Linux 7.0 kernel/sched/fair.c)
+
+[visual: code_explain lang=c title="还额度、清标记:distribute_cfs_runtime(Linux 7.0 kernel/sched/fair.c)"]
+		runtime = -cfs_rq->runtime_remaining + 1;
+		if (runtime > cfs_b->runtime)
+			runtime = cfs_b->runtime;
+		cfs_b->runtime -= runtime;
+		remaining = cfs_b->runtime;
+		raw_spin_unlock(&cfs_b->lock);
+
+		cfs_rq->runtime_remaining += runtime;
+
+		/* we check whether we're throttled above */
+		if (cfs_rq->runtime_remaining > 0) {
+			if (cpu_of(rq) != this_cpu) {
+				unthrottle_cfs_rq_async(cfs_rq);
+===HIGHLIGHT===
+lines=1-1
+先还清欠的,再多给 1 ns
+===HIGHLIGHT===
+lines=4-8
+从总额度扣,加到本核额度
+===HIGHLIGHT===
+lines=11-13
+额度回正:别的核发一个跨核请求
+让它自己清除标记
+
+[narration]
+周期定时器每 100 毫秒响一次,给总额度加一个周期的额度,是加不是赋值,封顶就是额度本身。然后对每个被限流的核,先还清上个周期的透支,再清除标记,放回等候的进程。实测那个周期四核合计领到 48532 微秒,比 50000 少约 1.5 毫秒。源码给了这笔差额的去处:清标记之前先还上个周期的透支。
+
+---
+
+## 16 场景 16
+
+[visual: spotlight]
+主线二
+内存的账怎么记
+
+[narration]
+再看主线二。一个物理页分出去,账怎么记到组上,超限以后谁来回收、谁来杀进程。
+
+---
+
+## 17 沿树记账:一次改账三层同时加 64 页
+
+[visual: ascii title=沿树记账:一次改账三层同时加 64 页]
+缺页分到 1 页,本核预领的页数不够
+        │ 一次改计数器 64 页
+        ▼
+┌────────────────────────────────────────┐
+│ report   959 -> 1023   先比自己的上限  │
+└───────────────────┬────────────────────┘
+                    │ parent 指针
+┌───────────────────▼────────────────────┐
+│ host01  1023 -> 1087   再比父组的上限  │
+└───────────────────┬────────────────────┘
+                    │
+┌───────────────────▼────────────────────┐
+│ 根  165161 -> 165225   上限最大,比不输 │
+└────────────────────────────────────────┘
+哪一层先超上限,哪一层就是回收和 OOM 的范围
+
+[sidebar]
+C1·按组限制合计用量
+C4·在内核已有代码路径上记账,开销要小
+
+[narration]
+先讲原理。父组要管住整棵子树,子组加一笔,每个祖先都要加同样一笔,各比一次上限。每分一页就走一遍太贵,所以每颗核预领 64 页,用完才改计数器。实测 25660 次记账只有 400 次动了计数器。哪一层先超上限,哪一层就是边界。这是 C1,按组限制合计用量,和 C4,在内核已有代码路径上记账,开销要小。
+
+---
+
+## 18 沿父指针逐层记账:page_counter_try_charge(Linux 7.0 mm/page_counter.c)
+
+[visual: code_explain lang=c title="沿父指针逐层记账:page_counter_try_charge(Linux 7.0 mm/page_counter.c)"]
+		new = atomic_long_add_return(nr_pages, &c->usage);
+		if (new > c->max) {
+			atomic_long_sub(nr_pages, &c->usage);
+			/*
+			 * This is racy, but we can live with some
+			 * inaccuracy in the failcnt which is only used
+			 * to report stats.
+			 */
+			if (track_failcnt)
+				data_race(c->failcnt++);
+			*fail = c;
+			goto failed;
+		}
+===HIGHLIGHT===
+lines=1-1
+先加后比
+省掉昂贵的比较并交换
+===HIGHLIGHT===
+lines=2-3
+超了:把这一层自己加的退回去
+===HIGHLIGHT===
+lines=11-12
+把这一层交出去,
+转去退下面已经加成功的层
+
+[narration]
+沿树记账在 page_counter_try_charge。循环从本组走到根,每一层先加,再和自己的上限比。超了,就把这一层加的退回去,把这一层交出去,下面已经加成功的层逐层退掉,账不会留下半笔。因为从叶子往根走,交出来的是离叶子最近的那一层。
+
+---
+
+## 19 超限以后:try_charge_memcg 的回收部分(Linux 7.0 mm/memcontrol.c)
+
+[visual: code_explain lang=c title="超限以后:try_charge_memcg 的回收部分(Linux 7.0 mm/memcontrol.c)"]
+	if (!gfpflags_allow_blocking(gfp_mask))
+		goto nomem;
+
+	__memcg_memory_event(mem_over_limit, MEMCG_MAX, allow_spinning);
+	raised_max_event = true;
+
+	psi_memstall_enter(&pflags);
+	nr_reclaimed = try_to_free_mem_cgroup_pages(mem_over_limit, nr_pages,
+						    gfp_mask, reclaim_options, NULL);
+	psi_memstall_leave(&pflags);
+
+	if (mem_cgroup_margin(mem_over_limit) >= nr_pages)
+		goto retry;
+
+	if (!drained) {
+		drain_all_stock(mem_over_limit);
+		drained = true;
+		goto retry;
+	}
+===HIGHLIGHT===
+lines=4-4
+记一次 max 事件
+C2·记实际用量,超限处理看资源类型
+===HIGHLIGHT===
+lines=8-9
+超限的进程自己在组内回收
+范围是超限那一层的子树
+===HIGHLIGHT===
+lines=12-13
+回收后够了就重试
+===HIGHLIGHT===
+lines=15-19
+把各核预领的页数退回计数器
+只做一次,再重试
+
+[narration]
+记账失败走到这里。内存等不来也拒绝不了,所以先回收。回收由超限的进程自己动手,范围只是超限那一层的子树。够了就重试,不够就把各核预领的页数退回计数器再试。重试最多 16 轮,都不行才进组内 OOM。这是 C2,记实际用量,超限处理看资源类型。
+
+---
+
+## 20 挑人的打分:oom_badness(Linux 7.0 mm/oom_kill.c)
+
+[visual: code_explain lang=c title="挑人的打分:oom_badness(Linux 7.0 mm/oom_kill.c)"]
+	/*
+	 * The baseline for the badness score is the proportion of RAM that each
+	 * task's rss, pagetable and swap space use.
+	 */
+	points = get_mm_rss_sum(p->mm) + get_mm_counter_sum(p->mm, MM_SWAPENTS) +
+		mm_pgtables_bytes(p->mm) / PAGE_SIZE;
+	task_unlock(p);
+
+	/* Normalize to oom_score_adj units */
+	adj *= totalpages / 1000;
+	points += adj;
+===HIGHLIGHT===
+lines=5-6
+分数 = 常驻页 + swap 页
++ 页表占的页
+===HIGHLIGHT===
+lines=10-11
+再加 oom_score_adj
+按范围总页数折算
+
+[narration]
+全机 OOM 和组内 OOM 用同一套打分,只差遍历范围。分数是常驻页数,加 swap 页数,加页表页数,再加 oom_score_adj 按总页数折算。实测里 worker 得 77763 分,主进程只有 2416 分,所以选中 worker。
+
+---
+
+## 21 场景 21
+
+[visual: spotlight]
+组内 OOM 为什么
+有时多杀一个?
+
+[narration]
+现在回答一个留了很久的问题。组里该杀一个,为什么有时杀了两三个。
+
+---
+
+## 22 两条各自合理的规则
+
+[visual: ascii title=两条各自合理的规则]
+     遍历器                             OOM 检查
+┌───────────────────────────────┐  ┌───────────────────────────────┐
+│ 规则 1:遍历器跳过             │  │ 规则 2:防重复检查             │
+│ 正在退出的进程                │  │ 遍历时看见受害者,不再挑人     │
+│                               │  │                               │
+│ 谁用:cgroup.procs、           │  │ 谁用:oom_evaluate_task        │
+│ cgroup.kill、OOM 遍历         │  │                               │
+│ 为什么对:将死的进程           │  │ 为什么对:受害者的内存         │
+│ 不该显示给用户                │  │ 要几毫秒才还,期间别再杀       │
+└───────────────────────────────┘  └───────────────────────────────┘
+
+[sidebar]
+规则 1:遍历跳过退出中的进程
+规则 2:遍历见到受害者就不再挑
+两条合起来有一段空档
+
+[narration]
+两条规则为什么都合理?受害者发了 SIGKILL,内存要几毫秒才还,期间再超限就不该再挑人,所以 OOM 里有防重复检查:遍历时看到受害者就不杀。遍历器给 cgroup.procs 这类列表用,正在退出的进程不该显示,就跳过它。各管各的都对。
+
+---
+
+## 23 防重复检查:oom_evaluate_task(Linux 7.0 mm/oom_kill.c)
+
+[visual: code_explain lang=c title="防重复检查:oom_evaluate_task(Linux 7.0 mm/oom_kill.c)"]
+	/*
+	 * This task already has access to memory reserves and is being killed.
+	 * Don't allow any other task to have access to the reserves unless
+	 * the task has MMF_OOM_SKIP because chances that it would release
+	 * any memory is quite low.
+	 */
+	if (!is_sysrq_oom(oc) && tsk_is_oom_victim(task)) {
+		if (mm_flags_test(MMF_OOM_SKIP, task->signal->oom_mm))
+			goto next;
+		goto abort;
+	}
+===HIGHLIGHT===
+lines=7-7
+遍历到的这个进程已经是受害者
+===HIGHLIGHT===
+lines=8-9
+内存放掉的标记已立:
+跳过它,看下一个
+===HIGHLIGHT===
+lines=10-10
+标记还没立:停止遍历
+这一轮不杀任何人
+
+[narration]
+防重复检查在 oom_evaluate_task。遍历到一个已经是受害者的进程,如果 MMF_OOM_SKIP 已经立了,说明内存放掉了,跳过。还没立就 abort,这一轮不杀,触发者回去重试。它有一个前提:遍历时必须看得到受害者。
+
+---
+
+## 24 看不到受害者的原因:css_task_iter_advance(Linux 7.0 kernel/cgroup/cgroup.c)
+
+[visual: code_explain lang=c title="看不到受害者的原因:css_task_iter_advance(Linux 7.0 kernel/cgroup/cgroup.c)"]
+	task = list_entry(it->task_pos, struct task_struct, cg_list);
+	/*
+	 * Hide tasks that are exiting but not yet removed. Keep zombie
+	 * leaders with live threads visible.
+	 */
+	if ((task->flags & PF_EXITING) && !atomic_read(&task->signal->live))
+		goto repeat;
+===HIGHLIGHT===
+lines=2-5
+注释:隐藏正在退出
+还没清走的任务
+===HIGHLIGHT===
+lines=6-7
+带 PF_EXITING 且线程组
+活跃数 live 为 0:跳过
+
+[narration]
+看不到受害者的原因在遍历器。mem_cgroup_scan_tasks 用它遍历,每个任务先过这一关:带 PF_EXITING,并且线程组的活跃数 live 归零,就被跳过。oom_evaluate_task 根本遍历不到它。
+
+---
+
+## 25 进程退出的顺序:do_exit(Linux 7.0 kernel/exit.c)
+
+[visual: code_explain lang=c title="进程退出的顺序:do_exit(Linux 7.0 kernel/exit.c)"]
+	exit_signals(tsk);  /* sets PF_EXITING */
+
+	seccomp_filter_release(tsk);
+
+	acct_update_integrals(tsk);
+	group_dead = atomic_dec_and_test(&tsk->signal->live);
+===HIGHLIGHT===
+lines=1-1
+置 PF_EXITING
+===HIGHLIGHT===
+lines=6-6
+live 减到 0:
+从这一刻起遍历器看不到它
+
+[narration]
+进程自己的退出顺序是这样:第 918 行置 PF_EXITING,第 923 行把 live 减到 0。从这一刻起,遍历器就看不到它了。可是拆地址空间的 exit_mm 在 964 行,还没调用,内存一页没还,账还是满的。
+
+---
+
+## 26 空档:看不到了,账还没降
+
+[visual: ascii title=空档:看不到了,账还没降]
+      遍历器的视角                      它占的内存
+┌───────────────────────────────┐  ┌───────────────────────────────┐
+│ 选中,发 SIGKILL               │  │ 账:满                         │
+│   遍历器:看得到               │  │                               │
+│   防重复检查:有效             │  │                               │
+│   ▼                           │  │   ▼                           │
+│ 进 do_exit,live 归零          │  │ 账:仍然是满的                 │
+│   遍历器:看不到               │  │                               │
+│   ▼                           │  │   ▼                           │
+│ exit_mmap 拆映射              │  │ 账:拆完才开始降               │
+│   立 MMF_OOM_SKIP             │  │ 要几毫秒                      │
+└───────────────────────────────┘  └───────────────────────────────┘
+                空档里再超限,就在剩下的进程里再挑一个
+
+[sidebar]
+进 do_exit 后遍历器看不到
+内存拆完才还
+空档里再超限就多杀
+
+[narration]
+把两边放在一条时间线上。受害者刚被选中,遍历器还看得到它,检查有效。进 do_exit、live 归零以后看不到了,账却是满的,要等 exit_mmap 拆完映射,才立标记、才还内存,这要几毫秒。空档里再超限,就在剩下的进程里再挑一个,这就是多杀的来源。
+
+---
+
+## 27 实验设计:同一个场景跑 4 轮
+
+[visual: text title=实验设计:同一个场景跑 4 轮]
+上限 300M;两个 worker 先占 150M、80M
+第三个每 0.1 秒吃 10M,直到超限
+跟踪每次进 OOM 的时刻、打分、选中
+以及防重复检查拦下的时刻
+预期:进 do_exit 之前拦得住,之后拦不住
+
+[sidebar]
+上限 300M
+三个 worker 逐步占满
+看拦下与放过的时刻
+
+[narration]
+再用实验验证。同一个场景跑几轮:上限 300M,两个 worker 先占 150M 和 80M,第三个每 0.1 秒多吃 10M,直到超限。跟踪脚本打印每次进 OOM、打分、选中,以及防重复检查拦下和受害者进 do_exit 的时刻。预期是进 do_exit 之前拦得住,之后拦不住。
+
+---
+
+## 28 实测:组内 OOM 第 1 轮的跟踪(oomrace.log)
+
+[visual: code_explain lang=bash title="实测:组内 OOM 第 1 轮的跟踪(oomrace.log)"]
+cd /tmp && limactl shell cg-lab sudo bash -s -- oomrace < 05-evidence-sessions.sh > logs/oomrace.log
+       4 us  第 1 次进入组内 OOM(触发者 pid 165757):report 的账 76800 页,上限 76800 页
+     316 us      选中 pid 165754,发 SIGKILL
+     331 us  受害者 pid 165754 进入 do_exit(exit_signals);几微秒后 signal->live 归零,从那以后遍历看不到它
+     594 us  第 2 次进入组内 OOM(触发者 pid 165757):report 的账 76800 页,上限 76800 页
+     741 us      选中 pid 165755,发 SIGKILL
+     821 us  第 3 次进入组内 OOM(触发者 pid 165757):report 的账 76800 页,上限 76800 页
+     822 us      遍历到 pid 165755:它是还没拆完的受害者,闸门挡住,这一轮不杀(abort)
+    1000 us  第 4 次进入组内 OOM(触发者 pid 165757):report 的账 76800 页,上限 76800 页
+    1002 us      遍历到 pid 165755:它是还没拆完的受害者,闸门挡住,这一轮不杀(abort)
+    ……(1179、1241、1306、1366 us 又四次,每次都是 abort)
+    1458 us  受害者 pid 165755 进入 do_exit(exit_signals);几微秒后 signal->live 归零,从那以后遍历看不到它
+===HIGHLIGHT===
+lines=4-5
+316 us 选中 165754
+331 us 它进 do_exit
+===HIGHLIGHT===
+lines=6-7
+594 us 第 2 次进 OOM
+没有拦截,选中 165755
+===HIGHLIGHT===
+lines=9-12
+六次进 OOM,每次都被拦下
+一个人也没多杀
+===HIGHLIGHT===
+lines=13-13
+1458 us 它才进 do_exit
+
+[narration]
+这是第 1 轮的前半段。第一个受害者 165754 在 316 微秒选中,331 微秒进 do_exit。594 微秒第二次进 OOM,没有拦截,直接选中 165755。它 741 微秒选中,1458 微秒才进 do_exit,中间六次进 OOM,每次遍历到它都被拦下,一个也没多杀。
+
+---
+
+## 29 图
+
+[visual: html_slide image="pics/05-shot-oomrace.png" title=实测:组内 OOM 的四轮跟踪]
+[step: auto]
+scroll auto
+
+[narration]
+这是完整的四轮留档,杀掉的进程数是 3、3、3、2,只有第四轮触发者活了下来。每次多杀都发生在受害者进 do_exit 之后、内存还清之前。拆内存要几毫秒到十几毫秒,第 2 轮最后一个受害者 11.8 毫秒才还完,账降到 215 页。
+
+---
+
+## 30 三种改法
+
+[visual: ascii title=三种改法]
+┌──────────────────────────────────────────────────────────────────┐
+│ A 遍历时不跳过退出中的进程                                       │
+│   改核心的公共遍历器                                             │
+│   至少 11 处调用要受影响                                         │
+└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│ B 在超限那一组上记标记                                           │
+│   标记:已有受害者在退出                                          │
+│   只改内存控制器,核心不动                                        │
+│   标记何时清,要配合 MMF_OOM_SKIP                                 │
+└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│ C 退出时先拆内存再让 live 归零                                   │
+│   改所有进程的退出顺序                                           │
+│   风险最大,波及面远超 cgroup                                     │
+└──────────────────────────────────────────────────────────────────┘
+
+[sidebar]
+A 改核心遍历器
+B 在组上记标记
+C 改所有进程的退出顺序
+
+[narration]
+如果让你来修,按 v7.0 源码做设计分析,有三处可改。A,遍历时不跳过退出中的进程,要改核心的公共遍历器。C,先拆内存再让 live 归零,要改所有进程的退出顺序,风险最大。B,在超限那一组上记标记,只改内存控制器。拿数据库比,这像死锁检测:回滚中的事务不在活跃列表上,要另外记一笔。
+
+---
+
+## 31 场景 31
+
+[visual: spotlight]
+主线三
+公共框架:组籍与登记表
+
+[narration]
+最后是主线三。核心不认识任何具体资源,却要在 fork、入组、退出时让每个控制器都知道,这是怎么做到的。
+
+---
+
+## 32 公共框架的四样东西
+
+[visual: layers title=公共框架的四样东西]
+task_struct:只带一个指针 task->cgroups
+struct css_set:组籍,每个控制器一格
+struct cgroup_subsys_state:控制器给每个组的一份账
+struct cgroup_subsys:登记表,控制器交给核心的回调表
+
+[sidebar]
+C5·所有资源共用同一套分组
+
+[narration]
+框架只有这四样。进程身上只有一个指针,指向组籍。组籍就是进程所属各个组的一排指针,每个控制器一格,指向那个控制器的账。登记表是控制器交给核心的一张回调函数表。因为 C5,所有资源共用同一套分组,进程到每种资源的账只隔一个组籍。
+
+---
+
+## 33 组籍:struct css_set(Linux 7.0 include/linux/cgroup-defs.h)
+
+[visual: code_explain lang=c title="组籍:struct css_set(Linux 7.0 include/linux/cgroup-defs.h)"]
+/*
+ * A css_set is a structure holding pointers to a set of
+ * cgroup_subsys_state objects. This saves space in the task struct
+ * object and speeds up fork()/exit(), since a single inc/dec and a
+ * list_add()/del() can bump the reference count on the entire cgroup
+ * set for a task.
+ */
+struct css_set {
+	/*
+	 * Set of subsystem states, one for each subsystem. This array is
+	 * immutable after creation apart from the init_css_set during
+	 * subsystem registration (at boot time).
+	 */
+	struct cgroup_subsys_state *subsys[CGROUP_SUBSYS_COUNT];
+===HIGHLIGHT===
+lines=1-7
+作者自己写的理由:
+进程里只放一个指针
+fork 和退出加减一次引用计数
+就等于对整套账都加减了
+===HIGHLIGHT===
+lines=14-14
+每个控制器一格
+从进程到账只两步:
+task->cgroups->subsys[id]
+
+[narration]
+注释是作者自己写的理由:组籍省了进程结构的空间,fork 和退出时加减一次引用计数,就等于对整套账都加减了。subsys 数组每个控制器一格。控制器的数据结构第一个成员就是公共头 css,核心只认识这个头,不知道里面还有什么。
+
+---
+
+## 34 登记表:struct cgroup_subsys(Linux 7.0 include/linux/cgroup-defs.h)
+
+[visual: code_explain lang=c title="登记表:struct cgroup_subsys(Linux 7.0 include/linux/cgroup-defs.h)"]
+	struct cgroup_subsys_state *(*css_alloc)(struct cgroup_subsys_state *parent_css);
+	int (*css_online)(struct cgroup_subsys_state *css);
+	void (*css_offline)(struct cgroup_subsys_state *css);
+	void (*css_released)(struct cgroup_subsys_state *css);
+	void (*css_free)(struct cgroup_subsys_state *css);
+	void (*css_reset)(struct cgroup_subsys_state *css);
+	void (*css_killed)(struct cgroup_subsys_state *css);
+	void (*css_rstat_flush)(struct cgroup_subsys_state *css, int cpu);
+	int (*css_extra_stat_show)(struct seq_file *seq,
+				   struct cgroup_subsys_state *css);
+	int (*css_local_stat_show)(struct seq_file *seq,
+				   struct cgroup_subsys_state *css);
+
+	int (*can_attach)(struct cgroup_taskset *tset);
+	void (*cancel_attach)(struct cgroup_taskset *tset);
+	void (*attach)(struct cgroup_taskset *tset);
+	int (*can_fork)(struct task_struct *task,
+			struct css_set *cset);
+	void (*cancel_fork)(struct task_struct *task, struct css_set *cset);
+	void (*fork)(struct task_struct *task);
+	void (*exit)(struct task_struct *task);
+	void (*release)(struct task_struct *task);
+	void (*bind)(struct cgroup_subsys_state *root_css);
+===HIGHLIGHT===
+lines=1-5
+账的创建、上线、下线、销毁
+===HIGHLIGHT===
+lines=14-16
+入组:先问 can_attach
+后通知 attach
+===HIGHLIGHT===
+lines=17-22
+fork 先问 can_fork
+fork、退出、回收各一格
+
+[narration]
+登记表一共 19 格回调,按时刻分三类:账的创建和销毁,进程进出,统计和接口。没有任何一格叫记 CPU 账。每个控制器只填自己需要的格子,核心只调用填了的。cpu 一个 fork 的格子都没填,fork 时一次也不会被叫到,开销为零。这对应 C4,在内核已有代码路径上记账,开销要小。
+
+---
+
+## 35 fork 先问后挂:cgroup_can_fork(Linux 7.0 kernel/cgroup/cgroup.c)
+
+[visual: code_explain lang=c title="fork 先问后挂:cgroup_can_fork(Linux 7.0 kernel/cgroup/cgroup.c)"]
+	ret = cgroup_css_set_fork(kargs);
+	if (ret)
+		return ret;
+
+	do_each_subsys_mask(ss, i, have_canfork_callback) {
+		ret = ss->can_fork(child, kargs->cset);
+		if (ret)
+			goto out_revert;
+	} while_each_subsys_mask();
+
+	return 0;
+===HIGHLIGHT===
+lines=1-3
+取父进程的组籍,引用加一
+===HIGHLIGHT===
+lines=5-9
+只点名填了 can_fork 的控制器
+谁说不行,前面答应过的撤销
+
+[narration]
+fork 先问后挂。cgroup_can_fork 取父进程的组籍,引用加一,再用位图只点名填了 can_fork 的控制器,任何一个说不行,前面答应过的要撤销。pids 的询问是沿父指针每层先加一再比上限,实测 pids.max 设 20,第 20 次被拒。
+
+---
+
+## 36 入组:cgroup_migrate_execute(Linux 7.0 kernel/cgroup/cgroup.c)
+
+[visual: code_explain lang=c title="入组:cgroup_migrate_execute(Linux 7.0 kernel/cgroup/cgroup.c)"]
+	/* check that we can legitimately attach to the cgroup */
+	if (tset->nr_tasks) {
+		do_each_subsys_mask(ss, ssid, mgctx->ss_mask) {
+			if (ss->can_attach) {
+				tset->ssid = ssid;
+				ret = ss->can_attach(tset);
+				if (ret) {
+					failed_ssid = ssid;
+					goto out_cancel_attach;
+				}
+			}
+		} while_each_subsys_mask();
+	}
+
+	/*
+	 * Now that we're guaranteed success, proceed to move all tasks to
+	 * the new cgroup.  There are no failure cases after here, so this
+	 * is the commit point.
+	 */
+	spin_lock_irq(&css_set_lock);
+	list_for_each_entry(cset, &tset->src_csets, mg_node) {
+		list_for_each_entry_safe(task, tmp_task, &cset->mg_tasks, cg_list) {
+			struct css_set *from_cset = task_css_set(task);
+			struct css_set *to_cset = cset->mg_dst_cset;
+
+			get_css_set(to_cset);
+			to_cset->nr_tasks++;
+			css_set_move_task(task, from_cset, to_cset, true);
+			from_cset->nr_tasks--;
+===HIGHLIGHT===
+lines=2-13
+先逐个问 can_attach
+谁拒绝就全部取消
+===HIGHLIGHT===
+lines=15-20
+提交点:此后没有失败分支
+===HIGHLIGHT===
+lines=26-29
+新组籍引用加一
+进程换到新组籍的名单
+
+[narration]
+写 cgroup.procs 把进程搬进另一个组,最后到这里。先逐个问 can_attach,谁拒绝就全部取消。都同意才进提交点,往后没有失败分支,进程换到新组籍。提交完再逐个通知 attach。格子完全相同的进程共用同一张组籍。
+
+---
+
+## 37 退出:cgroup_task_exit 与 do_cgroup_task_dead(Linux 7.0 kernel/cgroup/cgroup.c)
+
+[visual: code_explain lang=c title="退出:cgroup_task_exit 与 do_cgroup_task_dead(Linux 7.0 kernel/cgroup/cgroup.c)"]
+void cgroup_task_exit(struct task_struct *tsk)
+{
+	struct cgroup_subsys *ss;
+	int i;
+
+	/* see cgroup_post_fork() for details */
+	do_each_subsys_mask(ss, i, have_exit_callback) {
+		ss->exit(tsk);
+	} while_each_subsys_mask();
+}
+
+static void do_cgroup_task_dead(struct task_struct *tsk)
+{
+	struct cgrp_cset_link *link;
+	struct css_set *cset;
+	unsigned long flags;
+
+	spin_lock_irqsave(&css_set_lock, flags);
+
+	WARN_ON_ONCE(list_empty(&tsk->cg_list));
+	cset = task_css_set(tsk);
+	css_set_move_task(tsk, cset, NULL, false);
+	cset->nr_tasks--;
+===HIGHLIGHT===
+lines=6-9
+只按登记表逐个调 exit
+不碰名单
+===HIGHLIGHT===
+lines=20-23
+摘名单在这里
+任务最后一次切走时才执行
+
+[narration]
+这里要更正前面的一个说法。cgroup_task_exit 只按登记表逐个调 exit,不碰名单。摘名单在 do_cgroup_task_dead,任务最后一次切走时才执行。pids 填的是 release,父进程回收它时才把进程数减一,所以僵尸进程仍占名额。
+
+---
+
+## 38 怎么证明核心不认识资源:数一数
+
+[visual: text title=怎么证明核心不认识资源:数一数]
+cgroup.c 共 7534 行
+mem_cgroup、memcg、cfs_、sched_:各 0 次
+通过登记表调用控制器:18 种,每种一两处
+不是零的三类:
+cpu_cgrp_id 2 次(cpu.stat 拼统计,只用编号)
+cpuset 28 次(多为兼容旧挂载选项)
+pids_ 5 次(全是挂载选项)
+
+[sidebar]
+7534 行里没有具体资源名
+回调调用点 18 种
+不是零的三类要列清
+
+[narration]
+怎么证明核心不认识具体资源,数一数。cgroup.c 有 7534 行,mem_cgroup、memcg、cfs_、sched_ 一次都没出现。通过登记表调用控制器的有 18 种,每种一两处。不是零的:cpu.stat 用了两次 cpu 的编号,cpuset 28 次多是兼容旧挂载选项,pids_ 5 次全是挂载选项。
+
+---
+
+## 39 五条约束落在哪些代码上
+
+[visual: ascii title=五条约束落在哪些代码上]
+┌──────────────────────────────────────────────────────────┐
+│ C1·按组限制合计用量                                      │
+│   组的总额度,沿父指针逐层比上限                          │
+│ C2·记实际用量,超限处理看资源类型                         │
+│   CPU 补额度,内存先回收再 OOM                            │
+│ C3·内核负责执行,配额由外部设定                           │
+│   配额靠写文件设定,内核只执行                            │
+│ C4·在内核已有代码路径上记账,开销要小                     │
+│   两层开关、本核预领的额度                               │
+│ C5·所有资源共用同一套分组                                │
+│   一张组籍,每个控制器一格                                │
+└──────────────────────────────────────────────────────────┘
+
+[sidebar]
+C1 到 C5 各自对应的机制
+总额度、回收、写文件、两层开关、组籍
+
+[narration]
+五条约束落在具体代码上。C1,按组限制合计用量,是总额度和逐层比较。C2,记实际用量,超限处理看资源类型,是 CPU 补额度、内存先回收再杀。C3,内核负责执行,配额由外部设定,是写文件设定。C4,在内核已有代码路径上记账,开销要小,是两层开关。C5,所有资源共用同一套分组,是一张组籍。
+
+---
+
+## 40 图
+
+[visual: html_slide image="pics/ep5-summary-card.png" title=Deep 阶段总结]
+[step: auto]
+scroll auto
+
+[narration]
+这一集收成六句话。cpu.max 是本核额度加组的总额度。限流是设标记,进程回用户态时停。内存沿父指针记账,每核预领 64 页。超限先回收,再在超限那一层里打分挑进程杀。多杀是遍历看不到退出中的进程,内存却没还。核心只按登记表调用控制器。
+
+---
+
+## 41 场景 41
+
+[visual: spotlight]
+下集预告
+Windows 怎么管同样的事
+
+[narration]
+本集就到这里,下集见。下一集换到 Windows,看 Job Object 怎么按组限制 CPU 和内存,内存超限时它的处理和 cgroup 有什么不同,加一种新资源的方式又有什么不同。
+
+---

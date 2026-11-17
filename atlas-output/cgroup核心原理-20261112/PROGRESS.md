@@ -248,3 +248,11 @@
 
 ### 分水岭
 - 2026-11-16 抛:到此收束做总结,还是继续进源码(用户最初规划的第 3 步是「cgroup 的源码解读 —— 关键源码」,推荐继续)→ 用户选「继续:进源码」
+
+## 视频(deeparch-video-gen --atlas,2026-11-17)
+- 用户:「做视频」「可以 按这个做。用的skill是 /Users/jin.xiao/workshop/deeparch-video 的 deeparch-vedio-gen --atlas」
+- 8 集 vmd 在本目录根(cgroup-ep0-toc ~ cgroup-ep7-synthesis),列模型源稿在 video-notes/ascii-src/,任务书 video-notes/BRIEF.md,覆盖表 video-notes/coverage-ep1~7.md;ep1~ep7 由 sonnet 子代理起草、主会话逐集审稿改词,ep0 主会话写
+- 8 个 mp4 全部 PASS(video-notes/logs/*.verification.json),合计 83.7 分钟;封面 cover-atlas.png(无人物照片,用目录树);简介 cgroup-ep0-toc.desc.txt
+- 审稿中更正原文:02 §10.4 db-sim 728 MiB → 约 711 MiB;07 数据库资源组图按八个想法重画;04 §11「五句」→「五条」;01/02/07「巡查」→「检查」;合成稿已重建
+- 2026-11-17 用户「分8p上传B站,然后推送main」→ 1 个稿件 8 个分 P 上传成功:BV1xQsB6EEHM(aid 117631554166277),标题「cgroup 核心原理 大电影 — 7 集深度解读」,无合集 / 无充电 / 无定时;状态审核中。请求与回执见 upload-request.json / upload-receipt.json;分 P 文件为 parts/ 下的硬链接(不入库)
+- 同日提交 run 目录并推送 origin main

@@ -1,0 +1,212 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 11.03
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 开场",
+  "start": 11.03,
+  "end": 27.7
+ },
+ {
+  "idx": 3,
+  "type": "text",
+  "title": "设想的场景：host01 一个月出了四次事",
+  "start": 27.7,
+  "end": 46.33
+ },
+ {
+  "idx": 4,
+  "type": "ascii",
+  "title": "四把工具：单位不同，用法不同",
+  "start": 46.33,
+  "end": 68.17
+ },
+ {
+  "idx": 5,
+  "type": "code",
+  "title": "\"同事改的启动命令（示意）\"",
+  "start": 68.17,
+  "end": 89.4
+ },
+ {
+  "idx": 6,
+  "type": "html_slide",
+  "title": "systemd 实测：同样的两个数",
+  "start": 89.4,
+  "end": 109.5
+ },
+ {
+  "idx": 7,
+  "type": "text",
+  "title": "这个系列的三个问题",
+  "start": 109.5,
+  "end": 130.03
+ },
+ {
+  "idx": 8,
+  "type": "text",
+  "title": "一句话定义",
+  "start": 130.03,
+  "end": 147.83
+ },
+ {
+  "idx": 9,
+  "type": "layers",
+  "title": "cgroup 分成两层",
+  "start": 147.83,
+  "end": 168.53
+ },
+ {
+  "idx": 10,
+  "type": "ascii",
+  "title": "合租公寓的分户水电表",
+  "start": 168.53,
+  "end": 189.23
+ },
+ {
+  "idx": 11,
+  "type": "text",
+  "title": "实验设计：写四个数，各触发一次上限",
+  "start": 189.23,
+  "end": 210.9
+ },
+ {
+  "idx": 12,
+  "type": "code",
+  "title": "\"实测：内核认得的控制器，和 report 目录里的 .max 文件\"",
+  "start": 210.9,
+  "end": 229.37
+ },
+ {
+  "idx": 13,
+  "type": "code",
+  "title": "\"实测：往四个文件里各写一个数\"",
+  "start": 229.37,
+  "end": 249.5
+ },
+ {
+  "idx": 14,
+  "type": "html_slide",
+  "title": "实测：四个上限各触发一次",
+  "start": 249.5,
+  "end": 278.8
+ },
+ {
+  "idx": 15,
+  "type": "ascii",
+  "title": "同一种写法，不同的超限处理",
+  "start": 278.8,
+  "end": 299.2
+ },
+ {
+  "idx": 16,
+  "type": "html_slide",
+  "title": "一条命令经过的五个环节",
+  "start": 299.2,
+  "end": 326.33
+ },
+ {
+  "idx": 17,
+  "type": "ascii",
+  "title": "0.5 颗核怎么变成两个数",
+  "start": 326.33,
+  "end": 351.37
+ },
+ {
+  "idx": 18,
+  "type": "text",
+  "title": "半颗核到底是什么意思",
+  "start": 351.37,
+  "end": 370.0
+ },
+ {
+  "idx": 19,
+  "type": "html_slide",
+  "title": "0.5 颗核的两种时间分布",
+  "start": 370.0,
+  "end": 390.8
+ },
+ {
+  "idx": 20,
+  "type": "html_slide",
+  "title": "实测：同一份活，不设限和放进半颗核",
+  "start": 390.8,
+  "end": 410.17
+ },
+ {
+  "idx": 21,
+  "type": "html_slide",
+  "title": "实测：探针看到的跑一段停一段",
+  "start": 410.17,
+  "end": 428.7
+ },
+ {
+  "idx": 22,
+  "type": "timeline",
+  "title": "runc 对内核做的三个动作",
+  "start": 428.7,
+  "end": 447.53
+ },
+ {
+  "idx": 23,
+  "type": "ascii",
+  "title": "先入组再 exec，还是事后补救",
+  "start": 447.53,
+  "end": 469.9
+ },
+ {
+  "idx": 24,
+  "type": "html_slide",
+  "title": "实测：只把父进程写进组",
+  "start": 469.9,
+  "end": 484.13
+ },
+ {
+  "idx": 25,
+  "type": "html_slide",
+  "title": "实测：8 个子进程逐个写进组",
+  "start": 484.13,
+  "end": 506.37
+ },
+ {
+  "idx": 26,
+  "type": "html_slide",
+  "title": "cgroup 的外形：一棵树加一排控制器",
+  "start": 506.37,
+  "end": 528.7
+ },
+ {
+  "idx": 27,
+  "type": "ascii",
+  "title": "cgroup 夹在两层中间",
+  "start": 528.7,
+  "end": 556.8
+ },
+ {
+  "idx": 28,
+  "type": "text",
+  "title": "三个问题，这一集走了一小步",
+  "start": 556.8,
+  "end": 577.0
+ },
+ {
+  "idx": 29,
+  "type": "html_slide",
+  "title": "第 1 集总结：cgroup 是什么",
+  "start": 577.0,
+  "end": 598.3
+ },
+ {
+  "idx": 30,
+  "type": "spotlight",
+  "title": "29 下集预告",
+  "start": 598.3,
+  "end": 620.13
+ }
+]

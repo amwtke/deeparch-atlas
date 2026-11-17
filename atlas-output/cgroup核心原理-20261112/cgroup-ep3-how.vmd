@@ -1,0 +1,696 @@
+# 第 3 集 How 阶段 — 组籍、账、接入点：cgroup 怎么接进内核
+
+[intro-line] 今天看 cgroup 怎么接进内核：组籍、账和接入点，以及 CPU、内存、磁盘、进程数超了之后各怎么处理。
+
+## 1 How 阶段开场
+
+[visual: spotlight]
+现在我们来看 How 阶段
+cgroup 怎么接进正在跑的内核?
+
+[narration]
+你手里已经有一套设计：公共的一层管树和组籍，每种资源一个控制器。问题是它怎么接进一个已经在跑的内核。这一集跟着一个 worker 走完一生，每一站都有实测。
+
+---
+
+## 2 三件事记住
+
+[visual: layers title=落进内核后只剩三件事]
+组籍:进程身上的一个指针,指向它所属的组
+账:每个组每种资源一本,限写在账旁边
+接入点:内核本来要走的路上,多执行的一步
+
+[sidebar]
+C1·按组限制合计用量
+C3·内核负责执行,配额由外部设定
+C4·在内核已有代码路径上记账,开销要小
+
+[narration]
+落到内核只剩三样东西。组籍是进程档案上的一个指针，指向它所属的组，内核里叫 css set。因为 C1，按组限制合计用量，和 C3，内核负责执行，配额由外部设定，归属不能让进程自己改，内核才能一步从进程找到组。
+账是每个组每种资源一本，限写在旁边。接入点是内核本来要走的路上多执行的一步，因为 C4，在内核已有代码路径上记账，开销要小。
+
+---
+
+## 3 全景图
+
+[visual: html_slide image="pics/03-overview.png" title=worker 一生穿过的五条路]
+
+[step: auto]
+scroll auto
+
+[narration]
+先看全景。左边五行是 worker 的一生：出生、跑 CPU、要内存、写盘、退出。灰色一列是内核本来要走的路，绿色一列是接入点，cgroup 只在末端多执行一步。
+紫色是核心，只在 fork 和退出时参与。橙色是控制器，各管一种资源，红字是超了怎么办。
+
+---
+
+## 4 实跑八行日志
+
+[visual: html_slide image="pics/03-shot-life.png" title=实测：worker 的一生]
+
+[step: auto]
+scroll auto
+
+[narration]
+全景对应一次实跑。report 组写四个上限：cpu.max 写 50000 100000，memory.max 写 300M，io.max 每秒 10 MiB，pids.max 写 20。worker 烧 0.2 秒 CPU，要 20 MiB，写 8 MiB，生孩子，退出。
+0.11 毫秒的缺页比 0.70 毫秒的 CPU 结算还早，因为 worker 一出生先写了和父进程共用的页。写盘那行到下一行隔 0.8 秒，8 MiB 除以每秒 10 MiB 正好 0.8 秒。
+
+---
+
+## 5 核心和控制器
+
+[visual: html_slide image="pics/03-framework.png" title=公共框架加资源插件]
+
+[step: auto]
+scroll auto
+
+[narration]
+上面一排是核心，只做一遍：树、组籍、文件接口、生命周期通知。C1，按组限制合计用量，和 C3，内核负责执行，配额由外部设定，对每种资源都一样，所以归核心。
+下面每个控制器只答三个问题：在哪里记账，限写成什么，超了怎么处理。因为 C2，记实际用量，超限处理看资源类型，这三样各不相同，加上 C5，所有资源共用同一套分组，种类还会增加，所以做成插件。
+
+---
+
+## 6 逐个打开控制器
+
+[visual: html_slide image="pics/03-shot-fw.png" title=实测：逐个打开控制器]
+
+[step: auto]
+scroll auto
+
+[narration]
+实验：在 host01 上一个个往下开控制器，看子组目录里的文件和建账动作。
+结果：内核认识 9 个控制器。开 pids 多 5 个文件，开 memory 文件从 1 个变 21 个，13 个 cgroup 开头的文件始终不变。核心通知每个控制器建账，调的是同一类函数。组籍每个控制器一个格子，五个格子指向同一棵树。
+
+---
+
+## 7 登记表
+
+[visual: ascii title=登记表:五个控制器各填了哪些格子]
+格子(回调)　　　　　　　　　pids    cpu     memory  io      cpuset
+建账 css_alloc　         有　　　 有　　   有　　   有　　   有
+账上线 css_online　　　　　　　    有　　   有　　   有　　　 有
+销账 css_free　          有　　　 有　　   有　　   有　　   有
+能搬进来吗 can_attach　　 有　　   有　　                   有
+搬进来了 attach　　　　　　　　　   有　　   有　　　　　　    有
+能生吗 can_fork          有　　　　　　　　　               有
+生了 fork　　　　　　　　　　　             有　　           有
+退出了 exit　　　　　　　　　　             有　　   有
+最后释放 release　　　    有
+合计　　　　　　　　　　　  5       5       6       4       7
+
+核心只在建组、入组、fork、退出这些时刻按表调用
+表上没有“记 CPU 账”“分一个页”这样的格子
+
+[sidebar]
+C5·所有资源共用同一套分组
+核心:树、组籍、文件接口、通知
+控制器:记账点、限额、超限处理
+
+[narration]
+核心怎么知道该通知谁？因为 C5，所有资源共用同一套分组，新加控制器不能要求核心改代码，所以控制器向核心交一张回调函数表，叫登记表，内核里是 struct cgroup subsys，关心的格子填自己的函数。
+表上全是建组、入组、fork、退出这类时刻，没有一格叫记 CPU 账。生命周期那条线经过核心，消耗资源那条线不经过核心，控制器直接在内核路径上记账。
+
+---
+
+## 8 五个调用栈
+
+[visual: html_slide image="pics/03-hook-stacks.png" title=五个接入点的调用栈]
+
+[step: auto]
+scroll auto
+
+[narration]
+每个接入点都用调用栈作证，从下往上读：最下面一行最先被调用。绿色虚线以下的灰色行，是没有 cgroup 的内核也要走的路；虚线以上一到三行是 cgroup 加的，紫色是核心，橙色是控制器。
+六列依次是：fork 前问能不能生，fork 后挂组籍，缺页，调度结算，提交 IO，退出。
+
+---
+
+## 9 fork：组籍怎么带上
+
+[visual: ascii title=fork 之后:父子进程指向同一张组籍(实测)]
+进程 7405 (父)  ─┐    ┌───────────────────────────────────┐
+进程 7407 (子)  ─┤    │ 组籍 0xffff0000c40f8400　　　　　   │
+进程 7408 (子)  ─┼─>  │ 名单上的进程数: 2   -> 3 -> 4　　　  │
+进程 7409 (子)  ─┘    ├───────────────────────────────────┤
+                     │ cpu 格　　 -> 组 report　　　　　　  │
+                     │ memory 格 -> 组 report　           │
+                     │ 其余控制器各一格　　　　　            │
+                     └───────────────────────────────────┘
+
+入组有两条路:
+  写 cgroup.procs: 给这个进程换一张组籍,子进程不动
+  fork: 子进程直接用父进程那一张
+
+[sidebar]
+C3·内核负责执行,配额由外部设定
+同组的进程共用一张组籍
+父子组籍地址相同
+
+[narration]
+第一个接入点是 fork。让进程自己登记不行，因为 C3，内核负责执行，配额由外部设定，归属不能由进程说了算；开线程扫描新进程也不行，间隔里新进程已经在花资源。所以就在 fork 这条路上把组籍带过去。
+实测：连 fork 三个 worker，父子的组籍是同一个地址，名单上的进程数从 2 涨到 4，子进程只多了一个指针。
+
+---
+
+## 10 pids 的回答
+
+[visual: code_explain lang=c title="pids_try_charge：fork 前先加一再比限（Linux 7.0 kernel/cgroup/pids.c）"]
+static int pids_try_charge(struct pids_cgroup *pids, int num, struct pids_cgroup **fail)
+{
+	struct pids_cgroup *p, *q;
+
+	for (p = pids; parent_pids(p); p = parent_pids(p)) {
+		int64_t new = atomic64_add_return(num, &p->counter);
+		int64_t limit = atomic64_read(&p->limit);
+
+		/*
+		 * Since new is capped to the maximum number of pid_t, if
+		 * p->limit is %PIDS_MAX then we know that this test will never
+		 * fail.
+		 */
+		if (new > limit) {
+			*fail = p;
+			goto revert;
+		}
+		/*
+		 * Not technically accurate if we go over limit somewhere up
+		 * the hierarchy, but that's tolerable for the watermark.
+		 */
+		pids_update_watermark(p, new);
+	}
+
+	return 0;
+
+revert:
+	for (q = pids; q != p; q = parent_pids(q))
+		pids_cancel(q, num);
+	pids_cancel(p, num);
+
+	return -EAGAIN;
+}
+===HIGHLIGHT===
+lines=1-3
+作用：fork 前问一句能不能生
+参数 pids：子进程所在组的账
+参数 num：要加的个数，这里是 1
+参数 fail：记下是哪一层超了
+===HIGHLIGHT===
+lines=5-8
+for 循环从本组一路走到父组
+每一层先加 num，再读这一层的限
+记账和比限是同一个动作
+===HIGHLIGHT===
+lines=14-17
+加完超过这一层的限
+记下是哪一层，跳到 revert
+父组的限管整棵子树
+===HIGHLIGHT===
+lines=27-32
+把已经加上的层全部减回去
+返回 -EAGAIN，fork 失败
+进程不用死，调用者收到错误
+
+[narration]
+核心在 fork 中途问一圈能不能生，pids 的回答就是这个函数：从本组一路走到父组，每层先加一再和上限比。超了就把已加的层减回去，返回 EAGAIN，这次 fork 失败，不用杀任何进程。
+
+---
+
+## 11 进程数实测
+
+[visual: html_slide image="pics/03-shot-pids.png" title=实测：第 20 次 fork 被拒绝]
+
+[step: auto]
+scroll auto
+
+[narration]
+实验：report 组上限 20 个进程，连续 fork 100 个，预期账涨到 20 就拒绝。
+结果：被问 20 次，19 次放行，第 20 次拒绝，返回 EAGAIN。每次放行，report 和父组 host01 两本账一起加一。账加一和比限，是同一个动作。
+
+---
+
+## 12 调度结算的调用栈
+
+[visual: timeline title=第二个接入点：从时钟中断到 cpu 控制器]
+T=1 [内核原有] 时钟中断到了，hrtimer_interrupt
+T=2 [内核原有] 周期节拍，tick_nohz_handler
+T=3 [内核原有] 调度器节拍，sched_tick
+T=4 [内核原有] 普通进程的节拍，task_tick_fair
+T=5 [内核原有] 结算刚跑了多久，update_curr
+T=6 [cgroup 加的] 从本核本地额度里扣，__account_cfs_rq_runtime
+
+[sidebar]
+C4·在内核已有代码路径上记账,开销要小
+没人设限的组:这一步不执行
+核心不参与
+
+[narration]
+第二个接入点是调度器结算。调度器本来就要结算当前进程刚跑了多久，结算那一刻正好知道谁、在哪颗核、跑了多久，账记在后面就行。另起定时器去扫进程，不符合 C4，在内核已有代码路径上记账，开销要小。
+栈里只有最上面一行是 cpu 控制器加的，核心没有参与。
+
+---
+
+## 13 扣本核的额度
+
+[visual: code_explain lang=c title="__account_cfs_rq_runtime：先扣本核的额度（Linux 7.0 kernel/sched/fair.c）"]
+static void __account_cfs_rq_runtime(struct cfs_rq *cfs_rq, u64 delta_exec)
+{
+	/* dock delta_exec before expiring quota (as it could span periods) */
+	cfs_rq->runtime_remaining -= delta_exec;
+
+	if (likely(cfs_rq->runtime_remaining > 0))
+		return;
+
+	if (cfs_rq->throttled)
+		return;
+	/*
+	 * if we're unable to extend our runtime we resched so that the active
+	 * hierarchy can be throttled
+	 */
+	if (!assign_cfs_rq_runtime(cfs_rq) && likely(cfs_rq->curr))
+		resched_curr(rq_of(cfs_rq));
+}
+===HIGHLIGHT===
+lines=1-2
+作用：把刚跑掉的时间记到组的账上
+参数 cfs_rq：这个组在这颗核上的队列
+参数 delta_exec：刚跑掉的纳秒数
+===HIGHLIGHT===
+lines=3-4
+先从本核的剩余额度里减掉
+只改本核自己的数，不用抢锁
+===HIGHLIGHT===
+lines=6-10
+减完还大于 0，直接返回
+这占绝大多数调用
+已经被限流的组也直接返回
+===HIGHLIGHT===
+lines=11-16
+减到 0 以下才去总额度领
+领不到就要求重新调度
+让这个组在这颗核上被限流
+
+[narration]
+先从本核的剩余额度里减，只改本核自己的数，不用抢锁。减完还大于零就返回，绝大多数调用到这里结束。减到零以下才去总额度里领，领不到就要求重新调度。
+
+---
+
+## 14 去总额度领一份
+
+[visual: code_explain lang=c title="__assign_cfs_rq_runtime：去全组总额度领一份（Linux 7.0 kernel/sched/fair.c）"]
+static int __assign_cfs_rq_runtime(struct cfs_bandwidth *cfs_b,
+				   struct cfs_rq *cfs_rq, u64 target_runtime)
+{
+	u64 min_amount, amount = 0;
+
+	lockdep_assert_held(&cfs_b->lock);
+
+	/* note: this is a positive sum as runtime_remaining <= 0 */
+	min_amount = target_runtime - cfs_rq->runtime_remaining;
+
+	if (cfs_b->quota == RUNTIME_INF)
+		amount = min_amount;
+	else {
+		start_cfs_bandwidth(cfs_b);
+
+		if (cfs_b->runtime > 0) {
+			amount = min(cfs_b->runtime, min_amount);
+			cfs_b->runtime -= amount;
+			cfs_b->idle = 0;
+		}
+	}
+
+	cfs_rq->runtime_remaining += amount;
+
+	return cfs_rq->runtime_remaining > 0;
+}
+===HIGHLIGHT===
+lines=1-4
+作用：本核额度用完，去总额度领
+参数 cfs_b：全组共享的总额度
+参数 target_runtime：想领多少，默认 5 毫秒
+===HIGHLIGHT===
+lines=8-9
+想领的量 = 目标 - 本核剩余
+本核已是负数时，先补上欠的
+===HIGHLIGHT===
+lines=11-21
+没设限就直接给，设了限就受总额度约束
+总额度还有剩，取剩余和想领的较小者
+从总额度里减掉，这一步在锁里做
+===HIGHLIGHT===
+lines=23-25
+加到本核的剩余额度上
+返回本核现在是否大于 0
+
+[narration]
+取总额度剩余和想领的量里较小的一个，从总额度里减掉，加到本核上，默认一份 5 毫秒。为什么是 5 毫秒？因为 C4，在内核已有代码路径上记账，开销要小，一份越大越省锁；又因为 C1，按组限制合计用量，一份越大各核囤的闲置额度越多。折中成 100 毫秒周期的二十分之一。
+拿数据库比，很像一次预取一段自增 ID，用完才回去拿锁。
+
+---
+
+## 15 记了多少笔账
+
+[visual: html_slide image="pics/03-shot-t1.png" title=实测：2 秒 1660 笔账]
+
+[step: auto]
+scroll auto
+
+[narration]
+实验：report 限半颗核，8 个 worker，跟踪 2 秒，数记了多少笔账、几笔去总额度领。预期去领的是少数。
+结果：记账 1660 次，合计正好 1000 毫秒，就是 2 秒乘半颗核。去总额度领 181 次，约 11%，其余 89% 只改本核自己的数。
+
+---
+
+## 16 没人设限时呢
+
+[visual: code_explain lang=bash title="实测：没人设限时，1 秒内记 CPU 账 0 次"]
+# cat /sys/fs/cgroup/host01/db/cpu.max /sys/fs/cgroup/host01/report/cpu.max
+max 100000
+max 100000
+# ./ingroup db python3 spin.py &
+# ./ingroup report python3 spin.py &
+# bpftrace t8-free.bt | grep .
+1 秒内「给某个组记 CPU 账」一共发生 0 次,按组分:
+# echo '50000 100000' > /sys/fs/cgroup/host01/report/cpu.max
+# bpftrace t8-free.bt | grep .
+1 秒内「给某个组记 CPU 账」一共发生 544 次,按组分:
+@n[report]: 544
+===HIGHLIGHT===
+lines=1-3
+db 和 report 都没写 cpu.max
+读出来是 max 100000，不设上限
+===HIGHLIGHT===
+lines=4-7
+两个组各放一个死循环
+跟踪脚本数 1 秒内记 CPU 账的次数
+===HIGHLIGHT===
+lines=8-11
+只给 report 写半颗核
+再数一遍，544 次，全记在 report 上
+
+[narration]
+多数组没写 cpu.max，也要每毫秒记一笔吗？实验：db 和 report 各放一个死循环，先都不设限数 1 秒，再只给 report 写半颗核。预期不设限的不记。
+结果：没人设限 0 次，设了之后 544 次，全在 report 上，db 仍是 0。内存不同，只要组开着 memory 控制器，每页都记。
+
+---
+
+## 17 缺页：内存的账
+
+[visual: text title=内存的账:一个数,加三样东西]
+计数器:这个组名下现在有多少页,旁边写着 memory.max
+每核预付页数:预付的用完才去改计数器,一次加 64 页
+父指针:每一层计数器都加、都比自己的上限
+页上记所属组:页还回去、回写时才知道算谁
+
+[sidebar]
+C2·记实际用量,超限处理看资源类型
+64 页一批,每核留 63 页预付
+页上记所属组
+
+[narration]
+第三个接入点是缺页：第一次写才分物理页，这一刻就是记账时机。因为 C2，记实际用量，超限处理看资源类型，要记真正分出去的页。账核心是一个数：这个组名下多少页，旁边写着上限，每个计数器指向父组。
+便宜的办法和 CPU 一样：每核一份预付页数，用完才改计数器，一次加 64 页，1 页自用，63 页预付。物理页上还记所属组，因为页会还，还的时候当初要页的进程可能早就不在了。
+
+---
+
+## 18 吃 100 MiB
+
+[visual: html_slide image="pics/03-shot-t2.png" title=实测：25610 次缺页，400 次改账]
+
+[step: auto]
+scroll auto
+
+[narration]
+实验：report 组上限 300M，一个 worker 吃 100 MiB。预期记账接近 25600 次，改计数器的次数少得多。
+结果：缺页 25610 次，真正改计数器只有 400 次，每次 64 页，正好 25600 页，三层计数器同时加 64。抽查 25610 个物理页，所属组全是 report。
+
+---
+
+## 19 提交 IO：账记在哪
+
+[visual: ascii title=第四个接入点:磁盘的账记在哪条路上]
+worker 调 write
+  |  数据拷进页缓存,标成脏页,write 就返回了
+  |  候选 1: 记在 write 上
+  |  不行:没占一点磁盘,写完删文件的程序白白被限
+  v
+回写路径把脏页打成一笔笔写请求
+  |  候选 2: 记在各种设备驱动里
+  |  不行:驱动各写各的,每一种都要加一份
+  v
+submit_bio_noacct 请求交给块层
+  |  候选 3: 记在这里
+  |  选这个:字节数清楚,真要占磁盘,所有设备共用入口
+  v
+块层排队、合并   -> 驱动　-> 磁盘
+
+[sidebar]
+C4·在内核已有代码路径上记账,开销要小
+write 返回时没有 IO
+块层入口所有设备共用
+
+[narration]
+第四个接入点是提交 IO。write 只把数据拷进页缓存就返回，没占磁盘，所以记在 write 上不行；记在设备驱动里，每种驱动都要加一份。内核选的是请求刚交给块层那一刻：字节数清楚，是真要占磁盘，所有设备共用入口。
+这是 C4，在内核已有代码路径上记账，开销要小，的落点。
+
+---
+
+## 20 不 fsync 的写
+
+[visual: html_slide image="pics/03-shot-wb.png" title=实测：kworker 提交，记在 report 上]
+
+[step: auto]
+scroll auto
+
+[narration]
+实验：report 限每秒 10 MiB，组里进程带缓冲写 30 MiB 不 fsync，再在组外执行 sync。这时交请求的是内核线程，不在 report 组里。预期请求仍记给 report。
+结果：交请求的是 kworker，4 笔共 31457280 字节，全记在 report 上；sync 用了 3.075 秒，30 除以 10 正好 3 秒。能对上，靠页上记的所属组，这是 C5，所有资源共用同一套分组。
+
+---
+
+## 21 超了之后
+
+[visual: spotlight]
+账记到限上会怎样?
+四种资源,四种处理
+
+[narration]
+先看最简单的：CPU 额度用完，进程怎么停。
+
+---
+
+## 22 额度怎么流动
+
+[visual: html_slide image="pics/03-cpu-pool.png" title=CPU 的账：总额度加本地额度]
+
+[step: auto]
+scroll auto
+
+[narration]
+上方是全组总额度，周期定时器每 100 毫秒补到 50 毫秒。下面四颗核各有一份本地额度，用完来领一次 5 毫秒。7 个 worker 落在四颗核上，是 1、1、2、3 个。
+底下四条横条：各核在 11 到 16 毫秒陆续被限流，之后八十多毫秒整组都在等。额度按核领，不按进程发，所以独占一颗核的进程拿 12.3%，三个进程共一颗核各 4.0%。这是 C1，按组限制合计用量，的另一面：合计之内怎么分不保证。
+
+---
+
+## 23 两个周期的时间线
+
+[visual: html_slide image="pics/03-shot-t3.png" title=实测：11.21 毫秒用完，停 84 毫秒]
+
+[step: auto]
+scroll auto
+
+[narration]
+实验：起 7 个 worker，跟踪额度流动，预期总额度十来毫秒就用完。
+结果：0.00 毫秒定时器补满 50000 微秒，11.21 毫秒核 3 领走最后的 864 微秒，总额度用完；核 3 和核 0 再领领不到，就设限流标记，两颗核上的 4 个 worker 在回用户态的路上停下。16.22 到 100.86 毫秒，84 毫秒里什么都没发生。
+
+---
+
+## 24 限流的全过程
+
+[visual: statemap title=没有检查线程：谁发现用完，谁设标记]
+周期定时器补满总额度
+各核按需领 5 毫秒本地额度
+本核领不到
+给这个组在这颗核设限流标记
+进程回用户态时自己停下
+下一个周期放回运行队列
+
+[sidebar]
+定时器只补额度、清标记
+领额度的核发现用完
+进程自己停下
+
+[narration]
+整个机制没有检查线程。定时器只补满总额度、清掉标记；发现用完的，是来领额度的那颗核自己，领不到就设一个标记。进程回到用户态时看到标记，自己停下。
+为什么等到这时？进程在内核里可能拿着锁，冻住它，别的组要这把锁也得等。实测 8 个和 400 个 worker，设标记都是每秒 40 次，就是 4 颗核乘 10 个周期，只有进程停下的次数不同，80 次和 4000 次。
+
+---
+
+## 25 内存到达上限之后
+
+[visual: html_slide image="pics/03-mem-charge.png" title=内存的账：记账、回收、OOM]
+
+[step: auto]
+scroll auto
+
+[narration]
+上半部分前面讲过，看下半部分：某一次加 64 页会超过上限时的四步。一，这次记账不成立，进程停在原地。二，它自己在本组范围里回收，够了就继续。三，收不动，进入组内 OOM，给组里进程打分，最高分的收到 SIGKILL。四，被杀进程的页还回去。
+为什么内存只能回收或杀？往内存写一个字节只是一条赋值语句，没有返回值，内核没法让它等，也没法告诉它不行。fork 有返回值，所以进程数可以直接拒绝。
+
+---
+
+## 26 回收和 OOM 实测
+
+[visual: html_slide image="pics/03-shot-t4.png" title=实测：先回收，收不动再杀]
+
+[step: auto]
+scroll auto
+
+[narration]
+两个实验。A：300M 的组读 600M 的文件，页缓存可以丢，预期靠回收。B：三个 worker 用匿名页，没有 swap，合计超过 300M，预期要杀。
+A：到上限 146 次，全靠回收，OOM 0 次，文件读完，只是慢一点。B：第三个 worker 回收不动，进入组内 OOM，打分 40812、22850、17441，选中最高的 8233，3.13 毫秒发 SIGKILL。到上限的是 8242，被杀的是 8233。这一遍还多杀了一个，原因留到第五集读源码。
+
+---
+
+## 27 四种处理
+
+[visual: ascii title=超了之后:四种资源,四种处理]
+资源　    接入点　　　　超了怎么处理          为什么
+────────────────────────────────────────────────────────────────────
+CPU      调度结算　　　等到下个周期          时间下个周期还有
+磁盘 IO　 提交 IO　　  请求排队等　          带宽下一秒还有
+进程数    fork        这次 fork 失败　　　  fork 有返回值,能说不行
+内存　    缺页　　　　　回收,收不动就杀　　　  占了不还,写内存没返回值
+
+发现超限都是同一个动作:加上去,看超没超
+只有最后一格不同,这一格由资源的性质决定
+
+[sidebar]
+C2·记实际用量,超限处理看资源类型
+会再生的:等
+能拒绝的:拒绝
+内存:回收,收不动就杀
+
+[narration]
+发现超限都是同一个动作：加上去，看超没超。只有超了怎么办不一样，由资源性质决定：会再生的 CPU 和 IO 带宽，等；能拒绝的进程数，拒绝；占了不还又没法拒绝的内存，回收，收不动就杀。
+这就是 C2，记实际用量，超限处理看资源类型。这一格不在登记表上，由每个控制器自己决定。
+
+---
+
+## 28 worker 一生回放
+
+[visual: timeline title=把八行日志串成一生]
+T=0.00 ms [fork 前] 核心问一圈，pids 放行，进程数加 1
+T=0.03 ms [fork 后] 核心让子进程抄走组籍
+T=0.11 ms [缺页] memory 给 report 记 1 页
+T=0.70 ms [调度结算] cpu 从本核额度里扣 663 微秒
+T=204.59 ms [提交 IO] io 检查一笔 4 MiB 的写请求
+T=1011.44 ms [fork] worker 生孩子，再问一圈
+T=1012.05 ms [退出前] 核心按登记表通知控制器
+T=1012.08 ms [退出后] pids 把进程数减 1
+
+[sidebar]
+C4·在内核已有代码路径上记账,开销要小
+核心参与 3 次
+控制器各管自己那条路
+
+[narration]
+把八行摊开，核心只参与三次：fork 两步，退出一步，其余都是控制器在内核已有的路上多执行一步。一生 1012 毫秒，其中约 800 毫秒花在写那 8 MiB 上。
+退出时 pids 要等父进程回收这个子进程才减一，只生不回收的程序，名额会被已退出的进程占满。整条链没有一处是 cgroup 新修的路，这就是 C4，在内核已有代码路径上记账，开销要小。
+
+---
+
+## 29 最小伪代码
+
+[visual: code_explain lang=python title="最小伪代码（示意）：登记表、fork、调度结算"]
+# 核心：登记表和 fork，不处理任何具体资源
+登记表 = {}
+def 登记(名, **格子): 登记表[名] = 格子
+
+def fork(父进程):
+    for 名, 格子 in 登记表.items():
+        if "能生吗" in 格子 and not 格子["能生吗"](父进程.组籍): return EAGAIN
+    子 = 复制(父进程)
+    子.组籍 = 父进程.组籍; 子.组籍.进程名单.append(子)
+    return 子
+
+# 接入点：加在 update_curr 之后
+def 调度结算(进程, 核, 跑了多久):
+    账 = 进程.组籍.格子["cpu"]
+    if 账 是 None 或 没设限: return
+    while 账:
+        账.本地额度[核] -= 跑了多久
+        if 账.本地额度[核] <= 0:
+            领 = min(5_ms, 账.总额度); 账.总额度 -= 领; 账.本地额度[核] += 领
+            if 账.本地额度[核] <= 0: 账.限流中[核] = True
+        账 = 账.父
+===HIGHLIGHT===
+lines=1-3
+核心这一块没有一个 if 是 CPU
+只管登记表和格子
+新增一个控制器，只多一次登记
+===HIGHLIGHT===
+lines=5-9
+复制之前，按表问一圈能生吗
+有人说不行就返回 EAGAIN
+复制之后，只抄一个组籍指针
+===HIGHLIGHT===
+lines=12-15
+没设限的组，这一步直接返回
+进程到账只需一步：组籍.格子
+===HIGHLIGHT===
+lines=16-20
+每一层祖先都扣本核的本地额度
+扣到 0 以下才去总额度领 5 毫秒
+还领不到，就设限流标记
+进程回用户态时自己停下
+
+[narration]
+取两块。核心这一块没有一个如果是 CPU，新增控制器只多一次登记；fork 里复制前按表问一圈，复制后只抄一个指针。接入点这一块：没设限直接返回，每层祖先都扣本核额度，扣到零以下才去领 5 毫秒，领不到就设标记。
+
+---
+
+## 30 五条设计原则
+
+[visual: layers title=五条设计原则，每条都有实测]
+公共框架加资源插件:13 个核心文件不变,每开一个控制器多一组文件
+复用内核已有路径记账:五个调用栈,没人设限 1 秒 0 次
+记账时同步检查限额:问能不能生那一刻,账加一,限也比过
+提供机制,策略由需求定制:内核一个数不填,父组写 0.3 核
+用统一的方式管理所有资源:五个格子一棵树,页上记所属组
+
+[sidebar]
+C5·所有资源共用同一套分组
+C4·在内核已有代码路径上记账,开销要小
+C2·记实际用量,超限处理看资源类型
+C3·内核负责执行,配额由外部设定
+
+[narration]
+五条设计原则，每条都有实测。公共框架加资源插件：13 个核心文件不变。复用内核已有路径记账：五个调用栈，没人设限 1 秒 0 次。记账时同步检查限额：账加一的那一刻限也比过，没有检查线程。
+提供机制，策略由需求定制：内核一个数不填。实测给父组写 0.3 核，report 一个字没改，用量从 49.9% 掉到 30.4%，父组管整棵子树。用统一的方式管理所有资源：五个格子指向一棵树，IO 回写时读页上记的所属组。公共的一层只做一遍，每种资源是插件。
+
+---
+
+## 31 本集总结
+
+[visual: html_slide image="pics/ep3-summary-card.png" title=How 阶段总结]
+
+[step: auto]
+scroll auto
+
+[narration]
+收成六句话。组籍是进程身上的一个指针，fork 只抄指针。五个接入点，下面全是内核本来要走的路。每核先领一份，CPU 5 毫秒、内存 64 页，89% 的 CPU 记账和 98.4% 的内存记账不碰共享的数。
+CPU 和 IO 没人设限就不执行，内存照记。超了怎么办看资源：CPU 等，内存回收再杀，进程数拒绝，IO 排队。父组管整棵子树。
+
+---
+
+## 32 下集预告
+
+[visual: spotlight]
+本集就到这里，下集见
+下一集：这套设计是怎么来的？
+
+[narration]
+本集就到这里，下集见。下一集倒回最早动手的时候：Paul Menage 手里已经有什么，为什么一开始每种资源一棵树，Paul Turner 和 Johannes Weiner 分别加了什么，Tejun Heo 为什么把多棵树收回成一棵。
+
+---

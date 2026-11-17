@@ -460,7 +460,7 @@ $ cat /sys/fs/cgroup/system.slice/report-demo.service/memory.max
 <li><strong>分表可以套总表。</strong> 一层楼一块总表,下面每户一块分表,各户加起来不能超过这层的总表。对应:cgroup 是一棵树,子组受父组限制。</li>
 <li><strong>户只分一次,几块表都认它。</strong> 不会出现电表记你住 301、水表记你住 302。再装一块新表(比如加一块热水表),也不用重新分户。对应:分组只有一套,归核心;多管一种资源就是多一个控制器。</li>
 <li><strong>限额是物业定的,不是表自己定的。</strong> 表不知道这一户该用多少,它只按写上去的数断电;住户自己也不能去改表上的限额。对应:数字由外面的管理程序写进来,内核只负责执行。</li>
-<li><strong>断电是表自己断的。</strong> 没有物业的人每天挨家挨户抄表、看谁超了。对应到内核,这是一个先记下的问题:cgroup 里有没有一个定期巡查的内核线程?第三节会实际检查。</li>
+<li><strong>断电是表自己断的。</strong> 没有物业的人每天挨家挨户抄表、看谁超了。对应到内核,这是一个先记下的问题:cgroup 里有没有一个定期检查的内核线程?第三节会实际检查。</li>
 <li><strong>装表不用重铺管线。</strong> 表接在楼里原有的进户管上,水还是走原来那根管子。对应:cgroup 不给内核另修一条路,只在内核本来就要走的代码路径上多做一步。</li>
 </ul>
 <p>这几个特征,后面几段会一个个对应到实际的机制上:各种表在 §3 的一个目录里,限额是谁定的在 §4,户只分一次在 §5 的一棵树上,表接在哪根管子上在 §6。</p>
@@ -3715,7 +3715,7 @@ Cached:          3654444 kB
 </blockquote>
 <p>下一个问题:放在哪定了。用量一笔笔记下来以后,谁来检查它超没超?</p>
 <h2 id="sec75">§7 核心想法:组籍、用量记录、限额,以及树</h2>
-<p><strong>结论:把记账和限额从进程身上挪到「组」上。进程只带一个组籍(记录它属于哪个组的指针),生下来就继承父进程的;每次真正消耗资源时顺手记到组的用量上,记的那一刻顺手和限额比一下,超了就地做超限处理,不安排专门的线程巡查。组还要能套组,第一版成品 v1 把它做成了一棵目录树。</strong></p>
+<p><strong>结论:把记账和限额从进程身上挪到「组」上。进程只带一个组籍(记录它属于哪个组的指针),生下来就继承父进程的;每次真正消耗资源时顺手记到组的用量上,记的那一刻顺手和限额比一下,超了就地做超限处理,不安排专门的线程检查。组还要能套组,第一版成品 v1 把它做成了一棵目录树。</strong></p>
 <h3 id="sec76">§7.1 一个想法</h3>
 <figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" font-family="JetBrains Mono, Consolas, monospace">
   <rect width="1200" height="560" fill="#0a0c10"/>
@@ -3889,7 +3889,7 @@ Cached:          3654444 kB
 <li><strong>CPU 要卡到毫秒。</strong> 上限是「每 100 ms 最多 50 ms」,想卡准,这个线程得每毫秒运行一次,它自己就成了机器上最大的 CPU 用户;组越多、进程越多(400 个 worker),它检查一遍就越久。</li>
 <li><strong>记账本来就发生在消耗的那一刻(<code>C4·在内核已有代码路径上记账,开销要小</code>)。</strong> 记账发生的那一瞬间,用量是最新的;顺手和旁边的限额比一下,只多一次比较。</li>
 </ul>
-<p><strong>所以是记账时同步检查限额,不需要巡查线程。</strong> 用量在消耗的那一刻记上,限额在记账的那一刻顺手比较;没有专门的检查线程。</p>
+<p><strong>所以是记账时同步检查限额,不需要检查线程。</strong> 用量在消耗的那一刻记上,限额在记账的那一刻顺手比较;没有专门的检查线程。</p>
 <p>拿合租公寓比,这像预付费电表:用到额度就断供,不用每月派人上门抄表。</p>
 <p>后面会看到它准到什么程度:§9.1 里 report 组每个周期平均用掉 49 969 μs,写的上限是 50 000 μs,差 31 μs,定期检查的线程做不到这么准。CPU 那边其实也有一个定时器,但它只负责每个周期把额度补满,不负责查谁超了;这一点在第三节 §7 看。</p>
 <h3 id="sec78">§7.2 第一版成品:v1 把组做成了目录树</h3>
@@ -3916,7 +3916,7 @@ Cached:          3654444 kB
 </tr>
 <tr>
 <td>限额写在用量旁边,记账时顺手比</td>
-<td>要专门起线程巡查,内存来不及,CPU 卡不准</td>
+<td>要专门起线程检查,内存来不及,CPU 卡不准</td>
 <td>超限的那一刻就被发现、就地做超限处理</td>
 </tr>
 <tr>
@@ -5327,7 +5327,7 @@ Memory cgroup out of memory: Killed process 4058 (report-w) total-vm:327220kB, a
   <text x="600.0" y="655" text-anchor="middle" fill="#5c6675" font-size="11">实跑留档 2026-11-14 · Lima 虚拟机 cg-lab · 日志原文 src/logs/cgmax.log · 提示符由留档脚本打印,命令与输出为真实执行结果</text>
 </svg><figcaption>终端留档:report 组加了 memory.max 300M 后,OOM 范围变成 /host01/report,被杀的是涨到约 299 MiB 的 report-w,db-sim 活着 <span class="hint">· 点图放大,Esc 还原</span></figcaption></figure>
 <ul>
-<li>范围从 <code>oom_memcg=/host01</code> 变成了 <code>oom_memcg=/host01/report</code>。哪个组的上限先被达到,OOM 就在哪个组里发生、只在那个组里挑人。report-w 涨到 anon-rss 306 504 kB ≈ 299 MiB 时达到上限(<code>max 53</code>:达到上限 53 次,每次先试着回收,收不动),最后被杀。db-sim 的 728 MiB 原封不动。</li>
+<li>范围从 <code>oom_memcg=/host01</code> 变成了 <code>oom_memcg=/host01/report</code>。哪个组的上限先被达到,OOM 就在哪个组里发生、只在那个组里挑人。report-w 涨到 anon-rss 306 504 kB ≈ 299 MiB 时达到上限(<code>max 53</code>:达到上限 53 次,每次先试着回收,收不动),最后被杀。db-sim 的约 711 MiB(RSS 727 836 KiB)原封不动。</li>
 <li>和上面第 4 步对比:两次 db 都有同样的 <code>memory.low</code>,结果一死一活。决定谁死的不是保护,是上限划在哪。这正是你灵魂问题②里「边界谁划的」的答案:<strong>边界就是管理员写进某个组 <code>memory.max</code> 的那个数,它决定了 OOM 发生在哪一层、在哪些进程里挑人。</strong> 写这个数的是外面的人,内核只管兑现(<code>C3·内核负责执行,配额由外部设定</code>)。</li>
 <li>一个顺带的细节:父组 host01 的 <code>memory.events</code> 也显示 <code>oom_kill 1</code>,但 <code>memory.events.local</code> 是 0。前者把整棵子树的事件都算上,后者只算自己这一层。这次 OOM 发生在 report,往上汇总到了 host01。这是 <code>C1·按组限制合计用量</code> 里「组能套组」那个要点在用量记录上的样子:父组能看到子树里发生的一切,但事情是在子组那一层处理的。</li>
 <li>两遍实跑(<code>cgmax-run1.log</code> 与 <code>cgmax.log</code>)结果一致。</li>
@@ -5537,7 +5537,7 @@ Memory cgroup out of memory: Killed process 4058 (report-w) total-vm:327220kB, a
 <td>记账时同步检查限额</td>
 <td>用量是消耗的那一刻顺手记的,限额是记账的那一刻顺手比的;没有专门的检查线程</td>
 <td>§7.1.1</td>
-<td>巡查线程来不及:内存每秒能吃进约 10 GiB,CPU 要卡到毫秒</td>
+<td>检查线程来不及:内存每秒能吃进约 10 GiB,CPU 要卡到毫秒</td>
 <td><code>C2·记实际用量,超限处理看资源类型</code> + <code>C4·在内核已有代码路径上记账,开销要小</code></td>
 <td>§4、§5、§7、§8;唯一的定时器只补不查(§7)</td>
 </tr>
@@ -10750,7 +10750,7 @@ def 提交IO(请求):                            # 加在 submit_bio_noacct 之�
 </tr>
 <tr>
 <td>③ cgroup 通过什么架构实现对各种资源的控制?它怎么融入内核?设计哲学是什么?</td>
-<td>架构:不是从零设计的,是 2006 年 Paul Menage 把 cpusets 里的分组抽出来,做成与具体资源无关的公共层;他自己把它比作 VFS。融入内核:「开销尽量小」是 2007 年论文里的明文要求,内存控制器因为太贵被发行版拒绝过,这条约束是发行版用不启用来表态才变得明确的。设计哲学:五句里四句找得到当事人的原话;「用统一的方式管理所有资源」这一句是用九年多换来的,而且至今没有完全做到</td>
+<td>架构:不是从零设计的,是 2006 年 Paul Menage 把 cpusets 里的分组抽出来,做成与具体资源无关的公共层;他自己把它比作 VFS。融入内核:「开销尽量小」是 2007 年论文里的明文要求,内存控制器因为太贵被发行版拒绝过,这条约束是发行版用不启用来表态才变得明确的。设计原则:五条里四条找得到当事人的原话;「用统一的方式管理所有资源」这一条是用九年多换来的,而且至今没有完全做到</td>
 </tr>
 </tbody>
 </table></div>
@@ -13696,35 +13696,35 @@ cd /tmp &amp;&amp; limactl shell cg-lab sudo bash -s -- fw &lt; 03-how/src/03-ev
 <figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" font-family="JetBrains Mono, Consolas, monospace">
 <rect width="1200" height="700" fill="#0a0c10"/>
 <text x="600" y="34" text-anchor="middle" fill="#e0e6f0" font-size="20">演练:用八个想法设计一个数据库的资源组</text>
-<text x="600" y="56" text-anchor="middle" fill="#8892a0" font-size="12">一个数据库进程里跑着几个租户的查询;要让一个租户的大查询拖不垮别人。左列是 cgroup 的做法,右列是搬过来的样子(设计推演,不对应某个具体产品)</text>
-<rect x="30" y="74" width="160" height="34" fill="#3a1e5f" stroke="#8040c0"/><text x="110" y="96" text-anchor="middle" fill="#c088ff" font-size="13">想法</text>
-<rect x="196" y="74" width="330" height="34" fill="#3a1e5f" stroke="#8040c0"/><text x="361" y="96" text-anchor="middle" fill="#c088ff" font-size="13">cgroup</text>
-<rect x="532" y="74" width="638" height="34" fill="#3a1e5f" stroke="#8040c0"/><text x="851" y="96" text-anchor="middle" fill="#c088ff" font-size="13">数据库资源组</text>
-<rect x="30" y="116" width="160" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="110" y="150" text-anchor="middle" fill="#88ff88" font-size="13">分组记账</text>
-<rect x="196" y="116" width="330" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="208" y="150" fill="#88c0ff" font-size="12">进程带组籍,fork 继承</text>
-<rect x="532" y="116" width="638" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="544" y="150" fill="#ffaa55" font-size="12">会话带组号;登录时按用户 / 应用映射;并行查询的工作线程继承</text>
-<rect x="30" y="182" width="160" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="110" y="216" text-anchor="middle" fill="#88ff88" font-size="13">统一成框架</text>
-<rect x="196" y="182" width="330" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="208" y="216" fill="#88c0ff" font-size="12">核心 + 插件 + 登记表</text>
-<rect x="532" y="182" width="638" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="544" y="216" fill="#ffaa55" font-size="12">资源组框架 + CPU / 内存 / IO / 并发 四个插件;建组、会话入组时按表通知</text>
-<rect x="30" y="248" width="160" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="110" y="282" text-anchor="middle" fill="#88ff88" font-size="13">复用已有路径</text>
-<rect x="196" y="248" width="330" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="208" y="282" fill="#88c0ff" font-size="12">记账挂在调度、缺页、提交 IO 上</text>
-<rect x="532" y="248" width="638" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="544" y="282" fill="#ffaa55" font-size="12">记在线程让出 CPU 处、内存分配器、缓冲池取页、发 IO 处;没设限的组不记</text>
-<rect x="30" y="314" width="160" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="110" y="348" text-anchor="middle" fill="#88ff88" font-size="13">记账时检查</text>
-<rect x="196" y="314" width="330" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="208" y="348" fill="#88c0ff" font-size="12">加上去,看超没超</text>
-<rect x="532" y="314" width="638" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="544" y="348" fill="#ffaa55" font-size="12">分配时比上限;不另起一个线程定期扫描查询</text>
-<rect x="30" y="380" width="160" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="110" y="414" text-anchor="middle" fill="#88ff88" font-size="13">按资源处理</text>
-<rect x="196" y="380" width="330" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="208" y="414" fill="#88c0ff" font-size="12">等 / 拒 / 回收或杀</text>
-<rect x="532" y="380" width="638" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="544" y="414" fill="#ffaa55" font-size="12">CPU:让出、排队;并发:准入排队;IO:限速;内存:分配时直接报错(有返回值)</text>
-<rect x="30" y="446" width="160" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="110" y="480" text-anchor="middle" fill="#88ff88" font-size="13">机制与策略</text>
-<rect x="196" y="446" width="330" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="208" y="480" fill="#88c0ff" font-size="12">文件界面,数字由外面写</text>
-<rect x="532" y="446" width="638" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="544" y="480" fill="#ffaa55" font-size="12">CREATE / ALTER 资源组的语句,数字由 DBA 或控制面写;引擎只兑现</text>
-<rect x="30" y="512" width="160" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="110" y="546" text-anchor="middle" fill="#88ff88" font-size="13">层层转包</text>
-<rect x="196" y="512" width="330" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="208" y="546" fill="#88c0ff" font-size="12">父组管子树</text>
-<rect x="532" y="512" width="638" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="544" y="546" fill="#ffaa55" font-size="12">租户 → 应用 → 会话 两三层;父组的上限管住下面所有</text>
-<rect x="30" y="578" width="160" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="110" y="612" text-anchor="middle" fill="#88ff88" font-size="13">统一管理</text>
-<rect x="196" y="578" width="330" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="208" y="612" fill="#88c0ff" font-size="12">只有一棵树;进程自己改不了组籍</text>
-<rect x="532" y="578" width="638" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="544" y="612" fill="#ffaa55" font-size="12">所有资源共用一套分组;会话自己不能换组,要有权限</text>
-<text x="600" y="672" text-anchor="middle" fill="#8892a0" font-size="11">最大的不同在「处置」一行:数据库自己分配内存,分配有返回值,所以内存超限可以报错而不必杀,和 Windows 的 Job Object 同一个位置</text>
+<text x="600" y="56" text-anchor="middle" fill="#8892a0" font-size="12">一个数据库进程里跑着几个租户的查询;要让一个租户的大查询拖不垮别人。中间是 cgroup 的做法,右列是搬过来的样子(设计推演,不对应某个具体产品)</text>
+<rect x="30" y="74" width="210" height="34" fill="#3a1e5f" stroke="#8040c0"/><text x="135" y="96" text-anchor="middle" fill="#c088ff" font-size="13">想法</text>
+<rect x="246" y="74" width="290" height="34" fill="#3a1e5f" stroke="#8040c0"/><text x="391" y="96" text-anchor="middle" fill="#c088ff" font-size="13">cgroup</text>
+<rect x="542" y="74" width="628" height="34" fill="#3a1e5f" stroke="#8040c0"/><text x="856" y="96" text-anchor="middle" fill="#c088ff" font-size="13">数据库资源组</text>
+<rect x="30" y="116" width="210" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="135" y="150" text-anchor="middle" fill="#88ff88" font-size="13">1 分进程组记账</text>
+<rect x="246" y="116" width="290" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="258" y="150" fill="#88c0ff" font-size="12">进程带组籍,fork 继承</text>
+<rect x="542" y="116" width="628" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="554" y="150" fill="#ffaa55" font-size="12">会话带组号;登录时按用户 / 应用映射;并行查询的工作线程继承</text>
+<rect x="30" y="182" width="210" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="135" y="216" text-anchor="middle" fill="#88ff88" font-size="13">2 将工具统一成框架</text>
+<rect x="246" y="182" width="290" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="258" y="216" fill="#88c0ff" font-size="12">一套分组,代替各管各的旧工具</text>
+<rect x="542" y="182" width="628" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="554" y="216" fill="#ffaa55" font-size="12">不给每个功能各加开关;一个资源组框架,CPU / 内存 / IO / 并发四个插件</text>
+<rect x="30" y="248" width="210" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="135" y="282" text-anchor="middle" fill="#88ff88" font-size="13">3 公共框架加资源插件</text>
+<rect x="246" y="248" width="290" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="258" y="282" fill="#88c0ff" font-size="12">核心只管树和组籍,每种资源一个插件</text>
+<rect x="542" y="248" width="628" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="554" y="282" fill="#ffaa55" font-size="12">框架只管会话属于哪个组、组怎么嵌套;加临时表空间上限就是第五个插件</text>
+<rect x="30" y="314" width="210" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="135" y="348" text-anchor="middle" fill="#88ff88" font-size="13">4 复用内核已有路径记账</text>
+<rect x="246" y="314" width="290" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="258" y="348" fill="#88c0ff" font-size="12">记账挂在调度、缺页、提交 IO 上</text>
+<rect x="542" y="314" width="628" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="554" y="348" fill="#ffaa55" font-size="12">记在线程让出 CPU 处、内存分配器、缓冲池取页、发 IO 处;没设限的组不记</text>
+<rect x="30" y="380" width="210" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="135" y="414" text-anchor="middle" fill="#88ff88" font-size="13">5 记账时同步检查限额</text>
+<rect x="246" y="380" width="290" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="258" y="414" fill="#88c0ff" font-size="12">加上去,看超没超</text>
+<rect x="542" y="380" width="628" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="554" y="414" fill="#ffaa55" font-size="12">分配时比上限;不另起一个线程定期扫描查询</text>
+<rect x="30" y="446" width="210" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="135" y="480" text-anchor="middle" fill="#88ff88" font-size="13">6 按资源特性决定超限处理</text>
+<rect x="246" y="446" width="290" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="258" y="480" fill="#88c0ff" font-size="12">等 / 拒 / 回收或杀</text>
+<rect x="542" y="446" width="628" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="554" y="480" fill="#ffaa55" font-size="12">CPU:让出、排队;并发:准入排队;IO:限速;内存:分配时直接报错(有返回值)</text>
+<rect x="30" y="512" width="210" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="135" y="546" text-anchor="middle" fill="#88ff88" font-size="13">7 提供机制,策略由需求定制</text>
+<rect x="246" y="512" width="290" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="258" y="546" fill="#88c0ff" font-size="12">文件界面,数字由外面写</text>
+<rect x="542" y="512" width="628" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="554" y="546" fill="#ffaa55" font-size="12">CREATE / ALTER 资源组的语句,数字由 DBA 或控制面写;引擎只负责执行</text>
+<rect x="30" y="578" width="210" height="58" fill="#1e5f3a" stroke="#40c060"/><text x="135" y="612" text-anchor="middle" fill="#88ff88" font-size="13">8 用统一的方式管理所有资源</text>
+<rect x="246" y="578" width="290" height="58" fill="#1e3a5f" stroke="#4080c0"/><text x="258" y="612" fill="#88c0ff" font-size="12">只有一棵树;进程自己改不了组籍</text>
+<rect x="542" y="578" width="628" height="58" fill="#5f3a1e" stroke="#c08040"/><text x="554" y="612" fill="#ffaa55" font-size="12">所有资源共用一套分组;会话自己不能换组,要有权限</text>
+<text x="600" y="672" text-anchor="middle" fill="#8892a0" font-size="11">最大的不同在第 6 行:数据库自己分配内存,分配有返回值,所以内存超限可以报错而不必杀,和 Windows 的 Job Object 一样</text>
 </svg><figcaption>演练:用八个想法设计一个数据库的资源组 <span class="hint">· 点图放大,Esc 还原</span></figcaption></figure>
 <p>逐条过一遍。</p>
 <ol>
@@ -13783,7 +13783,7 @@ cd /tmp &amp;&amp; limactl shell cg-lab sudo bash -s -- fw &lt; 03-how/src/03-ev
 <td>记账时同步比较上限</td>
 <td><code>C2·记实际用量,超限处理看资源类型</code></td>
 <td>超限只能在记账点被发现</td>
-<td>后台线程定期巡查</td>
+<td>后台线程定期检查</td>
 <td>Windows 的累计用户态时间限额是定期检查的(第六节 §4)</td>
 </tr>
 <tr>

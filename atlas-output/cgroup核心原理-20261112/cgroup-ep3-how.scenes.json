@@ -1,0 +1,233 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 14.23
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 How 阶段开场",
+  "start": 14.23,
+  "end": 27.4
+ },
+ {
+  "idx": 3,
+  "type": "layers",
+  "title": "落进内核后只剩三件事",
+  "start": 27.4,
+  "end": 58.23
+ },
+ {
+  "idx": 4,
+  "type": "html_slide",
+  "title": "worker 一生穿过的五条路",
+  "start": 58.23,
+  "end": 80.1
+ },
+ {
+  "idx": 5,
+  "type": "html_slide",
+  "title": "实测：worker 的一生",
+  "start": 80.1,
+  "end": 111.33
+ },
+ {
+  "idx": 6,
+  "type": "html_slide",
+  "title": "公共框架加资源插件",
+  "start": 111.33,
+  "end": 145.37
+ },
+ {
+  "idx": 7,
+  "type": "html_slide",
+  "title": "实测：逐个打开控制器",
+  "start": 145.37,
+  "end": 170.37
+ },
+ {
+  "idx": 8,
+  "type": "ascii",
+  "title": "登记表:五个控制器各填了哪些格子",
+  "start": 170.37,
+  "end": 201.47
+ },
+ {
+  "idx": 9,
+  "type": "html_slide",
+  "title": "五个接入点的调用栈",
+  "start": 201.47,
+  "end": 225.3
+ },
+ {
+  "idx": 10,
+  "type": "ascii",
+  "title": "fork 之后:父子进程指向同一张组籍(实测)",
+  "start": 225.3,
+  "end": 252.53
+ },
+ {
+  "idx": 11,
+  "type": "code",
+  "title": "\"pids_try_charge：fork 前先加一再比限（Linux 7.0 kernel/cgroup/pids.c",
+  "start": 252.53,
+  "end": 267.7
+ },
+ {
+  "idx": 12,
+  "type": "html_slide",
+  "title": "实测：第 20 次 fork 被拒绝",
+  "start": 267.7,
+  "end": 288.77
+ },
+ {
+  "idx": 13,
+  "type": "timeline",
+  "title": "第二个接入点：从时钟中断到 cpu 控制器",
+  "start": 288.77,
+  "end": 311.47
+ },
+ {
+  "idx": 14,
+  "type": "code",
+  "title": "\"__account_cfs_rq_runtime：先扣本核的额度（Linux 7.0 kernel/sched/fai",
+  "start": 311.47,
+  "end": 325.2
+ },
+ {
+  "idx": 15,
+  "type": "code",
+  "title": "\"__assign_cfs_rq_runtime：去全组总额度领一份（Linux 7.0 kernel/sched/fa",
+  "start": 325.2,
+  "end": 354.17
+ },
+ {
+  "idx": 16,
+  "type": "html_slide",
+  "title": "实测：2 秒 1660 笔账",
+  "start": 354.17,
+  "end": 376.13
+ },
+ {
+  "idx": 17,
+  "type": "code",
+  "title": "\"实测：没人设限时，1 秒内记 CPU 账 0 次\"",
+  "start": 376.13,
+  "end": 399.77
+ },
+ {
+  "idx": 18,
+  "type": "text",
+  "title": "内存的账:一个数,加三样东西",
+  "start": 399.77,
+  "end": 432.53
+ },
+ {
+  "idx": 19,
+  "type": "html_slide",
+  "title": "实测：25610 次缺页，400 次改账",
+  "start": 432.53,
+  "end": 458.17
+ },
+ {
+  "idx": 20,
+  "type": "ascii",
+  "title": "第四个接入点:磁盘的账记在哪条路上",
+  "start": 458.17,
+  "end": 482.23
+ },
+ {
+  "idx": 21,
+  "type": "html_slide",
+  "title": "实测：kworker 提交，记在 report 上",
+  "start": 482.23,
+  "end": 514.03
+ },
+ {
+  "idx": 22,
+  "type": "spotlight",
+  "title": "21 超了之后",
+  "start": 514.03,
+  "end": 518.57
+ },
+ {
+  "idx": 23,
+  "type": "html_slide",
+  "title": "CPU 的账：总额度加本地额度",
+  "start": 518.57,
+  "end": 554.9
+ },
+ {
+  "idx": 24,
+  "type": "html_slide",
+  "title": "实测：11.21 毫秒用完，停 84 毫秒",
+  "start": 554.9,
+  "end": 581.53
+ },
+ {
+  "idx": 25,
+  "type": "statemap",
+  "title": "没有检查线程：谁发现用完，谁设标记",
+  "start": 581.53,
+  "end": 613.2
+ },
+ {
+  "idx": 26,
+  "type": "html_slide",
+  "title": "内存的账：记账、回收、OOM",
+  "start": 613.2,
+  "end": 649.5
+ },
+ {
+  "idx": 27,
+  "type": "html_slide",
+  "title": "实测：先回收，收不动再杀",
+  "start": 649.5,
+  "end": 691.1
+ },
+ {
+  "idx": 28,
+  "type": "ascii",
+  "title": "超了之后:四种资源,四种处理",
+  "start": 691.1,
+  "end": 717.8
+ },
+ {
+  "idx": 29,
+  "type": "timeline",
+  "title": "把八行日志串成一生",
+  "start": 717.8,
+  "end": 746.67
+ },
+ {
+  "idx": 30,
+  "type": "code",
+  "title": "\"最小伪代码（示意）：登记表、fork、调度结算\"",
+  "start": 746.67,
+  "end": 766.53
+ },
+ {
+  "idx": 31,
+  "type": "layers",
+  "title": "五条设计原则，每条都有实测",
+  "start": 766.53,
+  "end": 808.13
+ },
+ {
+  "idx": 32,
+  "type": "html_slide",
+  "title": "How 阶段总结",
+  "start": 808.13,
+  "end": 838.53
+ },
+ {
+  "idx": 33,
+  "type": "spotlight",
+  "title": "32 下集预告",
+  "start": 838.53,
+  "end": 857.83
+ }
+]

@@ -1,0 +1,205 @@
+[
+ {
+  "idx": 1,
+  "type": "brand_intro",
+  "title": "",
+  "start": 0.0,
+  "end": 13.57
+ },
+ {
+  "idx": 2,
+  "type": "spotlight",
+  "title": "1 场景 1",
+  "start": 13.57,
+  "end": 26.77
+ },
+ {
+  "idx": 3,
+  "type": "text",
+  "title": "一台 4 核 8G 的机器",
+  "start": 26.77,
+  "end": 43.1
+ },
+ {
+  "idx": 4,
+  "type": "ascii",
+  "title": "旧工具各管各的单位",
+  "start": 43.1,
+  "end": 68.87
+ },
+ {
+  "idx": 5,
+  "type": "ascii",
+  "title": "同样的报表,放进一个 cgroup",
+  "start": 68.87,
+  "end": 87.57
+ },
+ {
+  "idx": 6,
+  "type": "html_slide",
+  "title": "八个想法一页纸",
+  "start": 87.57,
+  "end": 127.1
+ },
+ {
+  "idx": 7,
+  "type": "ascii",
+  "title": "八个想法在回答五条约束",
+  "start": 127.1,
+  "end": 153.83
+ },
+ {
+  "idx": 8,
+  "type": "layers",
+  "title": "想法一 分进程组记账:三样东西",
+  "start": 153.83,
+  "end": 179.5
+ },
+ {
+  "idx": 9,
+  "type": "timeline",
+  "title": "半颗核是怎么兑现的",
+  "start": 179.5,
+  "end": 194.37
+ },
+ {
+  "idx": 10,
+  "type": "ascii",
+  "title": "想法二 将工具统一成框架",
+  "start": 194.37,
+  "end": 209.7
+ },
+ {
+  "idx": 11,
+  "type": "ascii",
+  "title": "想法三 公共框架加资源插件",
+  "start": 209.7,
+  "end": 233.87
+ },
+ {
+  "idx": 12,
+  "type": "ascii",
+  "title": "想法四 记账放在内核本来要走的路上",
+  "start": 233.87,
+  "end": 255.7
+ },
+ {
+  "idx": 13,
+  "type": "ascii",
+  "title": "省开销的两个办法",
+  "start": 255.7,
+  "end": 279.07
+ },
+ {
+  "idx": 14,
+  "type": "statemap",
+  "title": "想法五 CPU 限流:记账时同步检查",
+  "start": 279.07,
+  "end": 308.63
+ },
+ {
+  "idx": 15,
+  "type": "ascii",
+  "title": "想法六 超限怎么办由资源性质决定",
+  "start": 308.63,
+  "end": 332.17
+ },
+ {
+  "idx": 16,
+  "type": "html_slide",
+  "title": "同一个问题,两种形状",
+  "start": 332.17,
+  "end": 352.1
+ },
+ {
+  "idx": 17,
+  "type": "text",
+  "title": "杀的范围有边界:第二个问题的答案",
+  "start": 352.1,
+  "end": 366.63
+ },
+ {
+  "idx": 18,
+  "type": "ascii",
+  "title": "想法七 提供机制,策略由需求定制",
+  "start": 366.63,
+  "end": 396.9
+ },
+ {
+  "idx": 19,
+  "type": "ascii",
+  "title": "想法八 一棵树,所有资源共用一套分组",
+  "start": 396.9,
+  "end": 421.47
+ },
+ {
+  "idx": 20,
+  "type": "text",
+  "title": "把多棵树收回来",
+  "start": 421.47,
+  "end": 443.07
+ },
+ {
+  "idx": 21,
+  "type": "spotlight",
+  "title": "20 场景 20",
+  "start": 443.07,
+  "end": 448.63
+ },
+ {
+  "idx": 22,
+  "type": "html_slide",
+  "title": "演练:用八个想法设计数据库的资源组",
+  "start": 448.63,
+  "end": 495.7
+ },
+ {
+  "idx": 23,
+  "type": "ascii",
+  "title": "第六条:数据库的内存超了怎么办",
+  "start": 495.7,
+  "end": 514.03
+ },
+ {
+  "idx": 24,
+  "type": "ascii",
+  "title": "设计决策总表(1/3)",
+  "start": 514.03,
+  "end": 537.33
+ },
+ {
+  "idx": 25,
+  "type": "ascii",
+  "title": "设计决策总表(2/3)",
+  "start": 537.33,
+  "end": 557.4
+ },
+ {
+  "idx": 26,
+  "type": "ascii",
+  "title": "设计决策总表(3/3)",
+  "start": 557.4,
+  "end": 578.43
+ },
+ {
+  "idx": 27,
+  "type": "layers",
+  "title": "这套做法没解决的四件事",
+  "start": 578.43,
+  "end": 600.43
+ },
+ {
+  "idx": 28,
+  "type": "html_slide",
+  "title": "Synthesis 阶段总结",
+  "start": 600.43,
+  "end": 619.9
+ },
+ {
+  "idx": 29,
+  "type": "text",
+  "title": "回到那台机器和三个问题",
+  "start": 619.9,
+  "end": 654.33
+ }
+]

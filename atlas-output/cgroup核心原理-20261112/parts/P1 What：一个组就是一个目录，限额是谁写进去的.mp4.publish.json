@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "artifact": "P1 What：一个组就是一个目录，限额是谁写进去的.mp4",
+  "platforms": {
+    "bilibili": {
+      "remote_id": "BV1xQsB6EEHM",
+      "uploaded": true,
+      "collection": false,
+      "charging": false
+    }
+  }
+}

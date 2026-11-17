@@ -1,0 +1,67 @@
+{
+  "platform": "bilibili",
+  "title": "cgroup 核心原理 大电影 — 7 集深度解读",
+  "tags": [
+    "Linux",
+    "cgroup",
+    "cgroup v2",
+    "容器",
+    "Docker",
+    "资源隔离",
+    "内存控制器",
+    "OOM",
+    "CFS带宽控制",
+    "内核源码",
+    "操作系统",
+    "系统设计"
+  ],
+  "cover": "cover-atlas.png",
+  "desc_file": "cgroup-ep0-toc.desc.txt",
+  "parts": [
+    {
+      "file": "P0 目录：三个问题和七集路线.mp4",
+      "bytes": 14894601,
+      "sha256": "f1c09f5cbff2b777f5fe1a6f8305d9913f989773b2d8e20a1a628c5ad6bdcef6"
+    },
+    {
+      "file": "P1 What：一个组就是一个目录，限额是谁写进去的.mp4",
+      "bytes": 39598764,
+      "sha256": "8328ccf64a9884163aaa340ada91707070e54098f526d635e7fe22d7fc3bf73b"
+    },
+    {
+      "file": "P2 Why：老工具为什么管不住，五条约束怎么来的.mp4",
+      "bytes": 61695716,
+      "sha256": "27ad0a49e114fabba3859a1a5c530e383676ce8ff1354314605bd5b2a6f04e46"
+    },
+    {
+      "file": "P3 How：五个接入点，超限以后内核怎么处理.mp4",
+      "bytes": 60821764,
+      "sha256": "47c919bf2e65b412e2a395f9907936ba3314d6c6a98e6f50878e736db7984f2d"
+    },
+    {
+      "file": "P4 Origin：2006 到 2016，从多棵树到一棵树.mp4",
+      "bytes": 36133049,
+      "sha256": "57a6450d42a45192c0f1d00ec457c213a916db51434348c3eb9325a8d41dc5fc"
+    },
+    {
+      "file": "P5 Deep：Linux 7.0 源码里的三条主线.mp4",
+      "bytes": 55766960,
+      "sha256": "dfa3cf3a14d41505b9156508a3f1482b54bbd6e31fbfa789a0260226891b36f4"
+    },
+    {
+      "file": "P6 Comparison：对照 Windows Job Object.mp4",
+      "bytes": 23847765,
+      "sha256": "9024ed4bc09cfc553fae1bdcadc9e6f7e4213905ba368f9b748ad713a8491d6e"
+    },
+    {
+      "file": "P7 Synthesis：八个设计想法，用到数据库资源组.mp4",
+      "bytes": 41811484,
+      "sha256": "fa7810317cde07152079828df60917e7cfbb6d84a8b6c166b5aa010e3bf61e01"
+    }
+  ],
+  "multipart": true,
+  "season": null,
+  "charging": false,
+  "scheduled": false,
+  "authorized_at": "2026-11-17T19:30:42+08:00"
+}

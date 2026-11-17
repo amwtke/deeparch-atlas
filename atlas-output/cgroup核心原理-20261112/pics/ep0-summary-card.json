@@ -1,0 +1,26 @@
+{
+  "title": "七集路线图",
+  "subtitle": "cgroup 核心原理 · 目录",
+  "tagline": "从一台被报表拖慢的数据库讲起，讲到 Linux 7.0 源码里的每一步。",
+  "pillars": [
+    {"icon": "target", "t": "三个问题", "d": "半颗核、OOM 边界、框架"},
+    {"icon": "shield", "t": "五条约束", "d": "每个设计都回答它们"},
+    {"icon": "stack", "t": "七集", "d": "是什么到能带走什么"},
+    {"icon": "eye", "t": "实测", "d": "每步都有终端输出"}
+  ],
+  "items": [
+    {"icon": "box", "t": "第 1 集 What", "d": "一个目录几个文件，从 docker run 倒推数字是谁写的。"},
+    {"icon": "chart", "t": "第 2 集 Why", "d": "nice、绑核、ulimit、全机 OOM 管不住在哪，得出五条约束。"},
+    {"icon": "route", "t": "第 3 集 How", "d": "fork、调度、缺页、提交 IO、退出，五个接入点。"},
+    {"icon": "link", "t": "第 4 集 Origin", "d": "Menage、Turner、Weiner、Heo，从多棵树到一棵树。"},
+    {"icon": "gear", "t": "第 5 集 Deep", "d": "Linux 7.0 源码：cpu.max、组内 OOM、公共框架。"},
+    {"icon": "db", "t": "第 6、7 集", "d": "对照 Windows Job Object；八个设计想法用到数据库。"}
+  ],
+  "gains_title": "看完能做到",
+  "gains": [
+    {"icon": "check", "t": "说清限额从哪来", "d": "管理程序写文件，内核执行"},
+    {"icon": "bulb", "t": "指出五个接入点", "d": "每个都有调用栈"},
+    {"icon": "compass", "t": "带走八个想法", "d": "搬到自己的系统"}
+  ],
+  "takeaway": "cgroup = **一套分组** + **每种资源一个控制器** + **内核已有路径上多做的一步**。"
+}
