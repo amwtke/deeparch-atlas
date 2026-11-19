@@ -4,62 +4,62 @@
   "type": "brand_intro",
   "title": "",
   "start": 0.0,
-  "end": 16.33
+  "end": 16.5
  },
  {
   "idx": 2,
   "type": "title",
   "title": "cgroup 核心原理",
-  "start": 16.33,
-  "end": 40.97
+  "start": 16.5,
+  "end": 41.6
  },
  {
   "idx": 3,
   "type": "spotlight",
   "title": "2 三个问题",
-  "start": 40.97,
-  "end": 65.33
+  "start": 41.6,
+  "end": 66.1
  },
  {
   "idx": 4,
   "type": "layers",
   "title": "七集路线：从一台机器走到一套做法",
-  "start": 65.33,
-  "end": 93.57
+  "start": 66.1,
+  "end": 94.5
  },
  {
   "idx": 5,
   "type": "ascii",
   "title": "五条约束：后面每个设计都在回答它们",
-  "start": 93.57,
-  "end": 122.43
+  "start": 94.5,
+  "end": 123.37
  },
  {
   "idx": 6,
   "type": "layers",
   "title": "这些设计是谁做的",
-  "start": 122.43,
-  "end": 153.87
+  "start": 123.37,
+  "end": 154.97
  },
  {
   "idx": 7,
   "type": "spotlight",
   "title": "6 每一步都有实测",
-  "start": 153.87,
-  "end": 173.77
+  "start": 154.97,
+  "end": 174.87
  },
  {
   "idx": 8,
   "type": "html_slide",
   "title": "七集路线图",
-  "start": 173.77,
-  "end": 207.43
+  "start": 174.87,
+  "end": 209.03
  },
  {
   "idx": 9,
   "type": "title",
   "title": "进入第 1 集",
-  "start": 207.43,
-  "end": 223.63
+  "start": 209.03,
+  "end": 225.33
  }
 ]

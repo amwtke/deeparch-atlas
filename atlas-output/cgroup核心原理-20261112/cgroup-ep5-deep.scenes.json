@@ -11,286 +11,286 @@
   "type": "spotlight",
   "title": "1 场景 1",
   "start": 13.03,
-  "end": 30.93
+  "end": 31.17
  },
  {
   "idx": 3,
   "type": "layers",
   "title": "三条主线,三件事",
-  "start": 30.93,
-  "end": 54.43
+  "start": 31.17,
+  "end": 54.67
  },
  {
   "idx": 4,
   "type": "html_slide",
   "title": "三条主线,都从同一个 worker 的一生分出去",
-  "start": 54.43,
-  "end": 73.17
+  "start": 54.67,
+  "end": 73.4
  },
  {
   "idx": 5,
   "type": "text",
   "title": "实验设计:一个 worker 的一生",
-  "start": 73.17,
-  "end": 95.27
+  "start": 73.4,
+  "end": 95.5
  },
  {
   "idx": 6,
   "type": "html_slide",
   "title": "实测:一个 worker 从 fork 到被父进程回收",
-  "start": 95.27,
-  "end": 119.37
+  "start": 95.5,
+  "end": 119.6
  },
  {
   "idx": 7,
   "type": "spotlight",
   "title": "6 场景 6",
-  "start": 119.37,
-  "end": 127.9
+  "start": 119.6,
+  "end": 128.13
  },
  {
   "idx": 8,
   "type": "ascii",
   "title": "为什么要有本核额度",
-  "start": 127.9,
-  "end": 155.67
+  "start": 128.13,
+  "end": 155.9
  },
  {
   "idx": 9,
   "type": "code",
   "title": "\"写入 cpu.max 之后:tg_set_cfs_bandwidth(Linux 7.0 kernel/sched/c",
-  "start": 155.67,
-  "end": 173.73
+  "start": 155.9,
+  "end": 173.97
  },
  {
   "idx": 10,
   "type": "code",
   "title": "\"记账:account_cfs_rq_runtime(Linux 7.0 kernel/sched/fair.c)\"",
-  "start": 173.73,
-  "end": 195.73
+  "start": 173.97,
+  "end": 195.97
  },
  {
   "idx": 11,
   "type": "code",
   "title": "\"领额度:__assign_cfs_rq_runtime(Linux 7.0 kernel/sched/fair.c)\"",
-  "start": 195.73,
-  "end": 214.27
+  "start": 195.97,
+  "end": 214.5
  },
  {
   "idx": 12,
   "type": "statemap",
   "title": "限流的一个周期",
-  "start": 214.27,
-  "end": 235.03
+  "start": 214.5,
+  "end": 235.27
  },
  {
   "idx": 13,
   "type": "code",
   "title": "\"限流发生的地方:pick_task_fair(Linux 7.0 kernel/sched/fair.c)\"",
-  "start": 235.03,
-  "end": 257.03
+  "start": 235.27,
+  "end": 257.27
  },
  {
   "idx": 14,
   "type": "ascii",
   "title": "两种停法:6.18 之前 与 v7.0",
-  "start": 257.03,
-  "end": 278.93
+  "start": 257.27,
+  "end": 279.17
  },
  {
   "idx": 15,
   "type": "code",
   "title": "\"回用户态时停下:throttle_cfs_rq_work(Linux 7.0 kernel/sched/fair.c)",
-  "start": 278.93,
-  "end": 295.13
+  "start": 279.17,
+  "end": 295.37
  },
  {
   "idx": 16,
   "type": "code",
   "title": "\"还额度、清标记:distribute_cfs_runtime(Linux 7.0 kernel/sched/fair.",
-  "start": 295.13,
-  "end": 321.1
+  "start": 295.37,
+  "end": 321.33
  },
  {
   "idx": 17,
   "type": "spotlight",
   "title": "16 场景 16",
-  "start": 321.1,
-  "end": 328.97
+  "start": 321.33,
+  "end": 329.2
  },
  {
   "idx": 18,
   "type": "ascii",
   "title": "沿树记账:一次改账三层同时加 64 页",
-  "start": 328.97,
-  "end": 357.77
+  "start": 329.2,
+  "end": 358.0
  },
  {
   "idx": 19,
   "type": "code",
   "title": "\"沿父指针逐层记账:page_counter_try_charge(Linux 7.0 mm/page_counter.",
-  "start": 357.77,
-  "end": 378.23
+  "start": 358.0,
+  "end": 378.47
  },
  {
   "idx": 20,
   "type": "code",
   "title": "\"超限以后:try_charge_memcg 的回收部分(Linux 7.0 mm/memcontrol.c)\"",
-  "start": 378.23,
-  "end": 401.1
+  "start": 378.47,
+  "end": 401.33
  },
  {
   "idx": 21,
   "type": "code",
   "title": "\"挑人的打分:oom_badness(Linux 7.0 mm/oom_kill.c)\"",
-  "start": 401.1,
-  "end": 420.23
+  "start": 401.33,
+  "end": 420.47
  },
  {
   "idx": 22,
   "type": "spotlight",
   "title": "21 场景 21",
-  "start": 420.23,
-  "end": 426.57
+  "start": 420.47,
+  "end": 426.8
  },
  {
   "idx": 23,
   "type": "ascii",
   "title": "两条各自合理的规则",
-  "start": 426.57,
-  "end": 447.33
+  "start": 426.8,
+  "end": 447.8
  },
  {
   "idx": 24,
   "type": "code",
   "title": "\"防重复检查:oom_evaluate_task(Linux 7.0 mm/oom_kill.c)\"",
-  "start": 447.33,
-  "end": 465.9
+  "start": 447.8,
+  "end": 466.37
  },
  {
   "idx": 25,
   "type": "code",
   "title": "\"看不到受害者的原因:css_task_iter_advance(Linux 7.0 kernel/cgroup/cgr",
-  "start": 465.9,
-  "end": 480.87
+  "start": 466.37,
+  "end": 481.43
  },
  {
   "idx": 26,
   "type": "code",
   "title": "\"进程退出的顺序:do_exit(Linux 7.0 kernel/exit.c)\"",
-  "start": 480.87,
-  "end": 499.2
+  "start": 481.43,
+  "end": 499.77
  },
  {
   "idx": 27,
   "type": "ascii",
   "title": "空档:看不到了,账还没降",
-  "start": 499.2,
-  "end": 520.73
+  "start": 499.77,
+  "end": 521.3
  },
  {
   "idx": 28,
   "type": "text",
   "title": "实验设计:同一个场景跑 4 轮",
-  "start": 520.73,
-  "end": 544.13
+  "start": 521.3,
+  "end": 544.7
  },
  {
   "idx": 29,
   "type": "code",
   "title": "\"实测:组内 OOM 第 1 轮的跟踪(oomrace.log)\"",
-  "start": 544.13,
-  "end": 568.63
+  "start": 544.7,
+  "end": 569.2
  },
  {
   "idx": 30,
   "type": "html_slide",
   "title": "实测:组内 OOM 的四轮跟踪",
-  "start": 568.63,
-  "end": 589.93
+  "start": 569.2,
+  "end": 590.5
  },
  {
   "idx": 31,
   "type": "ascii",
   "title": "三种改法",
-  "start": 589.93,
-  "end": 618.17
+  "start": 590.5,
+  "end": 618.73
  },
  {
   "idx": 32,
   "type": "spotlight",
   "title": "31 场景 31",
-  "start": 618.17,
-  "end": 627.77
+  "start": 618.73,
+  "end": 628.33
  },
  {
   "idx": 33,
   "type": "layers",
   "title": "公共框架的四样东西",
-  "start": 627.77,
-  "end": 649.53
+  "start": 628.33,
+  "end": 650.1
  },
  {
   "idx": 34,
   "type": "code",
   "title": "\"组籍:struct css_set(Linux 7.0 include/linux/cgroup-defs.h)\"",
-  "start": 649.53,
-  "end": 668.67
+  "start": 650.1,
+  "end": 669.23
  },
  {
   "idx": 35,
   "type": "code",
   "title": "\"登记表:struct cgroup_subsys(Linux 7.0 include/linux/cgroup-def",
-  "start": 668.67,
-  "end": 694.2
+  "start": 669.23,
+  "end": 694.77
  },
  {
   "idx": 36,
   "type": "code",
   "title": "\"fork 先问后挂:cgroup_can_fork(Linux 7.0 kernel/cgroup/cgroup.c)",
-  "start": 694.2,
-  "end": 712.87
+  "start": 694.77,
+  "end": 713.57
  },
  {
   "idx": 37,
   "type": "code",
   "title": "\"入组:cgroup_migrate_execute(Linux 7.0 kernel/cgroup/cgroup.c)",
-  "start": 712.87,
-  "end": 732.53
+  "start": 713.57,
+  "end": 733.37
  },
  {
   "idx": 38,
   "type": "code",
   "title": "\"退出:cgroup_task_exit 与 do_cgroup_task_dead(Linux 7.0 kernel/",
-  "start": 732.53,
-  "end": 751.8
+  "start": 733.37,
+  "end": 752.83
  },
  {
   "idx": 39,
   "type": "text",
   "title": "怎么证明核心不认识资源:数一数",
-  "start": 751.8,
-  "end": 777.03
+  "start": 752.83,
+  "end": 778.27
  },
  {
   "idx": 40,
   "type": "ascii",
   "title": "五条约束落在哪些代码上",
-  "start": 777.03,
-  "end": 807.37
+  "start": 778.27,
+  "end": 808.6
  },
  {
   "idx": 41,
   "type": "html_slide",
   "title": "Deep 阶段总结",
-  "start": 807.37,
-  "end": 831.13
+  "start": 808.6,
+  "end": 832.37
  },
  {
   "idx": 42,
   "type": "spotlight",
   "title": "41 场景 41",
-  "start": 831.13,
-  "end": 849.03
+  "start": 832.37,
+  "end": 850.43
  }
 ]

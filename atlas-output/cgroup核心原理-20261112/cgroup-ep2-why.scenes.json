@@ -4,328 +4,328 @@
   "type": "brand_intro",
   "title": "",
   "start": 0.0,
-  "end": 14.57
+  "end": 15.03
  },
  {
   "idx": 2,
   "type": "spotlight",
   "title": "1 Why 阶段开场",
-  "start": 14.57,
-  "end": 32.57
+  "start": 15.03,
+  "end": 33.37
  },
  {
   "idx": 3,
   "type": "html_slide",
   "title": "十个发现合成五条约束：每试一个旧办法，就暴露出它的缺陷",
-  "start": 32.57,
-  "end": 48.97
+  "start": 33.37,
+  "end": 49.77
  },
  {
   "idx": 4,
   "type": "ascii",
   "title": "实验一：什么都不管，db 能拿多少",
-  "start": 48.97,
-  "end": 66.8
+  "start": 49.77,
+  "end": 67.6
  },
  {
   "idx": 5,
   "type": "code",
   "title": "\"实测：db-sim 独占 vs report 起 8 个 worker\"",
-  "start": 66.8,
-  "end": 81.8
+  "start": 67.6,
+  "end": 82.6
  },
  {
   "idx": 6,
   "type": "text",
   "title": "调度器没算错，是单位错了",
-  "start": 81.8,
-  "end": 100.93
+  "start": 82.6,
+  "end": 101.73
  },
  {
   "idx": 7,
   "type": "html_slide",
   "title": "nice 19：8 个 worker 时 648 次，闲时 report 用满 398%，400 个 worker 时 ",
-  "start": 100.93,
-  "end": 121.0
+  "start": 101.73,
+  "end": 121.8
  },
  {
   "idx": 8,
   "type": "text",
   "title": "nice 的两个问题",
-  "start": 121.0,
-  "end": 140.43
+  "start": 121.8,
+  "end": 141.23
  },
  {
   "idx": 9,
   "type": "html_slide",
   "title": "绑核时 report 合计 100%；worker 以普通用户身份自己解绑后，db 回到 215 次",
-  "start": 140.43,
-  "end": 157.37
+  "start": 141.23,
+  "end": 158.17
  },
  {
   "idx": 10,
   "type": "html_slide",
   "title": "三个子进程里有一个调用了 setsid，按进程组杀完它还活着",
-  "start": 157.37,
-  "end": 176.9
+  "start": 158.17,
+  "end": 177.7
  },
  {
   "idx": 11,
   "type": "ascii",
   "title": "你要管的一组，常常是别人分出来的一份",
-  "start": 176.9,
-  "end": 195.63
+  "start": 177.7,
+  "end": 196.43
  },
  {
   "idx": 12,
   "type": "html_slide",
   "title": "ulimit -v 512M：8 个 worker 合计 2461 MiB；没碰过的 1 GiB 映射只占 10 MiB",
-  "start": 195.63,
-  "end": 214.9
+  "start": 196.43,
+  "end": 215.7
  },
  {
   "idx": 13,
   "type": "text",
   "title": "ulimit 量的是地址空间，不是物理内存",
-  "start": 214.9,
-  "end": 236.53
+  "start": 215.7,
+  "end": 237.33
  },
  {
   "idx": 14,
   "type": "ascii",
   "title": "实验：沙箱内存见底的时候，内核杀谁",
-  "start": 236.53,
-  "end": 250.93
+  "start": 237.33,
+  "end": 251.73
  },
  {
   "idx": 15,
   "type": "html_slide",
   "title": "report-w 触发 OOM，被杀的是 db-sim，退出状态 137",
-  "start": 250.93,
-  "end": 265.6
+  "start": 251.73,
+  "end": 266.47
  },
  {
   "idx": 16,
   "type": "ascii",
   "title": "用量超了以后怎么办：由资源的性质决定",
-  "start": 265.6,
-  "end": 287.1
+  "start": 266.47,
+  "end": 287.97
  },
  {
   "idx": 17,
   "type": "html_slide",
   "title": "dd 0.10 秒写完 1 GiB 只进了页缓存，落盘要 0.61 秒；ulimit -u 30 对普通用户按用户算，对",
-  "start": 287.1,
-  "end": 306.9
+  "start": 287.97,
+  "end": 307.77
  },
  {
   "idx": 18,
   "type": "ascii",
   "title": "每把旧工具只管一种资源，单位各不相同",
-  "start": 306.9,
-  "end": 317.03
+  "start": 307.77,
+  "end": 317.9
  },
  {
   "idx": 19,
   "type": "spotlight",
   "title": "18 转折",
-  "start": 317.03,
-  "end": 321.73
+  "start": 317.9,
+  "end": 322.6
  },
  {
   "idx": 20,
   "type": "ascii",
   "title": "给 CPU 写一个限制器，要做五件事",
-  "start": 321.73,
-  "end": 341.17
+  "start": 322.6,
+  "end": 342.03
  },
  {
   "idx": 21,
   "type": "ascii",
   "title": "四个限制器并排：上四行一样，下三行才不同",
-  "start": 341.17,
-  "end": 360.17
+  "start": 342.03,
+  "end": 361.03
  },
  {
   "idx": 22,
   "type": "layers",
   "title": "把公共的一层抽出来：核心加控制器",
-  "start": 360.17,
-  "end": 378.43
+  "start": 361.03,
+  "end": 379.3
  },
  {
   "idx": 23,
   "type": "text",
   "title": "内核只执行，数字由外面写",
-  "start": 378.43,
-  "end": 397.37
+  "start": 379.3,
+  "end": 398.23
  },
  {
   "idx": 24,
   "type": "ascii",
   "title": "host01 4 核 8G：两台虚拟机 vs 同一个内核里分组",
-  "start": 397.37,
-  "end": 417.07
+  "start": 398.23,
+  "end": 417.93
  },
  {
   "idx": 25,
   "type": "ascii",
   "title": "共用内核之后：另建检查路径 vs 复用已有路径",
-  "start": 417.07,
-  "end": 429.33
+  "start": 417.93,
+  "end": 430.2
  },
  {
   "idx": 26,
   "type": "timeline",
   "title": "复用已有路径：worker 一生本来就要走的五条路",
-  "start": 429.33,
-  "end": 447.47
+  "start": 430.2,
+  "end": 448.33
  },
  {
   "idx": 27,
   "type": "html_slide",
   "title": "核心想法：把记账和限额从进程身上，挪到一个进程自己改不了的组上",
-  "start": 447.47,
-  "end": 462.33
+  "start": 448.33,
+  "end": 463.2
  },
  {
   "idx": 28,
   "type": "ascii",
   "title": "组籍：进程身上一个指针，指向每个控制器一栏的记录",
-  "start": 462.33,
-  "end": 483.5
+  "start": 463.2,
+  "end": 484.37
  },
  {
   "idx": 29,
   "type": "ascii",
   "title": "专门的检查线程 vs 记账时同时比较",
-  "start": 483.5,
-  "end": 502.23
+  "start": 484.37,
+  "end": 503.1
  },
  {
   "idx": 30,
   "type": "html_slide",
   "title": "v1 的两棵树：同一个 shell 在两棵树上各占一个位置；一个进程的两个线程被拆到两个组",
-  "start": 502.23,
-  "end": 517.13
+  "start": 503.1,
+  "end": 518.0
  },
  {
   "idx": 31,
   "type": "html_slide",
   "title": "v1 多棵树 vs v2 一棵树：同一个 worker 写一个文件，用量记到哪",
-  "start": 517.13,
-  "end": 535.27
+  "start": 518.0,
+  "end": 536.13
  },
  {
   "idx": 32,
   "type": "ascii",
   "title": "v1 的四个痛和 v2 的改法",
-  "start": 535.27,
-  "end": 554.27
+  "start": 536.13,
+  "end": 555.13
  },
  {
   "idx": 33,
   "type": "html_slide",
   "title": "v2 里写副线程的 tid 会搬走整个进程；有进程的组打开子组的内存控制被拒，把进程挪到叶子后成功",
-  "start": 554.27,
-  "end": 570.77
+  "start": 555.13,
+  "end": 571.5
  },
  {
   "idx": 34,
   "type": "html_slide",
   "title": "report 组限 0.5 核：8 个 worker 和 400 个 worker 时，db-sim 都是 348%",
-  "start": 570.77,
-  "end": 591.67
+  "start": 571.5,
+  "end": 592.4
  },
  {
   "idx": 35,
   "type": "html_slide",
   "title": "report 组限 512 MiB：8 个 worker 被杀 7 个，db-sim 的 1500 MiB 原封不动",
-  "start": 591.67,
-  "end": 608.7
+  "start": 592.4,
+  "end": 609.43
  },
  {
   "idx": 36,
   "type": "html_slide",
   "title": "report 组限每秒写 10 MiB：直接写和带缓冲的写 50 MiB 都是 5 秒；db 组同样的写 0.026 秒",
-  "start": 608.7,
-  "end": 625.63
+  "start": 609.43,
+  "end": 626.37
  },
  {
   "idx": 37,
   "type": "html_slide",
   "title": "report 组 pids.max 为 20 时，root 身份的第 20 次 fork 失败；db 组不受影响",
-  "start": 625.63,
-  "end": 641.63
+  "start": 626.37,
+  "end": 642.37
  },
  {
   "idx": 38,
   "type": "ascii",
   "title": "四种资源同一套框架，只有最后一列不同",
-  "start": 641.63,
-  "end": 658.6
+  "start": 642.37,
+  "end": 659.33
  },
  {
   "idx": 39,
   "type": "html_slide",
   "title": "只分组不封顶，400 个 worker 时 db-sim 152%；一核一个 192%；权重 900 比 100 时 3",
-  "start": 658.6,
-  "end": 684.5
+  "start": 659.33,
+  "end": 685.23
  },
  {
   "idx": 40,
   "type": "ascii",
   "title": "cpu.weight 加 cpu.max：取更紧的那个",
-  "start": 684.5,
-  "end": 707.0
+  "start": 685.23,
+  "end": 707.73
  },
  {
   "idx": 41,
   "type": "html_slide",
   "title": "内存没有 weight；设了 memory.low 700M 后 db 一页没少；换成匿名页后，受保护的 db-sim ",
-  "start": 707.0,
-  "end": 728.33
+  "start": 707.73,
+  "end": 729.07
  },
  {
   "idx": 42,
   "type": "html_slide",
   "title": "report 组加 memory.max 300M 后，OOM 范围变成 /host01/report，被杀的是 rep",
-  "start": 728.33,
-  "end": 748.17
+  "start": 729.07,
+  "end": 748.9
  },
  {
   "idx": 43,
   "type": "spotlight",
   "title": "42 边界是谁划的",
-  "start": 748.17,
-  "end": 754.33
+  "start": 748.9,
+  "end": 755.07
  },
  {
   "idx": 44,
   "type": "layers",
   "title": "十个发现，合成五条约束",
-  "start": 754.33,
-  "end": 774.37
+  "start": 755.07,
+  "end": 775.1
  },
  {
   "idx": 45,
   "type": "ascii",
   "title": "每条设计想法都来自一个具体的问题",
-  "start": 774.37,
-  "end": 792.17
+  "start": 775.1,
+  "end": 792.9
  },
  {
   "idx": 46,
   "type": "html_slide",
   "title": "本集总结：五条约束和公共框架加资源插件",
-  "start": 792.17,
-  "end": 813.43
+  "start": 792.9,
+  "end": 814.17
  },
  {
   "idx": 47,
   "type": "spotlight",
   "title": "46 下集预告",
-  "start": 813.43,
-  "end": 828.47
+  "start": 814.17,
+  "end": 829.3
  }
 ]

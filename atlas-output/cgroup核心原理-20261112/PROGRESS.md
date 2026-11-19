@@ -256,3 +256,5 @@
 - 审稿中更正原文:02 §10.4 db-sim 728 MiB → 约 711 MiB;07 数据库资源组图按八个想法重画;04 §11「五句」→「五条」;01/02/07「巡查」→「检查」;合成稿已重建
 - 2026-11-17 用户「分8p上传B站,然后推送main」→ 1 个稿件 8 个分 P 上传成功:BV1xQsB6EEHM(aid 117631554166277),标题「cgroup 核心原理 大电影 — 7 集深度解读」,无合集 / 无充电 / 无定时;状态审核中。请求与回执见 upload-request.json / upload-receipt.json;分 P 文件为 parts/ 下的硬链接(不入库)
 - 同日提交 run 目录并推送 origin main
+- 2026-11-19 用户「删除上次cgroup生成的视频。重新生成一下」:配音把 cgroup 读错(听起来像 Crope),应读作 C group(control group)。改法:deeparch-video 的 scripts/data/pronunciations.json 加一条 cgroup→cGroup(等长替换,只影响配音,字幕仍显示 cgroup;该仓库未提交)。删本地 8 个 mp4 + parts/ 下 8 个硬链接,vmd 不变,8 集重渲全部 PASS(合计约 83.8 分钟);整段回听(语音识别)约 61 处全部读作 C group
+- 2026-11-19 用户「删掉旧稿件,重新上传」:旧稿件 BV1xQsB6EEHM 的删除接口要验证码(340022),未删成,已请用户在创作中心手动删;新稿件 BV1KHsY6eEWx(aid 117643482765252)上传成功,8 个分 P,标题 / 封面 / 简介 / 分 P 名不变,状态审核中。upload-request.json / upload-receipt.json 已换成新稿件;本次改动未提交 git(等用户指示)

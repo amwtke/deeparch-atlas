@@ -1,11 +1,12 @@
 {
   "platform": "bilibili",
-  "bvid": "BV1xQsB6EEHM",
-  "aid": 117631554166277,
-  "url": "https://www.bilibili.com/video/BV1xQsB6EEHM",
+  "bvid": "BV1KHsY6eEWx",
+  "aid": 117643482765252,
+  "url": "https://www.bilibili.com/video/BV1KHsY6eEWx",
   "title": "cgroup 核心原理 大电影 — 7 集深度解读",
   "parts": 8,
   "state": -30,
   "state_desc": "审核中",
-  "checked_at": "2026-11-17T19:31:28+08:00"
+  "replaces": "BV1xQsB6EEHM",
+  "checked_at": "2026-11-19T22:08:14+08:00"
 }

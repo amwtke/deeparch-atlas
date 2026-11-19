@@ -4,139 +4,139 @@
   "type": "brand_intro",
   "title": "",
   "start": 0.0,
-  "end": 12.93
+  "end": 13.0
  },
  {
   "idx": 2,
   "type": "spotlight",
   "title": "1 场景 1",
-  "start": 12.93,
-  "end": 31.77
+  "start": 13.0,
+  "end": 32.1
  },
  {
   "idx": 3,
   "type": "text",
   "title": "只比架构这一层",
-  "start": 31.77,
-  "end": 44.97
+  "start": 32.1,
+  "end": 45.3
  },
  {
   "idx": 4,
   "type": "layers",
   "title": "对照下来三件事",
-  "start": 44.97,
-  "end": 72.43
+  "start": 45.3,
+  "end": 72.77
  },
  {
   "idx": 5,
   "type": "html_slide",
   "title": "同一个问题,两种形状",
-  "start": 72.43,
-  "end": 93.03
+  "start": 72.77,
+  "end": 93.37
  },
  {
   "idx": 6,
   "type": "spotlight",
   "title": "5 场景 5",
-  "start": 93.03,
-  "end": 98.47
+  "start": 93.37,
+  "end": 98.8
  },
  {
   "idx": 7,
   "type": "ascii",
   "title": "两边一样的部分",
-  "start": 98.47,
-  "end": 119.97
+  "start": 98.8,
+  "end": 120.3
  },
  {
   "idx": 8,
   "type": "ascii",
   "title": "不同:进程怎么进出组",
-  "start": 119.97,
-  "end": 145.17
+  "start": 120.3,
+  "end": 145.53
  },
  {
   "idx": 9,
   "type": "statemap",
   "title": "Windows 的进程只进不出",
-  "start": 145.17,
-  "end": 155.3
+  "start": 145.53,
+  "end": 155.67
  },
  {
   "idx": 10,
   "type": "ascii",
   "title": "CPU 上限:几乎是同一种做法",
-  "start": 155.3,
-  "end": 182.37
+  "start": 155.67,
+  "end": 182.73
  },
  {
   "idx": 11,
   "type": "spotlight",
   "title": "10 场景 10",
-  "start": 182.37,
-  "end": 188.8
+  "start": 182.73,
+  "end": 189.4
  },
  {
   "idx": 12,
   "type": "ascii",
   "title": "内存超限:一个杀,一个拒",
-  "start": 188.8,
-  "end": 215.63
+  "start": 189.4,
+  "end": 216.23
  },
  {
   "idx": 13,
   "type": "timeline",
   "title": "同一次内存超限,四个时刻",
-  "start": 215.63,
-  "end": 238.27
+  "start": 216.23,
+  "end": 238.93
  },
  {
   "idx": 14,
   "type": "spotlight",
   "title": "13 场景 13",
-  "start": 238.27,
-  "end": 242.37
+  "start": 238.93,
+  "end": 243.03
  },
  {
   "idx": 15,
   "type": "ascii",
   "title": "新增一种资源要动哪里",
-  "start": 242.37,
-  "end": 271.83
+  "start": 243.03,
+  "end": 272.6
  },
  {
   "idx": 16,
   "type": "ascii",
   "title": "另外几处不同",
-  "start": 271.83,
-  "end": 295.27
+  "start": 272.6,
+  "end": 296.1
  },
  {
   "idx": 17,
   "type": "ascii",
   "title": "五条约束在两边的对照",
-  "start": 295.27,
-  "end": 326.2
+  "start": 296.1,
+  "end": 327.03
  },
  {
   "idx": 18,
   "type": "text",
   "title": "回到三个问题",
-  "start": 326.2,
-  "end": 348.8
+  "start": 327.03,
+  "end": 349.63
  },
  {
   "idx": 19,
   "type": "html_slide",
   "title": "Comparison 阶段总结",
-  "start": 348.8,
-  "end": 369.5
+  "start": 349.63,
+  "end": 370.33
  },
  {
   "idx": 20,
   "type": "spotlight",
   "title": "19 场景 19",
-  "start": 369.5,
-  "end": 385.77
+  "start": 370.33,
+  "end": 386.6
  }
 ]
